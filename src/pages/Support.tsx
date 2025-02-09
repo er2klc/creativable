@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Header } from "@/components/landing/Header";
 import { VisitorSupportForm } from "@/components/support/VisitorSupportForm";
@@ -15,6 +16,21 @@ const Support = () => {
   return (
     <div className="min-h-screen w-full bg-[#0A0A0A] text-white">
       <Header isScrolled={true} />
+      <div className="fixed top-0 left-0 right-0 z-[40] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-4 border-b border-sidebar-border md:hidden h-16">
+        <div className="flex items-center gap-4">
+          <div 
+            onClick={() => navigate("/dashboard")}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            <img 
+              src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
+              alt="Logo" 
+              className="h-8 w-8"
+            />
+            <span className="text-sm text-white font-light">creativable</span>
+          </div>
+        </div>
+      </div>
       <div className="container mx-auto px-4 pt-32 pb-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
