@@ -92,7 +92,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
       const leadId = notification.metadata?.lead_id;
       
       if (leadId) {
-        navigate(`/leads/${leadId}`);
+        navigate(`/contacts/${leadId}`);
         onOpenChange(false);
       } else if (notification.target_page) {
         navigate(notification.target_page);
