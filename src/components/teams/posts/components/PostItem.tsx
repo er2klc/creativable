@@ -10,7 +10,7 @@ import { CommentsList } from "./CommentsList";
 
 interface PostItemProps {
   post: TeamPost & {
-    team_post_comments: number; // Now expecting a number instead of an array
+    team_post_comments: number;
     author?: {
       id: string;
       display_name?: string | null;
@@ -19,18 +19,6 @@ interface PostItemProps {
     team_categories?: {
       name: string;
     } | null;
-    team_post_reactions?: {
-      id: string;
-      reaction_type: string;
-      created_by: string;
-    }[];
-    team_post_mentions?: {
-      id: string;
-      mentioned_user?: {
-        id: string;
-        display_name?: string | null;
-      };
-    }[];
   };
   isExpanded: boolean;
   onToggleComments: () => void;
@@ -75,21 +63,10 @@ export const PostItem = ({ post, isExpanded, onToggleComments }: PostItemProps) 
             <div className="mt-4">
               <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
               <p className="whitespace-pre-wrap text-muted-foreground">{post.content}</p>
-              {post.team_post_mentions?.length > 0 && (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  <span>Erwähnt: </span>
-                  {post.team_post_mentions.map((mention, index) => (
-                    <span key={mention.id}>
-                      @{mention.mentioned_user?.display_name}
-                      {index < post.team_post_mentions.length - 1 ? ', ' : ''}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
             <PostActions
               postId={post.id}
-              reactionsCount={post.team_post_reactions?.length || 0}
+              reactionsCount={0}
               commentsCount={post.team_post_comments}
               isExpanded={isExpanded}
               onToggleComments={onToggleComments}
