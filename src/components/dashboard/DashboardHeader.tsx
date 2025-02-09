@@ -31,7 +31,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
   return (
     <div className="fixed top-[48px] md:top-0 left-0 right-0 z-[99] bg-background border-b md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
       <div className="w-full bg-background">
-        <div className="h-16 px-4 flex items-center">
+        <div className="h-24 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
             <div>
               <h1 className="text-lg md:text-xl font-semibold text-foreground">
@@ -48,3 +48,4 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     </div>
   );
 };
+
