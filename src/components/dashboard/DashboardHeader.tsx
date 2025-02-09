@@ -48,3 +48,4 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     </div>
   );
 };
+
