@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
@@ -87,7 +86,7 @@ export function MobileMenu() {
     <>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-white p-0 h-8 w-8 -ml-2">
+          <Button variant="ghost" size="icon" className="text-white p-0 h-8 w-8 -ml-4">
             <Menu className="h-6 w-6" />
           </Button>
         </SheetTrigger>
@@ -97,7 +96,7 @@ export function MobileMenu() {
         >
           <div className="flex flex-col h-[95vh] bg-[#111111] overflow-y-auto">
             <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-4">
                 <img 
                   src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
                   alt="Logo" 
