@@ -13,7 +13,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gray-50/50">
       <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-2 py-2 border-b border-sidebar-border md:hidden">
         <MobileMenu />
-        <div className="flex items-center gap-2">
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2">
           <img 
             src="/lovable-uploads/364f2d81-57ce-4e21-a182-252ddb5cbe50.png" 
             alt="Logo" 
@@ -33,4 +33,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
