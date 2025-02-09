@@ -11,7 +11,7 @@ interface PostSnapsListProps {
 }
 
 export const PostSnapsList = ({ teamId, isAdmin }: PostSnapsListProps) => {
-  console.log("PostSnapsList rendered with teamId:", teamId); // Debug log
+  console.log("PostSnapsList rendered with teamId:", teamId);
 
   const { data: categories, isLoading } = useQuery({
     queryKey: ['team-categories', teamId],
@@ -23,7 +23,7 @@ export const PostSnapsList = ({ teamId, isAdmin }: PostSnapsListProps) => {
         .order('order_index');
 
       if (error) throw error;
-      console.log("Fetched categories:", data); // Debug log
+      console.log("Fetched categories:", data);
       return data;
     },
   });
@@ -57,15 +57,7 @@ export const PostSnapsList = ({ teamId, isAdmin }: PostSnapsListProps) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold">Community</h2>
-        <div className="flex gap-2">
-          {categories?.map((category) => (
-            <CreatePostDialog 
-              key={category.id}
-              teamId={teamId}
-              categoryId={category.id}
-            />
-          ))}
-        </div>
+        <CreatePostDialog teamId={teamId} />
       </div>
       <PostList teamId={teamId} />
     </div>
