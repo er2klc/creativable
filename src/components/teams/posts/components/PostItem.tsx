@@ -20,16 +20,16 @@ export const PostItem = ({ post, isExpanded, onToggleComments }: PostItemProps) 
       <CardContent className="p-6">
         <div className="flex items-start gap-4">
           <Avatar className="h-10 w-10">
-            <AvatarImage src={post.profiles?.avatar_url || ""} />
+            <AvatarImage src={post.author?.avatar_url || ""} />
             <AvatarFallback>
-              {post.profiles?.display_name?.substring(0, 2).toUpperCase() || "??"}
+              {post.author?.display_name?.substring(0, 2).toUpperCase() || "??"}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-baseline justify-between gap-2">
               <div>
                 <span className="font-medium">
-                  {post.profiles?.display_name}
+                  {post.author?.display_name}
                 </span>
                 <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                   <Badge variant="secondary">

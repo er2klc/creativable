@@ -13,7 +13,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           team_categories (
             name
           ),
-          profiles:created_by (
+          author:profiles!team_posts_created_by_fkey (
             id,
             display_name,
             avatar_url
@@ -23,7 +23,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
             content,
             created_at,
             created_by,
-            profiles!team_post_comments_created_by_fkey (
+            author:profiles!team_post_comments_created_by_fkey (
               id,
               display_name,
               avatar_url
@@ -37,7 +37,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           team_post_mentions (
             id,
             mentioned_user_id,
-            profiles!team_post_mentions_mentioned_user_id_fkey (
+            mentioned_user:profiles!team_post_mentions_mentioned_user_id_fkey (
               id,
               display_name
             )
