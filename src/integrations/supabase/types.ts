@@ -2600,6 +2600,13 @@ export type Database = {
             foreignKeyName: "team_post_comments_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
+            referencedRelation: "team_post_comments_count"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "team_post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
             referencedRelation: "team_posts"
             referencedColumns: ["id"]
           },
@@ -2656,6 +2663,13 @@ export type Database = {
             foreignKeyName: "team_post_mentions_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
+            referencedRelation: "team_post_comments_count"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "team_post_mentions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
             referencedRelation: "team_posts"
             referencedColumns: ["id"]
           },
@@ -2695,6 +2709,13 @@ export type Database = {
             foreignKeyName: "fk_team_post_reactions_posts"
             columns: ["post_id"]
             isOneToOne: false
+            referencedRelation: "team_post_comments_count"
+            referencedColumns: ["post_id"]
+          },
+          {
+            foreignKeyName: "fk_team_post_reactions_posts"
+            columns: ["post_id"]
+            isOneToOne: false
             referencedRelation: "team_posts"
             referencedColumns: ["id"]
           },
@@ -2704,6 +2725,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_post_comments_count"
+            referencedColumns: ["post_id"]
           },
           {
             foreignKeyName: "team_post_reactions_post_id_fkey"
@@ -3174,15 +3202,7 @@ export type Database = {
           count: number | null
           post_id: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "team_post_comments_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "team_posts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
     }
     Functions: {
