@@ -7,47 +7,61 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
   return useQuery({
     queryKey: ['team-posts', teamId, categoryId],
     queryFn: async () => {
-      console.log("Fetching posts for teamId:", teamId, "categoryId:", categoryId);
+      console.log("Starting to fetch posts for teamId:", teamId, "categoryId:", categoryId);
       
-      let query = supabase
-        .from('team_posts')
-        .select(`
-          *,
-          team_categories (
-            name
-          ),
-          author:profiles!team_posts_created_by_fkey (
-            id,
-            display_name,
-            avatar_url
-          ),
-          team_post_comments:team_post_comments_count!inner (
-            count
-          )
-        `)
-        .eq('team_id', teamId)
-        .order('pinned', { ascending: false })
-        .order('created_at', { ascending: false });
+      try {
+        let query = supabase
+          .from('team_posts')
+          .select(`
+            *,
+            team_categories (
+              name
+            ),
+            author:profiles!team_posts_created_by_fkey (
+              id,
+              display_name,
+              avatar_url
+            ),
+            team_post_comments:team_post_comments_count!inner (
+              count
+            )
+          `)
+          .eq('team_id', teamId)
+          .order('pinned', { ascending: false })
+          .order('created_at', { ascending: false });
 
-      if (categoryId) {
-        query = query.eq('category_id', categoryId);
-      }
+        if (categoryId) {
+          query = query.eq('category_id', categoryId);
+        }
 
-      const { data, error } = await query;
+        const { data, error } = await query;
 
-      if (error) {
-        console.error("Error fetching posts:", error);
-        toast.error("Fehler beim Laden der Beiträge");
+        if (error) {
+          console.error("Error fetching posts:", error);
+          toast.error("Fehler beim Laden der Beiträge");
+          throw error;
+        }
+        
+        if (!data || data.length === 0) {
+          console.log("No posts found for teamId:", teamId, "categoryId:", categoryId);
+        } else {
+          console.log("Successfully fetched posts:", data.length, "posts found");
+        }
+        
+        const transformedData = data.map(post => ({
+          ...post,
+          team_post_comments: post.team_post_comments[0]?.count || 0
+        }));
+        
+        console.log("Transformed posts data:", transformedData);
+        return transformedData;
+      } catch (error) {
+        console.error("Unexpected error in useTeamPosts:", error);
+        toast.error("Unerwarteter Fehler beim Laden der Beiträge");
         throw error;
       }
-      
-      const transformedData = data.map(post => ({
-        ...post,
-        team_post_comments: post.team_post_comments[0]?.count || 0
-      }));
-      
-      console.log("Successfully fetched posts:", transformedData);
-      return transformedData;
     },
+    refetchOnWindowFocus: true, // Ensure we get fresh data when the window regains focus
+    refetchOnMount: true, // Ensure we get fresh data when the component mounts
   });
 };

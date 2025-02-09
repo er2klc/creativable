@@ -13,7 +13,9 @@ interface PostListProps {
 
 export const PostList = ({ teamId, categoryId }: PostListProps) => {
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
-  const { data: posts, isLoading, error } = useTeamPosts(teamId, categoryId);
+  const { data: posts, isLoading, error, refetch } = useTeamPosts(teamId, categoryId);
+
+  console.log("PostList rendering with posts:", posts);
 
   if (isLoading) {
     return (
@@ -28,32 +30,40 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
       <Alert variant="destructive" className="mb-4">
         <AlertDescription>
           Fehler beim Laden der Beiträge. Bitte versuchen Sie es später erneut.
+          <button 
+            onClick={() => refetch()} 
+            className="ml-2 underline hover:no-underline"
+          >
+            Erneut versuchen
+          </button>
         </AlertDescription>
       </Alert>
     );
   }
 
+  if (!posts?.length) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center text-muted-foreground">
+            <p className="text-lg font-medium">Keine Beiträge gefunden</p>
+            <p className="text-sm mt-1">Erstellen Sie den ersten Beitrag in dieser Kategorie!</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {!posts?.length ? (
-        <Card>
-          <CardContent className="p-6">
-            <div className="text-center text-muted-foreground">
-              <p className="text-lg font-medium">Keine Beiträge gefunden</p>
-              <p className="text-sm mt-1">Erstellen Sie den ersten Beitrag in dieser Kategorie!</p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : (
-        posts.map((post) => (
-          <PostItem
-            key={post.id}
-            post={post}
-            isExpanded={expandedPost === post.id}
-            onToggleComments={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
-          />
-        ))
-      )}
+      {posts.map((post) => (
+        <PostItem
+          key={post.id}
+          post={post}
+          isExpanded={expandedPost === post.id}
+          onToggleComments={() => setExpandedPost(expandedPost === post.id ? null : post.id)}
+        />
+      ))}
     </div>
   );
 };
