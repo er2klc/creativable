@@ -45,7 +45,7 @@ export function MobileMenu() {
       if (error) throw error;
       return count || 0;
     },
-    refetchInterval: 30000  // Refetch every 30 seconds
+    refetchInterval: 30000
   });
 
   const getInitials = (email: string) => {
@@ -88,54 +88,12 @@ export function MobileMenu() {
   return (
     <>
       <Sheet open={open} onOpenChange={setOpen}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <SheetTrigger asChild>
             <Button variant="ghost" size="icon" className="text-white">
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white relative"
-            onClick={() => setNotificationsOpen(true)}
-          >
-            <Bell className="h-5 w-5" />
-            {unreadCount > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
-                {unreadCount}
-              </Badge>
-            )}
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Avatar className="h-8 w-8 cursor-pointer">
-                <AvatarImage src={user?.user_metadata?.avatar_url} />
-                <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
-              </Avatar>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuItem onClick={() => navigate("/settings")}>
-                <User className="mr-2 h-4 w-4" />
-                <span>Profil</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <CreditCard className="mr-2 h-4 w-4" />
-                <span>Plan</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Receipt className="mr-2 h-4 w-4" />
-                <span>Rechnung</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" />
-                <span>Abmelden</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
         </div>
         <SheetContent 
           side="top" 
@@ -181,6 +139,51 @@ export function MobileMenu() {
           </div>
         </SheetContent>
       </Sheet>
+
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-white relative"
+          onClick={() => setNotificationsOpen(true)}
+        >
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {unreadCount}
+            </Badge>
+          )}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Avatar className="h-8 w-8 cursor-pointer">
+              <AvatarImage src={user?.user_metadata?.avatar_url} />
+              <AvatarFallback>{getInitials(user?.email || "")}</AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => navigate("/settings")}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>Plan</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Receipt className="mr-2 h-4 w-4" />
+              <span>Rechnung</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Abmelden</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <NotificationSidebar
         open={notificationsOpen}
