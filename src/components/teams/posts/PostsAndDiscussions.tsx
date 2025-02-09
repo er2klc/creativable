@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CategoryList } from "./CategoryList";
 import { PostList } from "./PostList";
 import { CategoryOverview } from "./CategoryOverview";
+import { CreatePostDialog } from "./CreatePostDialog";
 
 interface PostsAndDiscussionsProps {
   categories: any[];
@@ -25,6 +26,9 @@ export function PostsAndDiscussions({ categories, teamId, activeCategory }: Post
 
         {/* Posts Area */}
         <div className="col-span-9">
+          <div className="mb-4 flex justify-end">
+            <CreatePostDialog teamId={teamId} categoryId={activeCategory} />
+          </div>
           <PostList teamId={teamId} categoryId={activeCategory} />
         </div>
       </div>

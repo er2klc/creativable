@@ -30,10 +30,6 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end">
-        <CreatePostDialog teamId={teamId} categoryId={categoryId} />
-      </div>
-      
       {!posts?.length ? (
         <Card>
           <CardContent className="p-6 text-center text-muted-foreground">
