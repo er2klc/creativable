@@ -113,4 +113,3 @@ export const AppLayout = ({ children }: AppLayoutProps) => {
     </div>
   );
 };
-
