@@ -54,12 +54,23 @@ export const PostSnapsList = ({ teamId, isAdmin }: PostSnapsListProps) => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold">Community</h2>
-        <CreatePostDialog teamId={teamId} />
-      </div>
-      <PostList teamId={teamId} />
+    <div className="space-y-8">
+      {categories.map((category) => (
+        <div key={category.id} className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-xl font-semibold">{category.name}</h2>
+              {category.description && (
+                <span className="text-sm text-muted-foreground">
+                  {category.description}
+                </span>
+              )}
+            </div>
+            {isAdmin && <CreatePostDialog teamId={teamId} categoryId={category.id} />}
+          </div>
+          <PostList teamId={teamId} categoryId={category.id} />
+        </div>
+      ))}
     </div>
   );
 };
