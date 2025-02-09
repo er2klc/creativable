@@ -1,132 +1,101 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, ChevronRight } from "lucide-react";
+import { Card } from "@/components/ui/card";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
-import { useNavigate } from "react-router-dom";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { MessageSquare } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 
 interface CategoryOverviewProps {
   teamId: string;
 }
 
 export function CategoryOverview({ teamId }: CategoryOverviewProps) {
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  
-  const { data: categories = [], isLoading } = useQuery({
-    queryKey: ["team-categories", teamId],
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ["team-posts-overview", teamId],
     queryFn: async () => {
-      const { data: categoriesData, error: categoriesError } = await supabase
-        .from("team_categories")
+      const { data, error } = await supabase
+        .from("team_posts")
         .select(`
           *,
-          team_posts (
-            id,
-            title,
-            created_at,
-            created_by,
-            team_post_comments (count)
+          team_categories (
+            name,
+            slug
+          ),
+          author:profiles!team_posts_created_by_fkey (
+            display_name
+          ),
+          team_post_comments (
+            id
           )
         `)
         .eq("team_id", teamId)
-        .order("order_index");
+        .order("created_at", { ascending: false })
+        .limit(10);
 
-      if (categoriesError) throw categoriesError;
-
-      // Fetch display names for post creators in a separate query
-      const postsWithCreators = await Promise.all(
-        categoriesData.map(async (category) => {
-          const postsWithCreatorInfo = await Promise.all(
-            (category.team_posts || []).map(async (post) => {
-              const { data: profileData } = await supabase
-                .from("profiles")
-                .select("display_name")
-                .eq("id", post.created_by)
-                .single();
-              
-              return {
-                ...post,
-                creator_name: profileData?.display_name
-              };
-            })
-          );
-
-          return {
-            ...category,
-            team_posts: postsWithCreatorInfo
-              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-              .slice(0, 3) // Nur die letzten 3 Beiträge
-          };
-        })
-      );
-      
-      return postsWithCreators;
+      if (error) throw error;
+      return data;
     },
   });
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      <div className="space-y-4">
+        {[1, 2, 3].map((i) => (
+          <Card key={i} className="p-6">
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-muted rounded w-1/4"></div>
+              <div className="h-4 bg-muted rounded w-3/4"></div>
+            </div>
+          </Card>
+        ))}
       </div>
+    );
+  }
+
+  if (!posts?.length) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-muted-foreground">
+          Keine Beiträge gefunden
+        </div>
+      </Card>
     );
   }
 
   return (
     <div className="space-y-4">
-      {categories.map((category) => (
-        <Card 
-          key={category.id} 
-          className="group hover:shadow-md transition-shadow cursor-pointer"
-          onClick={() => navigate(`category/${category.slug}`)}
-        >
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-lg">{category.name}</CardTitle>
-              {category.description && (
-                <p className="text-sm text-muted-foreground mt-1">
-                  {category.description}
-                </p>
-              )}
+      {posts.map((post) => (
+        <Card key={post.id} className="p-6 hover:shadow-md transition-shadow">
+          <div className="space-y-4">
+            <div className="flex items-baseline justify-between gap-2">
+              <h3 className="text-lg font-semibold line-clamp-1">
+                {post.title}
+              </h3>
+              <span className="text-sm text-muted-foreground whitespace-nowrap">
+                {formatDistanceToNow(new Date(post.created_at), {
+                  addSuffix: true,
+                  locale: de,
+                })}
+              </span>
             </div>
-            <ChevronRight className={`h-4 w-4 text-muted-foreground ${isMobile ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`} />
-          </CardHeader>
-          <CardContent>
-            {category.team_posts?.length > 0 ? (
-              <div className="space-y-3">
-                {category.team_posts.map((post: any) => (
-                  <div
-                    key={post.id}
-                    className="p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
-                  >
-                    <h4 className="font-medium line-clamp-1">{post.title}</h4>
-                    <div className="flex items-center justify-between mt-2 text-sm text-muted-foreground">
-                      <div className="flex-1 min-w-0">
-                        <span className="block truncate">
-                          {formatDistanceToNow(new Date(post.created_at), {
-                            addSuffix: true,
-                            locale: de,
-                          })}{" "}
-                          von {post.creator_name || "Unbekannt"}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 ml-2">
-                        <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                        <span>{post.team_post_comments?.[0]?.count || 0}</span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">
+                  {post.team_categories.name}
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  von {post.author.display_name}
+                </span>
               </div>
-            ) : (
-              <p className="text-center text-muted-foreground py-3">
-                Noch keine Beiträge in dieser Kategorie
-              </p>
-            )}
-          </CardContent>
+              <div className="flex items-center gap-1 text-muted-foreground">
+                <MessageSquare className="h-4 w-4" />
+                <span className="text-sm">{post.team_post_comments.length}</span>
+              </div>
+            </div>
+          </div>
         </Card>
       ))}
     </div>

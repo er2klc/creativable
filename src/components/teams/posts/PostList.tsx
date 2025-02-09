@@ -15,8 +15,6 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
   const [expandedPost, setExpandedPost] = useState<string | null>(null);
   const { data: posts, isLoading, error, refetch } = useTeamPosts(teamId, categoryId);
 
-  console.log("PostList rendering with posts:", posts);
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
