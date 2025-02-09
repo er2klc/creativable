@@ -12,6 +12,7 @@ interface MainContentProps {
 export const MainContent = ({ children, className }: MainContentProps) => {
   const location = useLocation();
   const isLeadsPage = location.pathname === "/leads";
+  const isDashboardPage = location.pathname === "/";
   const isMobile = useIsMobile();
 
   return (
@@ -29,20 +30,11 @@ export const MainContent = ({ children, className }: MainContentProps) => {
       </div>
       <div className={cn(
         "container mx-auto py-4 max-w-full px-4",
-        isLeadsPage ? "pt-16 md:pt-4" : "pt-16 md:py-4"
+        (isLeadsPage || isDashboardPage) ? "pt-24 md:pt-20" : "pt-16 md:py-4"
       )}>
-        {isLeadsPage && (
-          <div className="flex items-center py-4">
-            <h1 className="text-2xl font-semibold">Leads</h1>
-          </div>
-        )}
-        <div className="relative w-full overflow-x-hidden">
-          {children}
-          {isLeadsPage && (
-            <div className="absolute -top-4 left-0 right-0 h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent shadow-sm" />
-          )}
-        </div>
+        {children}
       </div>
     </main>
   );
 };
+

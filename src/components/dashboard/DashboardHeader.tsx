@@ -29,7 +29,7 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
   const displayName = profile?.display_name || userEmail?.split('@')[0] || "Benutzer";
 
   return (
-    <div className="w-full bg-background border-b">
+    <div className="fixed top-0 right-0 left-[72px] group-hover:left-[240px] z-50 bg-background border-b transition-[left] duration-300">
       <div className="w-full px-4 py-4">
         <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
           <div>
