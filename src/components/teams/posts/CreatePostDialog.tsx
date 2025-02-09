@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+
+import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Plus, Sparkles } from "lucide-react";
+import { Plus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,71 +22,99 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSettings } from "@/hooks/use-settings";
-
-interface CreatePostDialogProps {
-  teamId: string;
-  categoryId: string;
-}
 
 interface FormValues {
   title: string;
   content: string;
 }
 
-export function CreatePostDialog({ teamId, categoryId }: CreatePostDialogProps) {
+interface CreatePostDialogProps {
+  teamId: string;
+  categoryId: string;
+}
+
+export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
   const queryClient = useQueryClient();
   const form = useForm<FormValues>();
-  const { settings } = useSettings();
 
-  const generateWithAI = async (prompt: string) => {
-    if (!settings?.openai_api_key) {
-      toast.error("Bitte fügen Sie zuerst Ihren OpenAI API-Key in den Einstellungen hinzu.");
-      return;
-    }
-
-    try {
-      setIsGenerating(true);
-      const { data, error } = await supabase.functions.invoke('generate-post-content', {
-        body: JSON.stringify({ prompt }),
-      });
+  // Fetch team members for @mentions
+  const { data: teamMembers } = useQuery({
+    queryKey: ['team-members', teamId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('team_members')
+        .select(`
+          user_id,
+          profiles:user_id (
+            id,
+            display_name
+          )
+        `)
+        .eq('team_id', teamId);
 
       if (error) throw error;
-      
-      form.setValue('content', data.content);
-      toast.success("Inhalt wurde generiert!");
-    } catch (error: any) {
-      console.error("Error generating content:", error);
-      toast.error("Fehler beim Generieren des Inhalts");
-    } finally {
-      setIsGenerating(false);
-    }
+      return data;
+    },
+  });
+
+  const extractMentions = (content: string) => {
+    const mentionRegex = /@(\w+)/g;
+    const mentions = content.match(mentionRegex) || [];
+    return mentions.map(mention => mention.substring(1));
+  };
+
+  const findUserIdByName = (name: string) => {
+    const member = teamMembers?.find(
+      m => m.profiles?.display_name?.toLowerCase() === name.toLowerCase()
+    );
+    return member?.profiles?.id;
   };
 
   const onSubmit = async (values: FormValues) => {
     try {
-      const { error } = await supabase.from("team_posts").insert({
-        team_id: teamId,
-        category_id: categoryId,
-        title: values.title,
-        content: values.content,
-        created_by: (await supabase.auth.getUser()).data.user?.id,
-      });
+      const mentions = extractMentions(values.content);
+      const mentionedUserIds = mentions
+        .map(name => findUserIdByName(name))
+        .filter((id): id is string => id !== undefined);
 
-      if (error) throw error;
+      // Insert the post
+      const { data: post, error: postError } = await supabase
+        .from('team_posts')
+        .insert({
+          team_id: teamId,
+          category_id: categoryId,
+          title: values.title,
+          content: values.content,
+          created_by: (await supabase.auth.getUser()).data.user?.id,
+        })
+        .select('id')
+        .single();
+
+      if (postError) throw postError;
+
+      // Insert mentions if any
+      if (mentionedUserIds.length > 0) {
+        const { error: mentionsError } = await supabase
+          .from('team_post_mentions')
+          .insert(
+            mentionedUserIds.map(userId => ({
+              post_id: post.id,
+              mentioned_user_id: userId,
+            }))
+          );
+
+        if (mentionsError) throw mentionsError;
+      }
 
       toast.success("Beitrag erfolgreich erstellt");
       setOpen(false);
       form.reset();
-      queryClient.invalidateQueries({ queryKey: ["team-posts", teamId] });
+      queryClient.invalidateQueries({ queryKey: ['team-posts'] });
     } catch (error: any) {
-      console.error("Error creating post:", error);
+      console.error('Error creating post:', error);
       toast.error("Fehler beim Erstellen des Beitrags");
     }
   };
@@ -121,24 +152,13 @@ export function CreatePostDialog({ teamId, categoryId }: CreatePostDialogProps) 
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Inhalt</FormLabel>
-                  <div className="space-y-2">
-                    <FormControl>
-                      <Textarea
-                        placeholder="Beschreibe deinen Beitrag..."
-                        className="min-h-[200px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => generateWithAI(field.value)}
-                      disabled={isGenerating}
-                    >
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Mit KI verbessern
-                    </Button>
-                  </div>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Beschreibe deinen Beitrag... (@mention für Erwähnungen)"
+                      className="min-h-[200px]"
+                      {...field}
+                    />
+                  </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -151,4 +171,4 @@ export function CreatePostDialog({ teamId, categoryId }: CreatePostDialogProps) 
       </DialogContent>
     </Dialog>
   );
-}
+};

@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useTeamPosts } from "./hooks/useTeamPosts";
 import { PostItem } from "./components/PostItem";
+import { CreatePostDialog } from "./CreatePostDialog";
 
 interface PostListProps {
   teamId: string;
@@ -29,16 +30,24 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
 
   if (!posts?.length) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center text-muted-foreground">
-          Keine Beiträge gefunden
-        </CardContent>
-      </Card>
+      <div className="space-y-4">
+        <div className="flex justify-end">
+          {categoryId && <CreatePostDialog teamId={teamId} categoryId={categoryId} />}
+        </div>
+        <Card>
+          <CardContent className="p-6 text-center text-muted-foreground">
+            Keine Beiträge gefunden
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        {categoryId && <CreatePostDialog teamId={teamId} categoryId={categoryId} />}
+      </div>
       {posts.map((post) => (
         <PostItem
           key={post.id}
