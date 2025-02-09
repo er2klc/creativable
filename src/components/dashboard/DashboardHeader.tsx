@@ -2,17 +2,28 @@ import { useSupabaseClient } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { SearchBar } from "./SearchBar";
+import { Bell, ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DashboardHeaderProps {
   userEmail: string | undefined;
 }
 
 export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
-  const supabase = useSupabaseClient();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [showNotifications, setShowNotifications] = useState(false);
   const [dailyQuote, setDailyQuote] = useState<string>("");
 
   const { data: profile } = useQuery({
@@ -32,34 +43,28 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
     }
   });
 
-  useEffect(() => {
-    const fetchDailyQuote = async () => {
-      try {
-        const storedQuote = localStorage.getItem('dailyQuote');
-        const storedDate = localStorage.getItem('dailyQuoteDate');
-        const today = new Date().toDateString();
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['unread-notifications'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('read', false);
 
-        if (storedQuote && storedDate === today) {
-          setDailyQuote(storedQuote);
-          return;
-        }
+      if (error) throw error;
+      return count || 0;
+    },
+    refetchInterval: 30000
+  });
 
-        const { data, error } = await supabase.functions.invoke('generate-daily-quote');
-        
-        if (error) throw error;
-        
-        const quote = data.quote;
-        setDailyQuote(quote);
-        localStorage.setItem('dailyQuote', quote);
-        localStorage.setItem('dailyQuoteDate', today);
-      } catch (error) {
-        console.error('Error fetching daily quote:', error);
-        setDailyQuote("Mache jeden Tag zu deinem Meisterwerk! 🌟");
-      }
-    };
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
-    fetchDailyQuote();
-  }, [supabase.functions]);
+  const getInitials = (email: string) => {
+    return email?.charAt(0).toUpperCase() || "U";
+  };
 
   const displayName = profile?.display_name || userEmail?.split('@')[0] || "Benutzer";
 
@@ -76,6 +81,44 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
         </div>
         <div className="w-full md:w-[400px]">
           <SearchBar />
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="h-8 w-px bg-gray-500" />
+          <Button
+            variant="ghost"
+            size="icon"
+            className="relative"
+            onClick={() => setShowNotifications(true)}
+          >
+            <Bell className="h-5 w-5" />
+            {unreadCount > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+              >
+                {unreadCount}
+              </Badge>
+            )}
+          </Button>
+          <div className="h-6 w-px bg-gray-200" />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="h-8 w-8 cursor-pointer">
+                <AvatarImage src={profile?.avatar_url} />
+                <AvatarFallback>{getInitials(userEmail || "")}</AvatarFallback>
+              </Avatar>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => navigate("/settings")}>
+                <ChevronDown className="mr-2 h-4 w-4" />
+                <span>Profil</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
+                <ChevronDown className="mr-2 h-4 w-4" />
+                <span>Abmelden</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       {dailyQuote && (
