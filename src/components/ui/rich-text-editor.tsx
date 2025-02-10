@@ -1,3 +1,4 @@
+
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import { Button } from './button';
@@ -9,8 +10,12 @@ import {
   Quote,
   Heading2,
   Undo,
-  Redo 
+  Redo,
+  Smile
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import data from '@emoji-mart/data'
+import Picker from '@emoji-mart/react'
 
 interface RichTextEditorProps {
   content: string;
@@ -30,6 +35,13 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
       attributes: {
         class: 'prose prose-sm max-w-none min-h-[150px] focus:outline-none p-2',
       },
+      handleDOMEvents: {
+        mousedown: (view, event) => {
+          // Prevent event propagation to stop dialog from closing
+          event.stopPropagation();
+          return false;
+        },
+      },
     },
   });
 
@@ -37,8 +49,12 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     return null;
   }
 
+  const addEmoji = (emoji: any) => {
+    editor.chain().focus().insertContent(emoji.native).run();
+  };
+
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md select-none" onMouseDown={(e) => e.stopPropagation()}>
       <div className="flex flex-wrap gap-1 p-2 border-b bg-muted">
         <Button
           variant="ghost"
@@ -102,8 +118,25 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         >
           <Redo className="h-4 w-4" />
         </Button>
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <Smile className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-full p-0">
+            <Picker 
+              data={data} 
+              onEmojiSelect={addEmoji}
+              theme="light"
+              emojiSize={20}
+              emojiButtonSize={28}
+              maxFrequentRows={1}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
-      <div className="p-4">
+      <div className="p-4" onMouseDown={(e) => e.stopPropagation()}>
         <EditorContent editor={editor} />
       </div>
     </div>
