@@ -2,7 +2,7 @@
 import { TableCell } from "@/components/ui/table";
 import { Star, Instagram, Linkedin, Facebook, Video, Users, CircleUser, StarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
@@ -109,8 +109,13 @@ export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps
   switch (type) {
     case "favorite":
       return (
-        <TableCell className="p-2" onClick={toggleFavorite}>
-          <Button variant="ghost" size="icon" className="h-4 w-4">
+        <TableCell className="p-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-4 w-4"
+            onClick={toggleFavorite}
+          >
             <StarIcon className={cn("h-4 w-4", lead?.is_favorite ? "fill-yellow-400 text-yellow-400" : "text-gray-300")} />
           </Button>
         </TableCell>
