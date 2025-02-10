@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -44,7 +45,6 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
   });
 
   useEffect(() => {
-    // Subscribe to realtime updates for notifications
     const channel = supabase
       .channel('notifications-channel')
       .on(
@@ -87,14 +87,12 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      // Extract lead ID from metadata for presentation notifications
-      const leadId = notification.metadata?.lead_id;
-      
-      if (leadId) {
-        navigate(`/contacts/${leadId}`);
-        onOpenChange(false);
-      } else if (notification.target_page) {
+      // Check if the notification has target_page or leadId in metadata
+      if (notification.target_page) {
         navigate(notification.target_page);
+        onOpenChange(false);
+      } else if (notification.metadata?.leadId) {
+        navigate(`/contacts/${notification.metadata.leadId}`);
         onOpenChange(false);
       }
     } catch (error) {
@@ -111,6 +109,8 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
         return '▶️';
       case 'presentation_completed':
         return '✅';
+      case 'appointment_reminder':
+        return '📅';
       default:
         return '📢';
     }
@@ -158,7 +158,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
                   </span>
                 </div>
                 <p className="text-sm text-gray-600">{notification.content}</p>
-                {(notification.target_page || notification.metadata?.lead_id) && (
+                {(notification.target_page || notification.metadata?.leadId) && (
                   <div className="mt-2 flex items-center text-xs text-blue-600">
                     <ExternalLink className="h-3 w-3 mr-1" />
                     Klicken zum Öffnen
@@ -177,3 +177,4 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
     </Sheet>
   );
 };
+
