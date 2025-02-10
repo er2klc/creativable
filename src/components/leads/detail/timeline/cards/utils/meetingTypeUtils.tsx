@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Phone, MapPin, Video, Users, BarChart, RefreshCw, Calendar } from "lucide-react";
 
 export const getMeetingTypeLabel = (type: string): string => {
@@ -38,3 +39,4 @@ export const getMeetingTypeIcon = (type: string) => {
       return <Calendar className="h-4 w-4 text-blue-500" />;
   }
 };
+
