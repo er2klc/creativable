@@ -1,6 +1,7 @@
 
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
+import { formatDateTime } from "../../timeline/utils/dateUtils";
 
 interface YoutubeCardProps {
   content: string;
@@ -9,12 +10,14 @@ interface YoutubeCardProps {
     url?: string;
     presentationUrl?: string;
     videoId?: string;
+    expires_at?: string;
   };
 }
 
 export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
   const { settings } = useSettings();
   const videoId = metadata?.url?.split('v=')[1] || '';
+  const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
 
   const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
     try {
@@ -34,7 +37,7 @@ export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
   };
 
   return (
-    <div className="relative group bg-white border border-red-500 rounded-lg p-4 w-full">
+    <div className={`relative group bg-white border border-red-500 rounded-lg p-4 w-full ${isExpired ? 'opacity-50' : ''}`}>
       <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
           <div className="font-medium mb-2">{metadata?.title || content}</div>
@@ -47,23 +50,39 @@ export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
               />
             </div>
           )}
-          <div className="flex gap-4 mt-2">
-            {metadata?.url && (
-              <button
-                onClick={() => copyToClipboard(metadata.url!, 'youtube')}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                {settings?.language === "en" ? "Copy YouTube URL" : "YouTube URL kopieren"}
-              </button>
+          <div className="flex flex-col gap-2">
+            {metadata?.expires_at && (
+              <div className={`text-xs ${isExpired ? 'text-red-500' : 'text-gray-500'} font-medium`}>
+                {isExpired ? (
+                  settings?.language === "en"
+                    ? `Expired on ${formatDateTime(metadata.expires_at, 'en')}`
+                    : `Abgelaufen am ${formatDateTime(metadata.expires_at, 'de')}`
+                ) : (
+                  settings?.language === "en"
+                    ? `Expires on ${formatDateTime(metadata.expires_at, 'en')}`
+                    : `Läuft ab am ${formatDateTime(metadata.expires_at, 'de')}`
+                )}
+              </div>
             )}
-            {metadata?.presentationUrl && (
-              <button
-                onClick={() => copyToClipboard(metadata.presentationUrl!, 'presentation')}
-                className="text-sm text-blue-500 hover:underline"
-              >
-                {settings?.language === "en" ? "Copy Presentation URL" : "Präsentations-URL kopieren"}
-              </button>
-            )}
+            <div className="flex gap-4">
+              {metadata?.url && (
+                <button
+                  onClick={() => copyToClipboard(metadata.url!, 'youtube')}
+                  className="text-sm text-blue-500 hover:underline"
+                >
+                  {settings?.language === "en" ? "Copy YouTube URL" : "YouTube URL kopieren"}
+                </button>
+              )}
+              {metadata?.presentationUrl && (
+                <button
+                  onClick={() => copyToClipboard(metadata.presentationUrl!, 'presentation')}
+                  className={`text-sm text-blue-500 hover:underline ${isExpired ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  disabled={isExpired}
+                >
+                  {settings?.language === "en" ? "Copy Presentation URL" : "Präsentations-URL kopieren"}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
