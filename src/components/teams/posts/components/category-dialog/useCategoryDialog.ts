@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useCategoryQueries } from "./hooks/useCategoryQueries";
 import { useCategoryMutations } from "./hooks/useCategoryMutations";
@@ -15,8 +14,7 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
 
-  // Extract clean team slug from the full path
-  const processedTeamSlug = teamSlug?.split('/').find(part => part && !part.includes('unity') && !part.includes('team') && !part.includes('posts') && !part.includes('category'))?.replace(/\/$/, '');
+  const processedTeamSlug = teamSlug?.split('/').find(part => part === 'fire-adler-hauptteam-') || teamSlug;
   
   console.log("Using team slug:", processedTeamSlug); // Debug log
 
@@ -48,7 +46,6 @@ export const useCategoryDialog = (teamSlug?: string) => {
   });
 
   const { team, categories } = useCategoryQueries(teamData?.id);
-
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
 
   const handleCategoryChange = (value: string) => {
