@@ -58,14 +58,16 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     []
   );
 
-  // Create initial state from HTML string
+  // Create editor state
   const { manager } = useRemirror({
     extensions,
     content: {
       type: 'doc',
-      content: content ? [{ type: 'paragraph', content: [{ type: 'text', text: content }] }] : [{ type: 'paragraph' }]
+      content: [{
+        type: 'paragraph',
+        content: content ? [{ type: 'text', text: content }] : []
+      }]
     },
-    stringHandler: 'html',
   });
 
   return (
@@ -73,8 +75,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
       <Remirror
         manager={manager}
         onChange={({ helpers }) => {
-          const html = helpers.getHTML();
-          onChange(html);
+          onChange(helpers.getHTML());
         }}
         placeholder={placeholder}
         autoFocus={false}
