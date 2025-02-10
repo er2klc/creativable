@@ -15,6 +15,11 @@ interface PostCardProps {
 export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   const navigate = useNavigate();
 
+  // Early return if post data is incomplete
+  if (!post?.team_categories || !post?.author) {
+    return null;
+  }
+
   return (
     <Card 
       key={post.id} 
@@ -47,12 +52,12 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
               {post.team_categories.name}
             </Badge>
             <span className="text-sm text-muted-foreground">
-              von {post.author.display_name}
+              von {post.author.display_name || 'Unbekannt'}
             </span>
           </div>
           <div className="flex items-center gap-1 text-muted-foreground">
             <MessageSquare className="h-4 w-4" />
-            <span className="text-sm">{post.team_post_comments.length}</span>
+            <span className="text-sm">{post.team_post_comments?.length || 0}</span>
           </div>
         </div>
       </div>
