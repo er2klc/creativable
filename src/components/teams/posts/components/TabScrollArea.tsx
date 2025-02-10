@@ -104,8 +104,14 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
   }
 
+  const isDialogView = window.location.pathname.includes('/posts/');
+
   return (
-    <div className="relative w-full max-w-[552px] mx-auto">
+    <div className={cn(
+      "relative w-full",
+      isDialogView ? "max-w-[552px]" : "max-w-[900px]",
+      "mx-auto"
+    )}>
       {showLeftArrow && (
         <Button
           variant="ghost"
@@ -171,3 +177,4 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     </div>
   );
 };
+
