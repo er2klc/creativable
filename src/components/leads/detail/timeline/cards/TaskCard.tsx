@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Check, Edit } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { formatDateTime } from "../utils/dateUtils";
 import { MEETING_TYPES } from "@/constants/meetingTypes";
-import { MeetingTypeIcon } from "./MeetingTypeIcon";
+import { getMeetingTypeIcon } from "./utils/meetingTypeUtils";
 import { TaskEditForm } from "./TaskEditForm";
 
 interface TaskCardProps {
@@ -38,7 +39,7 @@ export const TaskCard = ({
     
     return (
       <div className="flex items-center gap-2">
-        <MeetingTypeIcon iconName={meetingTypeObj.iconName} />
+        {getMeetingTypeIcon(meetingType)}
         <span>{meetingTypeObj.label}</span>
       </div>
     );
