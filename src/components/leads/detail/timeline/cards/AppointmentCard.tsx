@@ -1,3 +1,4 @@
+
 import { Calendar, Edit, Trash2, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { format, differenceInDays, differenceInHours } from "date-fns";
@@ -101,9 +102,10 @@ export const AppointmentCard = ({
             type: 'appointment_reminder',
             metadata: {
               appointmentId: id,
-              leadId: leadId,
+              leadId,
               dueDate: metadata.dueDate
-            }
+            },
+            target_page: `/contacts/${leadId}`
           });
 
         if (error) {
