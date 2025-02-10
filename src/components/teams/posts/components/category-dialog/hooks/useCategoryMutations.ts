@@ -2,9 +2,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useAuth } from "@/hooks/use-auth";
 
 export const useCategoryMutations = () => {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
 
   const handleSave = async (
     teamId: string,
@@ -15,6 +17,11 @@ export const useCategoryMutations = () => {
     selectedColor: string,
     selectedSize: string
   ) => {
+    if (!user) {
+      toast.error("Nicht authentifiziert");
+      return false;
+    }
+
     try {
       if (selectedCategory !== "new") {
         const { error: categoryError } = await supabase
@@ -46,7 +53,8 @@ export const useCategoryMutations = () => {
             name: categoryName,
             is_public: isPublic,
             icon: selectedIcon,
-            color: selectedColor
+            color: selectedColor,
+            created_by: user.id
           })
           .select()
           .single();
