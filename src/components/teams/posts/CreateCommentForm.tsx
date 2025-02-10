@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { toast } from "sonner";
 
 interface CreateCommentFormProps {
@@ -44,7 +44,7 @@ export const CreateCommentForm = ({ postId }: CreateCommentFormProps) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-2">
-      <RichTextEditor
+      <TiptapEditor
         placeholder="Schreibe einen Kommentar..."
         content={content}
         onChange={setContent}
