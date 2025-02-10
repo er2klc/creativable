@@ -43,8 +43,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
   }
 
   const addEmoji = (emoji: any) => {
-    editor.commands.focus();
-    editor.commands.insertContent(emoji.native);
+    editor.chain().focus().insertContent(emoji.native).run();
   };
 
   return (
@@ -53,7 +52,10 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleBold().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleBold().run();
+          }}
           className={editor.isActive('bold') ? 'bg-muted-foreground/20' : ''}
         >
           <Bold className="h-4 w-4" />
@@ -61,7 +63,10 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleItalic().run();
+          }}
           className={editor.isActive('italic') ? 'bg-muted-foreground/20' : ''}
         >
           <Italic className="h-4 w-4" />
@@ -69,7 +74,10 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleHeading({ level: 2 }).run();
+          }}
           className={editor.isActive('heading') ? 'bg-muted-foreground/20' : ''}
         >
           <Heading2 className="h-4 w-4" />
@@ -77,7 +85,10 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleBulletList().run();
+          }}
           className={editor.isActive('bulletList') ? 'bg-muted-foreground/20' : ''}
         >
           <List className="h-4 w-4" />
@@ -85,7 +96,10 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleOrderedList().run();
+          }}
           className={editor.isActive('orderedList') ? 'bg-muted-foreground/20' : ''}
         >
           <ListOrdered className="h-4 w-4" />
@@ -93,7 +107,10 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().toggleBlockquote().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().toggleBlockquote().run();
+          }}
           className={editor.isActive('blockquote') ? 'bg-muted-foreground/20' : ''}
         >
           <Quote className="h-4 w-4" />
@@ -101,14 +118,20 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().undo().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().undo().run();
+          }}
         >
           <Undo className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => editor.chain().focus().redo().run()}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            editor.chain().focus().redo().run();
+          }}
         >
           <Redo className="h-4 w-4" />
         </Button>
@@ -118,7 +141,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
               <Smile className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full p-0" align="start" side="bottom">
+          <PopoverContent className="w-full p-0">
             <Picker 
               data={data} 
               onEmojiSelect={addEmoji}
