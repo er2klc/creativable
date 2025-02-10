@@ -10,13 +10,17 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useNavigate, useParams } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Bell } from "lucide-react";
 import { TeamHeader } from "@/components/teams/TeamHeader";
+import { SearchBar } from "@/components/dashboard/SearchBar";
+import { HeaderActions } from "@/components/layout/HeaderActions";
+import { useUser } from "@supabase/auth-helpers-react";
 
 export function PostsAndDiscussions() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { teamSlug } = useParams();
+  const user = useUser();
 
   // Get team data based on slug
   const { data: team, isLoading: isTeamLoading } = useQuery({
@@ -104,53 +108,65 @@ export function PostsAndDiscussions() {
 
   return (
     <>
-      <TeamHeader team={team} isInSnapView={false} />
-      <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
-        {/* Header */}
-        <div className="flex items-center gap-2 mb-6">
-          <MessageSquare className="h-5 w-5" />
-          <h1 className="text-lg md:text-xl font-semibold text-foreground">
-            Community
-          </h1>
+      <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+        <div className="w-full">
+          <div className="h-16 px-4 flex items-center">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+              <div className="flex items-center gap-2">
+                <MessageSquare className="h-5 w-5" />
+                <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                  Community
+                </h1>
+              </div>
+              <div className="w-[300px]">
+                <SearchBar />
+              </div>
+              <HeaderActions profile={null} userEmail={user?.email} />
+            </div>
+          </div>
         </div>
+      </div>
 
-        {/* Category Tabs in ScrollArea */}
-        <ScrollArea className="w-full border-b border-border">
-          <div className="flex flex-nowrap gap-2 pb-2">
-            <Badge
-              variant="outline"
-              className={cn(
-                "cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap",
-                "bg-background hover:bg-primary/90"
-              )}
-              onClick={() => handleCategoryClick()}
-            >
-              Alle Beiträge
-            </Badge>
-            {allCategories?.map((category) => (
+      <div className="pt-16">
+        <TeamHeader team={team} isInSnapView={false} />
+        <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
+          {/* Category Tabs in ScrollArea */}
+          <ScrollArea className="w-full border-b border-border">
+            <div className="flex flex-nowrap gap-2 pb-2">
               <Badge
-                key={category.id}
                 variant="outline"
                 className={cn(
                   "cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap",
                   "bg-background hover:bg-primary/90"
                 )}
-                onClick={() => handleCategoryClick(category.slug)}
+                onClick={() => handleCategoryClick()}
               >
-                {category.name}
+                Alle Beiträge
               </Badge>
-            ))}
-          </div>
-        </ScrollArea>
+              {allCategories?.map((category) => (
+                <Badge
+                  key={category.id}
+                  variant="outline"
+                  className={cn(
+                    "cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap",
+                    "bg-background hover:bg-primary/90"
+                  )}
+                  onClick={() => handleCategoryClick(category.slug)}
+                >
+                  {category.name}
+                </Badge>
+              ))}
+            </div>
+          </ScrollArea>
 
-        {/* Main Content Area with max width and scroll */}
-        <div className="w-full overflow-hidden">
-          <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
-            <CategoryOverview teamId={team.id} teamSlug={teamSlug} />
+          {/* Main Content Area with max width and scroll */}
+          <div className="w-full overflow-hidden">
+            <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
+              <CategoryOverview teamId={team.id} teamSlug={teamSlug} />
+            </div>
           </div>
         </div>
       </div>
     </>
   );
 }
-
