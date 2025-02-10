@@ -20,13 +20,16 @@ export const useAppointmentNotification = ({ id, leadId, dueDate, content }: Use
       const now = new Date();
       const hoursUntil = differenceInHours(appointmentDate, now);
       
-      if (hoursUntil === 4) {
+      // Only proceed if exactly 4 hours until appointment
+      if (hoursUntil === 4 && isSameHour(now, new Date())) {
         // Check if notification already exists for this appointment and hour
         const { data: existingNotifications } = await supabase
           .from('notifications')
           .select('id')
           .eq('metadata->appointmentId', id)
-          .eq('type', 'appointment_reminder');
+          .eq('type', 'appointment_reminder')
+          .is('deleted_at', null)
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()); // Last 24 hours
 
         if (existingNotifications && existingNotifications.length > 0) {
           return; // Notification already exists
@@ -65,7 +68,11 @@ export const useAppointmentNotification = ({ id, leadId, dueDate, content }: Use
       }
     };
 
-    const timer = setInterval(checkAndNotify, 60000); // Check every minute
+    // Initial check
+    checkAndNotify();
+    
+    // Check every 15 minutes instead of every minute
+    const timer = setInterval(checkAndNotify, 15 * 60 * 1000);
     return () => clearInterval(timer);
   }, [id, dueDate, leadId, content]);
 };

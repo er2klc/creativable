@@ -1209,6 +1209,7 @@ export type Database = {
         Row: {
           content: string
           created_at: string
+          deleted_at: string | null
           id: string
           metadata: Json | null
           read: boolean | null
@@ -1220,6 +1221,7 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           metadata?: Json | null
           read?: boolean | null
@@ -1231,6 +1233,7 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string
+          deleted_at?: string | null
           id?: string
           metadata?: Json | null
           read?: boolean | null
@@ -3172,6 +3175,45 @@ export type Database = {
       }
     }
     Views: {
+      active_notifications: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          deleted_at: string | null
+          id: string | null
+          metadata: Json | null
+          read: boolean | null
+          target_page: string | null
+          title: string | null
+          type: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          metadata?: Json | null
+          read?: boolean | null
+          target_page?: string | null
+          title?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          deleted_at?: string | null
+          id?: string | null
+          metadata?: Json | null
+          read?: boolean | null
+          target_page?: string | null
+          title?: string | null
+          type?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       elevate_platforms_access: {
         Row: {
           platform_id: string | null
@@ -3386,6 +3428,12 @@ export type Database = {
             }
             Returns: unknown
           }
+      mark_all_notifications_as_read: {
+        Args: {
+          user_id_input: string
+        }
+        Returns: undefined
+      }
       match_chunks: {
         Args: {
           query_embedding: string
