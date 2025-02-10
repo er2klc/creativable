@@ -1,9 +1,10 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
 import { Button } from "@/components/ui/button";
-import { Plus, CheckSquare } from "lucide-react";
+import { Plus, CheckSquare, User } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
@@ -25,6 +26,7 @@ import {
   verticalListSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tables } from "@/integrations/supabase/types";
@@ -42,10 +44,10 @@ function SortableTask({ task, updateTaskMutation, settings }: { task: Task, upda
     transition,
   } = useSortable({ id: task.id });
 
-  const style = {
+  const style = transform ? {
     transform: CSS.Transform.toString(transform),
     transition,
-  };
+  } : {};
 
   const handleTaskComplete = async (taskId: string, completed: boolean) => {
     if (completed) {
