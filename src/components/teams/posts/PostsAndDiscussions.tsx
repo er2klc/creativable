@@ -11,7 +11,6 @@ import { cn } from "@/lib/utils";
 import { useNavigate, useParams } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare } from "lucide-react";
-import { TeamHeader } from "@/components/teams/TeamHeader";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -137,7 +136,6 @@ export function PostsAndDiscussions() {
       </div>
 
       <div className="pt-16">
-        <TeamHeader team={team} isInSnapView={false} />
         <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
           {/* Category Tabs in ScrollArea */}
           <ScrollArea className="w-full border-b border-border">
@@ -179,4 +177,3 @@ export function PostsAndDiscussions() {
     </>
   );
 }
-
