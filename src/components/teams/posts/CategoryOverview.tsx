@@ -13,11 +13,28 @@ interface CategoryOverviewProps {
 }
 
 export function CategoryOverview({ teamId, teamSlug, categorySlug }: CategoryOverviewProps) {
-  const { data: posts, isLoading } = useQuery({
-    queryKey: ["team-posts-overview", teamId, categorySlug],
+  // First fetch team by slug to get the correct UUID
+  const { data: team, isLoading: isTeamLoading } = useQuery({
+    queryKey: ['team', teamSlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamSlug)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!teamSlug,
+  });
+
+  // Then fetch posts using the team's UUID
+  const { data: posts, isLoading: isPostsLoading } = useQuery({
+    queryKey: ['team-posts-overview', team?.id, categorySlug],
     queryFn: async () => {
       let query = supabase
-        .from("team_posts")
+        .from('team_posts')
         .select(`
           *,
           team_categories (
@@ -31,21 +48,30 @@ export function CategoryOverview({ teamId, teamSlug, categorySlug }: CategoryOve
             id
           )
         `)
-        .eq("team_id", teamId)
-        .order("created_at", { ascending: false });
+        .eq('team_id', team.id)
+        .order('created_at', { ascending: false });
 
       if (categorySlug) {
-        query = query.eq("team_categories.slug", categorySlug);
+        const { data: category } = await supabase
+          .from('team_categories')
+          .select('id')
+          .eq('team_id', team.id)
+          .eq('slug', categorySlug)
+          .maybeSingle();
+
+        if (category) {
+          query = query.eq('category_id', category.id);
+        }
       }
 
       const { data, error } = await query;
-
       if (error) throw error;
       return data as Post[];
     },
+    enabled: !!team?.id,
   });
 
-  if (isLoading) {
+  if (isTeamLoading || isPostsLoading) {
     return <LoadingState />;
   }
 
