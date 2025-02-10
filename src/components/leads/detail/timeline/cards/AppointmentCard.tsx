@@ -89,9 +89,14 @@ export const AppointmentCard = ({
 
         if (!lead) return;
 
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
         const { error } = await supabase
           .from('notifications')
           .insert({
+            user_id: user.id,
             title: 'Termin in 4 Stunden',
             content: `Dein Termin "${content}" mit ${lead.name} ist in 4 Stunden.`,
             type: 'appointment_reminder',
@@ -99,7 +104,8 @@ export const AppointmentCard = ({
               appointmentId: id,
               leadId,
               dueDate: metadata.dueDate
-            }
+            },
+            target_page: `/leads/${leadId}`
           });
 
         if (error) {
