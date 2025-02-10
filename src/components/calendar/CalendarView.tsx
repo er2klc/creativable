@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { format, addMonths, subMonths } from "date-fns";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
@@ -100,6 +101,16 @@ export const CalendarView = () => {
                 <div className="flex items-center gap-4">
                   <div className="w-[300px]">
                     <SearchBar />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Team Termine</span>
+                      <Switch
+                        checked={showTeamEvents}
+                        onCheckedChange={setShowTeamEvents}
+                      />
+                    </div>
+                    <ICalButton />
                   </div>
                 </div>
                 <HeaderActions profile={null} userEmail={user?.email} />
