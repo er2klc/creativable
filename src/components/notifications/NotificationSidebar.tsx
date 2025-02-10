@@ -18,7 +18,11 @@ interface Notification {
   created_at: string;
   read: boolean;
   type: string;
-  metadata: any;
+  metadata: {
+    appointmentId?: string;
+    leadId?: string;
+    dueDate?: string;
+  };
   target_page?: string;
 }
 
@@ -87,11 +91,11 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      if (notification.target_page) {
-        navigate(notification.target_page);
-        onOpenChange(false);
-      } else if (notification.metadata?.leadId) {
+      if (notification.type === 'appointment_reminder' && notification.metadata?.leadId) {
         navigate(`/contacts/${notification.metadata.leadId}`);
+        onOpenChange(false);
+      } else if (notification.target_page) {
+        navigate(notification.target_page);
         onOpenChange(false);
       }
     } catch (error) {
