@@ -2,7 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, MessageCircle, Megaphone, Calendar, Trophy, Video, Users, Star, Heart, HelpCircle, Rocket, FileText, Lightbulb, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabScroll } from "../hooks/useTabScroll";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +14,22 @@ interface TabScrollAreaProps {
   isAdmin?: boolean;
   teamSlug: string;
 }
+
+const iconMap: { [key: string]: any } = {
+  'MessageCircle': MessageCircle,
+  'Megaphone': Megaphone,
+  'Calendar': Calendar,
+  'Trophy': Trophy,
+  'Video': Video,
+  'Users': Users,
+  'Star': Star,
+  'Heart': Heart,
+  'HelpCircle': HelpCircle,
+  'Rocket': Rocket,
+  'FileText': FileText,
+  'Lightbulb': Lightbulb,
+  'Target': Target
+};
 
 export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }: TabScrollAreaProps) => {
   const {
@@ -116,23 +132,28 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
             )}
             onClick={() => onCategoryClick()}
           >
+            <MessageCircle className="h-4 w-4 mr-2 inline-block" />
             Alle Beiträge
           </Badge>
-          {allCategories?.map((category, index) => (
-            <Badge
-              key={category.id}
-              variant="outline"
-              className={cn(
-                "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2",
-                category.color || defaultTabColors[(index % 7 + 1) as keyof typeof defaultTabColors],
-                activeTab === category.slug ? "border-primary" : "border-transparent"
-              )}
-              onClick={() => onCategoryClick(category.slug)}
-            >
-              {!category.is_public && <Lock className="h-3 w-3" />}
-              {category.name}
-            </Badge>
-          ))}
+          {allCategories?.map((category, index) => {
+            const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
+            return (
+              <Badge
+                key={category.id}
+                variant="outline"
+                className={cn(
+                  "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2",
+                  category.color || defaultTabColors[(index % 7 + 1) as keyof typeof defaultTabColors],
+                  activeTab === category.slug ? "border-primary" : "border-transparent"
+                )}
+                onClick={() => onCategoryClick(category.slug)}
+              >
+                <IconComponent className="h-4 w-4" />
+                {category.name}
+                {!category.is_public && <Lock className="h-3 w-3 ml-2" />}
+              </Badge>
+            )}
+          )}
         </div>
         <ScrollBar orientation="horizontal" className="h-2.5 select-none touch-none flex-1" />
       </ScrollArea>
