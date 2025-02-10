@@ -65,21 +65,6 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     }
   };
 
-  const style: CSSProperties | undefined = transform ? {
-    transform: CSS.Transform.toString({
-      ...transform,
-      x: transform.x,
-      y: transform.y,
-      scaleX: 1.02,
-      scaleY: 1.02,
-    }),
-    zIndex: isDragging ? 1000 : 1,
-    position: isDragging ? 'absolute' : 'relative',
-    width: '100%',
-    transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
-  } : undefined;
-
   const handleMouseDown = () => {
     if (disabled) return;
     
@@ -101,6 +86,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (isDragging) return;
 
     try {
       const { error } = await supabase
@@ -110,7 +96,10 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
 
       if (error) throw error;
 
+      // Invalidate both queries to update UI immediately
       queryClient.invalidateQueries({ queryKey: ["pool-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      
       toast.success(lead.is_favorite ? "Von Favoriten entfernt" : "Zu Favoriten hinzugefügt");
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -118,20 +107,20 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     }
   };
 
-  const getBackgroundStyle = () => {
-    const types = lead.contact_type?.split(",").map(type => type.trim()) || [];
-    const isPartner = types.includes("Likely Partner");
-    const isKunde = types.includes("Likely Kunde");
-
-    if (isPartner && isKunde) {
-      return "bg-gradient-to-r from-[#F0FAFF] to-[#F0FFF0]";
-    } else if (isPartner) {
-      return "bg-[#F0FAFF]";
-    } else if (isKunde) {
-      return "bg-[#F0FFF0]";
-    }
-    return "bg-white";
-  };
+  const style: CSSProperties | undefined = transform ? {
+    transform: CSS.Transform.toString({
+      ...transform,
+      x: transform.x,
+      y: transform.y,
+      scaleX: 1.02,
+      scaleY: 1.02,
+    }),
+    zIndex: isDragging ? 1000 : 1,
+    position: isDragging ? 'absolute' : 'relative',
+    width: '100%',
+    transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+  } : undefined;
 
   // Get initials from name
   const getInitials = (name: string) => {
@@ -214,4 +203,4 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       </div>
     </div>
   );
-}
+};

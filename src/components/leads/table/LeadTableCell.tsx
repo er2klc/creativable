@@ -98,7 +98,10 @@ export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps
 
       if (error) throw error;
 
+      // Invalidate both queries to update UI immediately
       queryClient.invalidateQueries({ queryKey: ["pool-leads"] });
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      
       toast.success(lead.is_favorite ? "Von Favoriten entfernt" : "Zu Favoriten hinzugefügt");
     } catch (error) {
       console.error('Error toggling favorite:', error);
