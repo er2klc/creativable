@@ -9,9 +9,9 @@ import { ContentField } from "./form-fields/ContentField";
 import { FileField } from "./form-fields/FileField";
 import { useFileUpload } from "./hooks/useFileUpload";
 import { usePostSubmission } from "./hooks/usePostSubmission";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+import { TabScrollArea } from "../components/TabScrollArea";
 import { toast } from "sonner";
+import { useNavigate, useLocation } from "react-router-dom";
 
 interface FormValues {
   title: string;
@@ -31,6 +31,7 @@ interface CreatePostFormProps {
     postId: string;
     originalFiles?: string[] | null;
   };
+  isAdmin?: boolean;
 }
 
 export const CreatePostForm = ({ 
@@ -40,7 +41,8 @@ export const CreatePostForm = ({
   onSuccess, 
   teamMembers,
   initialValues,
-  editMode 
+  editMode,
+  isAdmin = false
 }: CreatePostFormProps) => {
   const form = useForm<FormValues>({
     defaultValues: {
@@ -48,6 +50,8 @@ export const CreatePostForm = ({
       categoryId: defaultCategoryId || ''
     }
   });
+  const location = useLocation();
+  const teamSlug = location.pathname.split('/')[3]; // Extracts team slug from URL
   
   const { isUploading, setIsUploading, handleFileUpload } = useFileUpload(teamId);
   const { handleSubmission } = usePostSubmission(teamId, form.watch('categoryId'), onSuccess, teamMembers);
@@ -73,26 +77,25 @@ export const CreatePostForm = ({
     }
   };
 
+  const handleCategoryChange = (categorySlug?: string) => {
+    const category = categories?.find(c => c.slug === categorySlug);
+    if (category) {
+      form.setValue('categoryId', category.id);
+    } else {
+      form.setValue('categoryId', '');
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="category">Kategorie</Label>
-          <Select
-            value={form.watch('categoryId')}
-            onValueChange={(value) => form.setValue('categoryId', value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Kategorie auswählen" />
-            </SelectTrigger>
-            <SelectContent>
-              {categories?.map((category) => (
-                <SelectItem key={category.id} value={category.id}>
-                  {category.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <TabScrollArea 
+            activeTab={categories?.find(c => c.id === form.watch('categoryId'))?.slug || 'all'}
+            onCategoryClick={handleCategoryChange}
+            isAdmin={isAdmin}
+            teamSlug={teamSlug}
+          />
         </div>
         
         <TitleField form={form} />
