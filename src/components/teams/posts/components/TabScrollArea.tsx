@@ -36,7 +36,7 @@ export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick, isAdm
   };
 
   return (
-    <div className="relative flex-1">
+    <div className="relative flex-1 max-w-full">
       {showLeftArrow && (
         <Button
           variant="ghost"
@@ -48,7 +48,7 @@ export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick, isAdm
         </Button>
       )}
       
-      <ScrollArea className="w-full">
+      <ScrollArea className="w-full whitespace-nowrap">
         <div 
           ref={scrollContainerRef}
           className="flex gap-2 pb-4 overflow-x-auto scroll-smooth"
@@ -81,7 +81,7 @@ export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick, isAdm
             </Badge>
           ))}
         </div>
-        <ScrollBar orientation="horizontal" className="hidden" />
+        <ScrollBar orientation="horizontal" className="h-2.5 select-none touch-none flex-1" />
       </ScrollArea>
 
       {showRightArrow && (
@@ -97,3 +97,4 @@ export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick, isAdm
     </div>
   );
 };
+
