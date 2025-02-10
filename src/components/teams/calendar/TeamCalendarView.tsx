@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { DndContext, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { ArrowLeft } from "lucide-react";
@@ -8,7 +9,6 @@ import { CalendarGrid } from "@/components/calendar/CalendarGrid";
 import { useTeamCalendar } from "./hooks/useTeamCalendar";
 import { TeamEventDetailsDialog } from "@/components/calendar/TeamEventDetailsDialog";
 import { TeamEvent } from "@/components/calendar/types/calendar";
-import { ICalButton } from "@/components/calendar/ICalButton";
 
 interface TeamCalendarViewProps {
   teamId: string;
@@ -79,21 +79,9 @@ export const TeamCalendarView = ({ teamId, teamName, isAdmin, onBack }: TeamCale
       onDragOver={handleDragOver}
     >
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onBack}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Zurück zu Snaps
-          </Button>
-          <h2 className="text-xl font-semibold">
-            Team Kalender
-          </h2>
-          <ICalButton teamId={teamId} teamName={teamName} />
-        </div>
+        <h2 className="text-xl font-semibold">
+          Team Kalender
+        </h2>
 
         <CalendarHeader 
           currentDate={currentDate}
@@ -138,3 +126,4 @@ export const TeamCalendarView = ({ teamId, teamName, isAdmin, onBack }: TeamCale
     </DndContext>
   );
 };
+
