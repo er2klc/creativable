@@ -34,7 +34,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
             )
           `)
           .eq('team_id', teamId)
-          .order('pinned', { ascending: false })
+          .order('pinned', { ascending: false })  // Order pinned posts first
           .order('created_at', { ascending: false });
 
         if (categoryId) {

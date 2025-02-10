@@ -135,4 +135,3 @@ export function CategoryOverview({ teamId, teamSlug, categorySlug }: CategoryOve
     </div>
   );
 }
-

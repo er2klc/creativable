@@ -1,6 +1,11 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { sizes } from "../constants";
+
+export const sizes = [
+  { value: 'small', name: 'Klein' },
+  { value: 'medium', name: 'Mittel' },
+  { value: 'large', name: 'Groß' }
+] as const;
 
 interface SizeSelectorProps {
   selectedSize: string;
