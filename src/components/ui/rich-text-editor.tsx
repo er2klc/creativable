@@ -43,26 +43,22 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
   }
 
   const addEmoji = (emoji: any) => {
-    editor.commands.focus();
-    editor.commands.insertContent(emoji.native);
+    editor.chain().focus().insertContent(emoji.native).run();
   };
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    // Prevent dialog from closing when clicking inside the editor
+  const handleButtonMouseDown = (e: React.MouseEvent, callback: () => void) => {
+    e.preventDefault();
     e.stopPropagation();
+    callback();
   };
 
   return (
-    <div className="border rounded-md select-none" onMouseDown={handleMouseDown}>
-      <div className="flex flex-wrap gap-1 p-2 border-b bg-muted" onMouseDown={handleMouseDown}>
+    <div className="border rounded-md select-none">
+      <div className="flex flex-wrap gap-1 p-2 border-b bg-muted">
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            editor.chain().focus().toggleBold().run();
-          }}
+          onMouseDown={(e) => handleButtonMouseDown(e, () => editor.chain().focus().toggleBold().run())}
           className={editor.isActive('bold') ? 'bg-muted-foreground/20' : ''}
         >
           <Bold className="h-4 w-4" />
@@ -70,11 +66,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            editor.chain().focus().toggleItalic().run();
-          }}
+          onMouseDown={(e) => handleButtonMouseDown(e, () => editor.chain().focus().toggleItalic().run())}
           className={editor.isActive('italic') ? 'bg-muted-foreground/20' : ''}
         >
           <Italic className="h-4 w-4" />
@@ -82,11 +74,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            editor.chain().focus().toggleHeading({ level: 2 }).run();
-          }}
+          onMouseDown={(e) => handleButtonMouseDown(e, () => editor.chain().focus().toggleHeading({ level: 2 }).run())}
           className={editor.isActive('heading') ? 'bg-muted-foreground/20' : ''}
         >
           <Heading2 className="h-4 w-4" />
@@ -94,11 +82,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            editor.chain().focus().toggleBulletList().run();
-          }}
+          onMouseDown={(e) => handleButtonMouseDown(e, () => editor.chain().focus().toggleBulletList().run())}
           className={editor.isActive('bulletList') ? 'bg-muted-foreground/20' : ''}
         >
           <List className="h-4 w-4" />
@@ -106,11 +90,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            editor.chain().focus().toggleOrderedList().run();
-          }}
+          onMouseDown={(e) => handleButtonMouseDown(e, () => editor.chain().focus().toggleOrderedList().run())}
           className={editor.isActive('orderedList') ? 'bg-muted-foreground/20' : ''}
         >
           <ListOrdered className="h-4 w-4" />
@@ -118,11 +98,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            editor.chain().focus().toggleBlockquote().run();
-          }}
+          onMouseDown={(e) => handleButtonMouseDown(e, () => editor.chain().focus().toggleBlockquote().run())}
           className={editor.isActive('blockquote') ? 'bg-muted-foreground/20' : ''}
         >
           <Quote className="h-4 w-4" />
@@ -130,22 +106,14 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            editor.chain().focus().undo().run();
-          }}
+          onMouseDown={(e) => handleButtonMouseDown(e, () => editor.chain().focus().undo().run())}
         >
           <Undo className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            editor.chain().focus().redo().run();
-          }}
+          onMouseDown={(e) => handleButtonMouseDown(e, () => editor.chain().focus().redo().run())}
         >
           <Redo className="h-4 w-4" />
         </Button>
@@ -164,7 +132,11 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
           </PopoverTrigger>
           <PopoverContent 
             className="w-full p-0" 
-            onMouseDown={(e) => {
+            onMouseDownCapture={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
             }}
@@ -180,10 +152,9 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
           </PopoverContent>
         </Popover>
       </div>
-      <div className="p-4" onMouseDown={handleMouseDown}>
+      <div className="p-4">
         <EditorContent editor={editor} />
       </div>
     </div>
   );
 }
-

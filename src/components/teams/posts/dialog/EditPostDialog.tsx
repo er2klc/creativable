@@ -15,6 +15,7 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
   const [open, setOpen] = useState(false);
 
   const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
     e.stopPropagation();
   };
 
@@ -26,7 +27,11 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
           Bearbeiten
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]" onMouseDownCapture={handleMouseDown}>
+      <DialogContent 
+        className="sm:max-w-[600px]" 
+        onMouseDownCapture={handleMouseDown}
+        onPointerDownCapture={handleMouseDown}
+      >
         <DialogHeader>
           <DialogTitle>Beitrag bearbeiten</DialogTitle>
         </DialogHeader>
@@ -47,4 +52,3 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
     </Dialog>
   );
 };
-
