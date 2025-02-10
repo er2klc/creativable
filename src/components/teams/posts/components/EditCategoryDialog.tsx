@@ -63,13 +63,25 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   const { data: categories } = useQuery({
     queryKey: ["team-categories", teamId],
     queryFn: async () => {
+      console.log('Fetching categories for team ID:', teamId);
+      
+      if (!teamId) {
+        console.log('No team ID provided, skipping fetch');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from("team_categories")
         .select('*')
         .eq("team_id", teamId)
         .order("order_index");
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+
+      console.log('Found categories:', data);
       return data;
     },
     enabled: !!teamId,
