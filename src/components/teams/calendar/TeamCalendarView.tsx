@@ -79,10 +79,6 @@ export const TeamCalendarView = ({ teamId, teamName, isAdmin, onBack }: TeamCale
       onDragOver={handleDragOver}
     >
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold">
-          Team Kalender
-        </h2>
-
         <CalendarHeader 
           currentDate={currentDate}
           onDateChange={setCurrentDate}
