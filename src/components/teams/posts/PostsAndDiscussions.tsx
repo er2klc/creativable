@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery } from "@tanstack/react-query";
@@ -10,6 +9,7 @@ import { TabScrollArea } from "./components/TabScrollArea";
 import { TeamHeader } from "./components/TeamHeader";
 import { Team } from "./types/team";
 import { PostDetail } from "./components/PostDetail";
+import { LoadingState } from "./LoadingState";
 
 export function PostsAndDiscussions() {
   const navigate = useNavigate();
@@ -17,7 +17,6 @@ export function PostsAndDiscussions() {
   const user = useUser();
   const [activeTab, setActiveTab] = useState(categorySlug || 'all');
 
-  // Get team data based on slug
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
@@ -61,7 +60,6 @@ export function PostsAndDiscussions() {
 
   const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
 
-  // If we have a postSlug, fetch the post details
   const { data: post } = useQuery({
     queryKey: ['team-post', postSlug],
     queryFn: async () => {
@@ -110,7 +108,6 @@ export function PostsAndDiscussions() {
     }
   };
 
-  // Update active tab when categorySlug changes
   useEffect(() => {
     if (categorySlug) {
       setActiveTab(categorySlug);
@@ -130,14 +127,7 @@ export function PostsAndDiscussions() {
   }
 
   if (isTeamLoading) {
-    return (
-      <Card className="p-6">
-        <div className="animate-pulse space-y-4">
-          <div className="h-4 bg-muted rounded w-1/4"></div>
-          <div className="h-4 bg-muted rounded w-3/4"></div>
-        </div>
-      </Card>
-    );
+    return <LoadingState />;
   }
 
   if (!team) {
