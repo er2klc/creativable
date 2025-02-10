@@ -43,7 +43,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   return (
     <Card className={cn(
-      "flex-1 p-4 text-sm overflow-hidden bg-white shadow-md relative border-2",
+      "flex-1 p-4 text-sm overflow-hidden bg-white shadow-md relative border",
       isViewCard ? "border-orange-500" : isExpired ? "border-red-500 bg-gray-50" : "border-gray-200"
     )}>
       {isViewCard && latestProgress > 0 && isVideoActive && (
