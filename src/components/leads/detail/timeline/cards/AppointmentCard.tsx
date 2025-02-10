@@ -37,22 +37,23 @@ export const AppointmentCard = ({
     content
   });
 
-  const MeetingIcon = metadata?.meetingType ? 
-    () => getMeetingTypeIcon(metadata.meetingType) : 
-    () => <Calendar className="h-4 w-4 text-blue-500" />;
+  // Get the appropriate icon component based on meeting type
+  const IconComponent = metadata?.meetingType ? 
+    getMeetingTypeIcon(metadata.meetingType) : 
+    <Calendar className="h-4 w-4 text-blue-500" />;
 
   return (
     <>
       <div className="relative group">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <MeetingIcon />
+            {IconComponent}
             <div className="font-medium">{content}</div>
           </div>
           
           {metadata?.meetingType && (
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              <MeetingIcon />
+              {IconComponent}
               {getMeetingTypeLabel(metadata.meetingType)}
             </div>
           )}
