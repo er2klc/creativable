@@ -14,12 +14,14 @@ import { MessageSquare } from "lucide-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useState } from "react";
 
 export function PostsAndDiscussions() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
-  const { teamSlug } = useParams();
+  const { teamSlug, categorySlug } = useParams();
   const user = useUser();
+  const [activeTab, setActiveTab] = useState(categorySlug || 'all');
 
   // Get team data based on slug
   const { data: team, isLoading: isTeamLoading } = useQuery({
@@ -67,11 +69,25 @@ export function PostsAndDiscussions() {
       return;
     }
 
+    setActiveTab(categorySlug || 'all');
+
     if (categorySlug) {
       navigate(`/unity/team/${teamSlug}/posts/category/${categorySlug}`);
     } else {
       navigate(`/unity/team/${teamSlug}/posts`);
     }
+  };
+
+  // Pastellfarben für die Tabs
+  const tabColors = {
+    all: 'bg-[#F2FCE2] hover:bg-[#E2ECD2]', // Soft Green
+    1: 'bg-[#FEF7CD] hover:bg-[#EEE7BD]', // Soft Yellow
+    2: 'bg-[#FEC6A1] hover:bg-[#EEB691]', // Soft Orange
+    3: 'bg-[#E5DEFF] hover:bg-[#D5CEEF]', // Soft Purple
+    4: 'bg-[#FFDEE2] hover:bg-[#EFCED2]', // Soft Pink
+    5: 'bg-[#FDE1D3] hover:bg-[#EDD1C3]', // Soft Peach
+    6: 'bg-[#D3E4FD] hover:bg-[#C3D4ED]', // Soft Blue
+    7: 'bg-[#F1F0FB] hover:bg-[#E1E0EB]', // Soft Gray
   };
 
   if (!teamSlug) {
@@ -137,26 +153,27 @@ export function PostsAndDiscussions() {
 
       <div className="pt-16">
         <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
-          {/* Category Tabs in ScrollArea */}
           <ScrollArea className="w-full border-b border-border">
-            <div className="flex flex-nowrap gap-2 pb-2">
+            <div className="flex gap-2 pb-2 overflow-x-auto">
               <Badge
                 variant="outline"
                 className={cn(
-                  "cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap",
-                  "bg-background hover:bg-primary/90"
+                  "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2",
+                  tabColors.all,
+                  activeTab === 'all' ? "border-primary" : "border-transparent"
                 )}
                 onClick={() => handleCategoryClick()}
               >
                 Alle Beiträge
               </Badge>
-              {allCategories?.map((category) => (
+              {allCategories?.map((category, index) => (
                 <Badge
                   key={category.id}
                   variant="outline"
                   className={cn(
-                    "cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap",
-                    "bg-background hover:bg-primary/90"
+                    "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2",
+                    tabColors[(index % 7 + 1) as keyof typeof tabColors],
+                    activeTab === category.slug ? "border-primary" : "border-transparent"
                   )}
                   onClick={() => handleCategoryClick(category.slug)}
                 >
@@ -166,7 +183,6 @@ export function PostsAndDiscussions() {
             </div>
           </ScrollArea>
 
-          {/* Main Content Area with max width and scroll */}
           <div className="w-full overflow-hidden">
             <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
               <CategoryOverview teamId={team.id} teamSlug={teamSlug} />
