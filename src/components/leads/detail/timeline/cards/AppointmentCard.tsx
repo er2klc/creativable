@@ -5,7 +5,7 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { useState } from "react";
-import { getMeetingTypeIcon } from "@/components/calendar/AppointmentItem";
+import { MeetingTypeIcon } from "../cards/MeetingTypeIcon";
 
 interface AppointmentCardProps {
   id: string;
@@ -29,21 +29,16 @@ export const AppointmentCard = ({
   const { settings } = useSettings();
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
 
-  const MeetingIcon = metadata?.meetingType ? getMeetingTypeIcon(metadata.meetingType) : Calendar;
-
-  console.log("DEBUG - AppointmentCard render:", {
-    id,
-    metadata,
-    hasOnDelete: !!onDelete,
-    timestamp: new Date().toISOString()
-  });
-
   return (
     <>
       <div className="relative group">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <MeetingIcon className="h-4 w-4 text-blue-500" />
+            {metadata?.meetingType ? (
+              <MeetingTypeIcon iconName={metadata.meetingType} className="h-4 w-4 text-blue-500" />
+            ) : (
+              <Calendar className="h-4 w-4 text-blue-500" />
+            )}
             <div className="font-medium">{content}</div>
           </div>
           
