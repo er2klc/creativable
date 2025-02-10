@@ -25,13 +25,13 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("new");
   const [categoryName, setCategoryName] = useState("");
   const [categorySize, setCategorySize] = useState("default");
 
   const handleSave = async () => {
     try {
-      if (selectedCategory) {
+      if (selectedCategory !== "new") {
         // Update category
         const { error } = await supabase
           .from("team_categories")
@@ -90,7 +90,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   };
 
   const handleDelete = async () => {
-    if (!selectedCategory) return;
+    if (selectedCategory === "new") return;
 
     try {
       const { error } = await supabase
@@ -141,7 +141,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
                 <SelectValue placeholder="Kategorie auswählen oder neue erstellen" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Neue Kategorie</SelectItem>
+                <SelectItem value="new">Neue Kategorie</SelectItem>
                 {/* Add existing categories here */}
               </SelectContent>
             </Select>
@@ -173,13 +173,13 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
               Abbrechen
             </Button>
             <div className="flex gap-2">
-              {selectedCategory && (
+              {selectedCategory !== "new" && (
                 <Button variant="destructive" onClick={handleDelete}>
                   Löschen
                 </Button>
               )}
               <Button onClick={handleSave}>
-                {selectedCategory ? "Speichern" : "Erstellen"}
+                {selectedCategory !== "new" ? "Speichern" : "Erstellen"}
               </Button>
             </div>
           </div>
