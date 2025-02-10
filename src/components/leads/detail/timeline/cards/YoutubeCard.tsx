@@ -43,8 +43,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
 
   return (
     <Card className={cn(
-      "flex-1 p-4 text-sm overflow-hidden bg-white shadow-md relative",
-      isViewCard ? "border border-orange-500" : isExpired ? "border-red-500 bg-gray-50" : "border-gray-200"
+      "flex-1 p-4 text-sm overflow-hidden bg-white shadow-md relative border-2",
+      isViewCard ? "border-orange-500" : isExpired ? "border-red-500 bg-gray-50" : "border-gray-200"
     )}>
       {isViewCard && latestProgress > 0 && isVideoActive && (
         <>
@@ -66,7 +66,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 ? "Presentation URL created"
                 : "Präsentation URL wurde erstellt"
             ) : (
-              metadata.title || content
+              metadata?.title || content
             )}
           </div>
           {isViewCard && (
@@ -76,23 +76,23 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
           )}
           {isViewCard && (
             <ViewInfo 
-              id={metadata.id}
-              ip={metadata.ip}
-              location={metadata.location}
+              id={metadata?.id}
+              ip={metadata?.ip}
+              location={metadata?.location}
             />
           )}
           {isViewCard && (
             <SessionProgress 
-              viewId={metadata.view_id}
+              viewId={metadata?.view_id}
               language={settings?.language}
             />
           )}
-          {!isViewCard && metadata.presentationUrl && (
+          {!isViewCard && metadata?.presentationUrl && (
             <div className="flex flex-col gap-2 mt-2">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => copyToClipboard(metadata.presentationUrl!)}
+                onClick={() => copyToClipboard(metadata.presentationUrl)}
                 className={cn(
                   "flex items-center gap-2 w-fit",
                   isExpired && "border-red-500 hover:border-red-600 opacity-50 cursor-not-allowed"
@@ -110,8 +110,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
               {isExpired && (
                 <div className="text-xs text-red-500 font-medium">
                   {settings?.language === "en" 
-                    ? `Expired on ${formatDateTime(metadata.expires_at, 'en')}` 
-                    : `Abgelaufen am ${formatDateTime(metadata.expires_at, 'de')}`}
+                    ? `Expired on ${formatDateTime(metadata.expires_at!, 'en')}` 
+                    : `Abgelaufen am ${formatDateTime(metadata.expires_at!, 'de')}`}
                 </div>
               )}
             </div>
@@ -134,4 +134,3 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
     </Card>
   );
 };
-
