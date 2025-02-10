@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { TeamAccessManager } from "./TeamAccessManager";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 
 interface EditPlatformDialogProps {
   platformId: string;
@@ -154,9 +154,18 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
           </div>
           <div className="space-y-2">
             <Label htmlFor="description">Beschreibung</Label>
-            <RichTextEditor
+            <TiptapEditor
               content={description}
               onChange={setDescription}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="videoUrl">Video URL</Label>
+            <Input
+              id="videoUrl"
+              value={videoUrl}
+              onChange={(e) => setVideoUrl(e.target.value)}
+              placeholder="Fügen Sie eine Video-URL hinzu"
             />
           </div>
           <TeamLogoUpload

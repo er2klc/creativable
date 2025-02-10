@@ -1,6 +1,7 @@
+
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 
 interface UnitFormProps {
   title: string;
@@ -31,7 +32,7 @@ export const UnitForm = ({
     </div>
     <div className="space-y-2">
       <Label htmlFor="description">Beschreibung</Label>
-      <RichTextEditor
+      <TiptapEditor
         content={description}
         onChange={setDescription}
       />

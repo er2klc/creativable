@@ -6,7 +6,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TeamLogoUpload } from "./TeamLogoUpload";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 
 interface EditTeamDialogProps {
   team: {
@@ -70,7 +70,7 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
             <Label htmlFor="description">Beschreibung</Label>
             <div className="max-h-[200px] overflow-y-auto border rounded-md">
               <div className="sticky top-0 z-10 bg-background border-b">
-                <RichTextEditor
+                <TiptapEditor
                   content={description}
                   onChange={setDescription}
                 />
