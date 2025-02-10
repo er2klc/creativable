@@ -70,18 +70,20 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
           Neuer Beitrag
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[600px] p-0">
+        <DialogHeader className="p-6 pb-0">
           <DialogTitle>Neuen Beitrag erstellen</DialogTitle>
         </DialogHeader>
-        <CreatePostForm
-          teamId={teamId}
-          categoryId={categoryId}
-          categories={categories}
-          onSuccess={() => setOpen(false)}
-          teamMembers={teamMembers}
-          isAdmin={isAdmin}
-        />
+        <div className="px-6 pb-6">
+          <CreatePostForm
+            teamId={teamId}
+            categoryId={categoryId}
+            categories={categories}
+            onSuccess={() => setOpen(false)}
+            teamMembers={teamMembers}
+            isAdmin={isAdmin}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
