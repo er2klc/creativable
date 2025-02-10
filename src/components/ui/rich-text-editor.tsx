@@ -46,11 +46,6 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     editor.chain().focus().insertContent(emoji.native).run();
   };
 
-  const preventBubbling = (e: React.MouseEvent | React.PointerEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
   const handleButtonClick = (e: React.MouseEvent, callback: () => void) => {
     e.preventDefault();
     e.stopPropagation();
@@ -58,7 +53,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
   };
 
   return (
-    <div className="border rounded-md select-none" onMouseDown={preventBubbling} onClick={preventBubbling}>
+    <div className="border rounded-md select-none">
       <div className="flex flex-wrap gap-1 p-2 border-b bg-muted">
         <Button
           variant="ghost"
@@ -124,23 +119,12 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         </Button>
         <Popover>
           <PopoverTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onMouseDown={preventBubbling}
-              onClick={preventBubbling}
-            >
+            <Button variant="ghost" size="sm">
               <Smile className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent 
-            className="w-full p-0" 
-            onMouseDownCapture={preventBubbling}
-            onPointerDownCapture={preventBubbling}
-            onClick={preventBubbling}
-            onPointerDown={preventBubbling}
-          >
-            <div onMouseDown={preventBubbling} onClick={preventBubbling}>
+          <PopoverContent className="w-full p-0">
+            <div>
               <Picker 
                 data={data} 
                 onEmojiSelect={addEmoji}
