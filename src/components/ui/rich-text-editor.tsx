@@ -64,20 +64,15 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     stringHandler: 'html',
   });
 
-  const onChangeHandler = React.useCallback(
-    () => {
-      const html = manager.store.commands.getHTML();
-      onChange(html);
-    },
-    [manager, onChange]
-  );
-
   return (
     <div className="border rounded-md">
       <Remirror
         manager={manager}
         initialContent={content}
-        onChange={onChangeHandler}
+        onChange={({ helpers }) => {
+          const html = helpers.getHTML();
+          onChange(html);
+        }}
         placeholder={placeholder}
       >
         <EditorToolbar />
