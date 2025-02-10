@@ -13,6 +13,7 @@ interface TabScrollAreaProps {
   onCategoryClick: (categorySlug?: string) => void;
   isAdmin?: boolean;
   teamSlug: string;
+  hideAllPosts?: boolean;
 }
 
 const iconMap: { [key: string]: any } = {
@@ -31,7 +32,7 @@ const iconMap: { [key: string]: any } = {
   'Target': Target
 };
 
-export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }: TabScrollAreaProps) => {
+export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug, hideAllPosts }: TabScrollAreaProps) => {
   const {
     scrollContainerRef,
     showLeftArrow,
@@ -88,7 +89,6 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     enabled: !!team?.id,
   });
 
-  // Default Pastellfarben für die Tabs wenn keine custom Farbe definiert ist
   const defaultTabColors = {
     all: 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]',
     1: 'bg-[#FEF7CD] hover:bg-[#EEB691] text-[#8B4513]',
@@ -103,8 +103,6 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
   if (isTeamLoading || isCategoriesLoading) {
     return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
   }
-
-  const isDialogView = window.location.pathname.includes('/posts/');
 
   return (
     <div className="relative w-full">
@@ -125,7 +123,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
           className="flex gap-2 py-2 px-4"
           onScroll={handleScroll}
         >
-          {!isDialogView && (
+          {!hideAllPosts && (
             <Badge
               variant="outline"
               className={cn(
@@ -175,4 +173,3 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     </div>
   );
 };
-

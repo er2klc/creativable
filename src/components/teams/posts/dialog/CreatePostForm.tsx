@@ -91,12 +91,13 @@ export const CreatePostForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="sticky top-0 bg-white z-10 pb-4 max-w-[552px] mx-auto">
+        <div className="sticky top-0 bg-white z-10 pb-4 max-h-[200px] overflow-auto">
           <TabScrollArea 
             activeTab={categories?.find(c => c.id === form.watch('categoryId'))?.slug || 'all'}
             onCategoryClick={handleCategoryChange}
             isAdmin={isAdmin}
             teamSlug={teamSlug}
+            hideAllPosts={true}
           />
         </div>
         
@@ -104,21 +105,22 @@ export const CreatePostForm = ({
           <TitleField form={form} />
           <ContentField form={form} />
           <FileField form={form} />
-          
-          <div className="sticky bottom-0 bg-white pt-4 flex justify-end">
-            <Button type="submit" disabled={isUploading}>
-              {isUploading ? (
-                <>
-                  <Upload className="h-4 w-4 mr-2 animate-spin" />
-                  Wird hochgeladen...
-                </>
-              ) : (
-                editMode ? 'Aktualisieren' : 'Erstellen'
-              )}
-            </Button>
-          </div>
+        </div>
+
+        <div className="fixed bottom-4 right-4">
+          <Button type="submit" disabled={isUploading} size="lg">
+            {isUploading ? (
+              <>
+                <Upload className="h-4 w-4 mr-2 animate-spin" />
+                Wird hochgeladen...
+              </>
+            ) : (
+              editMode ? 'Aktualisieren' : 'Erstellen'
+            )}
+          </Button>
         </div>
       </form>
     </Form>
   );
 };
+
