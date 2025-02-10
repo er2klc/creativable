@@ -68,7 +68,7 @@ export const NotificationItem = ({
             {notification.title}
           </h3>
         </div>
-        <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
+        <span className="text-xs text-gray-500 whitespace-nowrap ml-8">
           {formatDistanceToNow(new Date(notification.created_at), {
             addSuffix: true,
             locale: de
