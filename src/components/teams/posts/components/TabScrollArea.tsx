@@ -6,7 +6,6 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabScroll } from "../hooks/useTabScroll";
 import { TeamCategory } from "../types/team";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { EditCategoryDialog } from "./EditCategoryDialog";
 
 interface TabScrollAreaProps {

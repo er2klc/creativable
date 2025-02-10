@@ -2278,6 +2278,48 @@ export type Database = {
           },
         ]
       }
+      team_category_settings: {
+        Row: {
+          category_id: string
+          created_at: string | null
+          id: string
+          size: string
+          team_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string | null
+          id?: string
+          size?: string
+          team_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string | null
+          id?: string
+          size?: string
+          team_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_category_settings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "team_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_category_settings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_content_embeddings: {
         Row: {
           content: string
