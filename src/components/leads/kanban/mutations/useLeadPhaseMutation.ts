@@ -13,7 +13,7 @@ export const useLeadPhaseMutation = () => {
   return useMutation({
     mutationFn: async ({ 
       leadId, 
-      phaseId, 
+      phaseId,
       oldPhaseName,
       newPhaseName 
     }: { 
@@ -27,17 +27,21 @@ export const useLeadPhaseMutation = () => {
       
       return updateLeadPhase(leadId, phaseId, oldPhaseName, newPhaseName, user.id);
     },
-    onSuccess: (data) => {
-      // Only show toast if there was actually a phase change
-      if (data?.success) {
-        queryClient.invalidateQueries({ queryKey: ["leads"] });
-        toast({
-          title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-          description: settings?.language === "en"
-            ? "The phase has been successfully updated"
-            : "Die Phase wurde erfolgreich aktualisiert",
-        });
-      }
+    onSuccess: (data, variables) => {
+      // Invalidate the leads query to update the kanban board
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      
+      // Invalidate the specific lead query to update the timeline
+      queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
+      // Also invalidate the lead-with-relations query which is used in the timeline
+      queryClient.invalidateQueries({ queryKey: ["lead-with-relations", variables.leadId] });
+      
+      toast({
+        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
+        description: settings?.language === "en"
+          ? "The phase has been successfully updated"
+          : "Die Phase wurde erfolgreich aktualisiert",
+      });
     },
     onError: (error) => {
       console.error("Error updating phase:", error);
