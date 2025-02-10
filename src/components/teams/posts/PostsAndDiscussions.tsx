@@ -19,15 +19,24 @@ export function PostsAndDiscussions() {
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
+      if (!teamSlug) {
+        console.error('No team slug provided');
+        return null;
+      }
+
       const { data, error } = await supabase
         .from('teams')
         .select('*')
         .eq('slug', teamSlug)
-        .single();
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching team:', error);
+        throw error;
+      }
       return data;
     },
+    enabled: !!teamSlug,
   });
 
   const { data: allCategories } = useQuery({
@@ -47,12 +56,27 @@ export function PostsAndDiscussions() {
   });
 
   const handleCategoryClick = (categorySlug?: string) => {
+    if (!teamSlug) {
+      console.error('No team slug available for navigation');
+      return;
+    }
+
     if (categorySlug) {
       navigate(`/unity/team/${teamSlug}/posts/category/${categorySlug}`);
     } else {
       navigate(`/unity/team/${teamSlug}/posts`);
     }
   };
+
+  if (!teamSlug) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-muted-foreground">
+          Invalid team URL. Please check the URL and try again.
+        </div>
+      </Card>
+    );
+  }
 
   if (isTeamLoading) {
     return (
@@ -104,7 +128,7 @@ export function PostsAndDiscussions() {
 
       {/* Content Area */}
       <div className="w-full">
-        <CategoryOverview teamId={team.id} teamSlug={teamSlug || ''} />
+        <CategoryOverview teamId={team.id} teamSlug={teamSlug} />
       </div>
     </div>
   );
