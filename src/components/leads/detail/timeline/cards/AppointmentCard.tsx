@@ -1,11 +1,11 @@
 
-import { Calendar, Edit, Trash2 } from "lucide-react";
+import { Calendar, Edit, Trash2, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { useState } from "react";
-import { MeetingTypeIcon } from "../cards/MeetingTypeIcon";
+import { MeetingTypeIcon } from "./MeetingTypeIcon";
 
 interface AppointmentCardProps {
   id: string;
@@ -39,6 +39,25 @@ const getMeetingTypeLabel = (type: string): string => {
   }
 };
 
+const getMeetingTypeIcon = (type: string) => {
+  switch (type) {
+    case "phone_call":
+      return <Phone className="h-4 w-4 text-blue-500" />;
+    case "on_site":
+      return <MapPin className="h-4 w-4 text-blue-500" />;
+    case "zoom":
+      return <Video className="h-4 w-4 text-blue-500" />;
+    case "initial_meeting":
+      return <Users className="h-4 w-4 text-blue-500" />;
+    case "presentation":
+      return <BarChart className="h-4 w-4 text-blue-500" />;
+    case "follow_up":
+      return <RefreshCw className="h-4 w-4 text-blue-500" />;
+    default:
+      return <Calendar className="h-4 w-4 text-blue-500" />;
+  }
+};
+
 export const AppointmentCard = ({
   id,
   content,
@@ -63,6 +82,7 @@ export const AppointmentCard = ({
           
           {metadata?.meetingType && (
             <div className="flex items-center gap-2 text-sm text-gray-600">
+              {getMeetingTypeIcon(metadata.meetingType)}
               {getMeetingTypeLabel(metadata.meetingType)}
             </div>
           )}
@@ -112,3 +132,4 @@ export const AppointmentCard = ({
     </>
   );
 };
+
