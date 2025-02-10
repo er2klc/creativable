@@ -20,6 +20,25 @@ interface AppointmentCardProps {
   onDelete?: () => void;
 }
 
+const getMeetingTypeLabel = (type: string): string => {
+  switch (type) {
+    case "phone_call":
+      return "Telefongespräch";
+    case "on_site":
+      return "Vor-Ort-Termin";
+    case "zoom":
+      return "Zoom Meeting";
+    case "initial_meeting":
+      return "Erstgespräch";
+    case "presentation":
+      return "Präsentation";
+    case "follow_up":
+      return "Folgetermin";
+    default:
+      return type;
+  }
+};
+
 export const AppointmentCard = ({
   id,
   content,
@@ -44,7 +63,7 @@ export const AppointmentCard = ({
           
           {metadata?.meetingType && (
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              {metadata.meetingType}
+              {getMeetingTypeLabel(metadata.meetingType)}
             </div>
           )}
           
