@@ -92,7 +92,8 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
         navigate(notification.target_page);
         onOpenChange(false);
       } else if (notification.metadata?.leadId) {
-        navigate(`/contacts/${notification.metadata.leadId}`);
+        // Ensure we're using a string concatenation here, not a template literal
+        navigate('/contacts/' + notification.metadata.leadId);
         onOpenChange(false);
       }
     } catch (error) {
@@ -177,4 +178,3 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
     </Sheet>
   );
 };
-
