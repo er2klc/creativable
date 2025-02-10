@@ -4,14 +4,15 @@ import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
 import Image from '@tiptap/extension-image';
+import Underline from '@tiptap/extension-underline';
 import { Button } from './button';
 import { 
   Bold, 
   Italic, 
-  Underline,
+  Underline as UnderlineIcon, 
   List, 
-  ListOrdered,
-  Quote,
+  ListOrdered, 
+  Quote, 
   Hash,
   Image as ImageIcon,
   Heading2
@@ -37,6 +38,7 @@ export function TiptapEditor({
   const editor = useEditor({
     extensions: [
       StarterKit,
+      Underline,
       Mention.configure({
         HTMLAttributes: { class: 'mention' },
         suggestion: {
@@ -108,7 +110,7 @@ export function TiptapEditor({
             onClick={() => editor.chain().focus().toggleUnderline().run()}
             active={editor.isActive('underline')}
           >
-            <Underline className="h-4 w-4" />
+            <UnderlineIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton 
             onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
