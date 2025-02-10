@@ -39,13 +39,6 @@ export const CategoryDialogForm = ({
 }: CategoryDialogFormProps) => {
   return (
     <div className="grid gap-4 py-4">
-      <CategorySelector
-        selectedCategory={selectedCategory}
-        onCategoryChange={onCategoryChange}
-        categories={categories}
-        isAdmin={true} // Always show all categories in edit mode
-      />
-      
       <CategoryNameInput
         categoryName={categoryName}
         onCategoryNameChange={onCategoryNameChange}

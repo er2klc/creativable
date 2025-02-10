@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { CategoryDialogForm } from "./category-dialog/CategoryDialogForm";
 import { useCategoryDialog } from "./category-dialog/useCategoryDialog";
+import { TabScrollArea } from "./TabScrollArea";
+import { useParams } from "react-router-dom";
 
 interface EditCategoryDialogProps {
   teamId?: string;
@@ -37,6 +39,16 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     handleDelete
   } = useCategoryDialog(teamId);
 
+  const { teamSlug } = useParams();
+
+  const handleCategorySelection = (categorySlug?: string) => {
+    if (!categorySlug) return;
+    const category = categories?.find(c => c.slug === categorySlug);
+    if (category) {
+      handleCategoryChange(category.id);
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -51,6 +63,15 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
             Hier können Sie Kategorien erstellen, bearbeiten und löschen.
           </DialogDescription>
         </DialogHeader>
+
+        <div className="max-h-[400px] overflow-auto">
+          <TabScrollArea
+            activeTab={categories?.find(c => c.id === selectedCategory)?.slug || ''}
+            onCategoryClick={handleCategorySelection}
+            isAdmin={true}
+            teamSlug={teamSlug || ''}
+          />
+        </div>
         
         <CategoryDialogForm
           selectedCategory={selectedCategory}
