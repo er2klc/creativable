@@ -153,7 +153,10 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
           </PopoverContent>
         </Popover>
       </div>
-      <div className="p-4">
+      <div 
+        className="p-4 cursor-text"
+        onClick={() => editor.chain().focus().run()}
+      >
         <EditorContent editor={editor} />
       </div>
     </div>
