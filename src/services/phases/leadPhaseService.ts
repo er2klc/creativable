@@ -9,19 +9,22 @@ export const updateLeadPhase = async (
   newPhaseName: string,
   userId: string
 ) => {
-  // First check if the phase has actually changed
+  // WICHTIG: Erst prüfen ob sich die Phase tatsächlich geändert hat!
+  // Keine Meldung oder Datenbankaktualisierung wenn die Phase gleich bleibt.
+  // Dies verhindert unnötige Benachrichtigungen und Datenbankoperationen.
   const { data: currentLead } = await supabase
     .from("leads")
     .select("phase_id")
     .eq("id", leadId)
     .single();
 
-  // If the phase hasn't changed, return early
+  // Wenn die Phase identisch ist, early return ohne Änderungen
   if (currentLead?.phase_id === phaseId) {
+    console.log("Phase unchanged, skipping update");
     return null;
   }
 
-  // Update the lead's phase
+  // Phase hat sich geändert - Update durchführen
   const { error: updateError } = await supabase
     .from("leads")
     .update({
@@ -33,7 +36,7 @@ export const updateLeadPhase = async (
 
   if (updateError) throw updateError;
 
-  // Create a note for the phase change
+  // Nur wenn die Phase wirklich geändert wurde, erstellen wir einen Eintrag
   const { error: noteError } = await supabase
     .from("notes")
     .insert({
