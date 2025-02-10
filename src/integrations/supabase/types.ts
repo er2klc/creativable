@@ -2776,8 +2776,11 @@ export type Database = {
           created_by: string
           edited: boolean | null
           file_urls: string[] | null
+          hashtags: string[] | null
           id: string
+          last_autosave_at: string | null
           last_edited_at: string | null
+          mentioned_users: string[] | null
           pinned: boolean | null
           slug: string
           team_id: string
@@ -2791,8 +2794,11 @@ export type Database = {
           created_by: string
           edited?: boolean | null
           file_urls?: string[] | null
+          hashtags?: string[] | null
           id?: string
+          last_autosave_at?: string | null
           last_edited_at?: string | null
+          mentioned_users?: string[] | null
           pinned?: boolean | null
           slug: string
           team_id: string
@@ -2806,8 +2812,11 @@ export type Database = {
           created_by?: string
           edited?: boolean | null
           file_urls?: string[] | null
+          hashtags?: string[] | null
           id?: string
+          last_autosave_at?: string | null
           last_edited_at?: string | null
+          mentioned_users?: string[] | null
           pinned?: boolean | null
           slug?: string
           team_id?: string

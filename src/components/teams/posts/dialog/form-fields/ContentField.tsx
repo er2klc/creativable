@@ -1,13 +1,14 @@
 
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { UseFormReturn } from "react-hook-form";
 
 interface ContentFieldProps {
   form: UseFormReturn<any>;
+  teamMembers?: any[];
 }
 
-export const ContentField = ({ form }: ContentFieldProps) => {
+export const ContentField = ({ form, teamMembers }: ContentFieldProps) => {
   return (
     <FormField
       control={form.control}
@@ -17,10 +18,17 @@ export const ContentField = ({ form }: ContentFieldProps) => {
         <FormItem>
           <FormLabel>Inhalt</FormLabel>
           <FormControl>
-            <RichTextEditor
+            <TiptapEditor
               content={field.value}
               onChange={field.onChange}
               placeholder="Beschreibe deinen Beitrag... (@mention für Erwähnungen)"
+              teamMembers={teamMembers}
+              onMention={(userId) => {
+                console.log('Mentioned user:', userId);
+              }}
+              onHashtag={(tag) => {
+                console.log('Added hashtag:', tag);
+              }}
             />
           </FormControl>
           <FormMessage />
