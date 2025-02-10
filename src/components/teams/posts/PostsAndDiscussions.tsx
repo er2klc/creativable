@@ -10,7 +10,6 @@ import { TabScrollArea } from "./components/TabScrollArea";
 import { TeamHeader } from "./components/TeamHeader";
 import { Team } from "./types/team";
 import { PostDetail } from "./components/PostDetail";
-import { EditCategoryDialog } from "./components/EditCategoryDialog";
 
 export function PostsAndDiscussions() {
   const navigate = useNavigate();
@@ -42,6 +41,7 @@ export function PostsAndDiscussions() {
     enabled: !!teamSlug,
   });
 
+  // Now use team.id to fetch categories
   const { data: allCategories } = useQuery({
     queryKey: ['team-categories', team?.id],
     queryFn: async () => {
@@ -55,7 +55,7 @@ export function PostsAndDiscussions() {
       if (error) throw error;
       return data;
     },
-    enabled: !!team?.id,
+    enabled: !!team?.id, // Only run when we have team.id
   });
 
   const { data: teamMember } = useQuery({
@@ -184,9 +184,6 @@ export function PostsAndDiscussions() {
               onCategoryClick={handleCategoryClick}
               isAdmin={isAdmin}
             />
-            {isAdmin && (
-              <EditCategoryDialog teamId={allCategories?.[0]?.team_id} />
-            )}
           </div>
 
           <div className="w-full overflow-hidden">
@@ -194,7 +191,7 @@ export function PostsAndDiscussions() {
               {postSlug ? (
                 <PostDetail post={post} teamSlug={teamSlug} />
               ) : (
-                <CategoryOverview teamId={team.id} teamSlug={teamSlug} />
+                <CategoryOverview teamId={team.id} teamSlug={teamSlug} categorySlug={categorySlug} />
               )}
             </div>
           </div>
