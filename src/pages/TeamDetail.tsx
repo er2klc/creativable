@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,8 @@ import { useState } from "react";
 import { TeamSnaps } from "@/components/teams/detail/TeamSnaps";
 import { TeamCalendarView } from "@/components/teams/calendar/TeamCalendarView";
 import { cn } from "@/lib/utils";
+import { SearchBar } from "@/components/dashboard/SearchBar";
+import { HeaderActions } from "@/components/layout/HeaderActions";
 
 const TeamDetail = () => {
   const { teamSlug } = useParams();
@@ -79,29 +82,46 @@ const TeamDetail = () => {
 
   return (
     <div className="space-y-6">
-      <div className={cn(
-        "bg-background border-b transition-all duration-300",
-        activeSnapView ? "h-0 overflow-hidden" : "h-auto"
-      )}>
-        <div className="container py-4">
-          <div className="flex items-center justify-between">
-            <TeamHeader team={team} isInSnapView={!!activeSnapView} />
-            {isAdmin && !showCalendar && (
-              <Button
-                variant={isManaging ? "default" : "outline"}
-                size="sm"
-                onClick={() => setIsManaging(!isManaging)}
-                className="relative"
-              >
-                <Grid className="h-4 w-4 mr-2" />
-                {isManaging ? "Bearbeitung beenden" : "Snaps verwalten"}
-              </Button>
-            )}
+      <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+        <div className="w-full">
+          <div className="h-16 px-4 flex items-center">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+              <div className="flex items-center gap-2">
+                <Grid className="h-5 w-5" />
+                <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                  {team.name}
+                </h1>
+                {isAdmin && !showCalendar && (
+                  <Button
+                    variant={isManaging ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsManaging(!isManaging)}
+                    className="ml-4"
+                  >
+                    <Grid className="h-4 w-4 mr-2" />
+                    {isManaging ? "Bearbeitung beenden" : "Snaps verwalten"}
+                  </Button>
+                )}
+              </div>
+              <div className="w-[300px]">
+                <SearchBar />
+              </div>
+              <HeaderActions profile={null} userEmail={user?.email} />
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="container">
+      <div className={cn(
+        "bg-background border-b transition-all duration-300",
+        activeSnapView ? "h-0 overflow-hidden" : "h-auto"
+      )}>
+        <div className="container py-4 pt-20">
+          <TeamHeader team={team} isInSnapView={!!activeSnapView} />
+        </div>
+      </div>
+
+      <div className="container pt-4">
         <Tabs defaultValue="posts">
           {showCalendar ? (
             <TeamCalendarView
@@ -118,6 +138,7 @@ const TeamDetail = () => {
               isAdmin={isAdmin}
               isManaging={isManaging}
               teamId={team.id}
+              teamSlug={team.slug}
               onCalendarClick={() => {
                 setShowCalendar(true);
                 setActiveSnapView('calendar');
