@@ -93,7 +93,7 @@ const TeamCalendar = () => {
         </div>
       </div>
 
-      <div className="container pt-20">
+      <div className="container">
         <TeamCalendarView
           teamId={team.id}
           teamName={team.name}
