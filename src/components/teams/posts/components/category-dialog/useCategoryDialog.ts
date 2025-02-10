@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useCategoryQueries } from "./hooks/useCategoryQueries";
 import { useCategoryMutations } from "./hooks/useCategoryMutations";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useCategoryDialog = (teamId?: string) => {
   const [open, setOpen] = useState(false);
@@ -13,7 +15,24 @@ export const useCategoryDialog = (teamId?: string) => {
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
 
-  const { team, categories } = useCategoryQueries(teamId);
+  // Lade Team-ID aus der Slug
+  const { data: teamData } = useQuery({
+    queryKey: ['team-by-slug', teamId],
+    queryFn: async () => {
+      if (!teamId) return null;
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!teamId
+  });
+
+  const { team, categories } = useCategoryQueries(teamData?.id);
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
 
   const handleCategoryChange = (value: string) => {
@@ -39,7 +58,7 @@ export const useCategoryDialog = (teamId?: string) => {
   };
 
   const handleSave = async () => {
-    if (!team?.id) {
+    if (!teamData?.id) {
       toast.error("Team ID nicht gefunden");
       return;
     }
@@ -51,7 +70,7 @@ export const useCategoryDialog = (teamId?: string) => {
 
     try {
       const success = await saveCategory(
-        team.id,
+        teamData.id,
         selectedCategory,
         categoryName.trim(),
         isPublic,
