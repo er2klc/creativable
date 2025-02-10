@@ -50,37 +50,38 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
       new OrderedListExtension(),
       new BlockquoteExtension(),
       new HeadingExtension(),
-      new EmojiExtension(),
+      new EmojiExtension({
+        data,
+        transformCaptured: (emoji) => emoji.native,
+      }),
     ],
     []
   );
 
-  const { manager, state } = useRemirror({
+  const { manager } = useRemirror({
     extensions,
-    content: content,
+    content,
     stringHandler: 'html',
   });
 
   const onChangeHandler = React.useCallback(
-    ({ state }) => {
-      const html = state.doc.toString();
+    () => {
+      const html = manager.store.commands.getHTML();
       onChange(html);
     },
-    [onChange]
+    [manager, onChange]
   );
 
   return (
     <div className="border rounded-md">
       <Remirror
         manager={manager}
-        initialContent={state}
+        initialContent={content}
         onChange={onChangeHandler}
         placeholder={placeholder}
       >
         <EditorToolbar />
-        <div className="p-4 min-h-[150px] prose prose-sm max-w-none focus:outline-none">
-          <EditorComponent />
-        </div>
+        <EditorComponent className="p-4 min-h-[150px] prose prose-sm max-w-none focus:outline-none" />
       </Remirror>
     </div>
   );
