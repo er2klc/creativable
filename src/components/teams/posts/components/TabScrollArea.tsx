@@ -1,7 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabScroll } from "../hooks/useTabScroll";
@@ -49,10 +49,10 @@ export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick, isAdm
         </Button>
       )}
       
-      <ScrollArea className="w-full border-b border-border mx-8">
+      <ScrollArea className="w-full mx-8">
         <div 
           ref={scrollContainerRef}
-          className="flex gap-2 pb-2 overflow-x-auto scroll-smooth"
+          className="flex gap-2 pb-4 overflow-x-auto scroll-smooth"
           onScroll={handleScroll}
         >
           <Badge
@@ -81,6 +81,7 @@ export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick, isAdm
             </Badge>
           ))}
         </div>
+        <ScrollBar orientation="horizontal" className="hidden" />
       </ScrollArea>
 
       {showRightArrow && (

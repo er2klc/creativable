@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
   Dialog,
@@ -28,6 +28,40 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   const [selectedCategory, setSelectedCategory] = useState<string>("new");
   const [categoryName, setCategoryName] = useState("");
   const [categorySize, setCategorySize] = useState("default");
+
+  // Fetch existing categories
+  const { data: categories } = useQuery({
+    queryKey: ["team-categories", teamId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("team_categories")
+        .select(`
+          *,
+          team_category_settings(*)
+        `)
+        .eq("team_id", teamId)
+        .order("order_index");
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!teamId,
+  });
+
+  // Update category state when selection changes
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    if (value === "new") {
+      setCategoryName("");
+      setCategorySize("default");
+    } else {
+      const category = categories?.find(cat => cat.id === value);
+      if (category) {
+        setCategoryName(category.name);
+        setCategorySize(category.team_category_settings?.[0]?.size || "default");
+      }
+    }
+  };
 
   const handleSave = async () => {
     try {
@@ -130,19 +164,18 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
           <div className="grid gap-2">
             <Select
               value={selectedCategory}
-              onValueChange={(value) => {
-                setSelectedCategory(value);
-                // Reset form when switching categories
-                setCategoryName("");
-                setCategorySize("default");
-              }}
+              onValueChange={handleCategoryChange}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Kategorie auswählen oder neue erstellen" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="new">Neue Kategorie</SelectItem>
-                {/* Add existing categories here */}
+                {categories?.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    {category.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
