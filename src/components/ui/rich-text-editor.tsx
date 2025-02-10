@@ -1,23 +1,7 @@
 
-import React from 'react';
-import {
-  EditorComponent,
-  Remirror,
-  useRemirror,
-  useActive,
-  useCommands,
-} from '@remirror/react';
-import {
-  EmojiExtension,
-  BoldExtension,
-  ItalicExtension,
-  UnderlineExtension,
-  ListItemExtension,
-  BulletListExtension,
-  OrderedListExtension,
-  BlockquoteExtension,
-  HeadingExtension,
-} from 'remirror/extensions';
+import React, { useState, useEffect } from 'react';
+import { Editor, EditorState, RichUtils, convertToRaw, convertFromHTML, ContentState } from 'draft-js';
+import 'draft-js/dist/Draft.css';
 import { Button } from './button';
 import { 
   Bold, 
@@ -26,12 +10,8 @@ import {
   List, 
   ListOrdered,
   Quote,
-  Heading2,
-  Smile
+  Heading2
 } from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
 
 interface RichTextEditorProps {
   content: string;
@@ -40,114 +20,121 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
-  const extensions = React.useMemo(
-    () => [
-      new BoldExtension(),
-      new ItalicExtension(),
-      new UnderlineExtension(),
-      new ListItemExtension(),
-      new BulletListExtension(),
-      new OrderedListExtension(),
-      new BlockquoteExtension(),
-      new HeadingExtension(),
-      new EmojiExtension({
-        data,
-        transformCaptured: (emoji) => emoji.native,
-      }),
-    ],
-    []
-  );
-
-  // Create editor state
-  const { manager } = useRemirror({
-    extensions,
-    content: {
-      type: 'doc',
-      content: [{
-        type: 'paragraph',
-        content: content ? [{ type: 'text', text: content }] : []
-      }]
-    },
+  const [editorState, setEditorState] = useState(() => {
+    if (content) {
+      const blocksFromHTML = convertFromHTML(content);
+      const contentState = ContentState.createFromBlockArray(
+        blocksFromHTML.contentBlocks,
+        blocksFromHTML.entityMap
+      );
+      return EditorState.createWithContent(contentState);
+    }
+    return EditorState.createEmpty();
   });
 
-  return (
-    <div className="relative">
-      <Remirror
-        manager={manager}
-        onChange={({ helpers }) => {
-          onChange(helpers.getHTML());
-        }}
-        placeholder={placeholder}
-        autoFocus={false}
-        classNames={{
-          editor: 'min-h-[150px] px-3 py-2 focus:outline-none',
-        }}
-      >
-        <div className="sticky top-0 z-10 bg-background border-b">
-          <EditorToolbar />
-        </div>
-        <EditorComponent />
-      </Remirror>
-    </div>
-  );
-}
+  useEffect(() => {
+    const contentState = editorState.getCurrentContent();
+    const rawContent = convertToRaw(contentState);
+    const html = rawContent.blocks.map(block => {
+      const text = block.text;
+      switch (block.type) {
+        case 'header-two':
+          return `<h2>${text}</h2>`;
+        case 'blockquote':
+          return `<blockquote>${text}</blockquote>`;
+        case 'unordered-list-item':
+          return `<ul><li>${text}</li></ul>`;
+        case 'ordered-list-item':
+          return `<ol><li>${text}</li></ol>`;
+        default:
+          return `<p>${text}</p>`;
+      }
+    }).join('');
+    onChange(html);
+  }, [editorState, onChange]);
 
-function EditorToolbar() {
-  const commands = useCommands();
-  const active = useActive();
-
-  const handleAddEmoji = React.useCallback((emoji: { native: string }) => {
-    if (emoji?.native) {
-      commands.insertText(emoji.native);
+  const handleKeyCommand = (command: string, editorState: EditorState) => {
+    const newState = RichUtils.handleKeyCommand(editorState, command);
+    if (newState) {
+      setEditorState(newState);
+      return 'handled';
     }
-  }, [commands]);
+    return 'not-handled';
+  };
+
+  const toggleBlockType = (blockType: string) => {
+    setEditorState(RichUtils.toggleBlockType(editorState, blockType));
+  };
+
+  const toggleInlineStyle = (inlineStyle: string) => {
+    setEditorState(RichUtils.toggleInlineStyle(editorState, inlineStyle));
+  };
 
   return (
-    <div className="flex flex-wrap gap-1 p-2">
-      <ToolbarButton onClick={() => commands.toggleBold()} active={active.bold()}>
-        <Bold className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => commands.toggleItalic()} active={active.italic()}>
-        <Italic className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => commands.toggleUnderline()} active={active.underline()}>
-        <Underline className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => commands.toggleHeading({ level: 2 })} active={active.heading({ level: 2 })}>
-        <Heading2 className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => commands.toggleBulletList()} active={active.bulletList()}>
-        <List className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => commands.toggleOrderedList()} active={active.orderedList()}>
-        <ListOrdered className="h-4 w-4" />
-      </ToolbarButton>
-      <ToolbarButton onClick={() => commands.toggleBlockquote()} active={active.blockquote()}>
-        <Quote className="h-4 w-4" />
-      </ToolbarButton>
-
-      <Popover>
-        <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <Smile className="h-4 w-4" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Picker 
-            data={data} 
-            onEmojiSelect={handleAddEmoji}
-            theme="light"
-            emojiSize={20}
-            emojiButtonSize={28}
-            maxFrequentRows={1}
-          />
-        </PopoverContent>
-      </Popover>
+    <div className="relative border rounded-md">
+      <div className="sticky top-0 z-10 bg-background border-b">
+        <div className="flex flex-wrap gap-1 p-2">
+          <ToolbarButton 
+            onClick={() => toggleInlineStyle('BOLD')}
+            active={editorState.getCurrentInlineStyle().has('BOLD')}
+          >
+            <Bold className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton 
+            onClick={() => toggleInlineStyle('ITALIC')}
+            active={editorState.getCurrentInlineStyle().has('ITALIC')}
+          >
+            <Italic className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton 
+            onClick={() => toggleInlineStyle('UNDERLINE')}
+            active={editorState.getCurrentInlineStyle().has('UNDERLINE')}
+          >
+            <Underline className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton 
+            onClick={() => toggleBlockType('header-two')}
+            active={editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getStartKey()).getType() === 'header-two'}
+          >
+            <Heading2 className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton 
+            onClick={() => toggleBlockType('unordered-list-item')}
+            active={editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getStartKey()).getType() === 'unordered-list-item'}
+          >
+            <List className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton 
+            onClick={() => toggleBlockType('ordered-list-item')}
+            active={editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getStartKey()).getType() === 'ordered-list-item'}
+          >
+            <ListOrdered className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton 
+            onClick={() => toggleBlockType('blockquote')}
+            active={editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getStartKey()).getType() === 'blockquote'}
+          >
+            <Quote className="h-4 w-4" />
+          </ToolbarButton>
+        </div>
+      </div>
+      <div className="min-h-[150px] px-3 py-2">
+        <Editor
+          editorState={editorState}
+          onChange={setEditorState}
+          handleKeyCommand={handleKeyCommand}
+          placeholder={placeholder}
+        />
+      </div>
     </div>
   );
 }
 
-function ToolbarButton({ onClick, active, children }: { onClick: () => void; active: boolean; children: React.ReactNode }) {
+function ToolbarButton({ onClick, active, children }: { 
+  onClick: () => void; 
+  active: boolean; 
+  children: React.ReactNode 
+}) {
   return (
     <Button
       variant="ghost"
