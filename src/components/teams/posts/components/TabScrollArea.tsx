@@ -27,10 +27,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
-      if (!teamSlug) {
-        console.error('No team slug provided');
-        return null;
-      }
+      console.log('Fetching team with slug:', teamSlug);
       
       const { data, error } = await supabase
         .from('teams')
@@ -43,7 +40,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
         throw error;
       }
 
-      console.log('Fetched team:', data);
+      console.log('Found team:', data);
       return data;
     },
     enabled: !!teamSlug,
@@ -53,10 +50,11 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     queryKey: ['team-categories', team?.id],
     queryFn: async () => {
       if (!team?.id) {
-        console.error('No team ID available');
+        console.log('No team ID available, skipping categories fetch');
         return [];
       }
 
+      console.log('Fetching categories for team ID:', team.id);
       const { data, error } = await supabase
         .from('team_categories')
         .select('*')
@@ -67,8 +65,8 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
         console.error('Error fetching categories:', error);
         throw error;
       }
-      
-      console.log('Fetched categories:', data);
+
+      console.log('Found categories:', data);
       return data;
     },
     enabled: !!team?.id,
@@ -88,11 +86,6 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
 
   if (isTeamLoading || isCategoriesLoading) {
     return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
-  }
-
-  if (!team || !allCategories) {
-    console.log('No team or categories found:', { team, allCategories });
-    return null;
   }
 
   return (
