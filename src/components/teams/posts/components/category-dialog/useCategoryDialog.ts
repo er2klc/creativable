@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useCategoryQueries } from "./hooks/useCategoryQueries";
 import { useCategoryMutations } from "./hooks/useCategoryMutations";
@@ -13,25 +14,20 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedIcon, setSelectedIcon] = useState("MessageCircle");
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
-
-  const processedTeamSlug = teamSlug?.split('/').find(part => part === 'fire-adler-hauptteam-') || teamSlug;
   
-  console.log("Using team slug:", processedTeamSlug); // Debug log
-
-  // Load team ID from slug
+  // Get team ID directly from the URL path
   const { data: teamData } = useQuery({
-    queryKey: ['team-by-slug', processedTeamSlug],
+    queryKey: ['team-by-slug', teamSlug],
     queryFn: async () => {
-      if (!processedTeamSlug) {
-        console.error("No team slug provided", { processedTeamSlug, originalSlug: teamSlug });
+      if (!teamSlug) {
+        console.error("No team slug provided");
         return null;
       }
       
-      console.log("Fetching team data for slug:", processedTeamSlug);
       const { data, error } = await supabase
         .from('teams')
         .select('id')
-        .eq('slug', processedTeamSlug)
+        .eq('slug', teamSlug)
         .maybeSingle();
 
       if (error) {
@@ -39,13 +35,12 @@ export const useCategoryDialog = (teamSlug?: string) => {
         throw error;
       }
       
-      console.log("Found team data:", data);
       return data;
     },
-    enabled: !!processedTeamSlug,
+    enabled: !!teamSlug,
   });
 
-  const { team, categories } = useCategoryQueries(teamData?.id);
+  const { categories } = useCategoryQueries(teamData?.id);
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
 
   const handleCategoryChange = (value: string) => {
@@ -69,16 +64,13 @@ export const useCategoryDialog = (teamSlug?: string) => {
         setSelectedIcon(category.icon || "MessageCircle");
         setSelectedColor(category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
         setSelectedSize(category.size || "small");
-      } else {
-        console.error("Category not found:", value);
       }
     }
   };
 
   const handleSave = async () => {
     if (!teamData?.id) {
-      console.error("Team nicht gefunden", { processedTeamSlug, teamData });
-      toast.error("Team nicht gefunden. Bitte laden Sie die Seite neu.");
+      toast.error("Team nicht gefunden");
       return;
     }
     
@@ -88,7 +80,6 @@ export const useCategoryDialog = (teamSlug?: string) => {
     }
 
     try {
-      console.log("Saving category with team ID:", teamData.id);
       const success = await saveCategory(
         teamData.id,
         selectedCategory,
@@ -102,7 +93,6 @@ export const useCategoryDialog = (teamSlug?: string) => {
       if (success) {
         toast.success(selectedCategory === "new" ? "Kategorie erstellt" : "Kategorie aktualisiert");
         setOpen(false);
-        // Reset form
         setSelectedCategory("new");
         setCategoryName("");
         setIsPublic(true);
