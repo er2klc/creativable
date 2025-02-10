@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { X, ChevronLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +36,7 @@ export const SnapCard = ({
   }
 
   const handleClick = (e: React.MouseEvent) => {
-    if (snap.onClick) {
+    if (!isManaging && snap.onClick) {
       e.preventDefault();
       snap.onClick();
     }
