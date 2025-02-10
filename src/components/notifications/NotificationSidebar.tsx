@@ -92,12 +92,16 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      // Handle navigation based on type
+      // Navigationslogik für alle Benachrichtigungstypen
+      let targetPath = notification.target_page;
+      
+      // Prüfen auf leadId in metadata
       if (notification.metadata?.leadId) {
-        navigate(`/contacts/${notification.metadata.leadId}`);
-        onOpenChange(false);
-      } else if (notification.target_page) {
-        navigate(notification.target_page);
+        targetPath = `/contacts/${notification.metadata.leadId}`;
+      }
+
+      if (targetPath) {
+        navigate(targetPath);
         onOpenChange(false);
       }
     } catch (error) {

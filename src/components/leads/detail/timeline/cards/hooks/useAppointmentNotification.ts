@@ -1,6 +1,6 @@
 
 import { useEffect } from 'react';
-import { differenceInHours } from 'date-fns';
+import { differenceInHours, isSameHour } from 'date-fns';
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -21,6 +21,17 @@ export const useAppointmentNotification = ({ id, leadId, dueDate, content }: Use
       const hoursUntil = differenceInHours(appointmentDate, now);
       
       if (hoursUntil === 4) {
+        // Check if notification already exists for this appointment and hour
+        const { data: existingNotifications } = await supabase
+          .from('notifications')
+          .select('id')
+          .eq('metadata->appointmentId', id)
+          .eq('type', 'appointment_reminder');
+
+        if (existingNotifications && existingNotifications.length > 0) {
+          return; // Notification already exists
+        }
+
         const { data: lead } = await supabase
           .from('leads')
           .select('name')
@@ -54,7 +65,7 @@ export const useAppointmentNotification = ({ id, leadId, dueDate, content }: Use
       }
     };
 
-    const timer = setInterval(checkAndNotify, 60000);
+    const timer = setInterval(checkAndNotify, 60000); // Check every minute
     return () => clearInterval(timer);
   }, [id, dueDate, leadId, content]);
 };
