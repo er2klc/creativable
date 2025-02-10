@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   EditorComponent,
@@ -40,6 +39,7 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
+  // Extensions definieren
   const extensions = React.useMemo(
     () => [
       new BoldExtension(),
@@ -52,15 +52,16 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
       new HeadingExtension(),
       new EmojiExtension({
         data,
-        transformCaptured: (emoji) => emoji.native,
+        transformCaptured: (emoji) => emoji.native, // Emojis richtig einfügen
       }),
     ],
     []
   );
 
-  const { manager } = useRemirror({
+  // Remirror Manager initialisieren
+  const { manager, state } = useRemirror({
     extensions,
-    content,
+    content, // Richtiges Initial-Content-Handling
     stringHandler: 'html',
   });
 
@@ -68,15 +69,12 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     <div className="border rounded-md">
       <Remirror
         manager={manager}
-        initialContent={content}
-        onChange={({ helpers }) => {
-          const html = helpers.getHTML();
-          onChange(html);
-        }}
+        initialContent={state} // Richtiger Initialwert
+        onChange={({ helpers }) => onChange(helpers.getHTML())} // Verbesserter Change-Handler
         placeholder={placeholder}
       >
         <EditorToolbar />
-        <EditorComponent className="p-4 min-h-[150px] prose prose-sm max-w-none focus:outline-none" />
+        <EditorComponent className="p-4 min-h-[150px] focus:outline-none" />
       </Remirror>
     </div>
   );
@@ -92,62 +90,29 @@ function EditorToolbar() {
 
   return (
     <div className="flex flex-wrap gap-1 p-2 border-b bg-muted">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => commands.toggleBold()}
-        className={active.bold() ? 'bg-muted-foreground/20' : ''}
-      >
+      <ToolbarButton onClick={() => commands.toggleBold()} active={active.bold()}>
         <Bold className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => commands.toggleItalic()}
-        className={active.italic() ? 'bg-muted-foreground/20' : ''}
-      >
+      </ToolbarButton>
+      <ToolbarButton onClick={() => commands.toggleItalic()} active={active.italic()}>
         <Italic className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => commands.toggleUnderline()}
-        className={active.underline() ? 'bg-muted-foreground/20' : ''}
-      >
+      </ToolbarButton>
+      <ToolbarButton onClick={() => commands.toggleUnderline()} active={active.underline()}>
         <Underline className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => commands.toggleHeading({ level: 2 })}
-        className={active.heading({ level: 2 }) ? 'bg-muted-foreground/20' : ''}
-      >
+      </ToolbarButton>
+      <ToolbarButton onClick={() => commands.toggleHeading({ level: 2 })} active={active.heading({ level: 2 })}>
         <Heading2 className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => commands.toggleBulletList()}
-        className={active.bulletList() ? 'bg-muted-foreground/20' : ''}
-      >
+      </ToolbarButton>
+      <ToolbarButton onClick={() => commands.toggleBulletList()} active={active.bulletList()}>
         <List className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => commands.toggleOrderedList()}
-        className={active.orderedList() ? 'bg-muted-foreground/20' : ''}
-      >
+      </ToolbarButton>
+      <ToolbarButton onClick={() => commands.toggleOrderedList()} active={active.orderedList()}>
         <ListOrdered className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => commands.toggleBlockquote()}
-        className={active.blockquote() ? 'bg-muted-foreground/20' : ''}
-      >
+      </ToolbarButton>
+      <ToolbarButton onClick={() => commands.toggleBlockquote()} active={active.blockquote()}>
         <Quote className="h-4 w-4" />
-      </Button>
+      </ToolbarButton>
+
+      {/* Emoji Picker */}
       <Popover>
         <PopoverTrigger asChild>
           <Button variant="ghost" size="sm">
@@ -166,5 +131,19 @@ function EditorToolbar() {
         </PopoverContent>
       </Popover>
     </div>
+  );
+}
+
+// Einfache ToolbarButton Komponente für weniger Code-Wiederholung
+function ToolbarButton({ onClick, active, children }: { onClick: () => void; active: boolean; children: React.ReactNode }) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={onClick}
+      className={active ? 'bg-muted-foreground/20' : ''}
+    >
+      {children}
+    </Button>
   );
 }
