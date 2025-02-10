@@ -1,3 +1,4 @@
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
@@ -104,7 +105,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
   }
 
   return (
-    <div className="relative w-full">
+    <div className="relative w-full max-w-[552px] mx-auto">
       {showLeftArrow && (
         <Button
           variant="ghost"
@@ -119,7 +120,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
       <ScrollArea className="w-full">
         <div 
           ref={scrollContainerRef}
-          className="flex gap-2 py-2 px-4 min-w-full"
+          className="flex gap-2 py-2 px-4"
           onScroll={handleScroll}
         >
           <Badge

@@ -51,12 +51,11 @@ export const CreatePostForm = ({
     }
   });
   const location = useLocation();
-  const teamSlug = location.pathname.split('/')[3]; // Extracts team slug from URL
+  const teamSlug = location.pathname.split('/')[3];
   
   const { isUploading, setIsUploading, handleFileUpload } = useFileUpload(teamId);
   const { handleSubmission } = usePostSubmission(teamId, form.watch('categoryId'), onSuccess, teamMembers);
 
-  // Filter categories based on admin status
   const filteredCategories = categories?.filter(category => isAdmin || category.is_public);
 
   const onSubmit = async (values: FormValues) => {
@@ -91,8 +90,8 @@ export const CreatePostForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto">
-        <div className="sticky top-0 bg-white z-10 pb-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="sticky top-0 bg-white z-10 pb-4 max-w-[552px] mx-auto">
           <TabScrollArea 
             activeTab={categories?.find(c => c.id === form.watch('categoryId'))?.slug || 'all'}
             onCategoryClick={handleCategoryChange}
@@ -101,21 +100,23 @@ export const CreatePostForm = ({
           />
         </div>
         
-        <TitleField form={form} />
-        <ContentField form={form} />
-        <FileField form={form} />
-        
-        <div className="sticky bottom-0 bg-white pt-4 flex justify-end">
-          <Button type="submit" disabled={isUploading}>
-            {isUploading ? (
-              <>
-                <Upload className="h-4 w-4 mr-2 animate-spin" />
-                Wird hochgeladen...
-              </>
-            ) : (
-              editMode ? 'Aktualisieren' : 'Erstellen'
-            )}
-          </Button>
+        <div className="space-y-4 px-4">
+          <TitleField form={form} />
+          <ContentField form={form} />
+          <FileField form={form} />
+          
+          <div className="sticky bottom-0 bg-white pt-4 flex justify-end">
+            <Button type="submit" disabled={isUploading}>
+              {isUploading ? (
+                <>
+                  <Upload className="h-4 w-4 mr-2 animate-spin" />
+                  Wird hochgeladen...
+                </>
+              ) : (
+                editMode ? 'Aktualisieren' : 'Erstellen'
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>
