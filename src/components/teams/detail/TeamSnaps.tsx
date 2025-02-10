@@ -5,7 +5,7 @@ import { AdminSnapList } from "./snap-lists/AdminSnapList";
 import { HiddenSnapsList } from "./snap-lists/HiddenSnapsList";
 import { PostSnapsList } from "./snap-lists/PostSnapsList";
 import { useSnapManagement } from "./hooks/useSnapManagement";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Snap } from "./types";
 
 interface TeamSnapsProps {
@@ -30,18 +30,26 @@ export const TeamSnaps = ({
   activeSnapView 
 }: TeamSnapsProps) => {
   const navigate = useNavigate();
+  const { teamSlug: routeTeamSlug } = useParams();
   const { hiddenSnaps, hideSnapMutation, unhideSnapMutation } = useSnapManagement(teamId);
 
+  const currentTeamSlug = teamSlug || routeTeamSlug;
+
   const handleSnapClick = (snapId: string) => {
-    console.log("handleSnapClick called with:", { snapId, teamSlug });
+    if (!currentTeamSlug) {
+      console.error("No team slug available for navigation");
+      return;
+    }
+
+    console.log("handleSnapClick called with:", { snapId, currentTeamSlug });
     
     if (snapId === "posts") {
-      console.log("Navigating to posts with teamSlug:", teamSlug);
-      navigate(`/unity/team/${teamSlug}/posts`);
+      console.log("Navigating to posts with teamSlug:", currentTeamSlug);
+      navigate(`/unity/team/${currentTeamSlug}/posts`);
     } else if (snapId === "calendar") {
       onCalendarClick();
     } else {
-      navigate(`/unity/team/${teamSlug}/${snapId}`);
+      navigate(`/unity/team/${currentTeamSlug}/${snapId}`);
     }
     onSnapClick(snapId);
   };
@@ -120,6 +128,14 @@ export const TeamSnaps = ({
   const visibleRegularSnaps = regularSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
   const visibleAdminSnaps = adminSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
   const hiddenSnapsList = allSnaps.filter(snap => hiddenSnaps.includes(snap.id));
+
+  if (!currentTeamSlug) {
+    return (
+      <div className="p-4 text-center text-red-500">
+        Fehler: Team-Slug nicht gefunden
+      </div>
+    );
+  }
 
   if (activeSnapView === "posts") {
     return <PostSnapsList teamId={teamId} isAdmin={isAdmin} />;
