@@ -43,6 +43,7 @@ export const CategoryDialogForm = ({
         selectedCategory={selectedCategory}
         onCategoryChange={onCategoryChange}
         categories={categories}
+        isAdmin={true} // Always show all categories in edit mode
       />
       
       <CategoryNameInput

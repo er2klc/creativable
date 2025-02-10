@@ -5,6 +5,9 @@ import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useNavigate } from "react-router-dom";
 import { EditCategoryDialog } from "./EditCategoryDialog";
 import { CreatePostDialog } from "../CreatePostDialog";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface TeamHeaderProps {
   teamName: string;
@@ -14,6 +17,24 @@ interface TeamHeaderProps {
 
 export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) => {
   const navigate = useNavigate();
+  const user = useUser();
+
+  const { data: teamMember } = useQuery({
+    queryKey: ['team-member-role', teamSlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', teamSlug)
+        .eq('user_id', user?.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
@@ -36,7 +57,7 @@ export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) =
               </div>
             </div>
             <div className="flex items-center gap-4">
-              <EditCategoryDialog teamId={teamSlug} />
+              {isAdmin && <EditCategoryDialog teamId={teamSlug} />}
               <div className="w-[300px]">
                 <SearchBar />
               </div>
