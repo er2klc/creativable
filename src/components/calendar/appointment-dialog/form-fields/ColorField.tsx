@@ -34,6 +34,7 @@ export const ColorField = ({ form }: ColorFieldProps) => {
     <FormField
       control={form.control}
       name="color"
+      defaultValue="#F2FCE2"
       render={({ field }) => (
         <FormItem>
           <FormLabel>Farbe</FormLabel>
@@ -76,3 +77,4 @@ export const ColorField = ({ form }: ColorFieldProps) => {
     />
   );
 };
+
