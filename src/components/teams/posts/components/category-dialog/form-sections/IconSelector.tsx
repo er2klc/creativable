@@ -1,5 +1,6 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { availableIcons } from "../constants";
 
 interface IconSelectorProps {
@@ -15,6 +16,7 @@ export const IconSelector = ({
 
   return (
     <div className="grid gap-2">
+      <Label>Icon für Kategorie</Label>
       <Select
         value={selectedIcon}
         onValueChange={onIconChange}

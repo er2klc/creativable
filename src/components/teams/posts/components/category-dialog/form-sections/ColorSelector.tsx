@@ -1,5 +1,6 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { availableColors } from "../constants";
 
 interface ColorSelectorProps {
@@ -13,6 +14,7 @@ export const ColorSelector = ({
 }: ColorSelectorProps) => {
   return (
     <div className="grid gap-2">
+      <Label>Hintergrundfarbe für die Kategorie</Label>
       <Select
         value={selectedColor}
         onValueChange={onColorChange}

@@ -1,10 +1,11 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export const sizes = [
-  { value: 'small', name: 'Klein' },
-  { value: 'medium', name: 'Mittel' },
-  { value: 'large', name: 'Groß' }
+  { value: 'small', name: 'Klein - kompakte Darstellung' },
+  { value: 'medium', name: 'Mittel - standard Darstellung' },
+  { value: 'large', name: 'Groß - erweiterte Darstellung' }
 ] as const;
 
 interface SizeSelectorProps {
@@ -18,6 +19,7 @@ export const SizeSelector = ({
 }: SizeSelectorProps) => {
   return (
     <div className="grid gap-2">
+      <Label>Darstellungsgröße der Kategorie</Label>
       <Select
         value={selectedSize}
         onValueChange={onSizeChange}

@@ -46,6 +46,10 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     const category = categories?.find(c => c.slug === categorySlug);
     if (category) {
       handleCategoryChange(category.id);
+      setSelectedColor(category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]');
+      setSelectedIcon(category.icon || 'MessageCircle');
+      setCategoryName(category.name);
+      setIsPublic(category.is_public ?? true);
     }
   };
 
