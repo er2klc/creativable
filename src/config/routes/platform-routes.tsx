@@ -5,6 +5,7 @@ import TeamDetail from "@/pages/TeamDetail";
 import PlatformDetail from "@/pages/PlatformDetail";
 import LeaderBoard from "@/pages/LeaderBoard";
 import TeamPulse from "@/pages/TeamPulse";
+import { PostsAndDiscussions } from "@/components/teams/posts/PostsAndDiscussions";
 
 export const platformRoutes = [
   {
@@ -16,6 +17,11 @@ export const platformRoutes = [
     path: "/unity/team/:teamSlug",
     element: <TeamDetail />,
     label: "Team Detail",
+  },
+  {
+    path: "/unity/team/:teamSlug/posts",
+    element: <PostsAndDiscussions />,
+    label: "Team Posts",
   },
   {
     path: "/unity/team/:teamSlug/pulse",
@@ -38,3 +44,4 @@ export const platformRoutes = [
     label: "Leaderboard",
   },
 ];
+

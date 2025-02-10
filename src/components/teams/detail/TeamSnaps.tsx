@@ -1,4 +1,3 @@
-
 import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy, BarChart3 } from "lucide-react";
 import { SnapList } from "./snap-lists/SnapList";
 import { AdminSnapList } from "./snap-lists/AdminSnapList";
@@ -36,14 +35,8 @@ export const TeamSnaps = ({
     console.log("handleSnapClick called with:", { snapId, teamSlug });
     
     if (snapId === "posts") {
-      const postsUrl = `/unity/team/${teamSlug}/posts`;
-      console.log("Navigating to posts:", postsUrl);
-      navigate(postsUrl);
-      onSnapClick(snapId);
-      return;
-    } 
-    
-    if (snapId === "calendar") {
+      navigate(`/unity/team/${teamSlug}/posts`);
+    } else if (snapId === "calendar") {
       onCalendarClick();
     } else {
       navigate(`/unity/team/${teamSlug}/${snapId}`);
