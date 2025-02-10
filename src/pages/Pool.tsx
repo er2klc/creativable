@@ -5,25 +5,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadDetailView } from "@/components/leads/LeadDetailView";
 import { Tables } from "@/integrations/supabase/types";
-import { cn } from "@/lib/utils";
 import { PartnerOnboardingPipeline } from "@/components/partners/onboarding/PartnerOnboardingPipeline";
 import { PoolHeader } from "@/components/pool/PoolHeader";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LeadTableView } from "@/components/leads/LeadTableView";
 import { toast } from "sonner";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { StatusSelector } from "@/components/pool/status/StatusSelector";
+import { PartnerPhaseList } from "@/components/pool/partner/PartnerPhaseList";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const { status = 'partner' } = useParams<{ status?: string }>();
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>(isMobile ? 'list' : 'kanban');
@@ -120,59 +112,11 @@ export default function Pool() {
 
   const filteredLeads = leads.filter(lead => lead.status === status);
 
-  // Filter partner leads by phase
-  const getPartnerLeadsByPhase = (phase: string) => {
-    return filteredLeads.filter(lead => {
-      const progress = lead.onboarding_progress as any;
-      switch(phase) {
-        case 'start':
-          return !progress?.training_provided;
-        case 'goals':
-          return progress?.training_provided && !progress?.team_invited;
-        case 'presentation':
-          return progress?.team_invited;
-        default:
-          return true;
-      }
-    });
-  };
-
   return (
     <div className="px-4 md:px-8 max-w-full overflow-x-hidden">
       <PoolHeader viewMode={viewMode} setViewMode={setViewMode} />
       <div className="pt-20 md:pt-[84px] mb-8">
-        {isMobile ? (
-          <Select value={status} onValueChange={(value) => navigate(`/pool/${value}`)}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Status auswählen" />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map((option) => (
-                <SelectItem key={option.id} value={option.id}>
-                  {option.label} ({option.count})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <Tabs defaultValue={status} className="w-full" onValueChange={(value) => navigate(`/pool/${value}`)}>
-            <TabsList className="flex h-auto w-full bg-transparent gap-2 justify-start">
-              {statusOptions.map((option) => (
-                <TabsTrigger 
-                  key={option.id}
-                  value={option.id}
-                  className={cn(
-                    "data-[state=active]:bg-accent data-[state=active]:text-accent-foreground",
-                    "border border-input hover:bg-accent/50",
-                    "h-8 px-3 text-sm"
-                  )}
-                >
-                  {option.label} ({option.count})
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </Tabs>
-        )}
+        <StatusSelector status={status} statusOptions={statusOptions} />
       </div>
 
       <div className="overflow-x-hidden w-full">
@@ -181,32 +125,10 @@ export default function Pool() {
             {viewMode === 'kanban' ? (
               <PartnerOnboardingPipeline />
             ) : (
-              <div className="space-y-8">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Start & Setup</h3>
-                  <LeadTableView 
-                    leads={getPartnerLeadsByPhase('start')}
-                    onLeadClick={setSelectedLeadId}
-                    selectedPipelineId={null}
-                  />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Ziele & Kontakte</h3>
-                  <LeadTableView 
-                    leads={getPartnerLeadsByPhase('goals')}
-                    onLeadClick={setSelectedLeadId}
-                    selectedPipelineId={null}
-                  />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Präsentation & Abschluss</h3>
-                  <LeadTableView 
-                    leads={getPartnerLeadsByPhase('presentation')}
-                    onLeadClick={setSelectedLeadId}
-                    selectedPipelineId={null}
-                  />
-                </div>
-              </div>
+              <PartnerPhaseList 
+                leads={filteredLeads}
+                onLeadClick={setSelectedLeadId}
+              />
             )}
           </>
         )}
