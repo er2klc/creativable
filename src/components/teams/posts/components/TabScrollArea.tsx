@@ -24,7 +24,6 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     scrollTabs
   } = useTabScroll();
 
-  // First fetch team by slug to get the correct UUID
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
@@ -50,7 +49,6 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     enabled: !!teamSlug,
   });
 
-  // Then fetch categories using the team's UUID
   const { data: allCategories, isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['team-categories', team?.id],
     queryFn: async () => {
