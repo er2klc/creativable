@@ -269,11 +269,11 @@ export default function TodoList() {
 
   return (
     <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <CheckSquare className="h-6 w-6" />
-          ToDos
-        </h1>
+      <div className="flex justify-between items-center mb-6 bg-white rounded-lg shadow-sm p-4">
+        <div className="flex items-center gap-2">
+          <CheckSquare className="h-6 w-6 text-primary" />
+          <h1 className="text-2xl font-bold">ToDos ({incompleteTasks.length})</h1>
+        </div>
         <Button onClick={() => setIsAddTaskOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           {settings?.language === "en" ? "New Task" : "Neue Aufgabe"}
