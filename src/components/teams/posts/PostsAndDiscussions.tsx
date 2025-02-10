@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate, useParams } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare } from "lucide-react";
+import { TeamHeader } from "@/components/teams/TeamHeader";
 
 export function PostsAndDiscussions() {
   const isMobile = useIsMobile();
@@ -102,50 +103,54 @@ export function PostsAndDiscussions() {
   }
 
   return (
-    <div className="space-y-6 max-w-[1200px] mx-auto px-4">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-6">
-        <MessageSquare className="h-5 w-5" />
-        <h1 className="text-lg md:text-xl font-semibold text-foreground">
-          Community
-        </h1>
-      </div>
+    <>
+      <TeamHeader team={team} isInSnapView={false} />
+      <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
+        {/* Header */}
+        <div className="flex items-center gap-2 mb-6">
+          <MessageSquare className="h-5 w-5" />
+          <h1 className="text-lg md:text-xl font-semibold text-foreground">
+            Community
+          </h1>
+        </div>
 
-      {/* Category Tabs in ScrollArea */}
-      <ScrollArea className="w-full border-b border-border">
-        <div className="flex flex-nowrap gap-2 pb-2">
-          <Badge
-            variant="outline"
-            className={cn(
-              "cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap",
-              "bg-background hover:bg-primary/90"
-            )}
-            onClick={() => handleCategoryClick()}
-          >
-            Alle Beiträge
-          </Badge>
-          {allCategories?.map((category) => (
+        {/* Category Tabs in ScrollArea */}
+        <ScrollArea className="w-full border-b border-border">
+          <div className="flex flex-nowrap gap-2 pb-2">
             <Badge
-              key={category.id}
               variant="outline"
               className={cn(
                 "cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap",
                 "bg-background hover:bg-primary/90"
               )}
-              onClick={() => handleCategoryClick(category.slug)}
+              onClick={() => handleCategoryClick()}
             >
-              {category.name}
+              Alle Beiträge
             </Badge>
-          ))}
-        </div>
-      </ScrollArea>
+            {allCategories?.map((category) => (
+              <Badge
+                key={category.id}
+                variant="outline"
+                className={cn(
+                  "cursor-pointer px-4 py-2 text-sm hover:bg-primary hover:text-primary-foreground transition-colors whitespace-nowrap",
+                  "bg-background hover:bg-primary/90"
+                )}
+                onClick={() => handleCategoryClick(category.slug)}
+              >
+                {category.name}
+              </Badge>
+            ))}
+          </div>
+        </ScrollArea>
 
-      {/* Main Content Area with max width and scroll */}
-      <div className="w-full overflow-hidden">
-        <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
-          <CategoryOverview teamId={team.id} teamSlug={teamSlug} />
+        {/* Main Content Area with max width and scroll */}
+        <div className="w-full overflow-hidden">
+          <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
+            <CategoryOverview teamId={team.id} teamSlug={teamSlug} />
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
+
