@@ -1,5 +1,32 @@
+
 import { LeadWithRelations } from "@/types/leads";
-import { TimelineItem } from "./TimelineItem";
+
+export interface TimelineItem {
+  id: string;
+  type: string;
+  content: string;
+  timestamp: string;
+  metadata?: {
+    dueDate?: string;
+    fileName?: string;
+    fileType?: string;
+    fileSize?: number;
+    filePath?: string;
+    status?: "completed" | "cancelled" | "outdated";
+    completedAt?: string;
+    cancelledAt?: string;
+    updatedAt?: string;
+    oldDate?: string;
+    newDate?: string;
+    type?: string;
+    oldStatus?: string;
+    newStatus?: string;
+    last_edited_at?: string;
+    meetingType?: string;
+    color?: string;
+  };
+  created_at?: string;
+}
 
 export const createStatusChangeItem = (lead: LeadWithRelations): TimelineItem => {
   let statusMessage = '';
@@ -24,12 +51,13 @@ export const createStatusChangeItem = (lead: LeadWithRelations): TimelineItem =>
 
   return {
     id: `status-${lead.id}`,
-    type: 'phase_change',
+    type: 'status_change',
     content: statusMessage,
-    timestamp: lead.updated_at,
+    timestamp: lead.updated_at || new Date().toISOString(),
     metadata: {
       oldStatus: lead.status,
       newStatus: lead.status,
+      timestamp: lead.updated_at || new Date().toISOString()
     }
   };
 };
