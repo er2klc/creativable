@@ -3,7 +3,6 @@ import { Calendar, Edit, Trash2 } from "lucide-react";
 import { useParams } from "react-router-dom";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { useState } from "react";
-import { MeetingTypeIcon } from "./MeetingTypeIcon";
 import { getMeetingTypeLabel, getMeetingTypeIcon } from "./utils/meetingTypeUtils";
 import { useAppointmentNotification } from "./hooks/useAppointmentNotification";
 import { TimeDisplay } from "./components/TimeDisplay";
@@ -43,7 +42,7 @@ export const AppointmentCard = ({
         <div className="space-y-2">
           <div className="flex items-center gap-2">
             {metadata?.meetingType ? (
-              <MeetingTypeIcon iconName={metadata.meetingType} className="h-4 w-4 text-blue-500" />
+              getMeetingTypeIcon(metadata.meetingType)
             ) : (
               <Calendar className="h-4 w-4 text-blue-500" />
             )}
