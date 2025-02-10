@@ -15,15 +15,17 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
 
-  // Extract actual team slug from URL format
-  const processedTeamSlug = teamSlug?.replace("unity/team/", "").split("/")[0];
+  // Extract team slug from route path - make sure we get the actual slug without any path parts
+  const processedTeamSlug = teamSlug?.split('/').find(part => part && !part.includes('unity') && !part.includes('team') && !part.includes('posts') && !part.includes('category'));
   
+  console.log("Using team slug:", processedTeamSlug); // Debug log
+
   // Load team ID from slug
   const { data: teamData } = useQuery({
     queryKey: ['team-by-slug', processedTeamSlug],
     queryFn: async () => {
       if (!processedTeamSlug) {
-        console.error("No team slug provided", { processedTeamSlug });
+        console.error("No team slug provided", { processedTeamSlug, originalSlug: teamSlug });
         return null;
       }
       
@@ -32,12 +34,13 @@ export const useCategoryDialog = (teamSlug?: string) => {
         .from('teams')
         .select('id')
         .eq('slug', processedTeamSlug)
-        .maybeSingle();
+        .single();
 
       if (error) {
         console.error("Error fetching team:", error);
         throw error;
       }
+      
       console.log("Found team data:", data);
       return data;
     },
