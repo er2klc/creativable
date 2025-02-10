@@ -91,7 +91,7 @@ export const CreatePostForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="sticky top-0 bg-white z-10 pb-4">
+        <div className="sticky top-0 bg-white z-10 pb-4 max-h-[200px] overflow-auto">
           <TabScrollArea 
             activeTab={categories?.find(c => c.id === form.watch('categoryId'))?.slug || 'all'}
             onCategoryClick={handleCategoryChange}
@@ -123,3 +123,4 @@ export const CreatePostForm = ({
     </Form>
   );
 };
+
