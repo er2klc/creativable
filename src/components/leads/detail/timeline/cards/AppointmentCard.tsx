@@ -1,12 +1,14 @@
 
 import { Calendar, Edit, Trash2, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, differenceInHours } from "date-fns";
 import { de } from "date-fns/locale";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MeetingTypeIcon } from "./MeetingTypeIcon";
 import { useParams } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface AppointmentCardProps {
   id: string;
@@ -69,10 +71,59 @@ export const AppointmentCard = ({
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
   const { leadId } = useParams<{ leadId: string }>();
   
-  const getDaysUntil = (date: string) => {
+  useEffect(() => {
+    const checkAndNotify = async () => {
+      if (!metadata?.dueDate || !leadId) return;
+      
+      const appointmentDate = new Date(metadata.dueDate);
+      const now = new Date();
+      const hoursUntil = differenceInHours(appointmentDate, now);
+      
+      // Check if it's exactly 4 hours before the appointment
+      if (hoursUntil === 4) {
+        const { data: lead } = await supabase
+          .from('leads')
+          .select('name')
+          .eq('id', leadId)
+          .single();
+
+        if (!lead) return;
+
+        const { error } = await supabase
+          .from('notifications')
+          .insert({
+            title: 'Termin in 4 Stunden',
+            content: `Dein Termin "${content}" mit ${lead.name} ist in 4 Stunden.`,
+            type: 'appointment_reminder',
+            metadata: {
+              appointmentId: id,
+              leadId,
+              dueDate: metadata.dueDate
+            }
+          });
+
+        if (error) {
+          console.error('Error creating notification:', error);
+          toast.error('Fehler beim Erstellen der Erinnerung');
+        }
+      }
+    };
+
+    const timer = setInterval(checkAndNotify, 60000); // Check every minute
+    return () => clearInterval(timer);
+  }, [id, metadata?.dueDate, leadId, content]);
+
+  const getTimeDisplay = (date: string) => {
     const days = differenceInDays(new Date(date), new Date());
+    const hours = differenceInHours(new Date(date), new Date());
+    
+    if (days === 0) {
+      if (hours < 0) return null;
+      if (hours === 0) return "Jetzt";
+      return `Heute in ${hours} ${hours === 1 ? 'Stunde' : 'Stunden'}`;
+    }
     if (days < 0) return null;
-    return days;
+    return `In ${days} ${days === 1 ? 'Tag' : 'Tagen'}`;
   };
 
   return (
@@ -103,9 +154,9 @@ export const AppointmentCard = ({
                 })}
               </div>
             )}
-            {metadata?.dueDate && getDaysUntil(metadata.dueDate) !== null && (
+            {metadata?.dueDate && getTimeDisplay(metadata.dueDate) && (
               <div className="text-blue-500">
-                In {getDaysUntil(metadata.dueDate)} Tagen
+                {getTimeDisplay(metadata.dueDate)}
               </div>
             )}
           </div>
@@ -147,4 +198,3 @@ export const AppointmentCard = ({
     </>
   );
 };
-
