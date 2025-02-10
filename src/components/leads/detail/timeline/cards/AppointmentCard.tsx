@@ -1,11 +1,12 @@
 
 import { Calendar, Edit, Trash2, Phone, MapPin, Video, Users, BarChart, RefreshCw } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { de } from "date-fns/locale";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { useState } from "react";
 import { MeetingTypeIcon } from "./MeetingTypeIcon";
+import { useParams } from "react-router-dom";
 
 interface AppointmentCardProps {
   id: string;
@@ -66,6 +67,13 @@ export const AppointmentCard = ({
 }: AppointmentCardProps) => {
   const { settings } = useSettings();
   const [isEditingAppointment, setIsEditingAppointment] = useState(false);
+  const { leadId } = useParams<{ leadId: string }>();
+  
+  const getDaysUntil = (date: string) => {
+    const days = differenceInDays(new Date(date), new Date());
+    if (days < 0) return null;
+    return days;
+  };
 
   return (
     <>
@@ -87,13 +95,20 @@ export const AppointmentCard = ({
             </div>
           )}
           
-          {metadata?.dueDate && (
-            <div className="text-sm text-gray-600">
-              {format(new Date(metadata.dueDate), 'PPp', {
-                locale: settings?.language === "en" ? undefined : de
-              })}
-            </div>
-          )}
+          <div className="flex justify-between items-center text-sm text-gray-600">
+            {metadata?.dueDate && (
+              <div>
+                {format(new Date(metadata.dueDate), 'PPp', {
+                  locale: settings?.language === "en" ? undefined : de
+                })}
+              </div>
+            )}
+            {metadata?.dueDate && getDaysUntil(metadata.dueDate) !== null && (
+              <div className="text-blue-500">
+                In {getDaysUntil(metadata.dueDate)} Tagen
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -121,7 +136,7 @@ export const AppointmentCard = ({
           initialSelectedDate={metadata?.dueDate ? new Date(metadata.dueDate) : null}
           appointmentToEdit={{
             id,
-            leadId: '',
+            leadId: leadId || '',
             time: metadata?.dueDate ? format(new Date(metadata.dueDate), 'HH:mm') : '09:00',
             title: content,
             color: metadata?.color || '#40E0D0',
