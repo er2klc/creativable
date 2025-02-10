@@ -70,3 +70,4 @@ export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
     </div>
   );
 };
+

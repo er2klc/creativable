@@ -44,7 +44,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   return (
     <Card className={cn(
       "flex-1 p-4 text-sm overflow-hidden bg-white shadow-md relative",
-      isViewCard ? "border border-orange-500" : isExpired ? "border-red-500" : "border-gray-200"
+      isViewCard ? "border border-orange-500" : isExpired ? "border-red-500 bg-gray-50" : "border-gray-200"
     )}>
       {isViewCard && latestProgress > 0 && isVideoActive && (
         <>
@@ -95,7 +95,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 onClick={() => copyToClipboard(metadata.presentationUrl!)}
                 className={cn(
                   "flex items-center gap-2 w-fit",
-                  isExpired && "border-red-500 hover:border-red-600"
+                  isExpired && "border-red-500 hover:border-red-600 opacity-50 cursor-not-allowed"
                 )}
                 disabled={isExpired}
               >
