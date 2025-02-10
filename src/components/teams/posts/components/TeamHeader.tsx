@@ -19,19 +19,39 @@ export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) =
   const navigate = useNavigate();
   const user = useUser();
 
-  const { data: teamMember } = useQuery({
-    queryKey: ['team-member-role', teamSlug],
+  // First fetch team by slug to get the correct UUID
+  const { data: team, isLoading: isTeamLoading } = useQuery({
+    queryKey: ['team', teamSlug],
     queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamSlug)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!teamSlug,
+  });
+
+  // Then fetch member role using the team's UUID
+  const { data: teamMember } = useQuery({
+    queryKey: ['team-member-role', team?.id],
+    queryFn: async () => {
+      if (!team?.id || !user?.id) return null;
+
       const { data, error } = await supabase
         .from('team_members')
         .select('role')
-        .eq('team_id', teamSlug)
-        .eq('user_id', user?.id)
+        .eq('team_id', team.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
       return data;
     },
+    enabled: !!team?.id && !!user?.id,
   });
 
   const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
