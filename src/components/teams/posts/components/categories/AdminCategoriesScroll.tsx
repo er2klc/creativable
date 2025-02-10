@@ -60,14 +60,9 @@ export const AdminCategoriesScroll = ({
     enabled: !!team?.id,
   });
 
-  const defaultTabColors = {
-    1: 'bg-[#FEF7CD] hover:bg-[#EEB691] text-[#8B4513]',
-    2: 'bg-[#FEC6A1] hover:bg-[#EEB691] text-[#8B4513]',
-    3: 'bg-[#E5DEFF] hover:bg-[#D5CEEF] text-[#483D8B]',
-    4: 'bg-[#FFDEE2] hover:bg-[#EFCED2] text-[#8B3D3D]',
-    5: 'bg-[#FDE1D3] hover:bg-[#EDD1C3] text-[#8B5742]',
-    6: 'bg-[#D3E4FD] hover:bg-[#C3D4ED] text-[#4A708B]',
-    7: 'bg-[#F1F0FB] hover:bg-[#E1E0EB] text-[#4A4A4A]',
+  const handleCategoryClick = (slug: string) => {
+    console.log("Category clicked:", slug); // Debug log
+    onCategoryClick(slug);
   };
 
   return (
@@ -97,10 +92,10 @@ export const AdminCategoriesScroll = ({
                 variant="outline"
                 className={cn(
                   "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2 shrink-0",
-                  category.color || defaultTabColors[(index % 7 + 1) as keyof typeof defaultTabColors],
+                  category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
                   activeTab === category.slug ? "border-primary" : "border-transparent"
                 )}
-                onClick={() => onCategoryClick(category.slug)}
+                onClick={() => handleCategoryClick(category.slug)}
               >
                 <IconComponent className="h-4 w-4" />
                 {category.name}
