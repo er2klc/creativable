@@ -37,7 +37,7 @@ export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
   };
 
   return (
-    <div className={`relative group bg-white border border-red-500 rounded-lg p-4 w-full ${isExpired ? 'opacity-50' : ''}`}>
+    <div className="relative group bg-white border border-red-500 rounded-lg p-4 w-full">
       <div className="flex items-start gap-4">
         <div className="flex-1 min-w-0">
           <div className="font-medium mb-2">{metadata?.title || content}</div>
@@ -89,4 +89,3 @@ export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
     </div>
   );
 };
-
