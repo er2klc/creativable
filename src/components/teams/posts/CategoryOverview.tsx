@@ -5,6 +5,7 @@ import { Post } from "./types/post";
 import { PostCard } from "./components/PostCard";
 import { LoadingState } from "./components/LoadingState";
 import { EmptyState } from "./components/EmptyState";
+import { cn } from "@/lib/utils";
 
 interface CategoryOverviewProps {
   teamId: string;
@@ -27,6 +28,36 @@ export function CategoryOverview({ teamId, teamSlug, categorySlug }: CategoryOve
       return data;
     },
     enabled: !!teamSlug,
+  });
+
+  // Then fetch category settings
+  const { data: categorySettings } = useQuery({
+    queryKey: ['category-settings', team?.id, categorySlug],
+    queryFn: async () => {
+      if (!team?.id) return null;
+
+      let categoryId = null;
+      if (categorySlug) {
+        const { data: category } = await supabase
+          .from('team_categories')
+          .select('id')
+          .eq('team_id', team.id)
+          .eq('slug', categorySlug)
+          .maybeSingle();
+        
+        categoryId = category?.id;
+      }
+
+      const { data, error } = await supabase
+        .from('team_category_settings')
+        .select('*')
+        .eq('team_id', team.id)
+        .eq('category_id', categoryId);
+
+      if (error) throw error;
+      return data[0];
+    },
+    enabled: !!team?.id,
   });
 
   // Then fetch posts using the team's UUID
@@ -79,8 +110,16 @@ export function CategoryOverview({ teamId, teamSlug, categorySlug }: CategoryOve
     return <EmptyState />;
   }
 
+  const size = categorySettings?.size || 'small';
+  
+  const gridSizeClass = {
+    small: 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3',
+    medium: 'grid-cols-1 md:grid-cols-2',
+    large: 'grid-cols-1'
+  }[size];
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    <div className={cn("grid gap-4", gridSizeClass)}>
       {posts.map((post) => (
         <PostCard key={post.id} post={post} teamSlug={teamSlug} />
       ))}

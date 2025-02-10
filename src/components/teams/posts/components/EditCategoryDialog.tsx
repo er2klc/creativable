@@ -48,6 +48,12 @@ const availableColors = [
   { name: 'Grau', value: 'bg-[#F1F0FB] hover:bg-[#E1E0EB] text-[#4A4A4A]' },
 ];
 
+const sizes = [
+  { name: 'Klein', value: 'small' },
+  { name: 'Medium', value: 'medium' },
+  { name: 'Groß', value: 'large' },
+];
+
 export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
@@ -58,6 +64,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   const [isPublic, setIsPublic] = useState(true);
   const [selectedIcon, setSelectedIcon] = useState("MessageCircle");
   const [selectedColor, setSelectedColor] = useState(availableColors[0].value);
+  const [selectedSize, setSelectedSize] = useState("small");
 
   // First fetch team by slug
   const { data: team } = useQuery({
@@ -93,19 +100,39 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
         return [];
       }
 
-      const { data, error } = await supabase
+      const { data: categories, error: categoriesError } = await supabase
         .from('team_categories')
         .select('*')
         .eq('team_id', team.id)
         .order('order_index');
 
-      if (error) {
-        console.error('Error fetching categories:', error);
-        throw error;
+      if (categoriesError) {
+        console.error('Error fetching categories:', categoriesError);
+        throw categoriesError;
       }
 
-      console.log('Found categories:', data);
-      return data;
+      // Fetch category settings
+      const { data: settings, error: settingsError } = await supabase
+        .from('team_category_settings')
+        .select('*')
+        .eq('team_id', team.id);
+
+      if (settingsError) {
+        console.error('Error fetching category settings:', settingsError);
+        throw settingsError;
+      }
+
+      // Merge categories with their settings
+      const categoriesWithSettings = categories.map(category => {
+        const setting = settings.find(s => s.category_id === category.id);
+        return {
+          ...category,
+          size: setting?.size || 'small'
+        };
+      });
+
+      console.log('Found categories:', categoriesWithSettings);
+      return categoriesWithSettings;
     },
     enabled: !!team?.id,
   });
@@ -118,6 +145,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
       setIsPublic(true);
       setSelectedIcon("MessageCircle");
       setSelectedColor(availableColors[0].value);
+      setSelectedSize("small");
     } else {
       const category = categories?.find(cat => cat.id === value);
       if (category) {
@@ -125,6 +153,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
         setIsPublic(category.is_public ?? true);
         setSelectedIcon(category.icon || "MessageCircle");
         setSelectedColor(category.color || availableColors[0].value);
+        setSelectedSize(category.size || "small");
       }
     }
   };
@@ -142,7 +171,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     try {
       if (selectedCategory !== "new") {
         // Update category
-        const { error } = await supabase
+        const { error: categoryError } = await supabase
           .from("team_categories")
           .update({ 
             name: categoryName,
@@ -152,10 +181,21 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
           })
           .eq("id", selectedCategory);
 
-        if (error) throw error;
+        if (categoryError) throw categoryError;
+
+        // Update or insert category settings
+        const { error: settingsError } = await supabase
+          .from("team_category_settings")
+          .upsert({
+            team_id: team.id,
+            category_id: selectedCategory,
+            size: selectedSize
+          });
+
+        if (settingsError) throw settingsError;
       } else {
         // Create new category
-        const { error } = await supabase
+        const { data: newCategory, error: categoryError } = await supabase
           .from("team_categories")
           .insert({
             team_id: team.id,
@@ -163,9 +203,22 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
             is_public: isPublic,
             icon: selectedIcon,
             color: selectedColor
+          })
+          .select()
+          .single();
+
+        if (categoryError) throw categoryError;
+
+        // Create category settings
+        const { error: settingsError } = await supabase
+          .from("team_category_settings")
+          .insert({
+            team_id: team.id,
+            category_id: newCategory.id,
+            size: selectedSize
           });
 
-        if (error) throw error;
+        if (settingsError) throw settingsError;
       }
 
       await queryClient.invalidateQueries({ queryKey: ["team-categories"] });
@@ -294,6 +347,24 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
             </Select>
           </div>
 
+          <div className="grid gap-2">
+            <Select
+              value={selectedSize}
+              onValueChange={setSelectedSize}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Größe auswählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {sizes.map((size) => (
+                  <SelectItem key={size.value} value={size.value}>
+                    {size.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {isPublic ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
@@ -325,3 +396,4 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     </Dialog>
   );
 };
+
