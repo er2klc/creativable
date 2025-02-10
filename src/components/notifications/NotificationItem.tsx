@@ -46,12 +46,10 @@ export const NotificationItem = ({
 
   // Construct the correct URL for presentations
   const getTargetUrl = () => {
-    if (notification.type.startsWith('presentation_')) {
-      return notification.metadata?.leadId ? 
-        `/contacts/${notification.metadata.leadId}` : 
-        (notification.target_page || '');
+    if (notification.metadata?.leadId) {
+      return `/contacts/${notification.metadata.leadId}`;
     }
-    return notification.target_page || (notification.metadata?.leadId ? `/contacts/${notification.metadata.leadId}` : '');
+    return notification.target_page || '';
   };
 
   return (
@@ -65,7 +63,7 @@ export const NotificationItem = ({
         <div className="flex items-center gap-2 flex-1">
           {getIconComponent(notification.type)}
           <h3 className="font-medium">
-            {notification.title}
+            {notification.type === 'presentation_view' ? 'Präsentation URL aufgerufen' : notification.title}
           </h3>
         </div>
         <span className="text-xs text-gray-500 whitespace-nowrap">
@@ -90,3 +88,4 @@ export const NotificationItem = ({
     </div>
   );
 };
+
