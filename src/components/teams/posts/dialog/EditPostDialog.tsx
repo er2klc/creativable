@@ -5,6 +5,7 @@ import { Pencil } from "lucide-react";
 import { useState } from "react";
 import { CreatePostForm } from "./CreatePostForm";
 import { Post } from "../types/post";
+import { useTeamMembers } from "./useTeamMembers";
 
 interface EditPostDialogProps {
   post: Post;
@@ -13,16 +14,7 @@ interface EditPostDialogProps {
 
 export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
   const [open, setOpen] = useState(false);
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
-
-  const preventBubbling = (e: React.MouseEvent | React.PointerEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-  };
+  const { data: teamMembers } = useTeamMembers(teamId);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -32,14 +24,7 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
           Bearbeiten
         </Button>
       </DialogTrigger>
-      <DialogContent 
-        className="sm:max-w-[600px]"
-        onClick={preventBubbling}
-        onMouseDown={preventBubbling}
-        onPointerDown={preventBubbling}
-        onMouseDownCapture={preventBubbling}
-        onPointerDownCapture={preventBubbling}
-      >
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Beitrag bearbeiten</DialogTitle>
         </DialogHeader>
@@ -55,6 +40,7 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
             originalFiles: post.file_urls,
           }}
           onSuccess={() => setOpen(false)}
+          teamMembers={teamMembers}
         />
       </DialogContent>
     </Dialog>
