@@ -37,7 +37,6 @@ export const NotificationItem = ({
     >
       <div className="flex justify-between items-start mb-1">
         <h3 className="font-medium flex items-center gap-2">
-          <span>{getNotificationIcon(notification.type)}</span>
           {notification.title}
         </h3>
         <span className="text-xs text-gray-500">
@@ -68,3 +67,4 @@ export const NotificationItem = ({
     </div>
   );
 };
+
