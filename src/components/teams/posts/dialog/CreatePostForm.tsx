@@ -21,10 +21,25 @@ interface CreatePostFormProps {
   categoryId?: string;
   onSuccess: () => void;
   teamMembers?: any[];
+  initialValues?: Partial<FormValues>;
+  editMode?: {
+    postId: string;
+    originalFiles?: string[] | null;
+  };
 }
 
-export const CreatePostForm = ({ teamId, categoryId, onSuccess, teamMembers }: CreatePostFormProps) => {
-  const form = useForm<FormValues>();
+export const CreatePostForm = ({ 
+  teamId, 
+  categoryId, 
+  onSuccess, 
+  teamMembers,
+  initialValues,
+  editMode 
+}: CreatePostFormProps) => {
+  const form = useForm<FormValues>({
+    defaultValues: initialValues
+  });
+  
   const { isUploading, setIsUploading, handleFileUpload } = useFileUpload(teamId);
   const { handleSubmission } = usePostSubmission(teamId, categoryId, onSuccess, teamMembers);
 
@@ -32,7 +47,13 @@ export const CreatePostForm = ({ teamId, categoryId, onSuccess, teamMembers }: C
     setIsUploading(true);
     try {
       const fileUrls = values.files ? await handleFileUpload(values.files) : [];
-      await handleSubmission(values, fileUrls);
+      
+      // If editing, combine new files with existing ones that weren't removed
+      const finalFileUrls = editMode?.originalFiles 
+        ? [...editMode.originalFiles, ...fileUrls]
+        : fileUrls;
+
+      await handleSubmission(values, finalFileUrls, editMode?.postId);
       form.reset();
     } finally {
       setIsUploading(false);
@@ -54,7 +75,7 @@ export const CreatePostForm = ({ teamId, categoryId, onSuccess, teamMembers }: C
                 Wird hochgeladen...
               </>
             ) : (
-              'Erstellen'
+              editMode ? 'Aktualisieren' : 'Erstellen'
             )}
           </Button>
         </div>

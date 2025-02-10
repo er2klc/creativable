@@ -5,6 +5,8 @@ import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { Post } from "../types/post";
 import { MessageSquare } from "lucide-react";
+import { EditPostDialog } from "../dialog/EditPostDialog";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface PostDetailProps {
   post: Post | null;
@@ -12,6 +14,8 @@ interface PostDetailProps {
 }
 
 export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
+  const user = useUser();
+
   if (!post) {
     return (
       <Card className="p-6">
@@ -22,18 +26,38 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
     );
   }
 
+  const isAuthor = user?.id === post.created_by;
+
   return (
     <div className="space-y-6">
       <Card className="p-6">
         <div className="space-y-6">
           <div className="flex items-start justify-between">
-            <h1 className="text-2xl font-bold">{post.title}</h1>
-            <span className="text-sm text-muted-foreground whitespace-nowrap">
-              {formatDistanceToNow(new Date(post.created_at), {
-                addSuffix: true,
-                locale: de,
-              })}
-            </span>
+            <div className="space-y-1">
+              <h1 className="text-2xl font-bold">{post.title}</h1>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>
+                  {formatDistanceToNow(new Date(post.created_at), {
+                    addSuffix: true,
+                    locale: de,
+                  })}
+                </span>
+                {post.edited && (
+                  <>
+                    <span>•</span>
+                    <span>
+                      Bearbeitet {formatDistanceToNow(new Date(post.last_edited_at!), {
+                        addSuffix: true,
+                        locale: de,
+                      })}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
+            {isAuthor && (
+              <EditPostDialog post={post} teamId={post.team_id} />
+            )}
           </div>
           
           <div className="flex items-center gap-2">

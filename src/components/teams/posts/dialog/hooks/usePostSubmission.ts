@@ -31,47 +31,63 @@ export const usePostSubmission = (
     return member?.profiles?.id;
   };
 
-  const handleSubmission = async (values: FormValues, fileUrls: string[]) => {
+  const handleSubmission = async (values: FormValues, fileUrls: string[], postId?: string) => {
     try {
       const mentions = extractMentions(values.content);
       const mentionedUserIds = mentions
         .map(name => findUserIdByName(name))
         .filter((id): id is string => id !== undefined);
 
-      const { data: post, error: postError } = await supabase
-        .from('team_posts')
-        .insert({
-          team_id: teamId,
-          category_id: categoryId,
-          title: values.title,
-          content: values.content,
-          created_by: (await supabase.auth.getUser()).data.user?.id,
-          file_urls: fileUrls.length > 0 ? fileUrls : null,
-        })
-        .select('id')
-        .single();
+      if (postId) {
+        // Update existing post
+        const { error: postError } = await supabase
+          .from('team_posts')
+          .update({
+            title: values.title,
+            content: values.content,
+            file_urls: fileUrls.length > 0 ? fileUrls : null,
+          })
+          .eq('id', postId);
 
-      if (postError) throw postError;
+        if (postError) throw postError;
+        toast.success("Beitrag erfolgreich aktualisiert");
+      } else {
+        // Create new post
+        const { data: post, error: postError } = await supabase
+          .from('team_posts')
+          .insert({
+            team_id: teamId,
+            category_id: categoryId,
+            title: values.title,
+            content: values.content,
+            created_by: (await supabase.auth.getUser()).data.user?.id,
+            file_urls: fileUrls.length > 0 ? fileUrls : null,
+          })
+          .select('id')
+          .single();
 
-      if (mentionedUserIds.length > 0) {
-        const { error: mentionsError } = await supabase
-          .from('team_post_mentions')
-          .insert(
-            mentionedUserIds.map(userId => ({
-              post_id: post.id,
-              mentioned_user_id: userId,
-            }))
-          );
+        if (postError) throw postError;
 
-        if (mentionsError) throw mentionsError;
+        if (mentionedUserIds.length > 0) {
+          const { error: mentionsError } = await supabase
+            .from('team_post_mentions')
+            .insert(
+              mentionedUserIds.map(userId => ({
+                post_id: post.id,
+                mentioned_user_id: userId,
+              }))
+            );
+
+          if (mentionsError) throw mentionsError;
+        }
+        toast.success("Beitrag erfolgreich erstellt");
       }
 
-      toast.success("Beitrag erfolgreich erstellt");
       queryClient.invalidateQueries({ queryKey: ['team-posts'] });
       onSuccess?.();
     } catch (error: any) {
-      console.error('Error creating post:', error);
-      toast.error("Fehler beim Erstellen des Beitrags");
+      console.error('Error handling post:', error);
+      toast.error(postId ? "Fehler beim Aktualisieren des Beitrags" : "Fehler beim Erstellen des Beitrags");
       throw error;
     }
   };

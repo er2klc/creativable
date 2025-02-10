@@ -2774,8 +2774,10 @@ export type Database = {
           content: string
           created_at: string | null
           created_by: string
+          edited: boolean | null
           file_urls: string[] | null
           id: string
+          last_edited_at: string | null
           pinned: boolean | null
           slug: string
           team_id: string
@@ -2787,8 +2789,10 @@ export type Database = {
           content: string
           created_at?: string | null
           created_by: string
+          edited?: boolean | null
           file_urls?: string[] | null
           id?: string
+          last_edited_at?: string | null
           pinned?: boolean | null
           slug: string
           team_id: string
@@ -2800,8 +2804,10 @@ export type Database = {
           content?: string
           created_at?: string | null
           created_by?: string
+          edited?: boolean | null
           file_urls?: string[] | null
           id?: string
+          last_edited_at?: string | null
           pinned?: boolean | null
           slug?: string
           team_id?: string
