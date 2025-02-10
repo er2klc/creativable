@@ -133,10 +133,18 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      // Navigation logic prioritizing leadId
-      let targetPath = notification.metadata?.leadId ? 
-        `/contacts/${notification.metadata.leadId}` : 
-        notification.target_page;
+      // Navigation logic based on notification type
+      let targetPath = notification.target_page;
+
+      if (notification.type === 'presentation_view' || 
+          notification.type === 'presentation_halfway' || 
+          notification.type === 'presentation_completed') {
+        // For presentation notifications, use target_page directly if available
+        targetPath = notification.target_page;
+      } else if (notification.metadata?.leadId) {
+        // For other notifications with leadId, use contacts path
+        targetPath = `/contacts/${notification.metadata.leadId}`;
+      }
 
       if (targetPath) {
         navigate(targetPath);
