@@ -2041,6 +2041,7 @@ export type Database = {
           order_index: number | null
           priority: string | null
           title: string
+          type: string | null
           updated_at: string | null
           user_id: string
         }
@@ -2056,6 +2057,7 @@ export type Database = {
           order_index?: number | null
           priority?: string | null
           title: string
+          type?: string | null
           updated_at?: string | null
           user_id: string
         }
@@ -2071,6 +2073,7 @@ export type Database = {
           order_index?: number | null
           priority?: string | null
           title?: string
+          type?: string | null
           updated_at?: string | null
           user_id?: string
         }

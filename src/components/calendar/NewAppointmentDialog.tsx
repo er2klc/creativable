@@ -1,3 +1,4 @@
+
 import { format } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -83,6 +84,7 @@ export const NewAppointmentDialog = ({
             color: values.color,
             completed: completed,
             cancelled: cancelled,
+            type: 'appointment'
           })
           .eq('id', appointmentToEdit.id);
 
@@ -97,6 +99,7 @@ export const NewAppointmentDialog = ({
           color: values.color,
           completed: completed,
           cancelled: cancelled,
+          type: 'appointment'
         });
 
         if (error) throw error;

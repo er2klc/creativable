@@ -13,7 +13,7 @@ export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
 
 export const mapTaskToTimelineItem = (task: any): TimelineItem => ({
   id: task.id,
-  type: 'task',
+  type: task.type || 'task',
   content: task.title,
   created_at: task.created_at,
   timestamp: task.created_at,
