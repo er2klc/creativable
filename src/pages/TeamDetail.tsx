@@ -116,7 +116,7 @@ const TeamDetail = () => {
         "bg-background border-b transition-all duration-300",
         activeSnapView ? "h-0 overflow-hidden" : "h-auto"
       )}>
-        <div className="container py-4 pt-20">
+        <div className="container py-4">
           <TeamHeader team={team} isInSnapView={!!activeSnapView} />
         </div>
       </div>
