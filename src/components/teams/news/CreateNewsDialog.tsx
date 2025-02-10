@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Plus } from "lucide-react";
@@ -18,7 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -92,7 +93,7 @@ export function CreateNewsDialog({ teamId }: CreateNewsDialogProps) {
                 <FormItem>
                   <FormLabel>Inhalt</FormLabel>
                   <FormControl>
-                    <RichTextEditor
+                    <TiptapEditor
                       content={field.value}
                       onChange={field.onChange}
                       placeholder="News Inhalt..."
