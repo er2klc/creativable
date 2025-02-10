@@ -107,6 +107,21 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     }
   };
 
+  const getBackgroundStyle = () => {
+    const types = lead.contact_type?.split(",").map(type => type.trim()) || [];
+    const isPartner = types.includes("Likely Partner");
+    const isKunde = types.includes("Likely Kunde");
+
+    if (isPartner && isKunde) {
+      return "bg-gradient-to-r from-[#F0FAFF] to-[#F0FFF0]";
+    } else if (isPartner) {
+      return "bg-[#F0FAFF]";
+    } else if (isKunde) {
+      return "bg-[#F0FFF0]";
+    }
+    return "bg-white";
+  };
+
   const style: CSSProperties | undefined = transform ? {
     transform: CSS.Transform.toString({
       ...transform,
@@ -204,3 +219,4 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     </div>
   );
 };
+
