@@ -15,8 +15,8 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
 
-  // Extract team slug from route path - remove trailing slash if present
-  const processedTeamSlug = teamSlug?.replace(/\/$/, '');
+  // Extract clean team slug from the full path
+  const processedTeamSlug = teamSlug?.split('/').find(part => part && !part.includes('unity') && !part.includes('team') && !part.includes('posts') && !part.includes('category'))?.replace(/\/$/, '');
   
   console.log("Using team slug:", processedTeamSlug); // Debug log
 
@@ -44,7 +44,7 @@ export const useCategoryDialog = (teamSlug?: string) => {
       console.log("Found team data:", data);
       return data;
     },
-    enabled: !!processedTeamSlug
+    enabled: !!processedTeamSlug,
   });
 
   const { team, categories } = useCategoryQueries(teamData?.id);
