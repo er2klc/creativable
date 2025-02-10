@@ -16,14 +16,14 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedSize, setSelectedSize] = useState("small");
 
   // Extract actual team slug from URL format
-  const processedTeamSlug = teamSlug?.split('unity/team/')[1]?.split('/')[0];
+  const processedTeamSlug = teamSlug?.replace("unity/team/", "").split("/")[0];
   
   // Load team ID from slug
   const { data: teamData } = useQuery({
     queryKey: ['team-by-slug', processedTeamSlug],
     queryFn: async () => {
       if (!processedTeamSlug) {
-        console.error("No team slug provided");
+        console.error("No team slug provided", { processedTeamSlug });
         return null;
       }
       
