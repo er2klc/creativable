@@ -15,17 +15,20 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
 
+  // Extract actual team slug from URL format
+  const processedTeamSlug = teamSlug?.split('/')[0]?.replace('unity/team/', '');
+  
   // Load team ID from slug
   const { data: teamData } = useQuery({
-    queryKey: ['team-by-slug', teamSlug],
+    queryKey: ['team-by-slug', processedTeamSlug],
     queryFn: async () => {
-      if (!teamSlug) return null;
+      if (!processedTeamSlug) return null;
       
-      console.log("Fetching team data for slug:", teamSlug);
+      console.log("Fetching team data for slug:", processedTeamSlug);
       const { data, error } = await supabase
         .from('teams')
         .select('id')
-        .eq('slug', teamSlug)
+        .eq('slug', processedTeamSlug)
         .maybeSingle();
 
       if (error) {
@@ -35,7 +38,7 @@ export const useCategoryDialog = (teamSlug?: string) => {
       console.log("Found team data:", data);
       return data;
     },
-    enabled: !!teamSlug
+    enabled: !!processedTeamSlug
   });
 
   const { team, categories } = useCategoryQueries(teamData?.id);
@@ -71,8 +74,8 @@ export const useCategoryDialog = (teamSlug?: string) => {
 
   const handleSave = async () => {
     if (!teamData?.id) {
-      console.error("Team ID not found", { teamSlug, teamData });
-      toast.error("Team ID nicht gefunden");
+      console.error("Team ID not found", { processedTeamSlug, teamData });
+      toast.error("Team nicht gefunden");
       return;
     }
     
