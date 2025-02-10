@@ -105,6 +105,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
   }
 
   const isDialogView = window.location.pathname.includes('/posts/');
+  const categories = allCategories?.filter(category => isAdmin || category.is_public);
 
   return (
     <div className="relative w-full">
@@ -125,19 +126,21 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
           className="flex gap-2 py-2 px-4"
           onScroll={handleScroll}
         >
-          <Badge
-            variant="outline"
-            className={cn(
-              "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 shrink-0",
-              defaultTabColors.all,
-              activeTab === 'all' ? "border-primary" : "border-transparent"
-            )}
-            onClick={() => onCategoryClick()}
-          >
-            <MessageCircle className="h-4 w-4 mr-2 inline-block" />
-            Alle Beiträge
-          </Badge>
-          {allCategories?.map((category, index) => {
+          {!isDialogView && (
+            <Badge
+              variant="outline"
+              className={cn(
+                "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 shrink-0",
+                defaultTabColors.all,
+                activeTab === 'all' ? "border-primary" : "border-transparent"
+              )}
+              onClick={() => onCategoryClick()}
+            >
+              <MessageCircle className="h-4 w-4 mr-2 inline-block" />
+              Alle Beiträge
+            </Badge>
+          )}
+          {categories?.map((category, index) => {
             const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
             return (
               <Badge
@@ -173,4 +176,3 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     </div>
   );
 };
-
