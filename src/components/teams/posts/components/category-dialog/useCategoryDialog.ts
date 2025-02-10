@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useCategoryQueries } from "./hooks/useCategoryQueries";
 import { useCategoryMutations } from "./hooks/useCategoryMutations";
@@ -5,7 +6,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useCategoryDialog = (teamSlug?: string) => {
+export const useCategoryDialog = (teamFullPath?: string) => {
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("new");
   const [categoryName, setCategoryName] = useState("");
@@ -14,35 +15,39 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
 
-  const processedTeamSlug = teamSlug?.split('/').find(part => part === 'fire-adler-hauptteam-') || teamSlug;
-  
-  console.log("Using team slug:", processedTeamSlug); // Debug log
-
-  // Load team ID from slug
+  // Direkt die Team ID aus der URL extrahieren
   const { data: teamData } = useQuery({
-    queryKey: ['team-by-slug', processedTeamSlug],
+    queryKey: ['team-by-slug', teamFullPath],
     queryFn: async () => {
-      if (!processedTeamSlug) {
-        console.error("No team slug provided", { processedTeamSlug, originalSlug: teamSlug });
+      if (!teamFullPath) {
+        console.error("No team path provided");
         return null;
       }
+
+      // Extract team slug from the full path (e.g., "fire-adler-hauptteam-" from "unity/team/fire-adler-hauptteam-/posts/...")
+      const teamSlug = teamFullPath.split('/').find(part => part.includes('hauptteam'));
       
-      console.log("Fetching team data for slug:", processedTeamSlug);
+      if (!teamSlug) {
+        console.error("Could not extract team slug from path:", teamFullPath);
+        return null;
+      }
+
+      console.log("Fetching team data for slug:", teamSlug);
       const { data, error } = await supabase
         .from('teams')
         .select('id')
-        .eq('slug', processedTeamSlug)
+        .eq('slug', teamSlug)
         .maybeSingle();
 
       if (error) {
         console.error("Error fetching team:", error);
         throw error;
       }
-      
+
       console.log("Found team data:", data);
       return data;
     },
-    enabled: !!processedTeamSlug,
+    enabled: !!teamFullPath,
   });
 
   const { team, categories } = useCategoryQueries(teamData?.id);
@@ -77,7 +82,7 @@ export const useCategoryDialog = (teamSlug?: string) => {
 
   const handleSave = async () => {
     if (!teamData?.id) {
-      console.error("Team nicht gefunden", { processedTeamSlug, teamData });
+      console.error("Team nicht gefunden");
       toast.error("Team nicht gefunden. Bitte laden Sie die Seite neu.");
       return;
     }
