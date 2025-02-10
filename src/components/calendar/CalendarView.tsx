@@ -12,6 +12,9 @@ import { Switch } from "@/components/ui/switch";
 import { ICalButton } from "./ICalButton";
 import { Appointment, AppointmentToEdit, TeamEvent } from "./types/calendar";
 import { useUser } from "@supabase/auth-helpers-react";
+import { SearchBar } from "@/components/dashboard/SearchBar";
+import { HeaderActions } from "@/components/layout/HeaderActions";
+import { Calendar } from "lucide-react";
 
 export const CalendarView = () => {
   console.log("CalendarView geladen version 1.1");
@@ -84,57 +87,61 @@ export const CalendarView = () => {
       onDragOver={handleDragOver}
     >
       <div className="space-y-4">
-       <div className="flex items-center justify-between">
-  <div className="flex-1">
-    <CalendarHeader 
-      currentDate={currentDate}
-      onDateChange={setCurrentDate}
-      onMonthChange={handleMonthChange}
-    />
-  </div>
-  <div className="flex items-center gap-6">
-    <div className="flex items-center gap-2">
-      <span className="text-sm">Team Termine</span>
-      <Switch
-        checked={showTeamEvents}
-        onCheckedChange={setShowTeamEvents}
-      />
-    </div>
-   <ICalButton />
-  </div>
-</div>
+        <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+          <div className="w-full">
+            <div className="h-16 px-4 flex items-center">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                    Kalender
+                  </h1>
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-[300px]">
+                    <SearchBar />
+                  </div>
+                </div>
+                <HeaderActions profile={null} userEmail={user?.email} />
+              </div>
+            </div>
+          </div>
+        </div>
 
-        {(isLoadingAppointments || isLoadingTeamEvents) && (
-          <div className="text-center text-gray-500">Lade Termine...</div>
-        )}
+        <div className="pt-24">
+          <CalendarHeader 
+            currentDate={currentDate}
+            onDateChange={setCurrentDate}
+          />
 
-        <CalendarGrid
-          currentDate={currentDate}
-          getDayAppointments={getDayAppointments}
-          onDateClick={(date) => {
-            setSelectedDate(date);
-            setSelectedAppointment(null);
-            setIsDialogOpen(true);
-          }}
-          onAppointmentClick={handleAppointmentClick}
-          activeId={activeId}
-          overDate={overDate}
-          draggedAppointment={draggedAppointment}
-          isAdmin={user?.id === draggedAppointment?.created_by}
-        />
+          <CalendarGrid
+            currentDate={currentDate}
+            getDayAppointments={getDayAppointments}
+            onDateClick={(date) => {
+              setSelectedDate(date);
+              setSelectedAppointment(null);
+              setIsDialogOpen(true);
+            }}
+            onAppointmentClick={handleAppointmentClick}
+            activeId={activeId}
+            overDate={overDate}
+            draggedAppointment={draggedAppointment}
+            isAdmin={user?.id === draggedAppointment?.created_by}
+          />
 
-        <NewAppointmentDialog
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          initialSelectedDate={selectedDate}
-          appointmentToEdit={selectedAppointment}
-        />
+          <NewAppointmentDialog
+            open={isDialogOpen}
+            onOpenChange={setIsDialogOpen}
+            initialSelectedDate={selectedDate}
+            appointmentToEdit={selectedAppointment}
+          />
 
-        <TeamEventDetailsDialog
-          open={isTeamEventDialogOpen}
-          onOpenChange={setIsTeamEventDialogOpen}
-          event={selectedTeamEvent}
-        />
+          <TeamEventDetailsDialog
+            open={isTeamEventDialogOpen}
+            onOpenChange={setIsTeamEventDialogOpen}
+            event={selectedTeamEvent}
+          />
+        </div>
       </div>
     </DndContext>
   );
