@@ -5,7 +5,6 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ArrowLeft, ArrowRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabScroll } from "../hooks/useTabScroll";
-import { TeamCategory } from "../types/team";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,7 +28,10 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
-      if (!teamSlug) return null;
+      if (!teamSlug) {
+        console.error('No team slug provided');
+        return null;
+      }
       
       const { data, error } = await supabase
         .from('teams')
@@ -41,6 +43,8 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
         console.error('Error fetching team:', error);
         throw error;
       }
+
+      console.log('Fetched team:', data);
       return data;
     },
     enabled: !!teamSlug,
@@ -50,8 +54,11 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
   const { data: allCategories, isLoading: isCategoriesLoading } = useQuery({
     queryKey: ['team-categories', team?.id],
     queryFn: async () => {
-      if (!team?.id) return null;
-      
+      if (!team?.id) {
+        console.error('No team ID available');
+        return [];
+      }
+
       const { data, error } = await supabase
         .from('team_categories')
         .select('*')
@@ -152,4 +159,3 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     </div>
   );
 };
-
