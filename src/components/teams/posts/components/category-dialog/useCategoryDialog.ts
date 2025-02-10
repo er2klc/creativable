@@ -3,10 +3,8 @@ import { useState } from "react";
 import { useCategoryQueries } from "./hooks/useCategoryQueries";
 import { useCategoryMutations } from "./hooks/useCategoryMutations";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
-export const useCategoryDialog = (teamSlug?: string) => {
+export const useCategoryDialog = (teamId?: string) => {
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("new");
   const [categoryName, setCategoryName] = useState("");
@@ -15,32 +13,7 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
   
-  // Get team ID directly from the URL path
-  const { data: teamData } = useQuery({
-    queryKey: ['team-by-slug', teamSlug],
-    queryFn: async () => {
-      if (!teamSlug) {
-        console.error("No team slug provided");
-        return null;
-      }
-      
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id')
-        .eq('slug', teamSlug)
-        .maybeSingle();
-
-      if (error) {
-        console.error("Error fetching team:", error);
-        throw error;
-      }
-      
-      return data;
-    },
-    enabled: !!teamSlug,
-  });
-
-  const { categories } = useCategoryQueries(teamData?.id);
+  const { categories } = useCategoryQueries(teamId);
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
 
   const handleCategoryChange = (value: string) => {
@@ -69,7 +42,7 @@ export const useCategoryDialog = (teamSlug?: string) => {
   };
 
   const handleSave = async () => {
-    if (!teamData?.id) {
+    if (!teamId) {
       toast.error("Team nicht gefunden");
       return;
     }
@@ -81,7 +54,7 @@ export const useCategoryDialog = (teamSlug?: string) => {
 
     try {
       const success = await saveCategory(
-        teamData.id,
+        teamId,
         selectedCategory,
         categoryName.trim(),
         isPublic,
