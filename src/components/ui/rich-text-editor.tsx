@@ -1,3 +1,4 @@
+
 import React from 'react';
 import {
   EditorComponent,
@@ -39,7 +40,6 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ content, onChange, placeholder }: RichTextEditorProps) {
-  // Extensions definieren
   const extensions = React.useMemo(
     () => [
       new BoldExtension(),
@@ -52,29 +52,37 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
       new HeadingExtension(),
       new EmojiExtension({
         data,
-        transformCaptured: (emoji) => emoji.native, // Emojis richtig einfügen
+        transformCaptured: (emoji) => emoji.native,
       }),
     ],
     []
   );
 
-  // Remirror Manager initialisieren
   const { manager, state } = useRemirror({
     extensions,
-    content, // Richtiges Initial-Content-Handling
+    content,
     stringHandler: 'html',
   });
 
   return (
-    <div className="border rounded-md">
+    <div className="relative">
       <Remirror
         manager={manager}
-        initialContent={state} // Richtiger Initialwert
-        onChange={({ helpers }) => onChange(helpers.getHTML())} // Verbesserter Change-Handler
+        initialContent={content}
+        onChange={({ helpers }) => {
+          const html = helpers.getHTML();
+          onChange(html);
+        }}
         placeholder={placeholder}
+        autoFocus={false}
+        classNames={{
+          editor: 'min-h-[150px] px-3 py-2 focus:outline-none',
+        }}
       >
-        <EditorToolbar />
-        <EditorComponent className="p-4 min-h-[150px] focus:outline-none" />
+        <div className="sticky top-0 z-10 bg-background border-b">
+          <EditorToolbar />
+        </div>
+        <EditorComponent />
       </Remirror>
     </div>
   );
@@ -84,12 +92,14 @@ function EditorToolbar() {
   const commands = useCommands();
   const active = useActive();
 
-  const addEmoji = (emoji: any) => {
-    commands.insertText(emoji.native);
-  };
+  const handleAddEmoji = React.useCallback((emoji: { native: string }) => {
+    if (emoji?.native) {
+      commands.insertText(emoji.native);
+    }
+  }, [commands]);
 
   return (
-    <div className="flex flex-wrap gap-1 p-2 border-b bg-muted">
+    <div className="flex flex-wrap gap-1 p-2">
       <ToolbarButton onClick={() => commands.toggleBold()} active={active.bold()}>
         <Bold className="h-4 w-4" />
       </ToolbarButton>
@@ -112,17 +122,16 @@ function EditorToolbar() {
         <Quote className="h-4 w-4" />
       </ToolbarButton>
 
-      {/* Emoji Picker */}
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="ghost" size="sm">
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
             <Smile className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent className="w-auto p-0" align="start">
           <Picker 
             data={data} 
-            onEmojiSelect={addEmoji}
+            onEmojiSelect={handleAddEmoji}
             theme="light"
             emojiSize={20}
             emojiButtonSize={28}
@@ -134,14 +143,13 @@ function EditorToolbar() {
   );
 }
 
-// Einfache ToolbarButton Komponente für weniger Code-Wiederholung
 function ToolbarButton({ onClick, active, children }: { onClick: () => void; active: boolean; children: React.ReactNode }) {
   return (
     <Button
       variant="ghost"
       size="sm"
       onClick={onClick}
-      className={active ? 'bg-muted-foreground/20' : ''}
+      className={`h-8 w-8 p-0 ${active ? 'bg-muted' : ''}`}
     >
       {children}
     </Button>
