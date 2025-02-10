@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { CategoryDialogForm } from "./category-dialog/CategoryDialogForm";
 import { useCategoryDialog } from "./category-dialog/useCategoryDialog";
-import { TabScrollArea } from "./TabScrollArea";
+import { AdminCategoriesScroll } from "./categories/AdminCategoriesScroll";
 import { useParams } from "react-router-dom";
 
 interface EditCategoryDialogProps {
@@ -69,10 +69,9 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
         </DialogHeader>
 
         <div className="max-h-[400px] overflow-auto">
-          <TabScrollArea
+          <AdminCategoriesScroll
             activeTab={categories?.find(c => c.id === selectedCategory)?.slug || ''}
             onCategoryClick={handleCategorySelection}
-            isAdmin={true}
             teamSlug={teamSlug || ''}
           />
         </div>

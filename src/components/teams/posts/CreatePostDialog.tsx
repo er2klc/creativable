@@ -11,9 +11,11 @@ import {
 } from "@/components/ui/dialog";
 import { CreatePostForm } from "./dialog/CreatePostForm";
 import { useTeamMembers } from "./dialog/useTeamMembers";
+import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
+import { CreatePostCategoriesScroll } from "./components/categories/CreatePostCategoriesScroll";
 
 interface CreatePostDialogProps {
   teamId: string;
@@ -24,24 +26,8 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
   const [open, setOpen] = useState(false);
   const { data: teamMembers } = useTeamMembers(teamId);
   const user = useUser();
+  const { teamSlug } = useParams();
   
-  // Fetch categories for the team
-  const { data: categories } = useQuery({
-    queryKey: ['team-categories', teamId],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('team_categories')
-        .select('*')
-        .eq('team_id', teamId)
-        .order('order_index');
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!teamId,
-  });
-
-  // Fetch member role
   const { data: teamMember } = useQuery({
     queryKey: ['team-member-role', teamId],
     queryFn: async () => {
@@ -78,7 +64,6 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
           <CreatePostForm
             teamId={teamId}
             categoryId={categoryId}
-            categories={categories}
             onSuccess={() => setOpen(false)}
             teamMembers={teamMembers}
             isAdmin={isAdmin}
