@@ -8,36 +8,42 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
-interface PostsAndDiscussionsProps {
-  categories: any[];
-  teamId: string;
-  teamSlug: string;
-  activeCategory?: string;
-}
-
-export function PostsAndDiscussions({ 
-  categories, 
-  teamId, 
-  teamSlug,
-  activeCategory 
-}: PostsAndDiscussionsProps) {
+export function PostsAndDiscussions() {
   const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const { teamSlug } = useParams();
+
+  // Get team data based on slug
+  const { data: team, isLoading: isTeamLoading } = useQuery({
+    queryKey: ['team', teamSlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('slug', teamSlug)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+  });
 
   const { data: allCategories } = useQuery({
-    queryKey: ['team-categories', teamId],
+    queryKey: ['team-categories', team?.id],
     queryFn: async () => {
+      if (!team?.id) return null;
       const { data, error } = await supabase
         .from('team_categories')
         .select('*')
-        .eq('team_id', teamId)
+        .eq('team_id', team.id)
         .order('order_index');
 
       if (error) throw error;
       return data;
     },
+    enabled: !!team?.id,
   });
 
   const handleCategoryClick = (categorySlug?: string) => {
@@ -48,15 +54,35 @@ export function PostsAndDiscussions({
     }
   };
 
+  if (isTeamLoading) {
+    return (
+      <Card className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-muted rounded w-1/4"></div>
+          <div className="h-4 bg-muted rounded w-3/4"></div>
+        </div>
+      </Card>
+    );
+  }
+
+  if (!team) {
+    return (
+      <Card className="p-6">
+        <div className="text-center text-muted-foreground">
+          Team not found
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Category Tabs */}
       <div className="flex flex-nowrap gap-2 pb-2 overflow-x-auto no-scrollbar">
         <Badge
-          variant={!activeCategory ? "default" : "outline"}
+          variant="outline"
           className={cn(
-            "cursor-pointer px-4 py-2 text-sm hover:bg-primary/90 whitespace-nowrap",
-            !activeCategory && "bg-primary"
+            "cursor-pointer px-4 py-2 text-sm hover:bg-primary/90 whitespace-nowrap"
           )}
           onClick={() => handleCategoryClick()}
         >
@@ -65,10 +91,9 @@ export function PostsAndDiscussions({
         {allCategories?.map((category) => (
           <Badge
             key={category.id}
-            variant={activeCategory === category.id ? "default" : "outline"}
+            variant="outline"
             className={cn(
-              "cursor-pointer px-4 py-2 text-sm hover:bg-primary/90 whitespace-nowrap",
-              activeCategory === category.id && "bg-primary"
+              "cursor-pointer px-4 py-2 text-sm hover:bg-primary/90 whitespace-nowrap"
             )}
             onClick={() => handleCategoryClick(category.slug)}
           >
@@ -79,17 +104,8 @@ export function PostsAndDiscussions({
 
       {/* Content Area */}
       <div className="w-full">
-        {activeCategory ? (
-          <>
-            <div className="mb-4">
-              <CreatePostDialog teamId={teamId} categoryId={activeCategory} />
-            </div>
-            <PostList teamId={teamId} categoryId={activeCategory} />
-          </>
-        ) : (
-          <CategoryOverview teamId={teamId} teamSlug={teamSlug} />
-        )}
+        <CategoryOverview teamId={team.id} teamSlug={teamSlug || ''} />
       </div>
     </div>
   );
-};
+}
