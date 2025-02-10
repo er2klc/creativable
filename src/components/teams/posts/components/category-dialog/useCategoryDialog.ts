@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
-export const useCategoryDialog = (teamId?: string) => {
+export const useCategoryDialog = (teamSlug?: string) => {
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("new");
   const [categoryName, setCategoryName] = useState("");
@@ -15,21 +15,21 @@ export const useCategoryDialog = (teamId?: string) => {
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
 
-  // Lade Team-ID aus der Slug
+  // Load team ID from slug
   const { data: teamData } = useQuery({
-    queryKey: ['team-by-slug', teamId],
+    queryKey: ['team-by-slug', teamSlug],
     queryFn: async () => {
-      if (!teamId) return null;
+      if (!teamSlug) return null;
       const { data, error } = await supabase
         .from('teams')
         .select('id')
-        .eq('slug', teamId)
-        .single();
+        .eq('slug', teamSlug)
+        .maybeSingle();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!teamId
+    enabled: !!teamSlug
   });
 
   const { team, categories } = useCategoryQueries(teamData?.id);
