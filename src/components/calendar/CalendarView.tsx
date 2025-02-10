@@ -92,25 +92,25 @@ export const CalendarView = () => {
           <div className="w-full">
             <div className="h-16 px-4 flex items-center">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5" />
-                    <h1 className="text-lg md:text-xl font-semibold text-foreground">
-                      Kalender
-                    </h1>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm">Team Termine</span>
-                    <Switch
-                      checked={showTeamEvents}
-                      onCheckedChange={setShowTeamEvents}
-                    />
-                  </div>
-                  <ICalButton />
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                    Kalender
+                  </h1>
                 </div>
                 <div className="flex items-center gap-4">
                   <div className="w-[300px]">
                     <SearchBar />
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm">Team Termine</span>
+                      <Switch
+                        checked={showTeamEvents}
+                        onCheckedChange={setShowTeamEvents}
+                      />
+                    </div>
+                    <ICalButton />
                   </div>
                 </div>
                 <HeaderActions profile={null} userEmail={user?.email} />
@@ -157,4 +157,3 @@ export const CalendarView = () => {
     </DndContext>
   );
 };
-
