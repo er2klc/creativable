@@ -1,4 +1,5 @@
 
+import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
 interface CategoryNameInputProps {
@@ -12,8 +13,10 @@ export const CategoryNameInput = ({
 }: CategoryNameInputProps) => {
   return (
     <div className="grid gap-2">
+      <Label htmlFor="categoryName">Kategoriename</Label>
       <Input
-        placeholder="Kategoriename"
+        id="categoryName"
+        placeholder="Name der Kategorie"
         value={categoryName}
         onChange={(e) => onCategoryNameChange(e.target.value)}
       />

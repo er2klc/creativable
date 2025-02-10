@@ -50,6 +50,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
       setSelectedIcon(category.icon || 'MessageCircle');
       setCategoryName(category.name);
       setIsPublic(category.is_public ?? true);
+      setSelectedSize(category.size || 'small');
     }
   };
 
