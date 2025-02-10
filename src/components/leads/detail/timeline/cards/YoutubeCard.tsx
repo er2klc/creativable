@@ -100,7 +100,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 disabled={isExpired}
               >
                 <Copy className="h-4 w-4" />
-                {settings?.language === "en" ? "Presentation URL" : "Präsentations-URL"}
+                {settings?.language === "en" ? "Presentation URL" : "Präsentations-URL_2"}
                 {isExpired && (
                   <span className="text-red-500 ml-2">
                     {settings?.language === "en" ? "(Expired)" : "(Abgelaufen)"}
