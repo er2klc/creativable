@@ -60,11 +60,6 @@ export const AdminCategoriesScroll = ({
     enabled: !!team?.id,
   });
 
-  const handleCategoryClick = (slug: string) => {
-    console.log("Category clicked:", slug); // Debug log
-    onCategoryClick(slug);
-  };
-
   return (
     <div className="relative w-full">
       {showLeftArrow && (
@@ -84,7 +79,7 @@ export const AdminCategoriesScroll = ({
           className="flex gap-2 py-2 px-4"
           onScroll={handleScroll}
         >
-          {categories?.map((category, index) => {
+          {categories?.map((category) => {
             const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
             return (
               <Badge
@@ -93,16 +88,16 @@ export const AdminCategoriesScroll = ({
                 className={cn(
                   "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2 shrink-0",
                   category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
-                  activeTab === category.slug ? "border-primary" : "border-transparent"
+                  activeTab === category.id ? "border-primary" : "border-transparent"
                 )}
-                onClick={() => handleCategoryClick(category.slug)}
+                onClick={() => onCategoryClick(category.id)}
               >
                 <IconComponent className="h-4 w-4" />
                 {category.name}
                 {!category.is_public && <Lock className="h-3 w-3 ml-2" />}
               </Badge>
-            )}
-          )}
+            );
+          })}
         </div>
         <ScrollBar orientation="horizontal" className="h-2.5" />
       </ScrollArea>

@@ -13,6 +13,7 @@ import { CategoryDialogForm } from "./category-dialog/CategoryDialogForm";
 import { useCategoryDialog } from "./category-dialog/useCategoryDialog";
 import { AdminCategoriesScroll } from "./categories/AdminCategoriesScroll";
 import { useParams } from "react-router-dom";
+import { useState } from "react";
 
 interface EditCategoryDialogProps {
   teamId?: string;
@@ -40,10 +41,12 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   } = useCategoryDialog(teamId);
 
   const { teamSlug } = useParams();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleCategorySelection = (categorySlug?: string) => {
-    if (!categorySlug) return;
-    const category = categories?.find(c => c.slug === categorySlug);
+  const handleCategorySelection = (categoryId?: string) => {
+    console.log("Selected category:", categoryId);
+    if (!categoryId) return;
+    const category = categories?.find(c => c.id === categoryId);
     if (category) {
       handleCategoryChange(category.id);
       setSelectedColor(category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]');
@@ -51,6 +54,17 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
       setCategoryName(category.name);
       setIsPublic(category.is_public ?? true);
       setSelectedSize(category.size || 'small');
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!categoryName.trim()) return;
+    setIsSubmitting(true);
+    try {
+      await handleSave();
+      setOpen(false);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -71,7 +85,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
 
         <div className="max-h-[400px] overflow-auto">
           <AdminCategoriesScroll
-            activeTab={categories?.find(c => c.id === selectedCategory)?.slug || ''}
+            activeTab={selectedCategory}
             onCategoryClick={handleCategorySelection}
             teamSlug={teamSlug || ''}
           />
@@ -103,7 +117,10 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
                 Löschen
               </Button>
             )}
-            <Button onClick={handleSave}>
+            <Button 
+              onClick={handleSubmit}
+              disabled={isSubmitting || !categoryName.trim()}
+            >
               {selectedCategory !== "new" ? "Speichern" : "Erstellen"}
             </Button>
           </div>
