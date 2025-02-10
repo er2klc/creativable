@@ -6,6 +6,8 @@ import { formatDateTime } from "../utils/dateUtils";
 import { MEETING_TYPES } from "@/constants/meetingTypes";
 import { getMeetingTypeIcon } from "./utils/meetingTypeUtils";
 import { TaskEditForm } from "./TaskEditForm";
+import confetti from "canvas-confetti";
+import { toast } from "sonner";
 
 interface TaskCardProps {
   id: string;
@@ -31,6 +33,25 @@ export const TaskCard = ({
 }: TaskCardProps) => {
   const { settings } = useSettings();
   const [isEditing, setIsEditing] = useState(false);
+
+  const handleComplete = () => {
+    if (!isCompleted && onComplete) {
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#FFD700', '#FFA500', '#FF6347', '#98FB98', '#87CEEB'],
+      });
+
+      toast.success(
+        settings?.language === "en" 
+          ? "Task completed! 🎉" 
+          : "Aufgabe erledigt! 🎉"
+      );
+      
+      onComplete();
+    }
+  };
 
   const getMeetingTypeLabel = (meetingType?: string) => {
     if (!meetingType) return null;
@@ -75,7 +96,7 @@ export const TaskCard = ({
       <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
         {onComplete && (
           <button
-            onClick={onComplete}
+            onClick={handleComplete}
             className="p-1 hover:bg-gray-100 rounded"
           >
             <div className={`w-4 h-4 border border-gray-400 rounded flex items-center justify-center ${isCompleted ? 'bg-green-500 border-green-500' : ''} hover:border-green-500 hover:bg-green-50`}>
@@ -93,3 +114,4 @@ export const TaskCard = ({
     </div>
   );
 };
+
