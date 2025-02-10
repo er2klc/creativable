@@ -130,20 +130,21 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      let targetPath = notification.target_page;
-
-      if (notification.type === 'presentation_view' || 
-          notification.type === 'presentation_halfway' || 
-          notification.type === 'presentation_completed') {
-        targetPath = notification.target_page;
+      // Handle routing based on notification type
+      if (notification.type.includes('presentation_')) {
+        // For presentation notifications, always use the leadId from metadata
+        if (notification.metadata?.leadId) {
+          navigate(`/contacts/${notification.metadata.leadId}`);
+        }
       } else if (notification.metadata?.leadId) {
-        targetPath = `/contacts/${notification.metadata.leadId}`;
+        // For other lead-related notifications
+        navigate(`/contacts/${notification.metadata.leadId}`);
+      } else if (notification.target_page) {
+        // For any other notifications with a target page
+        navigate(notification.target_page);
       }
 
-      if (targetPath) {
-        navigate(targetPath);
-        onOpenChange(false);
-      }
+      onOpenChange(false);
     } catch (error) {
       console.error('Error in markAsRead:', error);
       toast.error('Fehler beim Markieren der Benachrichtigung als gelesen');

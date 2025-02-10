@@ -15,6 +15,9 @@ interface NotificationItemProps {
     target_page?: string;
     metadata?: {
       leadId?: string;
+      appointmentId?: string;
+      dueDate?: string;
+      presentation_id?: string;
     };
   };
   onDelete: (id: string) => void;
@@ -42,14 +45,6 @@ export const NotificationItem = ({
       default:
         return <Bell className="h-4 w-4 text-gray-500" />;
     }
-  };
-
-  // Construct the correct URL for presentations
-  const getTargetUrl = () => {
-    if (notification.metadata?.leadId) {
-      return `/contacts/${notification.metadata.leadId}`;
-    }
-    return notification.target_page || '';
   };
 
   return (
