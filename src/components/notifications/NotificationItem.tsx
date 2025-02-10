@@ -1,7 +1,7 @@
 
 import { formatDistanceToNow } from 'date-fns';
 import { de } from 'date-fns/locale';
-import { ExternalLink, Trash2 } from "lucide-react";
+import { ExternalLink, Trash2, Youtube, Bell, Eye, Play, CheckCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NotificationItemProps {
@@ -28,6 +28,32 @@ export const NotificationItem = ({
   onClick,
   getNotificationIcon 
 }: NotificationItemProps) => {
+  // Helper function to get the appropriate icon component
+  const getIconComponent = (type: string) => {
+    switch (type) {
+      case 'presentation_view':
+        return <Eye className="h-4 w-4 text-blue-500" />;
+      case 'presentation_halfway':
+        return <Play className="h-4 w-4 text-yellow-500" />;
+      case 'presentation_completed':
+        return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'appointment_reminder':
+        return <Calendar className="h-4 w-4 text-purple-500" />;
+      default:
+        return <Bell className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
+  // Construct the correct URL for presentations
+  const getTargetUrl = () => {
+    if (notification.type.startsWith('presentation_')) {
+      return notification.metadata?.leadId ? 
+        `/contacts/${notification.metadata.leadId}` : 
+        notification.target_page;
+    }
+    return notification.target_page || (notification.metadata?.leadId ? `/contacts/${notification.metadata.leadId}` : null);
+  };
+
   return (
     <div
       onClick={onClick}
@@ -35,19 +61,22 @@ export const NotificationItem = ({
         notification.read ? 'bg-white' : 'bg-blue-50 hover:bg-blue-100/80'
       }`}
     >
-      <div className="flex justify-between items-start mb-1">
-        <h3 className="font-medium flex items-center gap-2">
-          {notification.title}
-        </h3>
-        <span className="text-xs text-gray-500">
+      <div className="flex justify-between items-start gap-2">
+        <div className="flex items-center gap-2 flex-1">
+          {getIconComponent(notification.type)}
+          <h3 className="font-medium">
+            {notification.title}
+          </h3>
+        </div>
+        <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
           {formatDistanceToNow(new Date(notification.created_at), {
             addSuffix: true,
             locale: de
           })}
         </span>
       </div>
-      <p className="text-sm text-gray-600">{notification.content}</p>
-      {(notification.target_page || notification.metadata?.leadId) && (
+      <p className="text-sm text-gray-600 mt-1">{notification.content}</p>
+      {getTargetUrl() && (
         <div className="mt-2 flex items-center text-xs text-blue-600">
           <ExternalLink className="h-3 w-3 mr-1" />
           Klicken zum Öffnen
