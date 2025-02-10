@@ -117,16 +117,16 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
         </Button>
       )}
       
-      <ScrollArea className="w-full whitespace-nowrap">
+      <ScrollArea className="w-full whitespace-nowrap pb-2">
         <div 
           ref={scrollContainerRef}
-          className="flex gap-2 pb-4 overflow-x-auto scroll-smooth"
+          className="flex gap-2 py-2 px-1"
           onScroll={handleScroll}
         >
           <Badge
             variant="outline"
             className={cn(
-              "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2",
+              "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 shrink-0",
               defaultTabColors.all,
               activeTab === 'all' ? "border-primary" : "border-transparent"
             )}
@@ -142,7 +142,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
                 key={category.id}
                 variant="outline"
                 className={cn(
-                  "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2",
+                  "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2 shrink-0",
                   category.color || defaultTabColors[(index % 7 + 1) as keyof typeof defaultTabColors],
                   activeTab === category.slug ? "border-primary" : "border-transparent"
                 )}
@@ -155,7 +155,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
             )}
           )}
         </div>
-        <ScrollBar orientation="horizontal" className="h-2.5 select-none touch-none flex-1" />
+        <ScrollBar orientation="horizontal" className="h-2.5 select-none touch-none" />
       </ScrollArea>
 
       {showRightArrow && (
@@ -171,3 +171,4 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     </div>
   );
 };
+
