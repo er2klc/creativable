@@ -9,13 +9,14 @@ import { EmptyState } from "./components/EmptyState";
 interface CategoryOverviewProps {
   teamId: string;
   teamSlug: string;
+  categorySlug?: string;
 }
 
-export function CategoryOverview({ teamId, teamSlug }: CategoryOverviewProps) {
+export function CategoryOverview({ teamId, teamSlug, categorySlug }: CategoryOverviewProps) {
   const { data: posts, isLoading } = useQuery({
-    queryKey: ["team-posts-overview", teamId],
+    queryKey: ["team-posts-overview", teamId, categorySlug],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("team_posts")
         .select(`
           *,
@@ -31,8 +32,13 @@ export function CategoryOverview({ teamId, teamSlug }: CategoryOverviewProps) {
           )
         `)
         .eq("team_id", teamId)
-        .order("created_at", { ascending: false })
-        .limit(10);
+        .order("created_at", { ascending: false });
+
+      if (categorySlug) {
+        query = query.eq("team_categories.slug", categorySlug);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
       return data as Post[];
@@ -48,7 +54,7 @@ export function CategoryOverview({ teamId, teamSlug }: CategoryOverviewProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {posts.map((post) => (
         <PostCard key={post.id} post={post} teamSlug={teamSlug} />
       ))}

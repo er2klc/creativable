@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery } from "@tanstack/react-query";
@@ -56,6 +55,26 @@ export function PostsAndDiscussions() {
     },
     enabled: !!team?.id,
   });
+
+  const { data: teamMember } = useQuery({
+    queryKey: ['team-member-role', team?.id],
+    queryFn: async () => {
+      if (!team?.id || !user?.id) return null;
+
+      const { data, error } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', team.id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!team?.id && !!user?.id,
+  });
+
+  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
 
   // If we have a postSlug, fetch the post details
   const { data: post } = useQuery({
@@ -160,6 +179,7 @@ export function PostsAndDiscussions() {
             activeTab={activeTab}
             allCategories={allCategories}
             onCategoryClick={handleCategoryClick}
+            isAdmin={isAdmin}
           />
 
           <div className="w-full overflow-hidden">

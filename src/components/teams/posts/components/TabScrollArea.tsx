@@ -6,14 +6,17 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabScroll } from "../hooks/useTabScroll";
 import { TeamCategory } from "../types/team";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { EditCategoryDialog } from "./EditCategoryDialog";
 
 interface TabScrollAreaProps {
   activeTab: string;
   allCategories: TeamCategory[] | null;
   onCategoryClick: (categorySlug?: string) => void;
+  isAdmin?: boolean;
 }
 
-export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick }: TabScrollAreaProps) => {
+export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick, isAdmin }: TabScrollAreaProps) => {
   const {
     scrollContainerRef,
     showLeftArrow,
@@ -24,18 +27,18 @@ export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick }: Tab
 
   // Pastellfarben für die Tabs
   const tabColors = {
-    all: 'bg-[#F2FCE2] hover:bg-[#E2ECD2]', // Soft Green
-    1: 'bg-[#FEF7CD] hover:bg-[#EEE7BD]', // Soft Yellow
-    2: 'bg-[#FEC6A1] hover:bg-[#EEB691]', // Soft Orange
-    3: 'bg-[#E5DEFF] hover:bg-[#D5CEEF]', // Soft Purple
-    4: 'bg-[#FFDEE2] hover:bg-[#EFCED2]', // Soft Pink
-    5: 'bg-[#FDE1D3] hover:bg-[#EDD1C3]', // Soft Peach
-    6: 'bg-[#D3E4FD] hover:bg-[#C3D4ED]', // Soft Blue
-    7: 'bg-[#F1F0FB] hover:bg-[#E1E0EB]', // Soft Gray
+    all: 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]', // Soft Green
+    1: 'bg-[#FEF7CD] hover:bg-[#EEE7BD] text-[#8B7355]', // Soft Yellow
+    2: 'bg-[#FEC6A1] hover:bg-[#EEB691] text-[#8B4513]', // Soft Orange
+    3: 'bg-[#E5DEFF] hover:bg-[#D5CEEF] text-[#483D8B]', // Soft Purple
+    4: 'bg-[#FFDEE2] hover:bg-[#EFCED2] text-[#8B3D3D]', // Soft Pink
+    5: 'bg-[#FDE1D3] hover:bg-[#EDD1C3] text-[#8B5742]', // Soft Peach
+    6: 'bg-[#D3E4FD] hover:bg-[#C3D4ED] text-[#4A708B]', // Soft Blue
+    7: 'bg-[#F1F0FB] hover:bg-[#E1E0EB] text-[#4A4A4A]', // Soft Gray
   };
 
   return (
-    <div className="relative flex items-center">
+    <div className="relative flex items-center gap-4">
       {showLeftArrow && (
         <Button
           variant="ghost"
@@ -90,6 +93,10 @@ export const TabScrollArea = ({ activeTab, allCategories, onCategoryClick }: Tab
         >
           <ArrowRight className="h-4 w-4" />
         </Button>
+      )}
+
+      {isAdmin && (
+        <EditCategoryDialog teamId={allCategories?.[0]?.team_id} />
       )}
     </div>
   );
