@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useCategoryQueries } from "./hooks/useCategoryQueries";
 import { useCategoryMutations } from "./hooks/useCategoryMutations";
+import { toast } from "sonner";
 
 export const useCategoryDialog = (teamId?: string) => {
   const [open, setOpen] = useState(false);
@@ -16,6 +17,7 @@ export const useCategoryDialog = (teamId?: string) => {
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
 
   const handleCategoryChange = (value: string) => {
+    console.log("Changing category to:", value);
     setSelectedCategory(value);
     if (value === "new") {
       setCategoryName("");
@@ -26,6 +28,7 @@ export const useCategoryDialog = (teamId?: string) => {
     } else {
       const category = categories?.find(cat => cat.id === value);
       if (category) {
+        console.log("Found category:", category);
         setCategoryName(category.name);
         setIsPublic(category.is_public ?? true);
         setSelectedIcon(category.icon || "MessageCircle");
@@ -36,27 +39,53 @@ export const useCategoryDialog = (teamId?: string) => {
   };
 
   const handleSave = async () => {
-    if (!team?.id) return;
+    if (!team?.id) {
+      toast.error("Team ID nicht gefunden");
+      return;
+    }
     
-    const success = await saveCategory(
-      team.id,
-      selectedCategory,
-      categoryName,
-      isPublic,
-      selectedIcon,
-      selectedColor,
-      selectedSize
-    );
+    if (!categoryName.trim()) {
+      toast.error("Bitte geben Sie einen Kategorienamen ein");
+      return;
+    }
 
-    if (success) {
-      setOpen(false);
+    try {
+      const success = await saveCategory(
+        team.id,
+        selectedCategory,
+        categoryName.trim(),
+        isPublic,
+        selectedIcon,
+        selectedColor,
+        selectedSize
+      );
+
+      if (success) {
+        toast.success(selectedCategory === "new" ? "Kategorie erstellt" : "Kategorie aktualisiert");
+        setOpen(false);
+        setSelectedCategory("new");
+        setCategoryName("");
+      }
+    } catch (error) {
+      console.error("Error saving category:", error);
+      toast.error("Fehler beim Speichern der Kategorie");
     }
   };
 
   const handleDelete = async () => {
-    const success = await deleteCategory(selectedCategory);
-    if (success) {
-      setOpen(false);
+    if (selectedCategory === "new") return;
+
+    try {
+      const success = await deleteCategory(selectedCategory);
+      if (success) {
+        toast.success("Kategorie gelöscht");
+        setOpen(false);
+        setSelectedCategory("new");
+        setCategoryName("");
+      }
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      toast.error("Fehler beim Löschen der Kategorie");
     }
   };
 
