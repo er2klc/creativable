@@ -3,10 +3,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
 import { Button } from "@/components/ui/button";
-import { Plus, CheckSquare, User } from "lucide-react";
+import { Plus, CheckSquare } from "lucide-react";
 import confetti from "canvas-confetti";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
+import { SearchBar } from "@/components/dashboard/SearchBar";
+import { HeaderActions } from "@/components/layout/HeaderActions";
+import { useAuth } from "@/hooks/use-auth";
 import {
   DndContext,
   closestCenter,
@@ -22,7 +25,6 @@ import {
   verticalListSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tables } from "@/integrations/supabase/types";
@@ -123,6 +125,7 @@ function SortableTask({ task, updateTaskMutation, settings }: { task: Task, upda
 export default function TodoList() {
   const [isAddTaskOpen, setIsAddTaskOpen] = useState(false);
   const { settings } = useSettings();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -268,54 +271,70 @@ export default function TodoList() {
   const incompleteTasks = tasks.filter(task => !task.completed);
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6 bg-white rounded-lg shadow-sm p-4">
-        <div className="flex items-center gap-2">
-          <CheckSquare className="h-6 w-6 text-primary" />
-          <h1 className="text-2xl font-bold">ToDos ({incompleteTasks.length})</h1>
+    <div className="min-h-screen bg-gray-50/50">
+      <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+        <div className="w-full">
+          <div className="h-16 px-4 flex items-center">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+              <div className="flex items-center gap-2">
+                <CheckSquare className="h-5 w-5" />
+                <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                  ToDos ({incompleteTasks.length})
+                </h1>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="w-[300px]">
+                  <SearchBar />
+                </div>
+                <Button onClick={() => setIsAddTaskOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  {settings?.language === "en" ? "New Task" : "Neue Aufgabe"}
+                </Button>
+              </div>
+              <HeaderActions profile={null} userEmail={user?.email} />
+            </div>
+          </div>
         </div>
-        <Button onClick={() => setIsAddTaskOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          {settings?.language === "en" ? "New Task" : "Neue Aufgabe"}
-        </Button>
       </div>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={incompleteTasks.map(task => task.id)}
-          strategy={verticalListSortingStrategy}
+      <div className="container mx-auto pt-24 md:pt-[84px] px-4">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
         >
-          <AnimatePresence>
-            <div className="space-y-4">
-              {incompleteTasks.map((task) => (
-                <SortableTask 
-                  key={task.id} 
-                  task={task} 
-                  updateTaskMutation={updateTaskMutation}
-                  settings={settings}
-                />
-              ))}
-            </div>
-          </AnimatePresence>
-        </SortableContext>
-      </DndContext>
+          <SortableContext
+            items={incompleteTasks.map(task => task.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <AnimatePresence>
+              <div className="space-y-4">
+                {incompleteTasks.map((task) => (
+                  <SortableTask 
+                    key={task.id} 
+                    task={task} 
+                    updateTaskMutation={updateTaskMutation}
+                    settings={settings}
+                  />
+                ))}
+              </div>
+            </AnimatePresence>
+          </SortableContext>
+        </DndContext>
 
-      {incompleteTasks.length === 0 && (
-        <div className="text-center text-gray-500 py-8">
-          {settings?.language === "en" 
-            ? "No tasks to display" 
-            : "Keine Aufgaben vorhanden"}
-        </div>
-      )}
+        {incompleteTasks.length === 0 && (
+          <div className="text-center text-gray-500 py-8">
+            {settings?.language === "en" 
+              ? "No tasks to display" 
+              : "Keine Aufgaben vorhanden"}
+          </div>
+        )}
 
-      <AddTaskDialog
-        open={isAddTaskOpen}
-        onOpenChange={setIsAddTaskOpen}
-      />
+        <AddTaskDialog
+          open={isAddTaskOpen}
+          onOpenChange={setIsAddTaskOpen}
+        />
+      </div>
     </div>
   );
 }
