@@ -114,7 +114,12 @@ export function PostsAndDiscussions() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  {team.name}
+                  <span 
+                    className="cursor-pointer hover:text-foreground transition-colors"
+                    onClick={() => navigate(`/unity/team/${team.slug}`)}
+                  >
+                    {team.name}
+                  </span>
                   <span className="text-muted-foreground">/</span>
                   <div className="flex items-center gap-2">
                     <MessageSquare className="h-5 w-5" />
@@ -174,3 +179,4 @@ export function PostsAndDiscussions() {
     </>
   );
 }
+

@@ -1,5 +1,5 @@
 
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Calendar } from "lucide-react";
@@ -7,9 +7,11 @@ import { TeamCalendarView } from "@/components/teams/calendar/TeamCalendarView";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
+import { ICalButton } from "@/components/calendar/ICalButton";
 
 const TeamCalendar = () => {
   const { teamSlug } = useParams();
+  const navigate = useNavigate();
   const user = useUser();
 
   const { data: team, isLoading: isTeamLoading } = useQuery({
@@ -66,7 +68,12 @@ const TeamCalendar = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  {team.name}
+                  <span 
+                    className="cursor-pointer hover:text-foreground transition-colors"
+                    onClick={() => navigate(`/unity/team/${team.slug}`)}
+                  >
+                    {team.name}
+                  </span>
                   <span className="text-muted-foreground">/</span>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
@@ -74,8 +81,11 @@ const TeamCalendar = () => {
                   </div>
                 </div>
               </div>
-              <div className="w-[300px]">
-                <SearchBar />
+              <div className="flex items-center gap-4">
+                <div className="w-[300px]">
+                  <SearchBar />
+                </div>
+                <ICalButton />
               </div>
               <HeaderActions profile={null} userEmail={user?.email} />
             </div>
@@ -96,3 +106,4 @@ const TeamCalendar = () => {
 };
 
 export default TeamCalendar;
+
