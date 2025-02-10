@@ -12,6 +12,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LeadTableView } from "@/components/leads/LeadTableView";
 import { toast } from "sonner";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function Pool() {
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
@@ -134,23 +141,38 @@ export default function Pool() {
     <div className="px-4 md:px-8 max-w-full overflow-x-hidden">
       <PoolHeader viewMode={viewMode} setViewMode={setViewMode} />
       <div className="pt-20 md:pt-[84px] mb-8">
-        <Tabs defaultValue={status} className="w-full" onValueChange={(value) => navigate(`/pool/${value}`)}>
-          <TabsList className="flex h-auto w-full bg-transparent gap-2 justify-start">
-            {statusOptions.map((option) => (
-              <TabsTrigger 
-                key={option.id}
-                value={option.id}
-                className={cn(
-                  "data-[state=active]:bg-accent data-[state=active]:text-accent-foreground",
-                  "border border-input hover:bg-accent/50",
-                  "h-8 px-3 text-sm"
-                )}
-              >
-                {option.label} ({option.count})
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+        {isMobile ? (
+          <Select value={status} onValueChange={(value) => navigate(`/pool/${value}`)}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder="Status auswählen" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((option) => (
+                <SelectItem key={option.id} value={option.id}>
+                  {option.label} ({option.count})
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Tabs defaultValue={status} className="w-full" onValueChange={(value) => navigate(`/pool/${value}`)}>
+            <TabsList className="flex h-auto w-full bg-transparent gap-2 justify-start">
+              {statusOptions.map((option) => (
+                <TabsTrigger 
+                  key={option.id}
+                  value={option.id}
+                  className={cn(
+                    "data-[state=active]:bg-accent data-[state=active]:text-accent-foreground",
+                    "border border-input hover:bg-accent/50",
+                    "h-8 px-3 text-sm"
+                  )}
+                >
+                  {option.label} ({option.count})
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
+        )}
       </div>
 
       <div className="overflow-x-hidden w-full">
