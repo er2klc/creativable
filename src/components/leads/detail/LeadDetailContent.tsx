@@ -32,7 +32,7 @@ export const LeadDetailContent = ({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="grid grid-cols-12 gap-6 p-6 bg-gray-50">
+      <div className="grid grid-cols-12 gap-6 p-6 bg-gray-50 min-h-[calc(100vh-4rem)]">
         {/* Left Column - 4/12 */}
         <div className="col-span-4 space-y-6">
           <div className="space-y-4">
@@ -67,4 +67,3 @@ export const LeadDetailContent = ({
     </div>
   );
 };
-
