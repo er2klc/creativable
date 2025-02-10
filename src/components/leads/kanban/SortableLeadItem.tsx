@@ -1,10 +1,15 @@
+
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { Tables } from "@/integrations/supabase/types";
 import { useState, useRef, CSSProperties } from "react";
 import { cn } from "@/lib/utils";
-import { Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
+import { Instagram, Linkedin, Facebook, Video, Users, StarIcon } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface SortableLeadItemProps {
   lead: Tables<"leads">;
@@ -15,6 +20,7 @@ interface SortableLeadItemProps {
 export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: SortableLeadItemProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const dragTimeoutRef = useRef<number | null>(null);
+  const queryClient = useQueryClient();
 
   const {
     attributes,
@@ -93,6 +99,25 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     setIsDragging(false);
   };
 
+  const toggleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ is_favorite: !lead.is_favorite })
+        .eq('id', lead.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["pool-leads"] });
+      toast.success(lead.is_favorite ? "Von Favoriten entfernt" : "Zu Favoriten hinzugefügt");
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error("Fehler beim Aktualisieren des Favoriten-Status");
+    }
+  };
+
   const getBackgroundStyle = () => {
     const types = lead.contact_type?.split(",").map(type => type.trim()) || [];
     const isPartner = types.includes("Likely Partner");
@@ -118,30 +143,13 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       .slice(0, 2);
   };
 
-  // Get platform border color
-  const getPlatformBorderColor = (platform: string) => {
-    switch (platform?.toLowerCase()) {
-      case "instagram":
-        return "border-l-pink-500";
-      case "linkedin":
-        return "border-l-blue-600";
-      case "facebook":
-        return "border-l-blue-700";
-      case "tiktok":
-        return "border-l-black";
-      default:
-        return "border-l-gray-500";
-    }
-  };
-
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative border-l-2",
+        "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative",
         getBackgroundStyle(),
-        getPlatformBorderColor(lead.platform),
         isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
         !isDragging && !disabled && "cursor-grab",
         disabled && "cursor-default"
@@ -157,6 +165,16 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       )}>
         {getPlatformIcon(lead.platform)}
       </div>
+
+      {/* Favorite Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        className="absolute bottom-2 right-2 h-6 w-6"
+        onClick={toggleFavorite}
+      >
+        <StarIcon className={cn("h-4 w-4", lead.is_favorite ? "fill-yellow-400 text-yellow-400" : "text-gray-300")} />
+      </Button>
 
       <div className="flex gap-3">
         {/* Profile Picture Column */}

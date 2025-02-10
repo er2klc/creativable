@@ -1,6 +1,6 @@
 
 import { TableCell } from "@/components/ui/table";
-import { Star, Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
+import { Star, Instagram, Linkedin, Facebook, Video, Users, CircleUser, StarIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,13 +8,31 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { toast } from "sonner";
 
 interface LeadTableCellProps {
-  type: "favorite" | "name" | "platform" | "phase" | "lastAction" | "industry";
+  type: "favorite" | "name" | "platform" | "phase" | "lastAction" | "status";
   value: any;
   onClick?: () => void;
-  lead?: Tables<"leads">; // Properly typed lead prop
+  lead?: Tables<"leads">; 
 }
+
+const getStatusInfo = (status: string) => {
+  switch(status) {
+    case 'lead':
+      return { label: 'Kontakt offen', icon: CircleUser, color: 'text-blue-500' };
+    case 'partner':
+      return { label: 'Partner', icon: Users, color: 'text-green-500' };
+    case 'customer':
+      return { label: 'Kunde', icon: Star, color: 'text-purple-500' };
+    case 'not_for_now':
+      return { label: 'Später', icon: CircleUser, color: 'text-orange-500' };
+    case 'no_interest':
+      return { label: 'Kein Interesse', icon: CircleUser, color: 'text-red-500' };
+    default:
+      return { label: 'Unbekannt', icon: CircleUser, color: 'text-gray-500' };
+  }
+};
 
 const getPlatformIcon = (platform: string) => {
   switch (platform?.toLowerCase()) {
@@ -50,6 +68,7 @@ const getPlatformColor = (platform: string) => {
 
 export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps) => {
   const isMobile = useIsMobile();
+  const queryClient = useQueryClient();
 
   const { data: phaseInfo } = useQuery({
     queryKey: ["phase-info", value],
@@ -67,15 +86,32 @@ export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps
     enabled: type === "phase" && !!value,
   });
 
+  const toggleFavorite = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!lead) return;
+
+    try {
+      const { error } = await supabase
+        .from('leads')
+        .update({ is_favorite: !lead.is_favorite })
+        .eq('id', lead.id);
+
+      if (error) throw error;
+
+      queryClient.invalidateQueries({ queryKey: ["pool-leads"] });
+      toast.success(lead.is_favorite ? "Von Favoriten entfernt" : "Zu Favoriten hinzugefügt");
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      toast.error("Fehler beim Aktualisieren des Favoriten-Status");
+    }
+  };
+
   switch (type) {
     case "favorite":
       return (
-        <TableCell className="p-2" onClick={(e) => {
-          e.stopPropagation();
-          onClick?.();
-        }}>
+        <TableCell className="p-2" onClick={toggleFavorite}>
           <Button variant="ghost" size="icon" className="h-4 w-4">
-            <Star className="h-4 w-4" />
+            <StarIcon className={cn("h-4 w-4", lead?.is_favorite ? "fill-yellow-400 text-yellow-400" : "text-gray-300")} />
           </Button>
         </TableCell>
       );
@@ -124,7 +160,7 @@ export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps
               <span className={cn("", isMobile && "text-sm")}>{value}</span>
               {isMobile && lead && (
                 <span className="text-xs text-muted-foreground">
-                  {lead.platform} • {lead.industry}
+                  {lead.platform} • {getStatusInfo(lead.status || 'lead').label}
                 </span>
               )}
             </div>
@@ -135,6 +171,17 @@ export const LeadTableCell = ({ type, value, onClick, lead }: LeadTableCellProps
       return (
         <TableCell className="whitespace-nowrap">
           {value ? new Date(value).toLocaleDateString() : "-"}
+        </TableCell>
+      );
+    case "status":
+      const statusInfo = getStatusInfo(value || 'lead');
+      const StatusIcon = statusInfo.icon;
+      return (
+        <TableCell className="whitespace-nowrap">
+          <div className="flex items-center gap-2">
+            <StatusIcon className={cn("h-4 w-4", statusInfo.color)} />
+            <span>{statusInfo.label}</span>
+          </div>
         </TableCell>
       );
     default:

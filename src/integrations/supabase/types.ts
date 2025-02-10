@@ -839,6 +839,7 @@ export type Database = {
           follow_up_date: string | null
           id: string
           industry: string
+          is_favorite: boolean | null
           languages: string[] | null
           last_action: string | null
           last_action_date: string | null
@@ -893,6 +894,7 @@ export type Database = {
           follow_up_date?: string | null
           id?: string
           industry: string
+          is_favorite?: boolean | null
           languages?: string[] | null
           last_action?: string | null
           last_action_date?: string | null
@@ -947,6 +949,7 @@ export type Database = {
           follow_up_date?: string | null
           id?: string
           industry?: string
+          is_favorite?: boolean | null
           languages?: string[] | null
           last_action?: string | null
           last_action_date?: string | null

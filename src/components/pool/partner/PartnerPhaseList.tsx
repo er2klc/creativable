@@ -9,19 +9,26 @@ interface PartnerPhaseListProps {
 
 export const PartnerPhaseList = ({ leads, onLeadClick }: PartnerPhaseListProps) => {
   const getPartnerLeadsByPhase = (phase: string) => {
-    return leads.filter(lead => {
-      const progress = lead.onboarding_progress as any;
-      switch(phase) {
-        case 'start':
-          return !progress?.training_provided;
-        case 'goals':
-          return progress?.training_provided && !progress?.team_invited;
-        case 'presentation':
-          return progress?.team_invited;
-        default:
-          return true;
-      }
-    });
+    // Sort leads with favorites first within each phase
+    return leads
+      .filter(lead => {
+        const progress = lead.onboarding_progress as any;
+        switch(phase) {
+          case 'start':
+            return !progress?.training_provided;
+          case 'goals':
+            return progress?.training_provided && !progress?.team_invited;
+          case 'presentation':
+            return progress?.team_invited;
+          default:
+            return true;
+        }
+      })
+      .sort((a, b) => {
+        if (a.is_favorite && !b.is_favorite) return -1;
+        if (!a.is_favorite && b.is_favorite) return 1;
+        return 0;
+      });
   };
 
   return (

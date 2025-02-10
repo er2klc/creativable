@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -114,6 +113,13 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
     }
   };
 
+  // Sort leads with favorites first
+  const sortedLeads = [...leads].sort((a, b) => {
+    if (a.is_favorite && !b.is_favorite) return -1;
+    if (!a.is_favorite && b.is_favorite) return 1;
+    return 0;
+  });
+
   return (
     <div className="h-full overflow-y-auto">
       <div className="min-w-full">
@@ -140,7 +146,7 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
                     {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
                   </TableCell>
                   <TableCell className="w-[15%] min-w-[120px]">
-                    {settings?.language === "en" ? "Industry" : "Branche"}
+                    {settings?.language === "en" ? "Status" : "Status"}
                   </TableCell>
                 </>
               )}
@@ -150,20 +156,20 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leads.map((lead) => (
+            {sortedLeads.map((lead) => (
               <TableRow
                 key={lead.id}
                 className="cursor-pointer hover:bg-muted/50"
                 onClick={() => onLeadClick(lead.id)}
               >
-                {!isMobile && <LeadTableCell type="favorite" value={null} />}
+                {!isMobile && <LeadTableCell type="favorite" value={null} lead={lead} />}
                 <LeadTableCell type="name" value={lead.name} lead={lead} />
                 {!isMobile && (
                   <>
                     <LeadTableCell type="platform" value={lead.platform} />
                     <LeadTableCell type="phase" value={lead.phase_id} />
                     <LeadTableCell type="lastAction" value={lead.last_action_date} />
-                    <LeadTableCell type="industry" value={lead.industry} />
+                    <LeadTableCell type="status" value={lead.status} lead={lead} />
                   </>
                 )}
                 <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
