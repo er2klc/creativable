@@ -10,8 +10,8 @@ import { Platform } from "@/config/platforms";
 import { Tables } from "@/integrations/supabase/types";
 import { HeaderActions } from "./header/HeaderActions";
 import { useStatusChange } from "./hooks/useStatusChange";
-import { Search, Bell } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Search } from "lucide-react";
+import { HeaderActions as GlobalHeaderActions } from "@/components/layout/HeaderActions";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 
@@ -76,20 +76,7 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
                 onStatusChange={handleStatusChange}
                 onDelete={handleDelete}
               />
-              <div className="flex items-center gap-4">
-                <button className="relative">
-                  <Bell className="h-5 w-5 text-gray-600 hover:text-purple-500 transition-colors" />
-                  <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                    2
-                  </span>
-                </button>
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={profile?.avatar_url} />
-                  <AvatarFallback>
-                    {profile?.full_name?.substring(0, 2).toUpperCase() || "U"}
-                  </AvatarFallback>
-                </Avatar>
-              </div>
+              <GlobalHeaderActions profile={profile} userEmail={undefined} />
             </div>
           </header>
           <div className="px-6 pb-3">
