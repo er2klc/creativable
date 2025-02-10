@@ -152,3 +152,4 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     </div>
   );
 };
+
