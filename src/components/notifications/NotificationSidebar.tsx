@@ -1,15 +1,12 @@
 
-import { useEffect, useState } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, Check, ExternalLink, Trash2, X } from "lucide-react";
+import { useEffect } from 'react';
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { formatDistanceToNow } from 'date-fns';
-import { de } from 'date-fns/locale';
 import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
+import { NotificationHeader } from './NotificationHeader';
+import { NotificationList } from './NotificationList';
 
 interface Notification {
   id: string;
@@ -119,7 +116,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
     }
   };
 
-  const markAsRead = async (notification: Notification) => {
+  const handleNotificationClick = async (notification: Notification) => {
     try {
       const { error } = await supabase
         .from('notifications')
@@ -133,16 +130,13 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      // Navigation logic based on notification type
       let targetPath = notification.target_page;
 
       if (notification.type === 'presentation_view' || 
           notification.type === 'presentation_halfway' || 
           notification.type === 'presentation_completed') {
-        // For presentation notifications, use target_page directly if available
         targetPath = notification.target_page;
       } else if (notification.metadata?.leadId) {
-        // For other notifications with leadId, use contacts path
         targetPath = `/contacts/${notification.metadata.leadId}`;
       }
 
@@ -174,84 +168,17 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="!w-[100vw] sm:!max-w-[600px] mt-0 z-[100]">
-        <div className="flex items-center justify-between mb-6">
-          <SheetHeader className="flex-1">
-            <SheetTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" />
-              Benachrichtigungen
-            </SheetTitle>
-          </SheetHeader>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={markAllAsRead}
-              className="flex items-center gap-1"
-            >
-              <Check className="h-4 w-4" />
-              Alle als gelesen markieren
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="h-8 w-8 rounded-full"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-        <ScrollArea className="h-[calc(100vh-100px)]">
-          <div className="space-y-4 pr-4">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                onClick={() => markAsRead(notification)}
-                className={`p-4 rounded-lg border transition-colors cursor-pointer relative group ${
-                  notification.read ? 'bg-white' : 'bg-blue-50 hover:bg-blue-100/80'
-                }`}
-              >
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className={`font-medium flex items-center gap-2`}>
-                    <span>{getNotificationIcon(notification.type)}</span>
-                    {notification.title}
-                  </h3>
-                  <span className="text-xs text-gray-500">
-                    {formatDistanceToNow(new Date(notification.created_at), {
-                      addSuffix: true,
-                      locale: de
-                    })}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-600">{notification.content}</p>
-                {(notification.target_page || notification.metadata?.leadId) && (
-                  <div className="mt-2 flex items-center text-xs text-blue-600">
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Klicken zum Öffnen
-                  </div>
-                )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleDeleteNotification(notification.id);
-                  }}
-                >
-                  <Trash2 className="h-4 w-4 text-gray-500 hover:text-red-600" />
-                </Button>
-              </div>
-            ))}
-            {notifications.length === 0 && (
-              <div className="text-center text-gray-500 py-8">
-                Keine Benachrichtigungen vorhanden
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+        <NotificationHeader 
+          onMarkAllRead={markAllAsRead}
+          onClose={() => onOpenChange(false)}
+        />
+        <NotificationList
+          notifications={notifications}
+          onDelete={handleDeleteNotification}
+          onNotificationClick={handleNotificationClick}
+          getNotificationIcon={getNotificationIcon}
+        />
       </SheetContent>
     </Sheet>
   );
 };
-
