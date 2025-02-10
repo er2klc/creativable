@@ -16,13 +16,16 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedSize, setSelectedSize] = useState("small");
 
   // Extract actual team slug from URL format
-  const processedTeamSlug = teamSlug?.split('/')[0]?.replace('unity/team/', '');
+  const processedTeamSlug = teamSlug?.split('/')[0]?.replace('unity/team/', '')?.replace('/posts/category/', '');
   
   // Load team ID from slug
   const { data: teamData } = useQuery({
     queryKey: ['team-by-slug', processedTeamSlug],
     queryFn: async () => {
-      if (!processedTeamSlug) return null;
+      if (!processedTeamSlug) {
+        console.error("No team slug provided");
+        return null;
+      }
       
       console.log("Fetching team data for slug:", processedTeamSlug);
       const { data, error } = await supabase
@@ -74,8 +77,8 @@ export const useCategoryDialog = (teamSlug?: string) => {
 
   const handleSave = async () => {
     if (!teamData?.id) {
-      console.error("Team ID not found", { processedTeamSlug, teamData });
-      toast.error("Team nicht gefunden");
+      console.error("Team nicht gefunden", { processedTeamSlug, teamData });
+      toast.error("Team nicht gefunden. Bitte laden Sie die Seite neu.");
       return;
     }
     
@@ -150,3 +153,4 @@ export const useCategoryDialog = (teamSlug?: string) => {
     handleDelete
   };
 };
+
