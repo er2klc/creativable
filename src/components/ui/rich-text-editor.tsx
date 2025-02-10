@@ -46,19 +46,19 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     editor.chain().focus().insertContent(emoji.native).run();
   };
 
-  const handleButtonClick = (e: React.MouseEvent, callback: () => void) => {
+  const handleButtonClick = (callback: () => void) => (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     callback();
   };
 
   return (
-    <div className="border rounded-md select-none">
+    <div className="border rounded-md select-none" onClick={(e) => e.stopPropagation()}>
       <div className="flex flex-wrap gap-1 p-2 border-b bg-muted">
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => handleButtonClick(e, () => editor.chain().focus().toggleBold().run())}
+          onClick={handleButtonClick(() => editor.chain().focus().toggleBold().run())}
           className={editor.isActive('bold') ? 'bg-muted-foreground/20' : ''}
         >
           <Bold className="h-4 w-4" />
@@ -66,7 +66,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => handleButtonClick(e, () => editor.chain().focus().toggleItalic().run())}
+          onClick={handleButtonClick(() => editor.chain().focus().toggleItalic().run())}
           className={editor.isActive('italic') ? 'bg-muted-foreground/20' : ''}
         >
           <Italic className="h-4 w-4" />
@@ -74,7 +74,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => handleButtonClick(e, () => editor.chain().focus().toggleHeading({ level: 2 }).run())}
+          onClick={handleButtonClick(() => editor.chain().focus().toggleHeading({ level: 2 }).run())}
           className={editor.isActive('heading') ? 'bg-muted-foreground/20' : ''}
         >
           <Heading2 className="h-4 w-4" />
@@ -82,7 +82,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => handleButtonClick(e, () => editor.chain().focus().toggleBulletList().run())}
+          onClick={handleButtonClick(() => editor.chain().focus().toggleBulletList().run())}
           className={editor.isActive('bulletList') ? 'bg-muted-foreground/20' : ''}
         >
           <List className="h-4 w-4" />
@@ -90,7 +90,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => handleButtonClick(e, () => editor.chain().focus().toggleOrderedList().run())}
+          onClick={handleButtonClick(() => editor.chain().focus().toggleOrderedList().run())}
           className={editor.isActive('orderedList') ? 'bg-muted-foreground/20' : ''}
         >
           <ListOrdered className="h-4 w-4" />
@@ -98,7 +98,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => handleButtonClick(e, () => editor.chain().focus().toggleBlockquote().run())}
+          onClick={handleButtonClick(() => editor.chain().focus().toggleBlockquote().run())}
           className={editor.isActive('blockquote') ? 'bg-muted-foreground/20' : ''}
         >
           <Quote className="h-4 w-4" />
@@ -106,40 +106,46 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => handleButtonClick(e, () => editor.chain().focus().undo().run())}
+          onClick={handleButtonClick(() => editor.chain().focus().undo().run())}
         >
           <Undo className="h-4 w-4" />
         </Button>
         <Button
           variant="ghost"
           size="sm"
-          onMouseDown={(e) => handleButtonClick(e, () => editor.chain().focus().redo().run())}
+          onClick={handleButtonClick(() => editor.chain().focus().redo().run())}
         >
           <Redo className="h-4 w-4" />
         </Button>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={(e) => e.stopPropagation()}
+            >
               <Smile className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full p-0">
-            <div>
-              <Picker 
-                data={data} 
-                onEmojiSelect={addEmoji}
-                theme="light"
-                emojiSize={20}
-                emojiButtonSize={28}
-                maxFrequentRows={1}
-              />
-            </div>
+          <PopoverContent 
+            className="w-full p-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Picker 
+              data={data} 
+              onEmojiSelect={addEmoji}
+              theme="light"
+              emojiSize={20}
+              emojiButtonSize={28}
+              maxFrequentRows={1}
+            />
           </PopoverContent>
         </Popover>
       </div>
-      <div className="p-4">
+      <div className="p-4" onClick={(e) => e.stopPropagation()}>
         <EditorContent editor={editor} />
       </div>
     </div>
   );
 }
+
