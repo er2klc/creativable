@@ -25,6 +25,11 @@ export const platformRoutes = [
     label: "Team Posts",
   },
   {
+    path: "/unity/team/:teamSlug/posts/category/:categorySlug",
+    element: <PostsAndDiscussions />,
+    label: "Team Posts Category",
+  },
+  {
     path: "/unity/team/:teamSlug/calendar",
     element: <TeamCalendar />,
     label: "Team Calendar",

@@ -63,7 +63,7 @@ export function PostsAndDiscussions() {
     }
 
     setActiveTab(categorySlug || 'all');
-
+    
     if (categorySlug) {
       navigate(`/unity/team/${teamSlug}/posts/category/${categorySlug}`);
     } else {
