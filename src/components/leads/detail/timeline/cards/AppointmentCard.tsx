@@ -47,7 +47,6 @@ export const AppointmentCard = ({
       <div className="relative group">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            {IconComponent}
             <div className="font-medium">{content}</div>
           </div>
           
