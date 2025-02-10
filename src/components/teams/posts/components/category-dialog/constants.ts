@@ -21,6 +21,22 @@ export const availableIcons = [
   { name: 'Target', icon: Target }
 ];
 
+export const iconMap: { [key: string]: any } = {
+  'MessageCircle': MessageCircle,
+  'Megaphone': Megaphone,
+  'Calendar': Calendar,
+  'Trophy': Trophy,
+  'Video': Video,
+  'Users': Users,
+  'Star': Star,
+  'Heart': Heart,
+  'HelpCircle': HelpCircle,
+  'Rocket': Rocket,
+  'FileText': FileText,
+  'Lightbulb': Lightbulb,
+  'Target': Target
+};
+
 export const availableColors = [
   { name: 'Grün', value: 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]' },
   { name: 'Gelb', value: 'bg-[#FEF7CD] hover:bg-[#EEE7BD] text-[#8B7355]' },
@@ -37,3 +53,4 @@ export const sizes = [
   { name: 'Medium', value: 'medium' },
   { name: 'Groß', value: 'large' },
 ];
+
