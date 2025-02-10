@@ -1,14 +1,14 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TeamAccessManager } from "./TeamAccessManager";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
-import { TiptapEditor } from "@/components/ui/tiptap-editor";
+import { NameField } from "./edit-dialog/NameField";
+import { DescriptionField } from "./edit-dialog/DescriptionField";
+import { LogoField } from "./edit-dialog/LogoField";
+import { DialogFooter } from "./edit-dialog/DialogFooter";
 
 interface EditPlatformDialogProps {
   platformId: string;
@@ -38,7 +38,6 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
     enabled: open && !!platformId,
   });
 
-  // Update form when platform data is loaded
   useEffect(() => {
     if (platform) {
       setName(platform.name || "");
@@ -47,7 +46,6 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
     }
   }, [platform]);
 
-  // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
       setName("");
@@ -57,7 +55,6 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
     }
   }, [open]);
 
-  // Fetch current team access
   useQuery({
     queryKey: ['platform-teams', platformId],
     queryFn: async () => {
@@ -87,7 +84,6 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
 
       if (platformError) throw platformError;
 
-      // Get current team access
       const { data: currentAccess } = await supabase
         .from('elevate_team_access')
         .select('team_id')
@@ -95,7 +91,6 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
 
       const currentTeamIds = currentAccess?.map(access => access.team_id) || [];
 
-      // Remove teams that were unselected
       const teamsToRemove = currentTeamIds.filter(id => !selectedTeams.includes(id));
       if (teamsToRemove.length > 0) {
         const { error: removeError } = await supabase
@@ -107,7 +102,6 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
         if (removeError) throw removeError;
       }
 
-      // Add new team access
       const teamsToAdd = selectedTeams.filter(id => !currentTeamIds.includes(id));
       if (teamsToAdd.length > 0) {
         const { error: addError } = await supabase
@@ -132,69 +126,25 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
     }
   };
 
-  const handleTeamClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[725px]" onClick={handleTeamClick}>
+      <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
           <DialogTitle>Plattform bearbeiten</DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Name der Plattform"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Beschreibung</Label>
-            <TiptapEditor
-              content={description}
-              onChange={setDescription}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="videoUrl">Video URL</Label>
-            <Input
-              id="videoUrl"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder="Fügen Sie eine Video-URL hinzu"
-            />
-          </div>
-          <TeamLogoUpload
-            currentLogoUrl={imageUrl}
-            onLogoChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  setImageUrl(reader.result as string);
-                };
-                reader.readAsDataURL(file);
-              }
-            }}
-            onLogoRemove={() => setImageUrl(null)}
-          />
+          <NameField name={name} setName={setName} />
+          <DescriptionField description={description} setDescription={setDescription} />
+          <LogoField imageUrl={imageUrl} setImageUrl={setImageUrl} />
           <TeamAccessManager
             selectedTeams={selectedTeams}
             setSelectedTeams={setSelectedTeams}
           />
         </div>
-        <div className="flex justify-end gap-3">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Abbrechen
-          </Button>
-          <Button onClick={handleSave}>
-            Speichern
-          </Button>
-        </div>
+        <DialogFooter 
+          onSave={handleSave}
+          onCancel={() => onOpenChange(false)}
+        />
       </DialogContent>
     </Dialog>
   );
