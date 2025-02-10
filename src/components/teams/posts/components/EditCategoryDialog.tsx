@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Settings } from "lucide-react";
+import { Settings, Lock, Unlock, MessageCircle, Megaphone, Calendar, Trophy, Video, Users, Star, Heart, HelpCircle, Rocket, FileText, Lightbulb, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -15,10 +15,38 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 
 interface EditCategoryDialogProps {
   teamId?: string;
 }
+
+const availableIcons = [
+  { name: 'MessageCircle', icon: MessageCircle },
+  { name: 'Megaphone', icon: Megaphone },
+  { name: 'Calendar', icon: Calendar },
+  { name: 'Trophy', icon: Trophy },
+  { name: 'Video', icon: Video },
+  { name: 'Users', icon: Users },
+  { name: 'Star', icon: Star },
+  { name: 'Heart', icon: Heart },
+  { name: 'HelpCircle', icon: HelpCircle },
+  { name: 'Rocket', icon: Rocket },
+  { name: 'FileText', icon: FileText },
+  { name: 'Lightbulb', icon: Lightbulb },
+  { name: 'Target', icon: Target }
+];
+
+const availableColors = [
+  { name: 'Grün', value: 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]' },
+  { name: 'Gelb', value: 'bg-[#FEF7CD] hover:bg-[#EEE7BD] text-[#8B7355]' },
+  { name: 'Orange', value: 'bg-[#FEC6A1] hover:bg-[#EEB691] text-[#8B4513]' },
+  { name: 'Lila', value: 'bg-[#E5DEFF] hover:bg-[#D5CEEF] text-[#483D8B]' },
+  { name: 'Rosa', value: 'bg-[#FFDEE2] hover:bg-[#EFCED2] text-[#8B3D3D]' },
+  { name: 'Pfirsich', value: 'bg-[#FDE1D3] hover:bg-[#EDD1C3] text-[#8B5742]' },
+  { name: 'Blau', value: 'bg-[#D3E4FD] hover:bg-[#C3D4ED] text-[#4A708B]' },
+  { name: 'Grau', value: 'bg-[#F1F0FB] hover:bg-[#E1E0EB] text-[#4A4A4A]' },
+];
 
 export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   const [open, setOpen] = useState(false);
@@ -27,7 +55,9 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
 
   const [selectedCategory, setSelectedCategory] = useState<string>("new");
   const [categoryName, setCategoryName] = useState("");
-  const [categorySize, setCategorySize] = useState("default");
+  const [isPublic, setIsPublic] = useState(true);
+  const [selectedIcon, setSelectedIcon] = useState("MessageCircle");
+  const [selectedColor, setSelectedColor] = useState(availableColors[0].value);
 
   // Fetch existing categories
   const { data: categories } = useQuery({
@@ -35,10 +65,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("team_categories")
-        .select(`
-          *,
-          team_category_settings(*)
-        `)
+        .select('*')
         .eq("team_id", teamId)
         .order("order_index");
 
@@ -53,12 +80,16 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     setSelectedCategory(value);
     if (value === "new") {
       setCategoryName("");
-      setCategorySize("default");
+      setIsPublic(true);
+      setSelectedIcon("MessageCircle");
+      setSelectedColor(availableColors[0].value);
     } else {
       const category = categories?.find(cat => cat.id === value);
       if (category) {
         setCategoryName(category.name);
-        setCategorySize(category.team_category_settings?.[0]?.size || "default");
+        setIsPublic(category.is_public ?? true);
+        setSelectedIcon(category.icon || "MessageCircle");
+        setSelectedColor(category.color || availableColors[0].value);
       }
     }
   };
@@ -69,46 +100,28 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
         // Update category
         const { error } = await supabase
           .from("team_categories")
-          .update({ name: categoryName })
+          .update({ 
+            name: categoryName,
+            is_public: isPublic,
+            icon: selectedIcon,
+            color: selectedColor
+          })
           .eq("id", selectedCategory);
 
         if (error) throw error;
-
-        // Update or insert category settings
-        const { error: settingsError } = await supabase
-          .from("team_category_settings")
-          .upsert({
-            team_id: teamId,
-            category_id: selectedCategory,
-            size: categorySize,
-          });
-
-        if (settingsError) throw settingsError;
       } else {
         // Create new category
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from("team_categories")
           .insert({
             team_id: teamId,
             name: categoryName,
-          })
-          .select()
-          .single();
+            is_public: isPublic,
+            icon: selectedIcon,
+            color: selectedColor
+          });
 
         if (error) throw error;
-
-        // Create category settings
-        if (data) {
-          const { error: settingsError } = await supabase
-            .from("team_category_settings")
-            .insert({
-              team_id: teamId,
-              category_id: data.id,
-              size: categorySize,
-            });
-
-          if (settingsError) throw settingsError;
-        }
       }
 
       await queryClient.invalidateQueries({ queryKey: ["team-categories"] });
@@ -146,6 +159,8 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     }
   };
 
+  const SelectedIconComponent = availableIcons.find(i => i.name === selectedIcon)?.icon || MessageCircle;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -153,7 +168,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
           <Settings className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
           <DialogTitle>Kategorien verwalten</DialogTitle>
           <DialogDescription>
@@ -179,6 +194,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
               </SelectContent>
             </Select>
           </div>
+          
           <div className="grid gap-2">
             <Input
               placeholder="Kategoriename"
@@ -186,22 +202,66 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
               onChange={(e) => setCategoryName(e.target.value)}
             />
           </div>
+
           <div className="grid gap-2">
             <Select
-              value={categorySize}
-              onValueChange={(value) => setCategorySize(value)}
+              value={selectedIcon}
+              onValueChange={setSelectedIcon}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Größe auswählen" />
+                <SelectValue>
+                  <div className="flex items-center gap-2">
+                    <SelectedIconComponent className="h-4 w-4" />
+                    <span>{selectedIcon}</span>
+                  </div>
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="default">Standard</SelectItem>
-                <SelectItem value="large">Groß</SelectItem>
-                <SelectItem value="small">Klein</SelectItem>
+                {availableIcons.map(({ name, icon: Icon }) => (
+                  <SelectItem key={name} value={name}>
+                    <div className="flex items-center gap-2">
+                      <Icon className="h-4 w-4" />
+                      <span>{name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
-          <div className="flex justify-between gap-2">
+
+          <div className="grid gap-2">
+            <Select
+              value={selectedColor}
+              onValueChange={setSelectedColor}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Farbe auswählen" />
+              </SelectTrigger>
+              <SelectContent>
+                {availableColors.map((color) => (
+                  <SelectItem key={color.value} value={color.value}>
+                    <div className="flex items-center gap-2">
+                      <div className={`w-4 h-4 rounded ${color.value.split(' ')[0]}`} />
+                      <span>{color.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {isPublic ? <Unlock className="h-4 w-4" /> : <Lock className="h-4 w-4" />}
+              <span>Öffentlich</span>
+            </div>
+            <Switch
+              checked={isPublic}
+              onCheckedChange={setIsPublic}
+            />
+          </div>
+
+          <div className="flex justify-between gap-2 pt-4">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Abbrechen
             </Button>

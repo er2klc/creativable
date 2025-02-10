@@ -2237,6 +2237,7 @@ export type Database = {
           icon: string | null
           id: string
           is_private: boolean | null
+          is_public: boolean | null
           name: string
           order_index: number
           slug: string
@@ -2250,6 +2251,7 @@ export type Database = {
           icon?: string | null
           id?: string
           is_private?: boolean | null
+          is_public?: boolean | null
           name: string
           order_index?: number
           slug: string
@@ -2263,6 +2265,7 @@ export type Database = {
           icon?: string | null
           id?: string
           is_private?: boolean | null
+          is_public?: boolean | null
           name?: string
           order_index?: number
           slug?: string

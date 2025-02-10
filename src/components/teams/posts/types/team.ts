@@ -5,6 +5,9 @@ export interface TeamCategory {
   slug: string;
   team_id: string;
   order_index: number;
+  icon?: string;
+  color?: string;
+  is_public?: boolean;
 }
 
 export interface Team {
