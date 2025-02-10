@@ -14,6 +14,10 @@ interface EditPostDialogProps {
 export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
   const [open, setOpen] = useState(false);
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -22,7 +26,7 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
           Bearbeiten
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent className="sm:max-w-[600px]" onMouseDownCapture={handleMouseDown}>
         <DialogHeader>
           <DialogTitle>Beitrag bearbeiten</DialogTitle>
         </DialogHeader>
@@ -43,3 +47,4 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
     </Dialog>
   );
 };
+
