@@ -4,8 +4,7 @@ import {
   EditorComponent,
   Remirror,
   useRemirror,
-  useHelpers,
-  useKeymap,
+  useActive,
   useCommands,
 } from '@remirror/react';
 import {
@@ -56,15 +55,15 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     []
   );
 
-  const { manager } = useRemirror({
+  const { manager, state } = useRemirror({
     extensions,
     content: content,
     stringHandler: 'html',
   });
 
   const onChangeHandler = React.useCallback(
-    ({ helpers }: { helpers: ReturnType<typeof useHelpers> }) => {
-      const html = helpers.getHTML();
+    ({ state }) => {
+      const html = state.doc.toString();
       onChange(html);
     },
     [onChange]
@@ -74,11 +73,12 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     <div className="border rounded-md">
       <Remirror
         manager={manager}
+        initialContent={state}
         onChange={onChangeHandler}
         placeholder={placeholder}
       >
         <EditorToolbar />
-        <div className="p-4 min-h-[150px] prose prose-sm max-w-none focus:outline-none cursor-text">
+        <div className="p-4 min-h-[150px] prose prose-sm max-w-none focus:outline-none">
           <EditorComponent />
         </div>
       </Remirror>
@@ -88,7 +88,7 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
 
 function EditorToolbar() {
   const commands = useCommands();
-  const helpers = useHelpers();
+  const active = useActive();
 
   const addEmoji = (emoji: any) => {
     commands.insertText(emoji.native);
@@ -100,7 +100,7 @@ function EditorToolbar() {
         variant="ghost"
         size="sm"
         onClick={() => commands.toggleBold()}
-        className={helpers.isActive('bold') ? 'bg-muted-foreground/20' : ''}
+        className={active.bold() ? 'bg-muted-foreground/20' : ''}
       >
         <Bold className="h-4 w-4" />
       </Button>
@@ -108,7 +108,7 @@ function EditorToolbar() {
         variant="ghost"
         size="sm"
         onClick={() => commands.toggleItalic()}
-        className={helpers.isActive('italic') ? 'bg-muted-foreground/20' : ''}
+        className={active.italic() ? 'bg-muted-foreground/20' : ''}
       >
         <Italic className="h-4 w-4" />
       </Button>
@@ -116,7 +116,7 @@ function EditorToolbar() {
         variant="ghost"
         size="sm"
         onClick={() => commands.toggleUnderline()}
-        className={helpers.isActive('underline') ? 'bg-muted-foreground/20' : ''}
+        className={active.underline() ? 'bg-muted-foreground/20' : ''}
       >
         <Underline className="h-4 w-4" />
       </Button>
@@ -124,7 +124,7 @@ function EditorToolbar() {
         variant="ghost"
         size="sm"
         onClick={() => commands.toggleHeading({ level: 2 })}
-        className={helpers.isActive('heading', { level: 2 }) ? 'bg-muted-foreground/20' : ''}
+        className={active.heading({ level: 2 }) ? 'bg-muted-foreground/20' : ''}
       >
         <Heading2 className="h-4 w-4" />
       </Button>
@@ -132,7 +132,7 @@ function EditorToolbar() {
         variant="ghost"
         size="sm"
         onClick={() => commands.toggleBulletList()}
-        className={helpers.isActive('bulletList') ? 'bg-muted-foreground/20' : ''}
+        className={active.bulletList() ? 'bg-muted-foreground/20' : ''}
       >
         <List className="h-4 w-4" />
       </Button>
@@ -140,7 +140,7 @@ function EditorToolbar() {
         variant="ghost"
         size="sm"
         onClick={() => commands.toggleOrderedList()}
-        className={helpers.isActive('orderedList') ? 'bg-muted-foreground/20' : ''}
+        className={active.orderedList() ? 'bg-muted-foreground/20' : ''}
       >
         <ListOrdered className="h-4 w-4" />
       </Button>
@@ -148,7 +148,7 @@ function EditorToolbar() {
         variant="ghost"
         size="sm"
         onClick={() => commands.toggleBlockquote()}
-        className={helpers.isActive('blockquote') ? 'bg-muted-foreground/20' : ''}
+        className={active.blockquote() ? 'bg-muted-foreground/20' : ''}
       >
         <Quote className="h-4 w-4" />
       </Button>
