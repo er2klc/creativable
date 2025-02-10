@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { Settings, Lock, Unlock, MessageCircle, Megaphone, Calendar, Trophy, Video, Users, Star, Heart, HelpCircle, Rocket, FileText, Lightbulb, Target } from "lucide-react";
+import { Lock, Unlock, MessageCircle, Megaphone, Calendar, Trophy, Video, Users, Star, Heart, HelpCircle, Rocket, FileText, Lightbulb, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -164,8 +164,8 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
-          <Settings className="h-4 w-4" />
+        <Button variant="outline">
+          Kategorie bearbeiten
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[725px]">
@@ -281,3 +281,4 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     </Dialog>
   );
 };
+
