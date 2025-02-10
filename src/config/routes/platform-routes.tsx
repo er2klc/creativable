@@ -6,6 +6,7 @@ import PlatformDetail from "@/pages/PlatformDetail";
 import LeaderBoard from "@/pages/LeaderBoard";
 import TeamPulse from "@/pages/TeamPulse";
 import { PostsAndDiscussions } from "@/components/teams/posts/PostsAndDiscussions";
+import TeamCalendar from "@/pages/TeamCalendar";
 
 export const platformRoutes = [
   {
@@ -22,6 +23,11 @@ export const platformRoutes = [
     path: "/unity/team/:teamSlug/posts",
     element: <PostsAndDiscussions />,
     label: "Team Posts",
+  },
+  {
+    path: "/unity/team/:teamSlug/calendar",
+    element: <TeamCalendar />,
+    label: "Team Calendar",
   },
   {
     path: "/unity/team/:teamSlug/pulse",
@@ -44,4 +50,3 @@ export const platformRoutes = [
     label: "Leaderboard",
   },
 ];
-

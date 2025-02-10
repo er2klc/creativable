@@ -1,5 +1,4 @@
-
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,16 +11,15 @@ import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import { TeamSnaps } from "@/components/teams/detail/TeamSnaps";
-import { TeamCalendarView } from "@/components/teams/calendar/TeamCalendarView";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 
 const TeamDetail = () => {
   const { teamSlug } = useParams();
+  const navigate = useNavigate();
   const user = useUser();
   const [isManaging, setIsManaging] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
   const [activeSnapView, setActiveSnapView] = useState<string | null>(null);
 
   const { data: team, isLoading: isTeamLoading } = useQuery({
@@ -87,11 +85,13 @@ const TeamDetail = () => {
           <div className="h-16 px-4 flex items-center">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
               <div className="flex items-center gap-2">
-                <Grid className="h-5 w-5" />
-                <h1 className="text-lg md:text-xl font-semibold text-foreground">
-                  {team.name}
-                </h1>
-                {isAdmin && !showCalendar && (
+                <div className="flex items-center gap-2">
+                  <Grid className="h-5 w-5" />
+                  <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                    {team.name}
+                  </h1>
+                </div>
+                {isAdmin && (
                   <Button
                     variant={isManaging ? "default" : "outline"}
                     size="sm"
@@ -123,31 +123,16 @@ const TeamDetail = () => {
 
       <div className="container pt-4">
         <Tabs defaultValue="posts">
-          {showCalendar ? (
-            <TeamCalendarView
-              teamId={team.id}
-              teamName={team.name}
-              isAdmin={isAdmin}
-              onBack={() => {
-                setShowCalendar(false);
-                setActiveSnapView(null);
-              }}
-            />
-          ) : (
-            <TeamSnaps 
-              isAdmin={isAdmin}
-              isManaging={isManaging}
-              teamId={team.id}
-              teamSlug={team.slug}
-              onCalendarClick={() => {
-                setShowCalendar(true);
-                setActiveSnapView('calendar');
-              }}
-              onSnapClick={(snapId) => setActiveSnapView(snapId)}
-              onBack={() => setActiveSnapView(null)}
-              activeSnapView={activeSnapView}
-            />
-          )}
+          <TeamSnaps 
+            isAdmin={isAdmin}
+            isManaging={isManaging}
+            teamId={team.id}
+            teamSlug={team.slug}
+            onCalendarClick={() => navigate(`/unity/team/${team.slug}/calendar`)}
+            onSnapClick={(snapId) => setActiveSnapView(snapId)}
+            onBack={() => setActiveSnapView(null)}
+            activeSnapView={activeSnapView}
+          />
 
           <TabsContent value="news" className="mt-6">
             <div className="space-y-6">
@@ -158,16 +143,6 @@ const TeamDetail = () => {
               )}
               <NewsList teamId={team.id} />
             </div>
-          </TabsContent>
-
-          <TabsContent value="calendar" className="mt-6">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Keine Termine vorhanden
-                </p>
-              </CardContent>
-            </Card>
           </TabsContent>
 
           <TabsContent value="files" className="mt-6">

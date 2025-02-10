@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useNavigate, useParams } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, Bell } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { TeamHeader } from "@/components/teams/TeamHeader";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
@@ -113,10 +113,14 @@ export function PostsAndDiscussions() {
           <div className="h-16 px-4 flex items-center">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
               <div className="flex items-center gap-2">
-                <MessageSquare className="h-5 w-5" />
-                <h1 className="text-lg md:text-xl font-semibold text-foreground">
-                  Community
-                </h1>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  {team.name}
+                  <span className="text-muted-foreground">/</span>
+                  <div className="flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5" />
+                    <span className="text-foreground">Community</span>
+                  </div>
+                </div>
               </div>
               <div className="w-[300px]">
                 <SearchBar />
