@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery } from "@tanstack/react-query";
@@ -151,7 +150,7 @@ export function PostsAndDiscussions() {
 
       <div className="pt-16">
         <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
-          <div className="flex items-center gap-4 w-full border-b border-gray-100 pb-4">
+          <div className="flex items-center gap-4">
             <TabScrollArea
               activeTab={activeTab}
               onCategoryClick={handleCategoryClick}
@@ -174,4 +173,3 @@ export function PostsAndDiscussions() {
     </>
   );
 }
-
