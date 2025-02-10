@@ -1,10 +1,9 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useCategoryMutations = () => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const handleSave = async (
@@ -66,14 +65,11 @@ export const useCategoryMutations = () => {
       }
 
       await queryClient.invalidateQueries({ queryKey: ["team-categories"] });
-      toast({ title: "Kategorie erfolgreich gespeichert" });
+      toast.success("Kategorie erfolgreich gespeichert");
       return true;
     } catch (error) {
       console.error("Error saving category:", error);
-      toast({ 
-        title: "Fehler beim Speichern der Kategorie", 
-        variant: "destructive" 
-      });
+      toast.error("Fehler beim Speichern der Kategorie");
       return false;
     }
   };
@@ -90,14 +86,11 @@ export const useCategoryMutations = () => {
       if (error) throw error;
 
       await queryClient.invalidateQueries({ queryKey: ["team-categories"] });
-      toast({ title: "Kategorie erfolgreich gelöscht" });
+      toast.success("Kategorie erfolgreich gelöscht");
       return true;
     } catch (error) {
       console.error("Error deleting category:", error);
-      toast({ 
-        title: "Fehler beim Löschen der Kategorie", 
-        variant: "destructive" 
-      });
+      toast.error("Fehler beim Löschen der Kategorie");
       return false;
     }
   };
