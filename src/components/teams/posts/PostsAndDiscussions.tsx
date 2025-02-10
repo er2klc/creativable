@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { PostList } from "./PostList";
 import { CategoryOverview } from "./CategoryOverview";
@@ -13,7 +14,7 @@ import { MessageSquare, ArrowLeft, ArrowRight } from "lucide-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 export function PostsAndDiscussions() {
@@ -23,6 +24,8 @@ export function PostsAndDiscussions() {
   const user = useUser();
   const [activeTab, setActiveTab] = useState(categorySlug || 'all');
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftArrow, setShowLeftArrow] = useState(false);
+  const [showRightArrow, setShowRightArrow] = useState(true);
 
   // Get team data based on slug
   const { data: team, isLoading: isTeamLoading } = useQuery({
@@ -79,6 +82,21 @@ export function PostsAndDiscussions() {
     }
   };
 
+  const checkScrollPosition = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftArrow(scrollLeft > 0);
+      setShowRightArrow(scrollLeft < scrollWidth - clientWidth - 10); // -10 für einen kleinen Puffer
+    }
+  };
+
+  useEffect(() => {
+    checkScrollPosition();
+    // Event-Listener für Resize hinzufügen
+    window.addEventListener('resize', checkScrollPosition);
+    return () => window.removeEventListener('resize', checkScrollPosition);
+  }, []);
+
   const scrollTabs = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
       const scrollAmount = 200;
@@ -88,6 +106,11 @@ export function PostsAndDiscussions() {
         behavior: 'smooth'
       });
     }
+  };
+
+  // Scroll-Event-Handler
+  const handleScroll = () => {
+    checkScrollPosition();
   };
 
   // Pastellfarben für die Tabs
@@ -166,19 +189,22 @@ export function PostsAndDiscussions() {
       <div className="pt-16">
         <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
           <div className="relative flex items-center">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute left-0 z-10 bg-white/80 hover:bg-white"
-              onClick={() => scrollTabs('left')}
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
+            {showLeftArrow && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute left-0 z-10 bg-white/80 hover:bg-white"
+                onClick={() => scrollTabs('left')}
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
             
             <ScrollArea className="w-full border-b border-border mx-8">
               <div 
                 ref={scrollContainerRef}
                 className="flex gap-2 pb-2 overflow-x-auto scroll-smooth"
+                onScroll={handleScroll}
               >
                 <Badge
                   variant="outline"
@@ -208,14 +234,16 @@ export function PostsAndDiscussions() {
               </div>
             </ScrollArea>
 
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute right-0 z-10 bg-white/80 hover:bg-white"
-              onClick={() => scrollTabs('right')}
-            >
-              <ArrowRight className="h-4 w-4" />
-            </Button>
+            {showRightArrow && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0 z-10 bg-white/80 hover:bg-white"
+                onClick={() => scrollTabs('right')}
+              >
+                <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
           </div>
 
           <div className="w-full overflow-hidden">
