@@ -92,11 +92,8 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      // Handle navigation based on notification type
-      if (notification.type === 'appointment_reminder' && notification.metadata?.leadId) {
-        navigate(`/contacts/${notification.metadata.leadId}`);
-        onOpenChange(false);
-      } else if (notification.type.includes('presentation_') && notification.metadata?.leadId) {
+      // Handle navigation based on type
+      if (notification.metadata?.leadId) {
         navigate(`/contacts/${notification.metadata.leadId}`);
         onOpenChange(false);
       } else if (notification.target_page) {
