@@ -11,6 +11,8 @@ import {
 } from "@/components/ui/dialog";
 import { CreatePostForm } from "./dialog/CreatePostForm";
 import { useTeamMembers } from "./dialog/useTeamMembers";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CreatePostDialogProps {
   teamId: string;
@@ -20,6 +22,22 @@ interface CreatePostDialogProps {
 export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) => {
   const [open, setOpen] = useState(false);
   const { data: teamMembers } = useTeamMembers(teamId);
+  
+  // Fetch categories for the team
+  const { data: categories } = useQuery({
+    queryKey: ['team-categories', teamId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('team_categories')
+        .select('*')
+        .eq('team_id', teamId)
+        .order('order_index');
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!teamId,
+  });
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -36,6 +54,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
         <CreatePostForm
           teamId={teamId}
           categoryId={categoryId}
+          categories={categories}
           onSuccess={() => setOpen(false)}
           teamMembers={teamMembers}
         />
