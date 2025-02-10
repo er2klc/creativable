@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery } from "@tanstack/react-query";
@@ -183,6 +182,7 @@ export function PostsAndDiscussions() {
               allCategories={allCategories}
               onCategoryClick={handleCategoryClick}
               isAdmin={isAdmin}
+              teamSlug={teamSlug}
             />
           </div>
 
