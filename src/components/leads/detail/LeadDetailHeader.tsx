@@ -54,12 +54,12 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
 
   return (
     <>
-      <DialogHeader className="px-6 py-3 bg-card border-b">
+      <DialogHeader className="fixed top-0 left-0 right-0 z-[40] bg-white border-b">
         <div className="flex flex-col space-y-4">
-          <header className="h-16 flex items-center justify-between border-b pb-4">
-            <div className="flex items-center gap-4 flex-1">
+          <header className="h-16 flex items-center justify-between px-6">
+            <div className="flex items-center gap-4">
               <LeadName name={lead.name} platform={lead.platform as Platform} />
-              <div className="relative flex-1 max-w-md">
+              <div className="relative w-[300px]">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
@@ -69,6 +69,13 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
                   className="w-full pl-10 pr-4 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
+            </div>
+            <div className="flex items-center gap-6">
+              <HeaderActions 
+                status={lead.status || 'lead'}
+                onStatusChange={handleStatusChange}
+                onDelete={handleDelete}
+              />
               <div className="flex items-center gap-4">
                 <button className="relative">
                   <Bell className="h-5 w-5 text-gray-600 hover:text-purple-500 transition-colors" />
@@ -84,16 +91,13 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
                 </Avatar>
               </div>
             </div>
-            <HeaderActions 
-              status={lead.status || 'lead'}
-              onStatusChange={handleStatusChange}
-              onDelete={handleDelete}
-            />
           </header>
-          <CompactPhaseSelector
-            lead={lead}
-            onUpdateLead={onUpdateLead}
-          />
+          <div className="px-6 pb-3">
+            <CompactPhaseSelector
+              lead={lead}
+              onUpdateLead={onUpdateLead}
+            />
+          </div>
         </div>
       </DialogHeader>
 
