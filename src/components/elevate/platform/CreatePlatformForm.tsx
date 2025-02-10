@@ -1,3 +1,4 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
@@ -6,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUser } from "@supabase/auth-helpers-react";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 
 interface CreatePlatformFormProps {
   name: string;
@@ -100,7 +101,7 @@ export const CreatePlatformForm = ({
       </div>
       <div className="space-y-2">
         <Label htmlFor="description">Beschreibung</Label>
-        <RichTextEditor
+        <TiptapEditor
           content={description}
           onChange={setDescription}
         />

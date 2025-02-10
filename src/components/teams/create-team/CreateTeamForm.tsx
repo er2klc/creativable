@@ -1,6 +1,7 @@
+
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RichTextEditor } from "@/components/ui/rich-text-editor";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { TeamLogoUpload } from "../TeamLogoUpload";
 
 interface CreateTeamFormProps {
@@ -61,7 +62,7 @@ export const CreateTeamForm = ({
         <Label htmlFor="description">Beschreibung</Label>
         <div className="max-h-[200px] overflow-y-auto border rounded-md">
           <div className="sticky top-0 z-10 bg-background border-b">
-            <RichTextEditor
+            <TiptapEditor
               content={description}
               onChange={setDescription}
             />
