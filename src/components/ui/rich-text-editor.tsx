@@ -58,9 +58,13 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     []
   );
 
+  // Create initial state from HTML string
   const { manager } = useRemirror({
     extensions,
-    content: content || '',
+    content: {
+      type: 'doc',
+      content: content ? [{ type: 'paragraph', content: [{ type: 'text', text: content }] }] : [{ type: 'paragraph' }]
+    },
     stringHandler: 'html',
   });
 
@@ -154,4 +158,3 @@ function ToolbarButton({ onClick, active, children }: { onClick: () => void; act
     </Button>
   );
 }
-
