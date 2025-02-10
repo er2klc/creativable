@@ -1,8 +1,9 @@
 
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, Settings } from "lucide-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useNavigate } from "react-router-dom";
+import { EditCategoryDialog } from "./EditCategoryDialog";
 
 interface TeamHeaderProps {
   teamName: string;
@@ -33,8 +34,11 @@ export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) =
                 </div>
               </div>
             </div>
-            <div className="w-[300px]">
-              <SearchBar />
+            <div className="flex items-center gap-4">
+              <div className="w-[300px]">
+                <SearchBar />
+              </div>
+              <EditCategoryDialog teamId={teamSlug} />
             </div>
             <HeaderActions profile={null} userEmail={userEmail} />
           </div>

@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery } from "@tanstack/react-query";
@@ -9,6 +10,7 @@ import { TabScrollArea } from "./components/TabScrollArea";
 import { TeamHeader } from "./components/TeamHeader";
 import { Team } from "./types/team";
 import { PostDetail } from "./components/PostDetail";
+import { EditCategoryDialog } from "./components/EditCategoryDialog";
 
 export function PostsAndDiscussions() {
   const navigate = useNavigate();
@@ -175,12 +177,17 @@ export function PostsAndDiscussions() {
 
       <div className="pt-16">
         <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
-          <TabScrollArea
-            activeTab={activeTab}
-            allCategories={allCategories}
-            onCategoryClick={handleCategoryClick}
-            isAdmin={isAdmin}
-          />
+          <div className="flex items-center gap-4">
+            <TabScrollArea
+              activeTab={activeTab}
+              allCategories={allCategories}
+              onCategoryClick={handleCategoryClick}
+              isAdmin={isAdmin}
+            />
+            {isAdmin && (
+              <EditCategoryDialog teamId={allCategories?.[0]?.team_id} />
+            )}
+          </div>
 
           <div className="w-full overflow-hidden">
             <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
