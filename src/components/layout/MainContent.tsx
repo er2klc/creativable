@@ -29,3 +29,4 @@ export const MainContent = ({ children, className }: MainContentProps) => {
     </main>
   );
 };
+
