@@ -20,45 +20,58 @@ export const useCategoryDialog = (teamSlug?: string) => {
     queryKey: ['team-by-slug', teamSlug],
     queryFn: async () => {
       if (!teamSlug) return null;
+      
+      console.log("Fetching team data for slug:", teamSlug);
       const { data, error } = await supabase
         .from('teams')
         .select('id')
         .eq('slug', teamSlug)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching team:", error);
+        throw error;
+      }
+      console.log("Found team data:", data);
       return data;
     },
     enabled: !!teamSlug
   });
 
   const { team, categories } = useCategoryQueries(teamData?.id);
+
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
 
   const handleCategoryChange = (value: string) => {
     console.log("Changing category to:", value);
     setSelectedCategory(value);
+    
     if (value === "new") {
+      // Reset form for new category
       setCategoryName("");
       setIsPublic(true);
       setSelectedIcon("MessageCircle");
       setSelectedColor("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
       setSelectedSize("small");
     } else {
+      // Find and populate form with existing category data
       const category = categories?.find(cat => cat.id === value);
       if (category) {
-        console.log("Found category:", category);
+        console.log("Found category data:", category);
         setCategoryName(category.name);
         setIsPublic(category.is_public ?? true);
         setSelectedIcon(category.icon || "MessageCircle");
         setSelectedColor(category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
         setSelectedSize(category.size || "small");
+      } else {
+        console.error("Category not found:", value);
       }
     }
   };
 
   const handleSave = async () => {
     if (!teamData?.id) {
+      console.error("Team ID not found", { teamSlug, teamData });
       toast.error("Team ID nicht gefunden");
       return;
     }
@@ -69,6 +82,7 @@ export const useCategoryDialog = (teamSlug?: string) => {
     }
 
     try {
+      console.log("Saving category with team ID:", teamData.id);
       const success = await saveCategory(
         teamData.id,
         selectedCategory,
@@ -82,8 +96,13 @@ export const useCategoryDialog = (teamSlug?: string) => {
       if (success) {
         toast.success(selectedCategory === "new" ? "Kategorie erstellt" : "Kategorie aktualisiert");
         setOpen(false);
+        // Reset form
         setSelectedCategory("new");
         setCategoryName("");
+        setIsPublic(true);
+        setSelectedIcon("MessageCircle");
+        setSelectedColor("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
+        setSelectedSize("small");
       }
     } catch (error) {
       console.error("Error saving category:", error);
