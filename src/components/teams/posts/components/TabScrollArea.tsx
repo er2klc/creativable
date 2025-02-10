@@ -107,11 +107,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
   const isDialogView = window.location.pathname.includes('/posts/');
 
   return (
-    <div className={cn(
-      "relative w-full",
-      isDialogView ? "max-w-[552px]" : "max-w-[900px]",
-      "mx-auto"
-    )}>
+    <div className="relative w-full">
       {showLeftArrow && (
         <Button
           variant="ghost"
@@ -123,7 +119,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
         </Button>
       )}
       
-      <ScrollArea className="w-full">
+      <ScrollArea className="w-full border-b">
         <div 
           ref={scrollContainerRef}
           className="flex gap-2 py-2 px-4"
