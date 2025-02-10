@@ -58,9 +58,9 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     []
   );
 
-  const { manager, state } = useRemirror({
+  const { manager } = useRemirror({
     extensions,
-    content,
+    content: content || '',
     stringHandler: 'html',
   });
 
@@ -68,7 +68,6 @@ export function RichTextEditor({ content, onChange, placeholder }: RichTextEdito
     <div className="relative">
       <Remirror
         manager={manager}
-        initialContent={content}
         onChange={({ helpers }) => {
           const html = helpers.getHTML();
           onChange(html);
@@ -155,3 +154,4 @@ function ToolbarButton({ onClick, active, children }: { onClick: () => void; act
     </Button>
   );
 }
+
