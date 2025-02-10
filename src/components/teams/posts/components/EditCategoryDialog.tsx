@@ -59,22 +59,45 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   const [selectedIcon, setSelectedIcon] = useState("MessageCircle");
   const [selectedColor, setSelectedColor] = useState(availableColors[0].value);
 
-  // Fetch existing categories
-  const { data: categories } = useQuery({
-    queryKey: ["team-categories", teamId],
+  // First fetch team by slug
+  const { data: team } = useQuery({
+    queryKey: ['team', teamId],
     queryFn: async () => {
-      console.log('Fetching categories for team ID:', teamId);
+      console.log('Fetching team with slug:', teamId);
       
-      if (!teamId) {
-        console.log('No team ID provided, skipping fetch');
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error fetching team:', error);
+        throw error;
+      }
+
+      console.log('Found team:', data);
+      return data;
+    },
+    enabled: !!teamId,
+  });
+
+  // Then fetch categories using team UUID
+  const { data: categories } = useQuery({
+    queryKey: ['team-categories', team?.id],
+    queryFn: async () => {
+      console.log('Fetching categories for team ID:', team?.id);
+      
+      if (!team?.id) {
+        console.log('No team ID available, skipping categories fetch');
         return [];
       }
 
       const { data, error } = await supabase
-        .from("team_categories")
+        .from('team_categories')
         .select('*')
-        .eq("team_id", teamId)
-        .order("order_index");
+        .eq('team_id', team.id)
+        .order('order_index');
 
       if (error) {
         console.error('Error fetching categories:', error);
@@ -84,7 +107,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
       console.log('Found categories:', data);
       return data;
     },
-    enabled: !!teamId,
+    enabled: !!team?.id,
   });
 
   // Update category state when selection changes
@@ -107,6 +130,15 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   };
 
   const handleSave = async () => {
+    if (!team?.id) {
+      toast({
+        title: "Fehler",
+        description: "Team ID nicht gefunden",
+        variant: "destructive"
+      });
+      return;
+    }
+
     try {
       if (selectedCategory !== "new") {
         // Update category
@@ -126,7 +158,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
         const { error } = await supabase
           .from("team_categories")
           .insert({
-            team_id: teamId,
+            team_id: team.id,
             name: categoryName,
             is_public: isPublic,
             icon: selectedIcon,
