@@ -6,6 +6,7 @@ import { useState } from "react";
 import { getMeetingTypeLabel, getMeetingTypeIcon } from "./utils/meetingTypeUtils";
 import { useAppointmentNotification } from "./hooks/useAppointmentNotification";
 import { TimeDisplay } from "./components/TimeDisplay";
+import { format } from "date-fns";
 
 interface AppointmentCardProps {
   id: string;
@@ -36,22 +37,22 @@ export const AppointmentCard = ({
     content
   });
 
+  const MeetingIcon = metadata?.meetingType ? 
+    () => getMeetingTypeIcon(metadata.meetingType) : 
+    () => <Calendar className="h-4 w-4 text-blue-500" />;
+
   return (
     <>
       <div className="relative group">
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            {metadata?.meetingType ? (
-              getMeetingTypeIcon(metadata.meetingType)
-            ) : (
-              <Calendar className="h-4 w-4 text-blue-500" />
-            )}
+            <MeetingIcon />
             <div className="font-medium">{content}</div>
           </div>
           
           {metadata?.meetingType && (
             <div className="flex items-center gap-2 text-sm text-gray-600">
-              {getMeetingTypeIcon(metadata.meetingType)}
+              <MeetingIcon />
               {getMeetingTypeLabel(metadata.meetingType)}
             </div>
           )}
