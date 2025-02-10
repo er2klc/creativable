@@ -48,14 +48,23 @@ export function CategoryOverview({ teamId, teamSlug, categorySlug }: CategoryOve
         categoryId = category?.id;
       }
 
-      const { data, error } = await supabase
-        .from('team_category_settings')
-        .select('*')
-        .eq('team_id', team.id)
-        .eq('category_id', categoryId);
+      // Only query if we have a category ID
+      if (categoryId) {
+        const { data, error } = await supabase
+          .from('team_category_settings')
+          .select('*')
+          .eq('team_id', team.id)
+          .eq('category_id', categoryId)
+          .maybeSingle();
 
-      if (error) throw error;
-      return data[0];
+        if (error) throw error;
+        return data;
+      }
+
+      // Return default settings for "All Posts" view
+      return {
+        size: 'small'
+      };
     },
     enabled: !!team?.id,
   });
@@ -126,3 +135,4 @@ export function CategoryOverview({ teamId, teamSlug, categorySlug }: CategoryOve
     </div>
   );
 }
+
