@@ -19,6 +19,11 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
     e.stopPropagation();
   };
 
+  const preventBubbling = (e: React.MouseEvent | React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -28,9 +33,12 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
         </Button>
       </DialogTrigger>
       <DialogContent 
-        className="sm:max-w-[600px]" 
-        onMouseDownCapture={handleMouseDown}
-        onPointerDownCapture={handleMouseDown}
+        className="sm:max-w-[600px]"
+        onClick={preventBubbling}
+        onMouseDown={preventBubbling}
+        onPointerDown={preventBubbling}
+        onMouseDownCapture={preventBubbling}
+        onPointerDownCapture={preventBubbling}
       >
         <DialogHeader>
           <DialogTitle>Beitrag bearbeiten</DialogTitle>
