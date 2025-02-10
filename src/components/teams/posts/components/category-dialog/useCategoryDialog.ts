@@ -16,7 +16,7 @@ export const useCategoryDialog = (teamSlug?: string) => {
   const [selectedSize, setSelectedSize] = useState("small");
 
   // Extract actual team slug from URL format
-  const processedTeamSlug = teamSlug?.split('/')[0]?.replace('unity/team/', '')?.replace('/posts/category/', '');
+  const processedTeamSlug = teamSlug?.split('unity/team/')[1]?.split('/')[0];
   
   // Load team ID from slug
   const { data: teamData } = useQuery({
@@ -153,4 +153,3 @@ export const useCategoryDialog = (teamSlug?: string) => {
     handleDelete
   };
 };
-
