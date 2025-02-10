@@ -49,9 +49,9 @@ export const NotificationItem = ({
     if (notification.type.startsWith('presentation_')) {
       return notification.metadata?.leadId ? 
         `/contacts/${notification.metadata.leadId}` : 
-        notification.target_page;
+        (notification.target_page || '');
     }
-    return notification.target_page || (notification.metadata?.leadId ? `/contacts/${notification.metadata.leadId}` : null);
+    return notification.target_page || (notification.metadata?.leadId ? `/contacts/${notification.metadata.leadId}` : '');
   };
 
   return (
@@ -68,24 +68,18 @@ export const NotificationItem = ({
             {notification.title}
           </h3>
         </div>
-        <span className="text-xs text-gray-500 whitespace-nowrap ml-16">
+        <span className="text-xs text-gray-500 whitespace-nowrap">
           {formatDistanceToNow(new Date(notification.created_at), {
             addSuffix: true,
             locale: de
           })}
         </span>
       </div>
-      <p className="text-sm text-gray-600 mt-1">{notification.content}</p>
-      {getTargetUrl() && (
-        <div className="mt-2 flex items-center text-xs text-blue-600">
-          <ExternalLink className="h-3 w-3 mr-1" />
-          Klicken zum Öffnen
-        </div>
-      )}
+      <p className="text-sm text-gray-600 mt-1 pr-8">{notification.content}</p>
       <Button
         variant="ghost"
         size="icon"
-        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
+        className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8"
         onClick={(e) => {
           e.stopPropagation();
           onDelete(notification.id);
@@ -96,4 +90,3 @@ export const NotificationItem = ({
     </div>
   );
 };
-
