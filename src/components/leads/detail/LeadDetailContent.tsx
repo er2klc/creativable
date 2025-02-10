@@ -1,3 +1,4 @@
+
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
@@ -40,7 +41,15 @@ export const LeadDetailContent = ({
           
           <LeadInfoCard 
             lead={lead} 
-            onUpdate={onUpdateLead} 
+            onUpdate={(updates) => {
+              // Only call onUpdateLead if we're actually changing something
+              const hasChanges = Object.entries(updates).some(
+                ([key, value]) => lead[key as keyof typeof lead] !== value
+              );
+              if (hasChanges) {
+                onUpdateLead(updates);
+              }
+            }} 
             onDelete={onDeleteClick}
           />
         </div>
@@ -58,3 +67,4 @@ export const LeadDetailContent = ({
     </div>
   );
 };
+
