@@ -29,13 +29,18 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
+      if (!teamSlug) return null;
+      
       const { data, error } = await supabase
         .from('teams')
         .select('id')
         .eq('slug', teamSlug)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching team:', error);
+        throw error;
+      }
       return data;
     },
     enabled: !!teamSlug,
@@ -46,13 +51,19 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     queryKey: ['team-categories', team?.id],
     queryFn: async () => {
       if (!team?.id) return null;
+      
       const { data, error } = await supabase
         .from('team_categories')
         .select('*')
         .eq('team_id', team.id)
         .order('order_index');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching categories:', error);
+        throw error;
+      }
+      
+      console.log('Fetched categories:', data);
       return data;
     },
     enabled: !!team?.id,
@@ -72,6 +83,11 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
 
   if (isTeamLoading || isCategoriesLoading) {
     return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
+  }
+
+  if (!team || !allCategories) {
+    console.log('No team or categories found:', { team, allCategories });
+    return null;
   }
 
   return (

@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery } from "@tanstack/react-query";
@@ -38,23 +39,6 @@ export function PostsAndDiscussions() {
       return data as Team;
     },
     enabled: !!teamSlug,
-  });
-
-  // Now use team.id to fetch categories
-  const { data: allCategories } = useQuery({
-    queryKey: ['team-categories', team?.id],
-    queryFn: async () => {
-      if (!team?.id) return null;
-      const { data, error } = await supabase
-        .from('team_categories')
-        .select('*')
-        .eq('team_id', team.id)
-        .order('order_index');
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!team?.id, // Only run when we have team.id
   });
 
   const { data: teamMember } = useQuery({
@@ -179,7 +163,6 @@ export function PostsAndDiscussions() {
           <div className="flex items-center gap-4">
             <TabScrollArea
               activeTab={activeTab}
-              allCategories={allCategories}
               onCategoryClick={handleCategoryClick}
               isAdmin={isAdmin}
               teamSlug={teamSlug}
