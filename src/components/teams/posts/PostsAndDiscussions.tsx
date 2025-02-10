@@ -5,14 +5,15 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TabScrollArea } from "./components/TabScrollArea";
 import { TeamHeader } from "./components/TeamHeader";
 import { Team } from "./types/team";
+import { PostDetail } from "./components/PostDetail";
 
 export function PostsAndDiscussions() {
   const navigate = useNavigate();
-  const { teamSlug, categorySlug } = useParams();
+  const { teamSlug, categorySlug, postSlug } = useParams();
   const user = useUser();
   const [activeTab, setActiveTab] = useState(categorySlug || 'all');
 
@@ -56,6 +57,40 @@ export function PostsAndDiscussions() {
     enabled: !!team?.id,
   });
 
+  // If we have a postSlug, fetch the post details
+  const { data: post } = useQuery({
+    queryKey: ['team-post', postSlug],
+    queryFn: async () => {
+      if (!postSlug) return null;
+      const { data, error } = await supabase
+        .from('team_posts')
+        .select(`
+          *,
+          team_categories (
+            name,
+            slug
+          ),
+          author:profiles!team_posts_created_by_fkey (
+            display_name
+          ),
+          team_post_comments (
+            id,
+            content,
+            created_at,
+            author:profiles!team_post_comments_created_by_fkey (
+              display_name
+            )
+          )
+        `)
+        .eq('slug', postSlug)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!postSlug,
+  });
+
   const handleCategoryClick = (categorySlug?: string) => {
     if (!teamSlug) {
       console.error('No team slug available for navigation');
@@ -70,6 +105,15 @@ export function PostsAndDiscussions() {
       navigate(`/unity/team/${teamSlug}/posts`);
     }
   };
+
+  // Update active tab when categorySlug changes
+  useEffect(() => {
+    if (categorySlug) {
+      setActiveTab(categorySlug);
+    } else {
+      setActiveTab('all');
+    }
+  }, [categorySlug]);
 
   if (!teamSlug) {
     return (
@@ -120,7 +164,11 @@ export function PostsAndDiscussions() {
 
           <div className="w-full overflow-hidden">
             <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
-              <CategoryOverview teamId={team.id} teamSlug={teamSlug} />
+              {postSlug ? (
+                <PostDetail post={post} teamSlug={teamSlug} />
+              ) : (
+                <CategoryOverview teamId={team.id} teamSlug={teamSlug} />
+              )}
             </div>
           </div>
         </div>
