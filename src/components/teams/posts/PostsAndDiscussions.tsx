@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { PostList } from "./PostList";
 import { CategoryOverview } from "./CategoryOverview";
@@ -10,11 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useNavigate, useParams } from "react-router-dom";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, ArrowLeft, ArrowRight } from "lucide-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { Button } from "@/components/ui/button";
 
 export function PostsAndDiscussions() {
   const isMobile = useIsMobile();
@@ -22,6 +22,7 @@ export function PostsAndDiscussions() {
   const { teamSlug, categorySlug } = useParams();
   const user = useUser();
   const [activeTab, setActiveTab] = useState(categorySlug || 'all');
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   // Get team data based on slug
   const { data: team, isLoading: isTeamLoading } = useQuery({
@@ -75,6 +76,17 @@ export function PostsAndDiscussions() {
       navigate(`/unity/team/${teamSlug}/posts/category/${categorySlug}`);
     } else {
       navigate(`/unity/team/${teamSlug}/posts`);
+    }
+  };
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 200;
+      const targetScroll = scrollContainerRef.current.scrollLeft + (direction === 'left' ? -scrollAmount : scrollAmount);
+      scrollContainerRef.current.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
     }
   };
 
@@ -153,35 +165,58 @@ export function PostsAndDiscussions() {
 
       <div className="pt-16">
         <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
-          <ScrollArea className="w-full border-b border-border">
-            <div className="flex gap-2 pb-2 overflow-x-auto">
-              <Badge
-                variant="outline"
-                className={cn(
-                  "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2",
-                  tabColors.all,
-                  activeTab === 'all' ? "border-primary" : "border-transparent"
-                )}
-                onClick={() => handleCategoryClick()}
+          <div className="relative flex items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute left-0 z-10 bg-white/80 hover:bg-white"
+              onClick={() => scrollTabs('left')}
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            
+            <ScrollArea className="w-full border-b border-border mx-8">
+              <div 
+                ref={scrollContainerRef}
+                className="flex gap-2 pb-2 overflow-x-auto scroll-smooth"
               >
-                Alle Beiträge
-              </Badge>
-              {allCategories?.map((category, index) => (
                 <Badge
-                  key={category.id}
                   variant="outline"
                   className={cn(
                     "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2",
-                    tabColors[(index % 7 + 1) as keyof typeof tabColors],
-                    activeTab === category.slug ? "border-primary" : "border-transparent"
+                    tabColors.all,
+                    activeTab === 'all' ? "border-primary" : "border-transparent"
                   )}
-                  onClick={() => handleCategoryClick(category.slug)}
+                  onClick={() => handleCategoryClick()}
                 >
-                  {category.name}
+                  Alle Beiträge
                 </Badge>
-              ))}
-            </div>
-          </ScrollArea>
+                {allCategories?.map((category, index) => (
+                  <Badge
+                    key={category.id}
+                    variant="outline"
+                    className={cn(
+                      "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2",
+                      tabColors[(index % 7 + 1) as keyof typeof tabColors],
+                      activeTab === category.slug ? "border-primary" : "border-transparent"
+                    )}
+                    onClick={() => handleCategoryClick(category.slug)}
+                  >
+                    {category.name}
+                  </Badge>
+                ))}
+              </div>
+            </ScrollArea>
+
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute right-0 z-10 bg-white/80 hover:bg-white"
+              onClick={() => scrollTabs('right')}
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
 
           <div className="w-full overflow-hidden">
             <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
