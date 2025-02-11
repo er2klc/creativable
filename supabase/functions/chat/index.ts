@@ -86,49 +86,8 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    const stream = response.body;
-    const reader = stream?.getReader();
-    const encoder = new TextEncoder();
-
-    const readableStream = new ReadableStream({
-      async start(controller) {
-        try {
-          while (true) {
-            const { done, value } = await reader?.read();
-            
-            if (done) {
-              controller.close();
-              break;
-            }
-
-            const chunk = new TextDecoder().decode(value);
-            const payloads = chunk.split("\n");
-            
-            for (const payload of payloads) {
-              if (payload.trim() === "") continue;
-              if (payload.includes("[DONE]")) continue;
-              
-              if (payload.startsWith("data: ")) {
-                try {
-                  const data = JSON.parse(payload.replace("data: ", ""));
-                  const text = data.choices[0]?.delta?.content || "";
-                  if (text) {
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`));
-                  }
-                } catch (error) {
-                  console.error("Error parsing payload:", error);
-                }
-              }
-            }
-          }
-        } catch (error) {
-          console.error("Stream reading error:", error);
-          controller.error(error);
-        }
-      },
-    });
-
-    return new Response(readableStream, {
+    // Transform the response into a readable stream
+    return new Response(response.body, {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",
