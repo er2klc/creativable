@@ -61,12 +61,12 @@ export const useChatMessages = ({
       
       try {
         const data = JSON.parse(jsonText);
-        // Extrahiere nur die benötigten Felder
-        if (data && data.role === 'assistant') {
+        // Extrahiere nur die benötigten Felder und überprüfe auf delta content
+        if (data?.choices?.[0]?.delta?.content) {
           return {
-            id: data.id,
-            role: data.role,
-            content: data.content
+            id: crypto.randomUUID(),
+            role: 'assistant',
+            content: data.choices[0].delta.content
           };
         }
         return null;
