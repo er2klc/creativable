@@ -118,61 +118,62 @@ serve(async (req) => {
 
     console.log("OpenAI API responded successfully, starting stream...");
 
-    // Create a new transformer to handle the stream
     const stream = new TransformStream();
     const writer = stream.writable.getWriter();
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    const messageId = crypto.randomUUID();
-    let accumulatedContent = '';
+    let fullContent = '';
 
     (async () => {
+      const reader = response.body!.getReader();
+      
       try {
-        const reader = response.body!.getReader();
         while (true) {
           const { done, value } = await reader.read();
+          
           if (done) {
-            await writer.close();
+            writer.close();
             break;
           }
 
+          // Decode the chunk and split into lines
           const chunk = decoder.decode(value);
           const lines = chunk.split('\n');
-
+          
           for (const line of lines) {
-            const trimmedLine = line.trim();
-            if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
-
-            if (trimmedLine.startsWith('data: ')) {
+            if (line.trim() === '') continue;
+            if (line.trim() === 'data: [DONE]') continue;
+            
+            if (line.startsWith('data: ')) {
               try {
-                const json = JSON.parse(trimmedLine.slice(5));
-                if (json.choices?.[0]?.delta?.content) {
-                  accumulatedContent += json.choices[0].delta.content;
+                const jsonData = JSON.parse(line.slice(5));
+                if (jsonData.choices?.[0]?.delta?.content) {
+                  fullContent += jsonData.choices[0].delta.content;
                   const message = {
-                    id: messageId,
+                    id: crypto.randomUUID(),
                     role: 'assistant',
-                    content: accumulatedContent
+                    content: fullContent,
                   };
-                  await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+                  await writer.write(encoder.encode(JSON.stringify(message) + '\n'));
                 }
               } catch (e) {
-                console.error('Error parsing chunk:', e, trimmedLine);
+                console.error('Error parsing JSON:', e);
               }
             }
           }
         }
       } catch (error) {
-        console.error('Stream processing error:', error);
-        await writer.abort(error);
+        console.error('Error in stream processing:', error);
+        writer.close();
       }
     })();
 
     return new Response(stream.readable, {
       headers: {
         ...corsHeaders,
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
+        'Content-Type': 'text/event-stream',
+        'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
 

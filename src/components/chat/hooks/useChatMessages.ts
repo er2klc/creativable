@@ -47,17 +47,6 @@ export const useChatMessages = ({
     },
     onFinish: (message) => {
       console.log("Chat finished:", message);
-    },
-    parser: (text) => {
-      try {
-        if (!text.trim()) return null;
-        console.log('Received text:', text);
-        return JSON.parse(text);
-      } catch (e) {
-        console.error('Parser error:', e);
-        console.error('Failed to parse text:', text);
-        return null;
-      }
     }
   });
 
