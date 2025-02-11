@@ -48,26 +48,23 @@ export const useChatMessages = ({
     onFinish: (message) => {
       console.log("Chat finished:", message);
     },
-    parse: (text) => {
-      // Extrahiere die JSON-Daten nach "data: "
-      const dataPrefix = "data: ";
-      if (text.startsWith(dataPrefix)) {
-        const jsonStr = text.slice(dataPrefix.length);
-        try {
-          const data = JSON.parse(jsonStr);
-          console.log("Parsed message:", data);
-          return {
-            id: data.id,
-            role: data.role,
-            content: data.content,
-            createdAt: data.createdAt
-          };
-        } catch (e) {
-          console.error("Parse error:", e);
-          throw e;
-        }
+    parser: (text) => {
+      if (text === '') return null;
+      
+      // The text should start with 'data: '
+      if (!text.startsWith('data: ')) {
+        return null;
       }
-      throw new Error("Invalid message format");
+
+      // Remove the 'data: ' prefix
+      const jsonText = text.replace(/^data: /, '');
+      
+      try {
+        return JSON.parse(jsonText);
+      } catch (e) {
+        console.error('Failed to parse:', jsonText, e);
+        return null;
+      }
     }
   });
 
