@@ -107,18 +107,6 @@ serve(async (req) => {
 
         const decoder = new TextDecoder();
         const encoder = new TextEncoder();
-        const messageId = crypto.randomUUID();
-        let accumulatedContent = '';
-
-        // Sende initiale leere Nachricht
-        controller.enqueue(encoder.encode(
-          `data: ${JSON.stringify({
-            id: messageId,
-            role: 'assistant',
-            content: '',
-            createdAt: new Date().toISOString()
-          })}\n\n`
-        ));
 
         try {
           while (true) {
@@ -133,21 +121,7 @@ serve(async (req) => {
               if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
 
               if (trimmedLine.startsWith('data: ')) {
-                try {
-                  const json = JSON.parse(trimmedLine.slice(5));
-                  if (json.choices?.[0]?.delta?.content) {
-                    accumulatedContent += json.choices[0].delta.content;
-                    const message = {
-                      id: messageId,
-                      role: 'assistant',
-                      content: accumulatedContent,
-                      createdAt: new Date().toISOString()
-                    };
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
-                  }
-                } catch (e) {
-                  console.error('Error parsing JSON:', e);
-                }
+                controller.enqueue(encoder.encode(trimmedLine + '\n\n'));
               }
             }
           }
