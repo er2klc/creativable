@@ -102,12 +102,23 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
+    // Generate a single message ID for the entire response
+    const messageId = crypto.randomUUID();
+    let accumulatedContent = '';
+
     (async () => {
       const reader = response.body!.getReader();
       try {
         while (true) {
           const { done, value } = await reader.read();
           if (done) {
+            // Send final message
+            const finalMessage = {
+              id: messageId,
+              role: 'assistant',
+              content: accumulatedContent
+            };
+            await writer.write(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
             await writer.write(encoder.encode('data: [DONE]\n\n'));
             await writer.close();
             break;
@@ -125,10 +136,13 @@ serve(async (req) => {
                 
                 if (data.choices?.[0]?.delta?.content) {
                   const text = data.choices[0].delta.content;
+                  accumulatedContent += text;
+                  
+                  // Send progressive updates with the same message ID
                   const message = {
-                    id: crypto.randomUUID(),
+                    id: messageId,
                     role: 'assistant',
-                    content: text
+                    content: accumulatedContent
                   };
                   
                   await writer.write(
