@@ -50,27 +50,9 @@ export const useChatMessages = ({
     },
     parser: (text) => {
       try {
-        // Entferne eventuelle Leerzeilen am Anfang und Ende
-        const cleanText = text.trim();
-        
-        // Überspringe nicht-data Zeilen
-        if (!cleanText.startsWith('data: ')) {
-          console.log('Skipping non-data line:', cleanText);
-          return null;
-        }
-        
-        // Extrahiere den JSON-Teil
-        const jsonText = cleanText.replace(/^data: /, '');
-        console.log('Parsing JSON:', jsonText);
-        
-        const parsed = JSON.parse(jsonText);
-        console.log('Successfully parsed message:', parsed);
-        
-        return {
-          id: parsed.id,
-          content: parsed.content,
-          role: parsed.role
-        };
+        if (!text.trim()) return null;
+        console.log('Received text:', text);
+        return JSON.parse(text);
       } catch (e) {
         console.error('Parser error:', e);
         console.error('Failed to parse text:', text);
