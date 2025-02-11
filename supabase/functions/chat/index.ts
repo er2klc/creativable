@@ -121,14 +121,7 @@ serve(async (req) => {
                   const json = JSON.parse(line.slice(5));
                   const content = json.choices[0]?.delta?.content;
                   if (content) {
-                    // Format the response to match what vercel/ai expects
-                    const aiResponse = {
-                      id: crypto.randomUUID(),
-                      role: "assistant",
-                      content: content,
-                      createdAt: new Date(),
-                    };
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(aiResponse)}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ role: "assistant", content })}\n\n`));
                   }
                 } catch (e) {
                   console.error('Error parsing JSON:', e);
