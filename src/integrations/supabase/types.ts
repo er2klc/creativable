@@ -140,47 +140,6 @@ export type Database = {
           },
         ]
       }
-      content_embeddings: {
-        Row: {
-          content: string
-          content_id: string
-          content_type: string
-          created_at: string | null
-          embedding: string | null
-          id: string
-          metadata: Json | null
-          team_id: string | null
-        }
-        Insert: {
-          content: string
-          content_id: string
-          content_type: string
-          created_at?: string | null
-          embedding?: string | null
-          id?: string
-          metadata?: Json | null
-          team_id?: string | null
-        }
-        Update: {
-          content?: string
-          content_id?: string
-          content_type?: string
-          created_at?: string | null
-          embedding?: string | null
-          id?: string
-          metadata?: Json | null
-          team_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "content_embeddings_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       dashboard_shortcuts: {
         Row: {
           created_at: string | null
@@ -213,71 +172,6 @@ export type Database = {
           title?: string
           type?: Database["public"]["Enums"]["shortcut_type"]
           updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      document_chunks: {
-        Row: {
-          chunk_index: number
-          content: string
-          created_at: string | null
-          document_id: string
-          embedding: string | null
-          id: string
-          tokens: number
-        }
-        Insert: {
-          chunk_index: number
-          content: string
-          created_at?: string | null
-          document_id: string
-          embedding?: string | null
-          id?: string
-          tokens?: number
-        }
-        Update: {
-          chunk_index?: number
-          content?: string
-          created_at?: string | null
-          document_id?: string
-          embedding?: string | null
-          id?: string
-          tokens?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "document_chunks_document_id_fkey"
-            columns: ["document_id"]
-            isOneToOne: false
-            referencedRelation: "user_documents"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      documents: {
-        Row: {
-          created_at: string | null
-          file_path: string
-          file_type: string
-          filename: string
-          id: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string | null
-          file_path: string
-          file_type: string
-          filename: string
-          id?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string | null
-          file_path?: string
-          file_type?: string
-          filename?: string
-          id?: string
           user_id?: string
         }
         Relationships: []
@@ -2359,47 +2253,6 @@ export type Database = {
           },
         ]
       }
-      team_content_embeddings: {
-        Row: {
-          content: string
-          content_id: string
-          content_type: string
-          created_at: string | null
-          embedding: string | null
-          id: string
-          metadata: Json | null
-          team_id: string
-        }
-        Insert: {
-          content: string
-          content_id: string
-          content_type: string
-          created_at?: string | null
-          embedding?: string | null
-          id?: string
-          metadata?: Json | null
-          team_id: string
-        }
-        Update: {
-          content?: string
-          content_id?: string
-          content_type?: string
-          created_at?: string | null
-          embedding?: string | null
-          id?: string
-          metadata?: Json | null
-          team_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "team_content_embeddings_team_id_fkey"
-            columns: ["team_id"]
-            isOneToOne: false
-            referencedRelation: "teams"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       team_hidden_snaps: {
         Row: {
           created_at: string | null
@@ -3529,37 +3382,6 @@ export type Database = {
           user_id_input: string
         }
         Returns: undefined
-      }
-      match_chunks: {
-        Args: {
-          query_embedding: string
-          match_threshold: number
-          match_count: number
-          user_id: string
-        }
-        Returns: {
-          id: string
-          content: string
-          similarity: number
-          document_id: string
-          document_title: string
-          source_type: string
-        }[]
-      }
-      match_content: {
-        Args: {
-          query_embedding: string
-          match_threshold: number
-          match_count: number
-          search_content_type: string
-        }
-        Returns: {
-          id: string
-          content: string
-          similarity: number
-          metadata: Json
-          team_id: string
-        }[]
       }
       match_user_embeddings: {
         Args: {
