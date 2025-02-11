@@ -41,66 +41,33 @@ export const useChatMessages = ({
         content: systemMessage,
       }
     ],
-    experimental_streamData: true,
     onError: (error) => {
       console.error("Chat error:", error);
       toast.error("Fehler beim Senden der Nachricht");
     },
     onFinish: (message) => {
       console.log("Chat finished:", message);
-      // Konsolidiere die finale Nachricht
-      setMessages(prev => 
-        prev.map(m => 
-          m.id === message.id ? { ...m, content: message.content } : m
-        )
-      );
     },
-    async onStream(stream) {
-      const reader = stream.getReader();
-      let currentMessageId: string | null = null;
-
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-
-          try {
-            const data = JSON.parse(value.data);
-            console.log("Stream data:", data);
-
-            if (data.id && data.role === 'assistant') {
-              if (!currentMessageId) {
-                // Erste Nachricht des Streams
-                currentMessageId = data.id;
-                setMessages(prev => [
-                  ...prev,
-                  {
-                    id: data.id,
-                    role: 'assistant',
-                    content: data.content,
-                    createdAt: new Date().toISOString()
-                  }
-                ]);
-              } else {
-                // Update existierende Nachricht
-                setMessages(prev => 
-                  prev.map(m => 
-                    m.id === currentMessageId 
-                      ? { ...m, content: data.content } 
-                      : m
-                  )
-                );
-              }
-            }
-          } catch (e) {
-            console.error('Stream parsing error:', e);
-          }
+    parse: (text) => {
+      // Extrahiere die JSON-Daten nach "data: "
+      const dataPrefix = "data: ";
+      if (text.startsWith(dataPrefix)) {
+        const jsonStr = text.slice(dataPrefix.length);
+        try {
+          const data = JSON.parse(jsonStr);
+          console.log("Parsed message:", data);
+          return {
+            id: data.id,
+            role: data.role,
+            content: data.content,
+            createdAt: data.createdAt
+          };
+        } catch (e) {
+          console.error("Parse error:", e);
+          throw e;
         }
-      } catch (error) {
-        console.error('Stream reading error:', error);
-      } finally {
-        reader.releaseLock();
       }
+      throw new Error("Invalid message format");
     }
   });
 
