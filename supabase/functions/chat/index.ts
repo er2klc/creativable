@@ -118,60 +118,56 @@ serve(async (req) => {
 
     console.log("OpenAI API responded successfully, starting stream...");
 
-    const stream = new ReadableStream({
-      async start(controller) {
-        const reader = response.body?.getReader();
-        if (!reader) {
-          controller.close();
-          return;
-        }
+    // Create a new transformer to handle the stream
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const messageId = crypto.randomUUID();
+    let accumulatedContent = '';
 
-        const decoder = new TextDecoder();
-        const encoder = new TextEncoder();
-        const messageId = crypto.randomUUID();
-        let accumulatedContent = '';
+    (async () => {
+      try {
+        const reader = response.body!.getReader();
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            await writer.close();
+            break;
+          }
 
-        try {
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
+          for (const line of lines) {
+            const trimmedLine = line.trim();
+            if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
 
-            for (const line of lines) {
-              const trimmedLine = line.trim();
-              if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
-
-              if (trimmedLine.startsWith('data: ')) {
-                try {
-                  const json = JSON.parse(trimmedLine.slice(5));
-                  if (json.choices?.[0]?.delta?.content) {
-                    accumulatedContent += json.choices[0].delta.content;
-                    const message = {
-                      id: messageId,
-                      role: 'assistant',
-                      content: accumulatedContent
-                    };
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
-                  }
-                } catch (e) {
-                  console.error('Error parsing JSON:', e);
+            if (trimmedLine.startsWith('data: ')) {
+              try {
+                const json = JSON.parse(trimmedLine.slice(5));
+                if (json.choices?.[0]?.delta?.content) {
+                  accumulatedContent += json.choices[0].delta.content;
+                  const message = {
+                    id: messageId,
+                    role: 'assistant',
+                    content: accumulatedContent
+                  };
+                  await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                 }
+              } catch (e) {
+                console.error('Error parsing chunk:', e, trimmedLine);
               }
             }
           }
-        } catch (error) {
-          console.error('Stream error:', error);
-          controller.error(error);
-        } finally {
-          controller.close();
-          reader.releaseLock();
         }
+      } catch (error) {
+        console.error('Stream processing error:', error);
+        await writer.abort(error);
       }
-    });
+    })();
 
-    return new Response(stream, {
+    return new Response(stream.readable, {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",
