@@ -88,7 +88,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4",
         messages: updatedMessages,
         stream: true,
       }),
@@ -108,11 +108,11 @@ serve(async (req) => {
 
         const decoder = new TextDecoder();
         const encoder = new TextEncoder();
+        let accumulatedContent = "";
 
         try {
           while (true) {
             const { done, value } = await reader.read();
-
             if (done) break;
 
             const chunk = decoder.decode(value);
@@ -126,7 +126,15 @@ serve(async (req) => {
                   const json = JSON.parse(line.slice(5));
                   const content = json.choices[0]?.delta?.content;
                   if (content) {
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ role: "assistant", content })}\n\n`));
+                    accumulatedContent += content;
+                    // Send the accumulated content in the format expected by vercel/ai
+                    const streamData = {
+                      id: crypto.randomUUID(),
+                      role: "assistant",
+                      content: accumulatedContent,
+                      createdAt: new Date(),
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(streamData)}\n\n`));
                   }
                 } catch (e) {
                   console.error('Error parsing JSON:', e);
