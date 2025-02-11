@@ -50,11 +50,30 @@ export const useChatMessages = ({
     },
     parser: (text) => {
       try {
-        if (!text.startsWith('data: ')) return null;
-        const json = JSON.parse(text.replace(/^data: /, ''));
-        return json;
+        // Entferne eventuelle Leerzeilen am Anfang und Ende
+        const cleanText = text.trim();
+        
+        // Überspringe nicht-data Zeilen
+        if (!cleanText.startsWith('data: ')) {
+          console.log('Skipping non-data line:', cleanText);
+          return null;
+        }
+        
+        // Extrahiere den JSON-Teil
+        const jsonText = cleanText.replace(/^data: /, '');
+        console.log('Parsing JSON:', jsonText);
+        
+        const parsed = JSON.parse(jsonText);
+        console.log('Successfully parsed message:', parsed);
+        
+        return {
+          id: parsed.id,
+          content: parsed.content,
+          role: parsed.role
+        };
       } catch (e) {
-        console.error('Failed to parse:', text, e);
+        console.error('Parser error:', e);
+        console.error('Failed to parse text:', text);
         return null;
       }
     }
