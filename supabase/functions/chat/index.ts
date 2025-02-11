@@ -107,8 +107,18 @@ serve(async (req) => {
 
         const decoder = new TextDecoder();
         const encoder = new TextEncoder();
-        let accumulatedContent = '';
         const messageId = crypto.randomUUID();
+        let accumulatedContent = '';
+
+        // Sende initiale leere Nachricht
+        controller.enqueue(encoder.encode(
+          `data: ${JSON.stringify({
+            id: messageId,
+            role: 'assistant',
+            content: '',
+            createdAt: new Date().toISOString()
+          })}\n\n`
+        ));
 
         try {
           while (true) {
