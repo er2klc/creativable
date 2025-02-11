@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.3.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
@@ -22,10 +21,6 @@ serve(async (req) => {
       throw new Error("OpenAI API key is required");
     }
 
-    // Initialize OpenAI
-    const configuration = new Configuration({ apiKey });
-    const openai = new OpenAIApi(configuration);
-
     // Initialize Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -35,12 +30,24 @@ serve(async (req) => {
     const userMessage = messages[messages.length - 1].content;
 
     // Generate embedding for the user's message
-    const embeddingResponse = await openai.createEmbedding({
-      model: "text-embedding-3-small",
-      input: userMessage,
+    const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "text-embedding-3-small",
+        input: userMessage,
+      }),
     });
 
-    const embedding = embeddingResponse.data.data[0].embedding;
+    if (!embeddingResponse.ok) {
+      throw new Error(`OpenAI Embedding API error: ${embeddingResponse.status}`);
+    }
+
+    const embeddingData = await embeddingResponse.json();
+    const embedding = embeddingData.data[0].embedding;
 
     // Search for relevant content using the embedding
     const { data: relevantContent, error: searchError } = await supabase.rpc(
@@ -86,11 +93,6 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    // Create a text encoder and decoder
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    // Create a stream with manual chunk processing
     const stream = new ReadableStream({
       async start(controller) {
         const reader = response.body?.getReader();
@@ -99,28 +101,17 @@ serve(async (req) => {
           return;
         }
 
+        const decoder = new TextDecoder();
+        const encoder = new TextEncoder();
         let buffer = '';
-        
+
         try {
           while (true) {
             const { done, value } = await reader.read();
-            
+
             if (done) {
               if (buffer) {
-                try {
-                  const lines = buffer.split('\n');
-                  for (const line of lines) {
-                    if (line.startsWith('data: ')) {
-                      const json = JSON.parse(line.slice(5));
-                      const content = json.choices[0]?.delta?.content;
-                      if (content) {
-                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
-                      }
-                    }
-                  }
-                } catch (e) {
-                  console.error('Error processing buffer:', e);
-                }
+                processBuffer(buffer, controller, encoder);
               }
               break;
             }
@@ -130,26 +121,14 @@ serve(async (req) => {
             buffer = lines.pop() || '';
 
             for (const line of lines) {
-              if (line.trim() === '' || line.includes('[DONE]')) continue;
-              
-              if (line.startsWith('data: ')) {
-                try {
-                  const json = JSON.parse(line.slice(5));
-                  const content = json.choices[0]?.delta?.content;
-                  if (content) {
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
-                  }
-                } catch (e) {
-                  console.error('Error parsing JSON:', e);
-                }
-              }
+              processLine(line, controller, encoder);
             }
           }
-          
-          controller.close();
         } catch (error) {
-          console.error('Stream processing error:', error);
+          console.error('Stream error:', error);
           controller.error(error);
+        } finally {
+          controller.close();
           reader.releaseLock();
         }
       }
@@ -172,3 +151,26 @@ serve(async (req) => {
     });
   }
 });
+
+function processLine(line: string, controller: ReadableStreamDefaultController, encoder: TextEncoder) {
+  if (line.trim() === '' || line.includes('[DONE]')) return;
+  
+  if (line.startsWith('data: ')) {
+    try {
+      const json = JSON.parse(line.slice(5));
+      const content = json.choices[0]?.delta?.content;
+      if (content) {
+        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
+      }
+    } catch (e) {
+      console.error('Error parsing JSON:', e);
+    }
+  }
+}
+
+function processBuffer(buffer: string, controller: ReadableStreamDefaultController, encoder: TextEncoder) {
+  const lines = buffer.split('\n');
+  for (const line of lines) {
+    processLine(line, controller, encoder);
+  }
+}
