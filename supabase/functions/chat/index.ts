@@ -80,6 +80,7 @@ serve(async (req) => {
       updatedMessages[0].content = `${messages[0].content}\n\nRelevanter Kontext:\n${context}`;
     }
 
+    // Get response from OpenAI
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -97,71 +98,8 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    const stream = new TransformStream();
-    const writer = stream.writable.getWriter();
-    const encoder = new TextEncoder();
-    const decoder = new TextDecoder();
-
-    // Generate a single message ID for the entire response
-    const messageId = crypto.randomUUID();
-    let accumulatedContent = '';
-
-    (async () => {
-      const reader = response.body!.getReader();
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) {
-            // Send final message
-            const finalMessage = {
-              id: messageId,
-              role: 'assistant',
-              content: accumulatedContent
-            };
-            await writer.write(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
-            await writer.write(encoder.encode('data: [DONE]\n\n'));
-            await writer.close();
-            break;
-          }
-
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (line.trim() === '' || line.trim() === 'data: [DONE]') continue;
-
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(5));
-                
-                if (data.choices?.[0]?.delta?.content) {
-                  const text = data.choices[0].delta.content;
-                  accumulatedContent += text;
-                  
-                  // Send progressive updates with the same message ID
-                  const message = {
-                    id: messageId,
-                    role: 'assistant',
-                    content: accumulatedContent
-                  };
-                  
-                  await writer.write(
-                    encoder.encode(`data: ${JSON.stringify(message)}\n\n`)
-                  );
-                }
-              } catch (error) {
-                console.error('Error parsing chunk:', error);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Stream error:', error);
-        writer.close();
-      }
-    })();
-
-    return new Response(stream.readable, {
+    // Simply pipe the response through
+    return new Response(response.body, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
