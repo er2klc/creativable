@@ -4,26 +4,43 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-openai-key, origin",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-openai-key, origin, accept",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Allow-Credentials": "true"
+  "Access-Control-Allow-Credentials": "true",
+  "Access-Control-Expose-Headers": "*"
 };
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: corsHeaders
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Content-Length": "0"
+      }
     });
   }
 
   try {
+    console.log("Received request:", {
+      method: req.method,
+      headers: Object.fromEntries(req.headers.entries())
+    });
+
     const { messages, teamId, userId } = await req.json();
     const apiKey = req.headers.get("X-OpenAI-Key");
     
     if (!apiKey) {
       throw new Error("OpenAI API key is required");
     }
+
+    console.log("Processing request with:", { 
+      teamId, 
+      userId,
+      messageCount: messages?.length 
+    });
 
     // Initialize Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -80,6 +97,8 @@ serve(async (req) => {
       updatedMessages[0].content = `${messages[0].content}\n\nRelevanter Kontext:\n${context}`;
     }
 
+    console.log("Calling OpenAI API...");
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -96,6 +115,8 @@ serve(async (req) => {
     if (!response.ok) {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
+
+    console.log("OpenAI API responded successfully, starting stream...");
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -163,7 +184,10 @@ serve(async (req) => {
     console.error("Error in chat function:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { 
+        ...corsHeaders, 
+        "Content-Type": "application/json"
+      },
     });
   }
 });
