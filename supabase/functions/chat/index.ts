@@ -103,25 +103,37 @@ serve(async (req) => {
 
         const decoder = new TextDecoder();
         const encoder = new TextEncoder();
-        let buffer = '';
 
         try {
           while (true) {
             const { done, value } = await reader.read();
 
-            if (done) {
-              if (buffer) {
-                processBuffer(buffer, controller, encoder);
-              }
-              break;
-            }
+            if (done) break;
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
 
             for (const line of lines) {
-              processLine(line, controller, encoder);
+              if (line.trim() === '' || line.includes('[DONE]')) continue;
+              
+              if (line.startsWith('data: ')) {
+                try {
+                  const json = JSON.parse(line.slice(5));
+                  const content = json.choices[0]?.delta?.content;
+                  if (content) {
+                    // Format the response to match what vercel/ai expects
+                    const aiResponse = {
+                      id: crypto.randomUUID(),
+                      role: "assistant",
+                      content: content,
+                      createdAt: new Date(),
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(aiResponse)}\n\n`));
+                  }
+                } catch (e) {
+                  console.error('Error parsing JSON:', e);
+                }
+              }
             }
           }
         } catch (error) {
@@ -151,26 +163,3 @@ serve(async (req) => {
     });
   }
 });
-
-function processLine(line: string, controller: ReadableStreamDefaultController, encoder: TextEncoder) {
-  if (line.trim() === '' || line.includes('[DONE]')) return;
-  
-  if (line.startsWith('data: ')) {
-    try {
-      const json = JSON.parse(line.slice(5));
-      const content = json.choices[0]?.delta?.content;
-      if (content) {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
-      }
-    } catch (e) {
-      console.error('Error parsing JSON:', e);
-    }
-  }
-}
-
-function processBuffer(buffer: string, controller: ReadableStreamDefaultController, encoder: TextEncoder) {
-  const lines = buffer.split('\n');
-  for (const line of lines) {
-    processLine(line, controller, encoder);
-  }
-}
