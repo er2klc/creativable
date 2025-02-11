@@ -60,7 +60,16 @@ export const useChatMessages = ({
       const jsonText = text.replace(/^data: /, '');
       
       try {
-        return JSON.parse(jsonText);
+        const data = JSON.parse(jsonText);
+        // Extrahiere nur die benötigten Felder
+        if (data && data.role === 'assistant') {
+          return {
+            id: data.id,
+            role: data.role,
+            content: data.content
+          };
+        }
+        return null;
       } catch (e) {
         console.error('Failed to parse:', jsonText, e);
         return null;
