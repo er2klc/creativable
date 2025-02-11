@@ -1164,6 +1164,42 @@ export type Database = {
           },
         ]
       }
+      nexus_embeddings: {
+        Row: {
+          content: string
+          content_type: string
+          created_at: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          source_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          content_type: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          content_type?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notes: {
         Row: {
           color: string | null
@@ -3523,6 +3559,22 @@ export type Database = {
           similarity: number
           metadata: Json
           team_id: string
+        }[]
+      }
+      match_user_embeddings: {
+        Args: {
+          p_user_id: string
+          query_embedding: string
+          similarity_threshold: number
+          match_count: number
+          p_content_type?: string
+        }
+        Returns: {
+          id: string
+          content: string
+          similarity: number
+          metadata: Json
+          content_type: string
         }[]
       }
       sparsevec_out: {
