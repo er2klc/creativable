@@ -86,35 +86,47 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    // Create a TransformStream to handle the streaming response
-    const transformer = new TransformStream({
-      async transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk);
-        const lines = text.split('\n');
-        
-        for (const line of lines) {
-          if (line.trim() === '') continue;
-          if (line.includes('[DONE]')) continue;
-          
-          if (line.startsWith('data: ')) {
-            try {
-              const json = JSON.parse(line.slice(5));
-              const content = json.choices[0]?.delta?.content;
-              if (content) {
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ text: content })}\n\n`));
+    // Create a ReadableStream to process the response
+    const reader = response.body!.getReader();
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const text = decoder.decode(value);
+            const lines = text.split('\n');
+
+            for (const line of lines) {
+              if (line.trim() === '') continue;
+              if (line.includes('[DONE]')) continue;
+
+              if (line.startsWith('data: ')) {
+                try {
+                  const json = JSON.parse(line.slice(5));
+                  const content = json.choices[0]?.delta?.content;
+                  if (content) {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
+                  }
+                } catch (error) {
+                  console.error('Error parsing chunk:', error);
+                }
               }
-            } catch (error) {
-              console.error('Error parsing chunk:', error);
             }
           }
+          controller.close();
+        } catch (error) {
+          console.error('Stream processing error:', error);
+          controller.error(error);
         }
-      }
+      },
     });
 
-    // Pipe the response through the transformer
-    const transformedStream = response.body?.pipeThrough(transformer);
-
-    return new Response(transformedStream, {
+    return new Response(stream, {
       headers: {
         ...corsHeaders,
         "Content-Type": "text/event-stream",
