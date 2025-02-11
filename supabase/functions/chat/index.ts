@@ -107,16 +107,16 @@ serve(async (req) => {
 
         const decoder = new TextDecoder();
         const encoder = new TextEncoder();
-        let buffer = '';
+        let accumulatedContent = '';
+        const messageId = crypto.randomUUID();
 
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
+            const chunk = decoder.decode(value);
+            const lines = chunk.split('\n');
 
             for (const line of lines) {
               const trimmedLine = line.trim();
@@ -124,41 +124,20 @@ serve(async (req) => {
 
               if (trimmedLine.startsWith('data: ')) {
                 try {
-                  const data = JSON.parse(trimmedLine.slice(5));
-                  if (data.choices?.[0]?.delta?.content) {
-                    const text = data.choices[0].delta.content;
-                    const chunk = {
-                      id: crypto.randomUUID(),
+                  const json = JSON.parse(trimmedLine.slice(5));
+                  if (json.choices?.[0]?.delta?.content) {
+                    accumulatedContent += json.choices[0].delta.content;
+                    const message = {
+                      id: messageId,
                       role: 'assistant',
-                      content: text,
+                      content: accumulatedContent,
                       createdAt: new Date().toISOString()
                     };
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
                   }
                 } catch (e) {
-                  console.error('Error parsing JSON:', e, trimmedLine);
+                  console.error('Error parsing JSON:', e);
                 }
-              }
-            }
-          }
-
-          if (buffer) {
-            const trimmedBuffer = buffer.trim();
-            if (trimmedBuffer && !trimmedBuffer.includes('[DONE]')) {
-              try {
-                const data = JSON.parse(trimmedBuffer.slice(5));
-                if (data.choices?.[0]?.delta?.content) {
-                  const text = data.choices[0].delta.content;
-                  const chunk = {
-                    id: crypto.randomUUID(),
-                    role: 'assistant',
-                    content: text,
-                    createdAt: new Date().toISOString()
-                  };
-                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
-                }
-              } catch (e) {
-                console.error('Error parsing final buffer:', e, trimmedBuffer);
               }
             }
           }

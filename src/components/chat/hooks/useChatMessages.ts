@@ -38,18 +38,8 @@ export const useChatMessages = ({
       console.error("Chat error:", error);
       toast.error("Fehler beim Senden der Nachricht");
     },
-    experimental_onStreamMessage: (message) => {
-      console.log("Received stream message:", message);
-    },
-    parse: (data) => {
-      try {
-        const parsedData = JSON.parse(data);
-        console.log("Parsed stream data:", parsedData);
-        return parsedData;
-      } catch (e) {
-        console.error("Error parsing stream data:", e);
-        throw e;
-      }
+    onFinish: (message) => {
+      console.log("Chat finished:", message);
     }
   });
 
@@ -70,13 +60,7 @@ export const useChatMessages = ({
     handleSubmit: (e: React.FormEvent) => {
       e.preventDefault();
       if (!input.trim()) return;
-      
-      try {
-        handleSubmit(e);
-      } catch (error) {
-        console.error("Error submitting message:", error);
-        toast.error("Fehler beim Senden der Nachricht");
-      }
+      handleSubmit(e);
     },
     setMessages,
     resetMessages
