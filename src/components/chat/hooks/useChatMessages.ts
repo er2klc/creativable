@@ -1,3 +1,4 @@
+
 import { useChat } from "ai/react";
 import { toast } from "sonner";
 
@@ -46,6 +47,9 @@ export const useChatMessages = ({
     onError: (error) => {
       console.error("Chat error:", error);
       toast.error("Fehler beim Senden der Nachricht");
+    },
+    experimental_onStreamMessage: (message) => {
+      console.log("Stream message received:", message);
     }
   });
 
