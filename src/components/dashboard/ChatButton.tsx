@@ -1,9 +1,12 @@
+
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ChatDialog } from "@/components/chat/ChatDialog";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const ChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   console.log("ChatButton rendered, isOpen:", isOpen);
 
@@ -14,7 +17,7 @@ export const ChatButton = () => {
 
   return (
     <>
-      <div className="fixed bottom-4 right-4 z-50">
+      <div className={`fixed ${isMobile ? "bottom-20 right-4" : "bottom-4 right-4"} z-50`}>
         <Button 
           onClick={handleClick}
           variant="outline" 

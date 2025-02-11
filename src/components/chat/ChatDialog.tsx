@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRef } from "react";
 import { useChatContext } from "@/hooks/use-chat-context";
@@ -6,6 +7,7 @@ import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
 import { useChatSetup } from "./hooks/useChatSetup";
 import { useChatMessages } from "./hooks/useChatMessages";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatDialogProps {
   open: boolean;
@@ -15,6 +17,7 @@ interface ChatDialogProps {
 export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { systemMessage } = useChatContext();
+  const isMobile = useIsMobile();
 
   const {
     sessionToken,
@@ -50,7 +53,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   if (!isReady) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className={isMobile ? "w-full h-full max-w-full m-0 p-0 rounded-none" : "sm:max-w-[500px]"}>
           <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
           <div className="flex items-center justify-center h-[600px]">
             <p className="text-muted-foreground">Initialisiere Chat...</p>
@@ -62,9 +65,13 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]" onClick={handleDialogClick} hideClose>
+      <DialogContent 
+        className={isMobile ? "w-full h-full max-w-full m-0 p-0 rounded-none" : "sm:max-w-[500px]"}
+        onClick={handleDialogClick} 
+        hideClose
+      >
         <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
-        <div className="flex flex-col h-[600px]">
+        <div className={`flex flex-col ${isMobile ? "h-[calc(100vh-4rem)]" : "h-[600px]"}`}>
           <ChatMessages messages={messages} scrollRef={scrollRef} />
           <ChatInput 
             input={input}
