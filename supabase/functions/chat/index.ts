@@ -10,7 +10,6 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
@@ -108,37 +107,58 @@ serve(async (req) => {
 
         const decoder = new TextDecoder();
         const encoder = new TextEncoder();
-        let accumulatedContent = "";
+        let buffer = '';
 
         try {
           while (true) {
             const { done, value } = await reader.read();
             if (done) break;
 
-            const chunk = decoder.decode(value);
-            const lines = chunk.split('\n');
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
 
             for (const line of lines) {
-              if (line.trim() === '' || line.includes('[DONE]')) continue;
-              
-              if (line.startsWith('data: ')) {
+              const trimmedLine = line.trim();
+              if (!trimmedLine || trimmedLine === 'data: [DONE]') continue;
+
+              if (trimmedLine.startsWith('data: ')) {
                 try {
-                  const json = JSON.parse(line.slice(5));
-                  const content = json.choices[0]?.delta?.content;
-                  if (content) {
-                    accumulatedContent += content;
-                    // Send the accumulated content in the format expected by vercel/ai
-                    const streamData = {
+                  const data = JSON.parse(trimmedLine.slice(5));
+                  if (data.choices?.[0]?.delta?.content) {
+                    const text = data.choices[0].delta.content;
+                    const chunk = {
                       id: crypto.randomUUID(),
-                      role: "assistant",
-                      content: accumulatedContent,
-                      createdAt: new Date(),
+                      role: 'assistant',
+                      content: text,
+                      createdAt: new Date().toISOString()
                     };
-                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(streamData)}\n\n`));
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
                   }
                 } catch (e) {
-                  console.error('Error parsing JSON:', e);
+                  console.error('Error parsing JSON:', e, trimmedLine);
                 }
+              }
+            }
+          }
+
+          if (buffer) {
+            const trimmedBuffer = buffer.trim();
+            if (trimmedBuffer && !trimmedBuffer.includes('[DONE]')) {
+              try {
+                const data = JSON.parse(trimmedBuffer.slice(5));
+                if (data.choices?.[0]?.delta?.content) {
+                  const text = data.choices[0].delta.content;
+                  const chunk = {
+                    id: crypto.randomUUID(),
+                    role: 'assistant',
+                    content: text,
+                    createdAt: new Date().toISOString()
+                  };
+                  controller.enqueue(encoder.encode(`data: ${JSON.stringify(chunk)}\n\n`));
+                }
+              } catch (e) {
+                console.error('Error parsing final buffer:', e, trimmedBuffer);
               }
             }
           }
