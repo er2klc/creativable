@@ -11,36 +11,20 @@ const corsHeaders = {
 };
 
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: {
-        ...corsHeaders,
-        "Content-Type": "application/json",
-        "Content-Length": "0"
-      }
+      headers: corsHeaders
     });
   }
 
   try {
-    console.log("Received request:", {
-      method: req.method,
-      headers: Object.fromEntries(req.headers.entries())
-    });
-
     const { messages, teamId, userId } = await req.json();
     const apiKey = req.headers.get("X-OpenAI-Key");
     
     if (!apiKey) {
       throw new Error("OpenAI API key is required");
     }
-
-    console.log("Processing request with:", { 
-      teamId, 
-      userId,
-      messageCount: messages?.length 
-    });
 
     // Initialize Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -70,7 +54,7 @@ serve(async (req) => {
     const embeddingData = await embeddingResponse.json();
     const embedding = embeddingData.data[0].embedding;
 
-    // Search for relevant content using the embedding
+    // Search for relevant content
     const { data: relevantContent, error: searchError } = await supabase.rpc(
       'match_user_embeddings',
       {
@@ -85,19 +69,16 @@ serve(async (req) => {
       console.error('Search error:', searchError);
     }
 
-    // Prepare context from relevant content
+    // Prepare context
     const context = relevantContent
       ?.map(item => item.content)
       .join('\n\n')
-      .slice(0, 3000); // Limit context length
+      .slice(0, 3000);
 
-    // Add context to the system message if we have relevant content
     const updatedMessages = [...messages];
     if (context) {
       updatedMessages[0].content = `${messages[0].content}\n\nRelevanter Kontext:\n${context}`;
     }
-
-    console.log("Calling OpenAI API...");
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -116,54 +97,52 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    console.log("OpenAI API responded successfully, starting stream...");
-
     const stream = new TransformStream();
     const writer = stream.writable.getWriter();
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-    let fullContent = '';
 
     (async () => {
       const reader = response.body!.getReader();
-      
       try {
         while (true) {
           const { done, value } = await reader.read();
-          
           if (done) {
-            writer.close();
+            await writer.write(encoder.encode('data: [DONE]\n\n'));
+            await writer.close();
             break;
           }
 
-          // Decode the chunk and split into lines
           const chunk = decoder.decode(value);
           const lines = chunk.split('\n');
-          
+
           for (const line of lines) {
-            if (line.trim() === '') continue;
-            if (line.trim() === 'data: [DONE]') continue;
-            
+            if (line.trim() === '' || line.trim() === 'data: [DONE]') continue;
+
             if (line.startsWith('data: ')) {
               try {
-                const jsonData = JSON.parse(line.slice(5));
-                if (jsonData.choices?.[0]?.delta?.content) {
-                  fullContent += jsonData.choices[0].delta.content;
+                const data = JSON.parse(line.slice(5));
+                
+                if (data.choices?.[0]?.delta?.content) {
+                  const text = data.choices[0].delta.content;
                   const message = {
                     id: crypto.randomUUID(),
                     role: 'assistant',
-                    content: fullContent,
+                    content: text
                   };
-                  await writer.write(encoder.encode(JSON.stringify(message) + '\n'));
+                  
+                  await writer.write(
+                    encoder.encode(`data: ${JSON.stringify(message)}\n\n`)
+                  );
                 }
-              } catch (e) {
-                console.error('Error parsing JSON:', e);
+              } catch (error) {
+                console.error('Error parsing chunk:', error);
               }
             }
           }
         }
       } catch (error) {
-        console.error('Error in stream processing:', error);
+        console.error('Stream error:', error);
         writer.close();
       }
     })();
