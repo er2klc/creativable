@@ -49,29 +49,12 @@ export const useChatMessages = ({
       console.log("Chat finished:", message);
     },
     parser: (text) => {
-      if (text === '') return null;
-      
-      // The text should start with 'data: '
-      if (!text.startsWith('data: ')) {
-        return null;
-      }
-
-      // Remove the 'data: ' prefix
-      const jsonText = text.replace(/^data: /, '');
-      
       try {
-        const data = JSON.parse(jsonText);
-        // Extrahiere nur die benötigten Felder und überprüfe auf delta content
-        if (data?.choices?.[0]?.delta?.content) {
-          return {
-            id: crypto.randomUUID(),
-            role: 'assistant',
-            content: data.choices[0].delta.content
-          };
-        }
-        return null;
+        if (!text.startsWith('data: ')) return null;
+        const json = JSON.parse(text.replace(/^data: /, ''));
+        return json;
       } catch (e) {
-        console.error('Failed to parse:', jsonText, e);
+        console.error('Failed to parse:', text, e);
         return null;
       }
     }
