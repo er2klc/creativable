@@ -86,25 +86,52 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    // Create a ReadableStream to process the response
-    const reader = response.body!.getReader();
+    // Create a text encoder and decoder
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
 
+    // Create a stream with manual chunk processing
     const stream = new ReadableStream({
       async start(controller) {
+        const reader = response.body?.getReader();
+        if (!reader) {
+          controller.close();
+          return;
+        }
+
+        let buffer = '';
+        
         try {
           while (true) {
             const { done, value } = await reader.read();
-            if (done) break;
+            
+            if (done) {
+              if (buffer) {
+                try {
+                  const lines = buffer.split('\n');
+                  for (const line of lines) {
+                    if (line.startsWith('data: ')) {
+                      const json = JSON.parse(line.slice(5));
+                      const content = json.choices[0]?.delta?.content;
+                      if (content) {
+                        controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
+                      }
+                    }
+                  }
+                } catch (e) {
+                  console.error('Error processing buffer:', e);
+                }
+              }
+              break;
+            }
 
-            const text = decoder.decode(value);
-            const lines = text.split('\n');
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
 
             for (const line of lines) {
-              if (line.trim() === '') continue;
-              if (line.includes('[DONE]')) continue;
-
+              if (line.trim() === '' || line.includes('[DONE]')) continue;
+              
               if (line.startsWith('data: ')) {
                 try {
                   const json = JSON.parse(line.slice(5));
@@ -112,18 +139,20 @@ serve(async (req) => {
                   if (content) {
                     controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text: content })}\n\n`));
                   }
-                } catch (error) {
-                  console.error('Error parsing chunk:', error);
+                } catch (e) {
+                  console.error('Error parsing JSON:', e);
                 }
               }
             }
           }
+          
           controller.close();
         } catch (error) {
           console.error('Stream processing error:', error);
           controller.error(error);
+          reader.releaseLock();
         }
-      },
+      }
     });
 
     return new Response(stream, {
