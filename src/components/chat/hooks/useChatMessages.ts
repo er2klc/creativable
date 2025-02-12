@@ -21,8 +21,8 @@ export const useChatMessages = ({
   const { 
     messages, 
     input, 
-    handleInputChange, 
-    handleSubmit: originalHandleSubmit, 
+    handleInputChange,
+    handleSubmit: originalHandleSubmit,
     setMessages,
     isLoading 
   } = useChat({
@@ -41,12 +41,7 @@ export const useChatMessages = ({
         role: "system",
         content: systemMessage,
       }
-    ],
-    onResponse: (response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-    }
+    ]
   });
 
   const resetMessages = useCallback(() => {
@@ -59,24 +54,17 @@ export const useChatMessages = ({
     ]);
   }, [setMessages, systemMessage]);
 
-  const updateLastMessage = useCallback((delta: string) => {
-    setMessages((prevMessages) => {
-      const messages = [...prevMessages];
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage?.role === 'assistant') {
-        lastMessage.content = (lastMessage.content || '') + delta;
-      }
-      return messages;
-    });
-  }, [setMessages]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    const currentInput = input.trim();
+    if (!currentInput) return;
 
     try {
-      // Sofort die Benutzernachricht hinzufügen
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: input }]);
+      // Setze die Benutzernachricht sofort und leere das Input-Feld
+      const userMessage = { id: Date.now().toString(), role: 'user', content: currentInput };
+      const assistantMessage = { id: crypto.randomUUID(), role: 'assistant', content: '' };
+      
+      setMessages(prev => [...prev, userMessage, assistantMessage]);
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
@@ -89,7 +77,7 @@ export const useChatMessages = ({
           messages: [
             { role: 'system', content: systemMessage },
             ...messages.filter(m => m.role !== 'system'),
-            { role: 'user', content: input }
+            { role: 'user', content: currentInput }
           ],
           teamId: currentTeamId,
           userId: userId
@@ -99,9 +87,6 @@ export const useChatMessages = ({
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-
-      // Füge initial eine leere Assistenten-Nachricht hinzu
-      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: '' }]);
 
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
@@ -122,19 +107,17 @@ export const useChatMessages = ({
 
           try {
             const parsed = JSON.parse(data);
-            console.log('Parsed data:', parsed); // Debug-Log
+            console.log('Parsed data:', parsed);
 
             if (parsed.delta) {
               accumulatedContent += parsed.delta;
-              updateLastMessage(accumulatedContent);
-            } else if (parsed.content) {
               setMessages(prev => {
-                const messages = [...prev];
-                const lastMessage = messages[messages.length - 1];
+                const updatedMessages = [...prev];
+                const lastMessage = updatedMessages[updatedMessages.length - 1];
                 if (lastMessage?.role === 'assistant') {
-                  lastMessage.content = parsed.content;
+                  lastMessage.content = accumulatedContent;
                 }
-                return messages;
+                return updatedMessages;
               });
             }
           } catch (error) {
@@ -148,14 +131,18 @@ export const useChatMessages = ({
     }
   };
 
+  const customHandleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
+    // Erlaube alle Zeichen inkl. 'ß'
+    handleInputChange(e);
+  };
+
   return {
     messages,
     input,
-    handleInputChange,
+    handleInputChange: customHandleInputChange,
     handleSubmit,
     setMessages,
     resetMessages,
-    updateLastMessage,
     isLoading
   };
 };
