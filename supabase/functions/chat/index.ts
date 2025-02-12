@@ -31,6 +31,41 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Get last user message for context search
+    const lastUserMessage = messages.filter(m => m.role === 'user').pop();
+    
+    // Search for relevant context
+    const embeddingResponse = await fetch(`${supabaseUrl}/functions/v1/unified-embeddings`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${supabaseKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        action: 'search',
+        content: lastUserMessage.content,
+        contentType: teamId ? 'team' : 'personal',
+        teamId: teamId,
+        userId: userId
+      })
+    });
+
+    const { results: relevantContext } = await embeddingResponse.json();
+    
+    // Build enhanced system message with context
+    let enhancedSystemMessage = messages[0].content + "\n\nRelevant context:\n";
+    if (relevantContext && relevantContext.length > 0) {
+      enhancedSystemMessage += relevantContext
+        .map(ctx => `- ${ctx.content}`)
+        .join("\n");
+    }
+
+    // Update system message with context
+    const enhancedMessages = [
+      { role: 'system', content: enhancedSystemMessage },
+      ...messages.slice(1)
+    ];
+
     // Get response from OpenAI
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -40,7 +75,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4",
-        messages: messages,
+        messages: enhancedMessages,
         stream: true,
       }),
     });
@@ -64,7 +99,7 @@ serve(async (req) => {
           const { done, value } = await reader.read();
           
           if (done) {
-            // Sende die finale Nachricht
+            // Send the final message
             const finalMessage = {
               id: messageId,
               role: 'assistant',
@@ -92,7 +127,7 @@ serve(async (req) => {
               
               if (delta) {
                 accumulatedContent += delta;
-                // Sende nur das Delta
+                // Send only the delta
                 const message = {
                   id: messageId,
                   role: 'assistant',
