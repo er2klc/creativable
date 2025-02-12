@@ -117,14 +117,15 @@ serve(async (req) => {
           const { done, value } = await reader.read();
           
           if (done) {
-            // Send final DONE message
-            const finalMessage = {
-              id: messageId,
-              role: 'assistant',
-              content: fullContent
-            };
-            
-            await writer.write(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
+            // Send final state
+            if (fullContent) {
+              const finalMessage = {
+                id: messageId,
+                role: 'assistant',
+                content: fullContent
+              };
+              await writer.write(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
+            }
             await writer.write(encoder.encode('data: [DONE]\n\n'));
             await writer.close();
             break;
@@ -135,13 +136,15 @@ serve(async (req) => {
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
+              const data = line.slice(6); // Remove 'data: ' prefix
+              
+              if (data === '[DONE]') {
+                continue;
+              }
+              
               try {
-                const data = line.slice(6); // Remove 'data: ' prefix
-                
-                if (data === '[DONE]') continue;
-                
                 const parsed = JSON.parse(data);
-                const content = parsed.choices[0]?.delta?.content || '';
+                const content = parsed.choices?.[0]?.delta?.content || '';
                 
                 if (content) {
                   fullContent += content;
@@ -159,6 +162,7 @@ serve(async (req) => {
               } catch (error) {
                 console.error('Error processing chunk:', error);
                 console.log('Problematic line:', line);
+                // Don't throw error, just continue with next line
                 continue;
               }
             }
