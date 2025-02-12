@@ -3570,6 +3570,26 @@ export type Database = {
           team_id: string
         }[]
       }
+      match_lead_content: {
+        Args: {
+          p_user_id: string
+          query_text: string
+          match_count?: number
+        }
+        Returns: {
+          id: string
+          name: string
+          platform: string
+          industry: string
+          status: string
+          last_interaction_date: string
+          contact_type: string
+          social_media_username: string
+          email: string
+          phone_number: string
+          notes: string[]
+        }[]
+      }
       match_team_content: {
         Args: {
           query_embedding: string

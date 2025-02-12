@@ -34,7 +34,21 @@ serve(async (req) => {
     // Get last user message for context search
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
     
-    // Search for relevant context using the combined search function
+    // Suche nach relevanten Kontakten
+    const { data: relevantLeads, error: leadsError } = await supabase.rpc(
+      'match_lead_content',
+      {
+        p_user_id: userId,
+        query_text: lastUserMessage.content,
+        match_count: 5
+      }
+    );
+
+    if (leadsError) {
+      console.error('Error fetching leads:', leadsError);
+    }
+
+    // Suche nach relevantem Kontext
     const { data: relevantContext, error: searchError } = await supabase.rpc(
       'match_combined_content',
       {
@@ -51,11 +65,25 @@ serve(async (req) => {
     }
     
     // Build enhanced system message with context
-    let enhancedSystemMessage = messages[0].content + "\n\nRelevant context:\n";
+    let enhancedSystemMessage = messages[0].content + "\n\nKontextinformationen:\n";
+    
+    // Füge Kontaktinformationen hinzu
+    if (relevantLeads && relevantLeads.length > 0) {
+      enhancedSystemMessage += "\nRelevante Kontakte:\n";
+      relevantLeads.forEach(lead => {
+        enhancedSystemMessage += `- ${lead.name} (${lead.platform}): ${lead.industry}, Status: ${lead.status}\n`;
+        if (lead.notes && lead.notes.length > 0) {
+          enhancedSystemMessage += `  Letzte Notizen: ${lead.notes[0]}\n`;
+        }
+      });
+    }
+
+    // Füge weiteren Kontext hinzu
     if (relevantContext && relevantContext.length > 0) {
-      enhancedSystemMessage += relevantContext
-        .map(ctx => `[${ctx.source}] ${ctx.content}`)
-        .join("\n");
+      enhancedSystemMessage += "\nWeiterer relevanter Kontext:\n";
+      relevantContext.forEach(ctx => {
+        enhancedSystemMessage += `[${ctx.source}] ${ctx.content}\n`;
+      });
     }
 
     // Update system message with context
@@ -63,6 +91,8 @@ serve(async (req) => {
       { role: 'system', content: enhancedSystemMessage },
       ...messages.slice(1)
     ];
+
+    console.log('Enhanced system message:', enhancedSystemMessage);
 
     // Get response from OpenAI
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
