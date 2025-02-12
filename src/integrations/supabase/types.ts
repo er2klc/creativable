@@ -148,6 +148,9 @@ export type Database = {
           embedding: string | null
           id: string
           metadata: Json | null
+          processed_at: string | null
+          processing_error: string | null
+          processing_status: string | null
           team_id: string | null
           updated_at: string | null
           user_id: string
@@ -159,6 +162,9 @@ export type Database = {
           embedding?: string | null
           id?: string
           metadata?: Json | null
+          processed_at?: string | null
+          processing_error?: string | null
+          processing_status?: string | null
           team_id?: string | null
           updated_at?: string | null
           user_id: string
@@ -170,6 +176,9 @@ export type Database = {
           embedding?: string | null
           id?: string
           metadata?: Json | null
+          processed_at?: string | null
+          processing_error?: string | null
+          processing_status?: string | null
           team_id?: string | null
           updated_at?: string | null
           user_id?: string
