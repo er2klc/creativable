@@ -43,9 +43,27 @@ serve(async (req) => {
       console.error('Error fetching user profile:', profileError);
     }
 
-    // Extrahiere Contact ID aus der Route
+    // Initialize context containers
     let currentContact = null;
+    let recentContacts = [];
     let contactContext = null;
+
+    // Always fetch recent contacts for context
+    console.log('Fetching recent contacts for context');
+    const { data: recentContactsData, error: recentContactsError } = await supabase
+      .rpc('get_contact_context', {
+        p_user_id: userId,
+        p_contact_id: null
+      });
+
+    if (recentContactsError) {
+      console.error('Error fetching recent contacts:', recentContactsError);
+    } else {
+      console.log('Found recent contacts:', recentContactsData?.length || 0);
+      recentContacts = recentContactsData || [];
+    }
+
+    // Get specific contact if on contact route
     if (currentRoute?.startsWith('contacts/')) {
       const contactId = currentRoute.split('/')[1];
       console.log('Fetching detailed contact context for:', contactId);
@@ -71,7 +89,7 @@ serve(async (req) => {
     // Get last user message for context search
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
     
-    // Suche nach relevanten Kontakten basierend auf dem Nachrichteninhalt
+    // Search for relevant contacts based on message content
     console.log('Searching for relevant contacts with query:', lastUserMessage.content);
     const { data: relevantContacts, error: contactError } = await supabase
       .rpc('match_contact_content', {
@@ -86,7 +104,7 @@ serve(async (req) => {
       console.log('Found relevant contacts:', relevantContacts);
     }
 
-    // Get embedding for the last message
+    // Get embedding for semantic search
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-ada-002",
       input: lastUserMessage.content,
@@ -94,7 +112,7 @@ serve(async (req) => {
     
     const queryEmbedding = embeddingResponse.data[0].embedding;
 
-    // Suche nach relevantem Kontext mit dem Embedding
+    // Search for relevant context with embedding
     console.log('Searching for context with embedding');
     const { data: relevantContext, error: searchError } = await supabase.rpc(
       'match_combined_content',
@@ -124,7 +142,23 @@ serve(async (req) => {
       if (userProfile.is_admin) enhancedSystemMessage += "- Admin-Benutzer\n";
     }
 
-    // Add detailed contact context if available
+    // Add recent contacts context
+    if (recentContacts.length > 0) {
+      enhancedSystemMessage += "\nLetzte Kontakte:\n";
+      recentContacts.slice(0, 5).forEach((contact: any) => {
+        enhancedSystemMessage += `- ${contact.name} (${contact.platform}, ${contact.industry})\n`;
+        if (contact.last_interaction_date) {
+          enhancedSystemMessage += `  Letzte Interaktion: ${new Date(contact.last_interaction_date).toLocaleDateString()}\n`;
+        }
+        if (contact.social_media_followers) {
+          enhancedSystemMessage += `  Social: ${contact.social_media_followers} Follower, ${(contact.social_media_engagement_rate || 0).toFixed(2)}% Engagement\n`;
+        }
+      });
+    } else {
+      enhancedSystemMessage += "\nHinweis: Bisher wurden keine Kontakte angelegt.\n";
+    }
+
+    // Add current contact context if available
     if (currentContact) {
       enhancedSystemMessage += "\nAktueller Kontakt:\n";
       enhancedSystemMessage += `- Name: ${currentContact.name}\n`;
@@ -134,21 +168,21 @@ serve(async (req) => {
       enhancedSystemMessage += `- Follower: ${currentContact.social_media_followers || 0}\n`;
       enhancedSystemMessage += `- Engagement Rate: ${(currentContact.social_media_engagement_rate || 0).toFixed(2)}%\n`;
       
-      if (currentContact.recent_posts && currentContact.recent_posts.length > 0) {
+      if (currentContact.recent_posts?.length > 0) {
         enhancedSystemMessage += "\nLetzte Posts:\n";
         currentContact.recent_posts.forEach((post: any) => {
           enhancedSystemMessage += `- ${post.content} (${post.likes_count} Likes, ${post.comments_count} Kommentare)\n`;
         });
       }
 
-      if (currentContact.recent_notes && currentContact.recent_notes.length > 0) {
+      if (currentContact.recent_notes?.length > 0) {
         enhancedSystemMessage += "\nLetzte Notizen:\n";
         currentContact.recent_notes.slice(0, 3).forEach((note: string) => {
           enhancedSystemMessage += `- ${note}\n`;
         });
       }
 
-      if (currentContact.recent_messages && currentContact.recent_messages.length > 0) {
+      if (currentContact.recent_messages?.length > 0) {
         enhancedSystemMessage += "\nLetzte Nachrichten:\n";
         currentContact.recent_messages.slice(0, 3).forEach((message: string) => {
           enhancedSystemMessage += `- ${message}\n`;
@@ -157,7 +191,7 @@ serve(async (req) => {
     }
     
     // Add relevant contacts if found
-    if (relevantContacts && relevantContacts.length > 0) {
+    if (relevantContacts?.length > 0) {
       enhancedSystemMessage += "\nÄhnliche Kontakte:\n";
       relevantContacts.forEach((contact: any) => {
         enhancedSystemMessage += `- ${contact.name} (Ähnlichkeit: ${(contact.similarity * 100).toFixed(1)}%)\n`;
@@ -168,7 +202,7 @@ serve(async (req) => {
     }
 
     // Add other context
-    if (relevantContext && relevantContext.length > 0) {
+    if (relevantContext?.length > 0) {
       enhancedSystemMessage += "\nWeiterer relevanter Kontext:\n";
       relevantContext.forEach((ctx: any) => {
         enhancedSystemMessage += `[${ctx.source}] ${ctx.content}\n`;
