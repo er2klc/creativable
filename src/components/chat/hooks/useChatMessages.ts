@@ -60,11 +60,18 @@ export const useChatMessages = ({
     if (!currentInput) return;
 
     try {
-      // Setze die Benutzernachricht sofort und leere das Input-Feld
+      // Setze die Benutzernachricht sofort
       const userMessage = { id: Date.now().toString(), role: 'user', content: currentInput };
       const assistantMessage = { id: crypto.randomUUID(), role: 'assistant', content: '' };
       
-      setMessages(prev => [...prev, userMessage, assistantMessage]);
+      // Setze zuerst die Benutzernachricht
+      setMessages(prev => [...prev, userMessage]);
+      
+      // Warte einen Frame für das Rendering
+      await new Promise(resolve => requestAnimationFrame(resolve));
+      
+      // Füge dann die leere Assistentennachricht hinzu
+      setMessages(prev => [...prev, assistantMessage]);
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
@@ -111,14 +118,22 @@ export const useChatMessages = ({
 
             if (parsed.delta) {
               accumulatedContent += parsed.delta;
+              // Erzwinge ein Re-Rendering mit einer neuen Referenz
               setMessages(prev => {
                 const updatedMessages = [...prev];
                 const lastMessage = updatedMessages[updatedMessages.length - 1];
                 if (lastMessage?.role === 'assistant') {
-                  lastMessage.content = accumulatedContent;
+                  // Erstelle ein neues Objekt für die letzte Nachricht
+                  updatedMessages[updatedMessages.length - 1] = {
+                    ...lastMessage,
+                    content: accumulatedContent
+                  };
                 }
                 return updatedMessages;
               });
+
+              // Warte einen Frame für das Rendering
+              await new Promise(resolve => requestAnimationFrame(resolve));
             }
           } catch (error) {
             console.error('Error parsing chunk:', error, 'Raw data:', data);
