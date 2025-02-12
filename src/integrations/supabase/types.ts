@@ -3538,6 +3538,23 @@ export type Database = {
         }
         Returns: undefined
       }
+      match_combined_content: {
+        Args: {
+          query_embedding: string
+          match_threshold: number
+          match_count: number
+          p_user_id: string
+          p_team_id: string
+        }
+        Returns: {
+          id: string
+          content: string
+          similarity: number
+          metadata: Json
+          source: string
+          team_id: string
+        }[]
+      }
       match_content: {
         Args: {
           query_embedding: string
@@ -3551,6 +3568,23 @@ export type Database = {
           similarity: number
           metadata: Json
           team_id: string
+        }[]
+      }
+      match_team_content: {
+        Args: {
+          query_embedding: string
+          match_threshold: number
+          match_count: number
+          p_team_id: string
+        }
+        Returns: {
+          id: string
+          content: string
+          similarity: number
+          metadata: Json
+          created_at: string
+          team_id: string
+          content_type: string
         }[]
       }
       match_user_embeddings: {
