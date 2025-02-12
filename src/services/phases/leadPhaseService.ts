@@ -36,22 +36,5 @@ export const updateLeadPhase = async (
 
   if (updateError) throw updateError;
 
-  // Nur wenn die Phase wirklich geändert wurde, erstellen wir einen Eintrag
-  const { error: noteError } = await supabase
-    .from("notes")
-    .insert({
-      lead_id: leadId,
-      user_id: userId,
-      content: `Phase von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
-      color: '#E9D5FF',
-      metadata: {
-        type: 'phase_change',
-        oldPhase: oldPhaseName,
-        newPhase: newPhaseName
-      }
-    });
-
-  if (noteError) throw noteError;
-
   return { success: true };
 };
