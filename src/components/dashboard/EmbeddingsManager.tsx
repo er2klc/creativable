@@ -27,6 +27,29 @@ export function EmbeddingsManager() {
     }
   });
 
+  const { data: stats } = useQuery({
+    queryKey: ['embedding-stats'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { count: contentCount } = await supabase
+        .from('content_embeddings')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      const { count: nexusCount } = await supabase
+        .from('nexus_embeddings')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      return {
+        contentCount: contentCount || 0,
+        nexusCount: nexusCount || 0
+      };
+    }
+  });
+
   const handleBackfillEmbeddings = async () => {
     try {
       setIsBackfilling(true);
@@ -95,21 +118,33 @@ export function EmbeddingsManager() {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="flex flex-col gap-4 sm:flex-row">
-          <Button 
-            onClick={handleGenerateEmbeddings}
-            disabled={isProcessing || !settings?.openai_api_key}
-          >
-            {isProcessing ? "Wird verarbeitet..." : "Neue Daten verarbeiten"}
-          </Button>
+        <div className="flex flex-col gap-4">
+          {stats && (
+            <div className="text-sm text-muted-foreground">
+              Verarbeitete Daten: 
+              <ul className="list-disc list-inside mt-2">
+                <li>Content Embeddings: {stats.contentCount}</li>
+                <li>Nexus Embeddings: {stats.nexusCount}</li>
+              </ul>
+            </div>
+          )}
           
-          <Button 
-            variant="outline"
-            onClick={handleBackfillEmbeddings}
-            disabled={isBackfilling || !settings?.openai_api_key}
-          >
-            {isBackfilling ? "Wird verarbeitet..." : "Bestehende Daten verarbeiten"}
-          </Button>
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <Button 
+              onClick={handleGenerateEmbeddings}
+              disabled={isProcessing || !settings?.openai_api_key}
+            >
+              {isProcessing ? "Wird verarbeitet..." : "Neue Daten verarbeiten"}
+            </Button>
+            
+            <Button 
+              variant="outline"
+              onClick={handleBackfillEmbeddings}
+              disabled={isBackfilling || !settings?.openai_api_key}
+            >
+              {isBackfilling ? "Wird verarbeitet..." : "Bestehende Daten verarbeiten"}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
