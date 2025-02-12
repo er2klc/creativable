@@ -98,8 +98,71 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    // Simply pipe the response through
-    return new Response(response.body, {
+    // Set up stream transformation
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+
+    // Generate a consistent message ID for the entire stream
+    const messageId = crypto.randomUUID();
+    let accumulatedContent = '';
+
+    // Process the stream
+    (async () => {
+      const reader = response.body!.getReader();
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          
+          if (done) {
+            await writer.write(encoder.encode('data: [DONE]\n\n'));
+            await writer.close();
+            break;
+          }
+
+          // Decode the chunk and split into lines
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
+
+          for (const line of lines) {
+            if (!line.trim() || !line.startsWith('data: ')) continue;
+
+            try {
+              // Remove 'data: ' prefix and parse
+              const data = JSON.parse(line.slice(6));
+              
+              if (!data.choices?.[0]?.delta?.content) continue;
+
+              // Add new content to accumulated content
+              accumulatedContent += data.choices[0].delta.content;
+
+              // Create message in the format expected by vercel/ai
+              const message = {
+                id: messageId,
+                role: 'assistant',
+                content: accumulatedContent
+              };
+
+              // Write the transformed message
+              await writer.write(
+                encoder.encode(`data: ${JSON.stringify(message)}\n\n`)
+              );
+            } catch (error) {
+              console.error('Error processing chunk:', error);
+              continue;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Stream processing error:', error);
+        // Ensure we close the writer even if there's an error
+        await writer.close();
+      }
+    })();
+
+    // Return the transformed stream
+    return new Response(stream.readable, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',

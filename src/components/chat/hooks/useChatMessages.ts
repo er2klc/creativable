@@ -47,7 +47,8 @@ export const useChatMessages = ({
     },
     onFinish: (message) => {
       console.log("Chat finished:", message);
-    }
+    },
+    experimental_streamData: true
   });
 
   const resetMessages = () => {
