@@ -4,3 +4,6 @@ project_id = "agqaitxlmxztqyhpcjau"
 
 [process-context-embeddings]
 verify_jwt = true
+
+[unified-embeddings]
+verify_jwt = true
