@@ -52,10 +52,8 @@ serve(async (req) => {
           .from('content_embeddings')
           .update({ 
             embedding,
-            metadata: {
-              ...content.metadata,
-              processed_at: new Date().toISOString()
-            }
+            processing_status: 'completed',
+            processed_at: new Date().toISOString()
           })
           .eq('id', content.id);
 
@@ -74,6 +72,16 @@ serve(async (req) => {
           success: false,
           error: error.message
         });
+
+        // Update error status
+        await supabase
+          .from('content_embeddings')
+          .update({ 
+            processing_status: 'error',
+            processing_error: error.message,
+            processed_at: new Date().toISOString()
+          })
+          .eq('id', content.id);
       }
     }
 
