@@ -3699,6 +3699,14 @@ export type Database = {
         | "sms"
         | "whatsapp"
         | "social_media"
+      context_type:
+        | "user_profile"
+        | "business_info"
+        | "contact_info"
+        | "team_content"
+        | "learning_content"
+        | "calendar_events"
+        | "tasks"
       gender_type: "male" | "female" | "other" | "prefer_not_to_say"
       link_group_type: "zoom" | "youtube" | "documents" | "custom" | "other"
       post_type:
