@@ -20,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, teamId, userId } = await req.json();
+    const { messages, teamId, userId, currentRoute } = await req.json();
     const apiKey = req.headers.get("X-OpenAI-Key");
     
     if (!apiKey) {
@@ -34,6 +34,32 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get user profile information
+    const { data: userProfile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError);
+    }
+
+    // Get current contact if on contact route
+    let currentContact = null;
+    if (currentRoute?.startsWith('contacts/')) {
+      const contactId = currentRoute.split('/')[1];
+      const { data: contact, error: contactError } = await supabase
+        .from('leads')
+        .select('*')
+        .eq('id', contactId)
+        .single();
+      
+      if (!contactError && contact) {
+        currentContact = contact;
+      }
+    }
 
     // Get last user message for context search
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
@@ -55,7 +81,7 @@ serve(async (req) => {
       console.log('Found relevant leads:', relevantLeads);
     }
 
-    // Get embedding for the last message using the new API version
+    // Get embedding for the last message
     const embeddingResponse = await openai.embeddings.create({
       model: "text-embedding-ada-002",
       input: lastUserMessage.content,
@@ -83,9 +109,28 @@ serve(async (req) => {
     }
     
     // Build enhanced system message with context
-    let enhancedSystemMessage = messages[0].content + "\n\nKontextinformationen:\n";
+    let enhancedSystemMessage = messages[0].content + "\n\n";
+
+    // Add user context if available
+    if (userProfile) {
+      enhancedSystemMessage += "Benutzerinformationen:\n";
+      enhancedSystemMessage += `- Name: ${userProfile.display_name || 'Nicht angegeben'}\n`;
+      enhancedSystemMessage += `- Email: ${userProfile.email || 'Nicht angegeben'}\n`;
+      if (userProfile.is_admin) enhancedSystemMessage += "- Admin-Benutzer\n";
+    }
+
+    // Add current contact context if available
+    if (currentContact) {
+      enhancedSystemMessage += "\nAktueller Kontakt:\n";
+      enhancedSystemMessage += `- Name: ${currentContact.name}\n`;
+      enhancedSystemMessage += `- Platform: ${currentContact.platform}\n`;
+      enhancedSystemMessage += `- Industry: ${currentContact.industry}\n`;
+      if (currentContact.last_interaction_date) {
+        enhancedSystemMessage += `- Letzte Interaktion: ${new Date(currentContact.last_interaction_date).toLocaleDateString()}\n`;
+      }
+    }
     
-    // Füge Kontaktinformationen hinzu
+    // Add relevant contacts
     if (relevantLeads && relevantLeads.length > 0) {
       enhancedSystemMessage += "\nRelevante Kontakte:\n";
       relevantLeads.forEach(lead => {
@@ -96,7 +141,7 @@ serve(async (req) => {
       });
     }
 
-    // Füge weiteren Kontext hinzu
+    // Add other context
     if (relevantContext && relevantContext.length > 0) {
       enhancedSystemMessage += "\nWeiterer relevanter Kontext:\n";
       relevantContext.forEach(ctx => {
