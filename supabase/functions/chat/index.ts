@@ -69,7 +69,7 @@ serve(async (req) => {
     const { data: relevantContext, error: searchError } = await supabase.rpc(
       'match_combined_content',
       {
-        query_embedding: queryEmbedding,
+        query_embedding: JSON.stringify(queryEmbedding), // Convert the array to a string representation
         match_threshold: 0.7,
         match_count: 5,
         p_user_id: userId,
