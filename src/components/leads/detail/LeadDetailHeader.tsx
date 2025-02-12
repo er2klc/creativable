@@ -24,8 +24,8 @@ export interface LeadDetailHeaderProps {
 export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetailHeaderProps) {
   const { settings } = useSettings();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const { handleStatusChange } = useStatusChange(lead, onUpdateLead, settings);
   const [searchQuery, setSearchQuery] = useState("");
+  const { handleStatusChange } = useStatusChange(lead, onUpdateLead, settings);
 
   const { data: profile } = useQuery({
     queryKey: ['profile'],
@@ -52,6 +52,17 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
     onDeleteLead();
   };
 
+  // Die Suche wird an die übergeordnete Komponente weitergegeben
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    // Hier können Sie einen globalen Zustand oder Callback verwenden,
+    // um die Suche zu filtern
+    window.dispatchEvent(new CustomEvent('lead-detail-search', { 
+      detail: { query: value } 
+    }));
+  };
+
   return (
     <>
       <DialogHeader className="fixed top-0 left-0 right-0 z-[40] bg-white border-b md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
@@ -65,7 +76,7 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
                   type="text"
                   placeholder="Suche in Kontaktdetails..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   className="w-full pl-10 pr-4 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-500"
                 />
               </div>
