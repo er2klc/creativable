@@ -1,3 +1,4 @@
+
 import { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadWithRelations, SubscriptionPayload } from "../types/leadSubscription";
@@ -12,7 +13,14 @@ export const useRelatedDataHandler = (
 
     const { data } = await supabase
       .from("leads")
-      .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
+      .select(`
+        *,
+        messages(*),
+        tasks(*),
+        notes(*),
+        lead_files(*),
+        linkedin_posts(*)
+      `)
       .eq("id", leadId)
       .maybeSingle();
 
@@ -23,8 +31,30 @@ export const useRelatedDataHandler = (
           if (!old) return old;
           return {
             ...old,
+            ...data,
             platform: old.platform,
-            notes: data.notes,
+            notes: data.notes || [],
+            messages: data.messages || [],
+            tasks: data.tasks || [],
+            lead_files: data.lead_files || [],
+            linkedin_posts: data.linkedin_posts || []
+          };
+        }
+      );
+      // Auch den lead-with-relations Query aktualisieren
+      queryClient.setQueryData<LeadWithRelations>(
+        ["lead-with-relations", leadId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            ...data,
+            platform: old.platform,
+            notes: data.notes || [],
+            messages: data.messages || [],
+            tasks: data.tasks || [],
+            lead_files: data.lead_files || [],
+            linkedin_posts: data.linkedin_posts || []
           };
         }
       );
@@ -37,7 +67,14 @@ export const useRelatedDataHandler = (
 
     const { data } = await supabase
       .from("leads")
-      .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
+      .select(`
+        *,
+        messages(*),
+        tasks(*),
+        notes(*),
+        lead_files(*),
+        linkedin_posts(*)
+      `)
       .eq("id", leadId)
       .maybeSingle();
 
@@ -49,7 +86,19 @@ export const useRelatedDataHandler = (
           return {
             ...old,
             platform: old.platform,
-            tasks: data.tasks,
+            tasks: data.tasks || [],
+          };
+        }
+      );
+      // Auch den lead-with-relations Query aktualisieren
+      queryClient.setQueryData<LeadWithRelations>(
+        ["lead-with-relations", leadId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            platform: old.platform,
+            tasks: data.tasks || [],
           };
         }
       );
@@ -62,7 +111,14 @@ export const useRelatedDataHandler = (
 
     const { data } = await supabase
       .from("leads")
-      .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
+      .select(`
+        *,
+        messages(*),
+        tasks(*),
+        notes(*),
+        lead_files(*),
+        linkedin_posts(*)
+      `)
       .eq("id", leadId)
       .maybeSingle();
 
@@ -74,7 +130,19 @@ export const useRelatedDataHandler = (
           return {
             ...old,
             platform: old.platform,
-            messages: data.messages,
+            messages: data.messages || [],
+          };
+        }
+      );
+      // Auch den lead-with-relations Query aktualisieren
+      queryClient.setQueryData<LeadWithRelations>(
+        ["lead-with-relations", leadId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            platform: old.platform,
+            messages: data.messages || [],
           };
         }
       );
@@ -87,7 +155,14 @@ export const useRelatedDataHandler = (
 
     const { data } = await supabase
       .from("leads")
-      .select("*, messages(*), tasks(*), notes(*), lead_files(*)")
+      .select(`
+        *,
+        messages(*),
+        tasks(*),
+        notes(*),
+        lead_files(*),
+        linkedin_posts(*)
+      `)
       .eq("id", leadId)
       .maybeSingle();
 
@@ -99,7 +174,19 @@ export const useRelatedDataHandler = (
           return {
             ...old,
             platform: old.platform,
-            lead_files: data.lead_files,
+            lead_files: data.lead_files || [],
+          };
+        }
+      );
+      // Auch den lead-with-relations Query aktualisieren
+      queryClient.setQueryData<LeadWithRelations>(
+        ["lead-with-relations", leadId],
+        (old) => {
+          if (!old) return old;
+          return {
+            ...old,
+            platform: old.platform,
+            lead_files: data.lead_files || [],
           };
         }
       );
