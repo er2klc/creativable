@@ -1,7 +1,9 @@
-import { List, Mail, Bell } from "lucide-react";
+
+import { List, Mail, Bell, Database } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChangelogForm } from "./changelog/ChangelogForm";
+import { EmbeddingsManager } from "@/components/dashboard/EmbeddingsManager";
 
 export const AdminTabs = () => {
   return (
@@ -18,6 +20,10 @@ export const AdminTabs = () => {
         <TabsTrigger value="notifications" className="text-white data-[state=active]:bg-white/10">
           <Bell className="h-4 w-4 mr-2" />
           Benachrichtigungen
+        </TabsTrigger>
+        <TabsTrigger value="ai-processing" className="text-white data-[state=active]:bg-white/10">
+          <Database className="h-4 w-4 mr-2" />
+          KI Verarbeitung
         </TabsTrigger>
       </TabsList>
 
@@ -44,6 +50,14 @@ export const AdminTabs = () => {
               Diese Funktion wird in Kürze verfügbar sein
             </CardDescription>
           </CardHeader>
+        </Card>
+      </TabsContent>
+
+      <TabsContent value="ai-processing">
+        <Card className="bg-black/40 border-none shadow-lg backdrop-blur-md">
+          <CardContent className="p-6">
+            <EmbeddingsManager />
+          </CardContent>
         </Card>
       </TabsContent>
     </Tabs>

@@ -6,7 +6,6 @@ import { LeadPhases } from "@/components/dashboard/LeadPhases";
 import { useAuth } from "@/hooks/use-auth";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { useNavigate } from "react-router-dom";
-import { EmbeddingsManager } from "@/components/dashboard/EmbeddingsManager";
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -34,7 +33,6 @@ const Dashboard = () => {
       <div className="pt-[132px] md:pt-[84px] space-y-8">
         <QuickActions />
         <DashboardMetrics />
-        <EmbeddingsManager />
         <LeadPhases />
       </div>
     </div>
