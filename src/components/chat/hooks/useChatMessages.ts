@@ -150,15 +150,10 @@ export const useChatMessages = ({
     }
   };
 
-  const customHandleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>) => {
-    // Erlaube alle Zeichen inkl. 'ß'
-    handleInputChange(e);
-  };
-
   return {
     messages,
     input,
-    handleInputChange: customHandleInputChange,
+    handleInputChange,
     handleSubmit,
     setMessages,
     resetMessages,

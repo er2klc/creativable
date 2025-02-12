@@ -34,29 +34,27 @@ serve(async (req) => {
     // Get last user message for context search
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
     
-    // Search for relevant context
-    const embeddingResponse = await fetch(`${supabaseUrl}/functions/v1/unified-embeddings`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${supabaseKey}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        action: 'search',
-        content: lastUserMessage.content,
-        contentType: teamId ? 'team' : 'personal',
-        teamId: teamId,
-        userId: userId
-      })
-    });
+    // Search for relevant context using the combined search function
+    const { data: relevantContext, error: searchError } = await supabase.rpc(
+      'match_combined_content',
+      {
+        query_embedding: lastUserMessage.content,
+        match_threshold: 0.7,
+        match_count: 5,
+        p_user_id: userId,
+        p_team_id: teamId
+      }
+    );
 
-    const { results: relevantContext } = await embeddingResponse.json();
+    if (searchError) {
+      console.error('Error searching for context:', searchError);
+    }
     
     // Build enhanced system message with context
     let enhancedSystemMessage = messages[0].content + "\n\nRelevant context:\n";
     if (relevantContext && relevantContext.length > 0) {
       enhancedSystemMessage += relevantContext
-        .map(ctx => `- ${ctx.content}`)
+        .map(ctx => `[${ctx.source}] ${ctx.content}`)
         .join("\n");
     }
 
