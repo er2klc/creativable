@@ -19,15 +19,10 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Initialize OpenAI
-    const configuration = new OpenAI({
-      apiKey: Deno.env.get('OPENAI_API_KEY'),
-    });
-
     // Get unprocessed content (where embedding is null)
     const { data: unprocessedContent, error: fetchError } = await supabase
       .from('content_embeddings')
-      .select('*')
+      .select('*, settings:user_id(openai_api_key)')
       .is('embedding', null)
       .limit(10);
 
@@ -38,8 +33,18 @@ serve(async (req) => {
     const results = [];
     for (const content of unprocessedContent || []) {
       try {
+        // Get user's OpenAI API key from settings
+        if (!content.settings?.openai_api_key) {
+          throw new Error(`No OpenAI API key found for user ${content.user_id}`);
+        }
+
+        // Initialize OpenAI with user's API key
+        const openai = new OpenAI({
+          apiKey: content.settings.openai_api_key,
+        });
+
         // Generate embedding
-        const embeddingResponse = await configuration.embeddings.create({
+        const embeddingResponse = await openai.embeddings.create({
           model: 'text-embedding-3-small',
           input: content.content,
         });
