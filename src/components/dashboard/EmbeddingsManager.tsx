@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export function EmbeddingsManager() {
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isBackfilling, setIsBackfilling] = useState(false);
 
   const { data: settings } = useQuery({
     queryKey: ['chatbot-settings'],
@@ -25,6 +27,33 @@ export function EmbeddingsManager() {
     }
   });
 
+  const handleBackfillEmbeddings = async () => {
+    try {
+      setIsBackfilling(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Sie müssen angemeldet sein");
+        return;
+      }
+
+      const response = await supabase.functions.invoke('backfill-embeddings', {
+        body: { }
+      });
+
+      if (!response.error) {
+        toast.success("Die Verarbeitung bestehender Daten wurde gestartet");
+      } else {
+        throw response.error;
+      }
+    } catch (error) {
+      console.error('Error backfilling embeddings:', error);
+      toast.error("Fehler beim Verarbeiten der bestehenden Daten");
+    } finally {
+      setIsBackfilling(false);
+    }
+  };
+
   const handleGenerateEmbeddings = async () => {
     try {
       setIsProcessing(true);
@@ -40,26 +69,15 @@ export function EmbeddingsManager() {
         return;
       }
 
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/populate-team-embeddings`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ 
-            userId: user.id,
-            processPersonalData: true 
-          })
-        }
-      );
+      const response = await supabase.functions.invoke('process-embeddings', {
+        body: { }
+      });
 
-      if (!response.ok) {
-        throw new Error("Fehler beim Verarbeiten der Daten");
+      if (!response.error) {
+        toast.success("Verarbeitung der Daten wurde gestartet");
+      } else {
+        throw response.error;
       }
-
-      toast.success("Verarbeitung der Daten wurde gestartet");
     } catch (error) {
       console.error('Error processing data:', error);
       toast.error("Fehler beim Verarbeiten der Daten");
@@ -76,13 +94,23 @@ export function EmbeddingsManager() {
           Verarbeiten Sie Ihre bestehenden Daten mit KI für verbesserte Suchfunktionen
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Button 
-          onClick={handleGenerateEmbeddings}
-          disabled={isProcessing || !settings?.openai_api_key}
-        >
-          {isProcessing ? "Wird verarbeitet..." : "Daten verarbeiten"}
-        </Button>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <Button 
+            onClick={handleGenerateEmbeddings}
+            disabled={isProcessing || !settings?.openai_api_key}
+          >
+            {isProcessing ? "Wird verarbeitet..." : "Neue Daten verarbeiten"}
+          </Button>
+          
+          <Button 
+            variant="outline"
+            onClick={handleBackfillEmbeddings}
+            disabled={isBackfilling || !settings?.openai_api_key}
+          >
+            {isBackfilling ? "Wird verarbeitet..." : "Bestehende Daten verarbeiten"}
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
