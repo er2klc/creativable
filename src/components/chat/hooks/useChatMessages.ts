@@ -46,12 +46,6 @@ export const useChatMessages = ({
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-    },
-    onFinish: (message) => {
-      console.log("Chat finished, final message:", message);
-    },
-    experimental_onFunctionCall: (message) => {
-      console.log("Function call:", message);
     }
   });
 
@@ -81,6 +75,9 @@ export const useChatMessages = ({
     if (!input.trim()) return;
 
     try {
+      // Sofort die Benutzernachricht hinzufügen
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: input }]);
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
         headers: {
@@ -103,11 +100,12 @@ export const useChatMessages = ({
         throw new Error('Network response was not ok');
       }
 
+      // Füge initial eine leere Assistenten-Nachricht hinzu
+      setMessages(prev => [...prev, { id: crypto.randomUUID(), role: 'assistant', content: '' }]);
+
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
       let accumulatedContent = '';
-
-      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: input }]);
 
       while (true) {
         const { value, done } = await reader.read();
@@ -124,10 +122,12 @@ export const useChatMessages = ({
 
           try {
             const parsed = JSON.parse(data);
+            console.log('Parsed data:', parsed); // Debug-Log
+
             if (parsed.delta) {
               accumulatedContent += parsed.delta;
               updateLastMessage(accumulatedContent);
-            } else if (parsed.done) {
+            } else if (parsed.content) {
               setMessages(prev => {
                 const messages = [...prev];
                 const lastMessage = messages[messages.length - 1];
@@ -138,7 +138,7 @@ export const useChatMessages = ({
               });
             }
           } catch (error) {
-            console.error('Error parsing chunk:', error);
+            console.error('Error parsing chunk:', error, 'Raw data:', data);
           }
         }
       }

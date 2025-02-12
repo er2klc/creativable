@@ -31,55 +31,6 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get the user's last message
-    const userMessage = messages[messages.length - 1].content;
-
-    // Generate embedding for the user's message
-    const embeddingResponse = await fetch("https://api.openai.com/v1/embeddings", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "text-embedding-3-small",
-        input: userMessage,
-      }),
-    });
-
-    if (!embeddingResponse.ok) {
-      throw new Error(`OpenAI Embedding API error: ${embeddingResponse.status}`);
-    }
-
-    const embeddingData = await embeddingResponse.json();
-    const embedding = embeddingData.data[0].embedding;
-
-    // Search for relevant content
-    const { data: relevantContent, error: searchError } = await supabase.rpc(
-      'match_user_embeddings',
-      {
-        p_user_id: userId,
-        query_embedding: embedding,
-        similarity_threshold: 0.7,
-        match_count: 5
-      }
-    );
-
-    if (searchError) {
-      console.error('Search error:', searchError);
-    }
-
-    // Prepare context
-    const context = relevantContent
-      ?.map(item => item.content)
-      .join('\n\n')
-      .slice(0, 3000);
-
-    const updatedMessages = [...messages];
-    if (context) {
-      updatedMessages[0].content = `${messages[0].content}\n\nRelevanter Kontext:\n${context}`;
-    }
-
     // Get response from OpenAI
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
@@ -89,7 +40,7 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4",
-        messages: updatedMessages,
+        messages: messages,
         stream: true,
       }),
     });
@@ -113,7 +64,7 @@ serve(async (req) => {
           const { done, value } = await reader.read();
           
           if (done) {
-            // Final message with complete content
+            // Sende die finale Nachricht
             const finalMessage = {
               id: messageId,
               role: 'assistant',
@@ -130,14 +81,10 @@ serve(async (req) => {
           const lines = chunk.split('\n');
 
           for (const line of lines) {
-            if (!line.trim() || !line.startsWith('data: ')) {
-              continue;
-            }
+            if (!line.trim() || !line.startsWith('data: ')) continue;
 
             const data = line.slice(6);
-            if (data === '[DONE]') {
-              continue;
-            }
+            if (data === '[DONE]') continue;
 
             try {
               const parsed = JSON.parse(data);
@@ -145,14 +92,13 @@ serve(async (req) => {
               
               if (delta) {
                 accumulatedContent += delta;
-                // Send only the delta in the stream
-                const deltaMessage = {
+                // Sende nur das Delta
+                const message = {
                   id: messageId,
                   role: 'assistant',
-                  delta: delta,
-                  done: false
+                  delta: delta
                 };
-                await writer.write(encoder.encode(`data: ${JSON.stringify(deltaMessage)}\n\n`));
+                await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
               }
             } catch (error) {
               console.error('Stream processing error:', error);
