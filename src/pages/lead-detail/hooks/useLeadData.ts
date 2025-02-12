@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadWithRelations } from "@/types/leads";
@@ -15,6 +16,12 @@ export const useLeadData = (leadId: string | null) => {
         throw new Error("No lead ID provided");
       }
 
+      if (!isValidUUID(leadId)) {
+        throw new Error("Invalid lead ID format");
+      }
+
+      console.log("Fetching lead data for ID:", leadId);
+      
       const { data, error } = await supabase
         .from("leads")
         .select(`
@@ -37,8 +44,17 @@ export const useLeadData = (leadId: string | null) => {
         throw new Error("Lead not found");
       }
 
+      console.log("Lead data fetched successfully:", {
+        id: data.id,
+        notesCount: data.notes?.length || 0,
+        messagesCount: data.messages?.length || 0,
+        tasksCount: data.tasks?.length || 0
+      });
+
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
+    staleTime: 0, // Immer neu laden
+    cacheTime: 5 * 60 * 1000, // 5 Minuten im Cache behalten
   });
 };

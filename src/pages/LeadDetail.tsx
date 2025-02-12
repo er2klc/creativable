@@ -1,3 +1,4 @@
+
 import { useParams } from "react-router-dom";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadDetailHeader } from "@/components/leads/detail/LeadDetailHeader";
@@ -43,6 +44,7 @@ export default function LeadDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["lead-with-relations", leadId] });
       toast.success(
         settings?.language === "en"
           ? "Entry deleted successfully"
