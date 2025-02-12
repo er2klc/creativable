@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.3.0';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -26,6 +27,10 @@ serve(async (req) => {
       throw new Error("OpenAI API key is required");
     }
 
+    // Initialize OpenAI
+    const configuration = new Configuration({ apiKey });
+    const openai = new OpenAIApi(configuration);
+
     // Initialize Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -35,6 +40,7 @@ serve(async (req) => {
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
     
     // Suche nach relevanten Kontakten
+    console.log('Searching for leads with query:', lastUserMessage.content);
     const { data: relevantLeads, error: leadsError } = await supabase.rpc(
       'match_lead_content',
       {
@@ -46,13 +52,24 @@ serve(async (req) => {
 
     if (leadsError) {
       console.error('Error fetching leads:', leadsError);
+    } else {
+      console.log('Found relevant leads:', relevantLeads);
     }
 
-    // Suche nach relevantem Kontext
+    // Get embedding for the last message
+    const embeddingResponse = await openai.createEmbedding({
+      model: "text-embedding-ada-002",
+      input: lastUserMessage.content,
+    });
+    
+    const queryEmbedding = embeddingResponse.data.data[0].embedding;
+
+    // Suche nach relevantem Kontext mit dem Embedding
+    console.log('Searching for context with embedding');
     const { data: relevantContext, error: searchError } = await supabase.rpc(
       'match_combined_content',
       {
-        query_embedding: lastUserMessage.content,
+        query_embedding: queryEmbedding,
         match_threshold: 0.7,
         match_count: 5,
         p_user_id: userId,
@@ -62,6 +79,8 @@ serve(async (req) => {
 
     if (searchError) {
       console.error('Error searching for context:', searchError);
+    } else {
+      console.log('Found relevant context:', relevantContext);
     }
     
     // Build enhanced system message with context
