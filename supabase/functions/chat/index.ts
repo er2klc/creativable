@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
@@ -107,6 +106,7 @@ serve(async (req) => {
     // Generate a consistent message ID for the entire stream
     const messageId = crypto.randomUUID();
     let accumulatedContent = '';
+    let buffer = '';
 
     // Process the stream
     (async () => {
@@ -116,18 +116,46 @@ serve(async (req) => {
           const { done, value } = await reader.read();
           
           if (done) {
+            // Flush any remaining buffer content
+            if (buffer) {
+              try {
+                const lastChunk = buffer.split('\n').filter(line => line.trim().startsWith('data: ')).pop();
+                if (lastChunk) {
+                  const lastData = JSON.parse(lastChunk.slice(6));
+                  if (lastData.choices?.[0]?.delta?.content) {
+                    accumulatedContent += lastData.choices[0].delta.content;
+                  }
+                }
+              } catch (e) {
+                console.error('Error processing final buffer:', e);
+              }
+            }
+            
+            // Send final message
+            const finalMessage = {
+              id: messageId,
+              role: 'assistant',
+              content: accumulatedContent
+            };
+            await writer.write(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
             await writer.write(encoder.encode('data: [DONE]\n\n'));
             await writer.close();
             break;
           }
 
-          // Decode the chunk and split into lines
-          const chunk = decoder.decode(value);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
+          // Decode the chunk and add to buffer
+          buffer += decoder.decode(value, { stream: true });
+          
+          // Process complete messages from buffer
+          const lines = buffer.split('\n');
+          
+          // Keep the last incomplete line in buffer
+          buffer = lines[lines.length - 1];
+          
+          // Process all complete lines
+          for (const line of lines.slice(0, -1)) {
             if (!line.trim() || !line.startsWith('data: ')) continue;
-
+            
             try {
               // Remove 'data: ' prefix and parse
               const data = JSON.parse(line.slice(6));
@@ -145,11 +173,9 @@ serve(async (req) => {
               };
 
               // Write the transformed message
-              await writer.write(
-                encoder.encode(`data: ${JSON.stringify(message)}\n\n`)
-              );
+              await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
             } catch (error) {
-              console.error('Error processing chunk:', error);
+              console.error('Error processing line:', error, 'Line:', line);
               continue;
             }
           }
