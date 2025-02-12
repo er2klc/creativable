@@ -117,14 +117,12 @@ serve(async (req) => {
           const { done, value } = await reader.read();
           
           if (done) {
-            // Send final state
             if (fullContent) {
-              const finalMessage = {
+              await writer.write(encoder.encode(`data: ${JSON.stringify({
                 id: messageId,
                 role: 'assistant',
                 content: fullContent
-              };
-              await writer.write(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
+              })}\n\n`));
             }
             await writer.write(encoder.encode('data: [DONE]\n\n'));
             await writer.close();
@@ -135,36 +133,26 @@ serve(async (req) => {
           const lines = chunk.split('\n');
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              const data = line.slice(6); // Remove 'data: ' prefix
+            if (!line.trim() || !line.startsWith('data: ')) continue;
+            
+            const data = line.slice(6); // Remove 'data: ' prefix
+            if (data === '[DONE]') continue;
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content || '';
               
-              if (data === '[DONE]') {
-                continue;
+              if (content) {
+                fullContent += content;
+                await writer.write(encoder.encode(`data: ${JSON.stringify({
+                  id: messageId,
+                  role: 'assistant',
+                  content: fullContent
+                })}\n\n`));
               }
-              
-              try {
-                const parsed = JSON.parse(data);
-                const content = parsed.choices?.[0]?.delta?.content || '';
-                
-                if (content) {
-                  fullContent += content;
-                  
-                  const message = {
-                    id: messageId,
-                    role: 'assistant',
-                    content: fullContent
-                  };
-
-                  await writer.write(
-                    encoder.encode(`data: ${JSON.stringify(message)}\n\n`)
-                  );
-                }
-              } catch (error) {
-                console.error('Error processing chunk:', error);
-                console.log('Problematic line:', line);
-                // Don't throw error, just continue with next line
-                continue;
-              }
+            } catch (error) {
+              console.error('Error processing chunk:', error, 'Line:', line);
+              continue;
             }
           }
         }
