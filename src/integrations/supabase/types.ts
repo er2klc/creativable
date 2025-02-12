@@ -209,6 +209,13 @@ export type Database = {
             referencedRelation: "teams"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_content_embeddings_settings"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "settings"
+            referencedColumns: ["user_id"]
+          },
         ]
       }
       dashboard_shortcuts: {
