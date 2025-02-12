@@ -3416,6 +3416,27 @@ export type Database = {
         }
         Returns: string
       }
+      get_contact_context: {
+        Args: {
+          p_user_id: string
+          p_contact_id: string
+        }
+        Returns: {
+          id: string
+          name: string
+          platform: string
+          industry: string
+          social_media_username: string
+          social_media_bio: string
+          social_media_followers: number
+          social_media_following: number
+          social_media_engagement_rate: number
+          last_interaction_date: string
+          recent_posts: Json
+          recent_notes: string[]
+          recent_messages: string[]
+        }[]
+      }
       get_user_teams: {
         Args: {
           uid: string
