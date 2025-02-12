@@ -1,7 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.3.0';
+import OpenAI from "https://esm.sh/openai@4.28.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,10 +20,9 @@ serve(async (req) => {
     );
 
     // Initialize OpenAI
-    const configuration = new Configuration({
+    const configuration = new OpenAI({
       apiKey: Deno.env.get('OPENAI_API_KEY'),
     });
-    const openai = new OpenAIApi(configuration);
 
     // Get unprocessed content (where embedding is null)
     const { data: unprocessedContent, error: fetchError } = await supabase
@@ -40,12 +39,12 @@ serve(async (req) => {
     for (const content of unprocessedContent || []) {
       try {
         // Generate embedding
-        const embeddingResponse = await openai.createEmbedding({
+        const embeddingResponse = await configuration.embeddings.create({
           model: 'text-embedding-3-small',
           input: content.content,
         });
 
-        const embedding = embeddingResponse.data.data[0].embedding;
+        const embedding = embeddingResponse.data[0].embedding;
 
         // Update record with embedding
         const { data, error } = await supabase
