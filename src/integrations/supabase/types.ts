@@ -1067,6 +1067,7 @@ export type Database = {
       messages: {
         Row: {
           content: string
+          created_at: string | null
           id: string
           lead_id: string | null
           platform: string
@@ -1076,6 +1077,7 @@ export type Database = {
         }
         Insert: {
           content: string
+          created_at?: string | null
           id?: string
           lead_id?: string | null
           platform: string
@@ -1085,6 +1087,7 @@ export type Database = {
         }
         Update: {
           content?: string
+          created_at?: string | null
           id?: string
           lead_id?: string | null
           platform?: string
