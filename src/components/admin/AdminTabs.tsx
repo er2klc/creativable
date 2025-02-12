@@ -1,7 +1,7 @@
 
 import { List, Mail, Bell, Database } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ChangelogForm } from "./changelog/ChangelogForm";
 import { EmbeddingsManager } from "@/components/dashboard/EmbeddingsManager";
 
