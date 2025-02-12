@@ -1158,6 +1158,7 @@ export type Database = {
           id: string
           lead_id: string
           metadata: Json | null
+          phase_change_details: Json | null
           updated_at: string | null
           user_id: string
         }
@@ -1168,6 +1169,7 @@ export type Database = {
           id?: string
           lead_id: string
           metadata?: Json | null
+          phase_change_details?: Json | null
           updated_at?: string | null
           user_id: string
         }
@@ -1178,6 +1180,7 @@ export type Database = {
           id?: string
           lead_id?: string
           metadata?: Json | null
+          phase_change_details?: Json | null
           updated_at?: string | null
           user_id?: string
         }
