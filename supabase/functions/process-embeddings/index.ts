@@ -8,6 +8,53 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Verarbeitet Inhalte im Hintergrund
+async function processContent(supabase: any, content: any) {
+  try {
+    if (!content.user_settings?.openai_api_key) {
+      throw new Error(`No OpenAI API key found for user ${content.user_id}`);
+    }
+
+    const openai = new OpenAI({
+      apiKey: content.user_settings.openai_api_key,
+    });
+
+    const embeddingResponse = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: content.content,
+    });
+
+    const embedding = embeddingResponse.data[0].embedding;
+
+    const { error } = await supabase
+      .from('content_embeddings')
+      .update({ 
+        embedding,
+        processing_status: 'completed',
+        processed_at: new Date().toISOString()
+      })
+      .eq('id', content.id);
+
+    if (error) throw error;
+    
+    console.log(`Successfully processed content ID: ${content.id}`);
+    return { id: content.id, success: true };
+  } catch (error) {
+    console.error(`Error processing content ID ${content.id}:`, error);
+    
+    await supabase
+      .from('content_embeddings')
+      .update({ 
+        processing_status: 'error',
+        processing_error: error.message,
+        processed_at: new Date().toISOString()
+      })
+      .eq('id', content.id);
+
+    return { id: content.id, success: false, error: error.message };
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -19,7 +66,7 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get unprocessed content (where embedding is null)
+    // Get unprocessed content
     const { data: unprocessedContent, error: fetchError } = await supabase
       .from('content_embeddings')
       .select(`
@@ -33,64 +80,10 @@ serve(async (req) => {
 
     console.log(`Processing ${unprocessedContent?.length || 0} items`);
 
-    const results = [];
-    for (const content of unprocessedContent || []) {
-      try {
-        // Get user's OpenAI API key from settings
-        if (!content.user_settings?.openai_api_key) {
-          throw new Error(`No OpenAI API key found for user ${content.user_id}`);
-        }
-
-        // Initialize OpenAI with user's API key
-        const openai = new OpenAI({
-          apiKey: content.user_settings.openai_api_key,
-        });
-
-        // Generate embedding
-        const embeddingResponse = await openai.embeddings.create({
-          model: 'text-embedding-3-small',
-          input: content.content,
-        });
-
-        const embedding = embeddingResponse.data[0].embedding;
-
-        // Update record with embedding
-        const { data, error } = await supabase
-          .from('content_embeddings')
-          .update({ 
-            embedding,
-            processing_status: 'completed',
-            processed_at: new Date().toISOString()
-          })
-          .eq('id', content.id);
-
-        if (error) throw error;
-        
-        results.push({
-          id: content.id,
-          success: true
-        });
-
-        console.log(`Successfully processed content ID: ${content.id}`);
-      } catch (error) {
-        console.error(`Error processing content ID ${content.id}:`, error);
-        results.push({
-          id: content.id,
-          success: false,
-          error: error.message
-        });
-
-        // Update error status
-        await supabase
-          .from('content_embeddings')
-          .update({ 
-            processing_status: 'error',
-            processing_error: error.message,
-            processed_at: new Date().toISOString()
-          })
-          .eq('id', content.id);
-      }
-    }
+    // Process all content in parallel
+    const results = await Promise.all(
+      (unprocessedContent || []).map(content => processContent(supabase, content))
+    );
 
     return new Response(JSON.stringify({ 
       success: true, 
