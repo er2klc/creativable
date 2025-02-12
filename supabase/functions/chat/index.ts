@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
@@ -105,89 +106,70 @@ serve(async (req) => {
 
     // Generate a consistent message ID for the entire stream
     const messageId = crypto.randomUUID();
-    let accumulatedContent = '';
-    let buffer = '';
+    let fullContent = '';
 
     // Process the stream
     (async () => {
       const reader = response.body!.getReader();
+      
       try {
         while (true) {
           const { done, value } = await reader.read();
           
           if (done) {
-            // Flush any remaining buffer content
-            if (buffer) {
-              try {
-                const lastChunk = buffer.split('\n').filter(line => line.trim().startsWith('data: ')).pop();
-                if (lastChunk) {
-                  const lastData = JSON.parse(lastChunk.slice(6));
-                  if (lastData.choices?.[0]?.delta?.content) {
-                    accumulatedContent += lastData.choices[0].delta.content;
-                  }
-                }
-              } catch (e) {
-                console.error('Error processing final buffer:', e);
-              }
-            }
-            
-            // Send final message
+            // Send final DONE message
             const finalMessage = {
               id: messageId,
               role: 'assistant',
-              content: accumulatedContent
+              content: fullContent
             };
+            
             await writer.write(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
             await writer.write(encoder.encode('data: [DONE]\n\n'));
             await writer.close();
             break;
           }
 
-          // Decode the chunk and add to buffer
-          buffer += decoder.decode(value, { stream: true });
-          
-          // Process complete messages from buffer
-          const lines = buffer.split('\n');
-          
-          // Keep the last incomplete line in buffer
-          buffer = lines[lines.length - 1];
-          
-          // Process all complete lines
-          for (const line of lines.slice(0, -1)) {
-            if (!line.trim() || !line.startsWith('data: ')) continue;
-            
-            try {
-              // Remove 'data: ' prefix and parse
-              const data = JSON.parse(line.slice(6));
-              
-              if (!data.choices?.[0]?.delta?.content) continue;
+          const chunk = decoder.decode(value);
+          const lines = chunk.split('\n');
 
-              // Add new content to accumulated content
-              accumulatedContent += data.choices[0].delta.content;
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const data = line.slice(6); // Remove 'data: ' prefix
+                
+                if (data === '[DONE]') continue;
+                
+                const parsed = JSON.parse(data);
+                const content = parsed.choices[0]?.delta?.content || '';
+                
+                if (content) {
+                  fullContent += content;
+                  
+                  const message = {
+                    id: messageId,
+                    role: 'assistant',
+                    content: fullContent
+                  };
 
-              // Create message in the format expected by vercel/ai
-              const message = {
-                id: messageId,
-                role: 'assistant',
-                content: accumulatedContent
-              };
-
-              // Write the transformed message
-              await writer.write(encoder.encode(`data: ${JSON.stringify(message)}\n\n`));
-            } catch (error) {
-              console.error('Error processing line:', error, 'Line:', line);
-              continue;
+                  await writer.write(
+                    encoder.encode(`data: ${JSON.stringify(message)}\n\n`)
+                  );
+                }
+              } catch (error) {
+                console.error('Error processing chunk:', error);
+                console.log('Problematic line:', line);
+                continue;
+              }
             }
           }
         }
       } catch (error) {
         console.error('Stream processing error:', error);
-        // Ensure we close the writer even if there's an error
         await writer.close();
       }
     })();
 
-    // Return the transformed stream
     return new Response(stream.readable, {
       headers: {
         ...corsHeaders,
