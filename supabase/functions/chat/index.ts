@@ -103,7 +103,7 @@ serve(async (req) => {
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     const messageId = crypto.randomUUID();
-    let currentContent = '';
+    let accumulatedContent = '';
 
     (async () => {
       const reader = response.body!.getReader();
@@ -113,11 +113,11 @@ serve(async (req) => {
           const { done, value } = await reader.read();
           
           if (done) {
-            // Sende nur die finale Nachricht am Ende
+            // Final message with complete content
             const finalMessage = {
               id: messageId,
               role: 'assistant',
-              content: currentContent,
+              content: accumulatedContent,
               done: true
             };
             await writer.write(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
@@ -144,11 +144,11 @@ serve(async (req) => {
               const delta = parsed.choices?.[0]?.delta?.content || '';
               
               if (delta) {
-                currentContent += delta;
+                accumulatedContent += delta;
+                // Send only the delta in the stream
                 const deltaMessage = {
                   id: messageId,
                   role: 'assistant',
-                  content: currentContent,
                   delta: delta,
                   done: false
                 };

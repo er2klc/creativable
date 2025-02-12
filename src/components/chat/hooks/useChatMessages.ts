@@ -50,17 +50,8 @@ export const useChatMessages = ({
     onFinish: (message) => {
       console.log("Chat finished, final message:", message);
     },
-    onError: (error) => {
-      console.error("Chat error:", error);
-      if (error.message.includes("Failed to parse")) {
-        console.error("Stream parsing error:", error);
-        toast.error("Fehler beim Verarbeiten der Stream-Antwort");
-      } else if (error.message.includes("Failed to fetch")) {
-        console.error("Network error:", error);
-        toast.error("Verbindungsfehler - Bitte überprüfen Sie Ihre Internetverbindung");
-      } else {
-        toast.error(`Fehler: ${error.message}`);
-      }
+    experimental_onFunctionCall: (message) => {
+      console.log("Function call:", message);
     }
   });
 
@@ -74,28 +65,86 @@ export const useChatMessages = ({
     ]);
   }, [setMessages, systemMessage]);
 
-  const updateLastMessage = useCallback((content: string) => {
-    setMessages((messages) => {
-      const updatedMessages = [...messages];
-      if (updatedMessages.length > 0) {
-        const lastMessage = updatedMessages[updatedMessages.length - 1];
-        if (lastMessage.role === 'assistant') {
-          lastMessage.content = content;
-        }
+  const updateLastMessage = useCallback((delta: string) => {
+    setMessages((prevMessages) => {
+      const messages = [...prevMessages];
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage?.role === 'assistant') {
+        lastMessage.content = (lastMessage.content || '') + delta;
       }
-      return updatedMessages;
+      return messages;
     });
   }, [setMessages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
-    
+
     try {
-      await originalHandleSubmit(e);
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${sessionToken}`,
+          'X-OpenAI-Key': apiKey || '',
+        },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: systemMessage },
+            ...messages.filter(m => m.role !== 'system'),
+            { role: 'user', content: input }
+          ],
+          teamId: currentTeamId,
+          userId: userId
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedContent = '';
+
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content: input }]);
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const lines = chunk.split('\n');
+
+        for (const line of lines) {
+          if (!line.trim() || !line.startsWith('data: ')) continue;
+
+          const data = line.slice(6);
+          if (data === '[DONE]') continue;
+
+          try {
+            const parsed = JSON.parse(data);
+            if (parsed.delta) {
+              accumulatedContent += parsed.delta;
+              updateLastMessage(accumulatedContent);
+            } else if (parsed.done) {
+              setMessages(prev => {
+                const messages = [...prev];
+                const lastMessage = messages[messages.length - 1];
+                if (lastMessage?.role === 'assistant') {
+                  lastMessage.content = parsed.content;
+                }
+                return messages;
+              });
+            }
+          } catch (error) {
+            console.error('Error parsing chunk:', error);
+          }
+        }
+      }
     } catch (error) {
-      console.error("Submit error:", error);
-      toast.error("Fehler beim Senden der Nachricht");
+      console.error('Error in handleSubmit:', error);
+      toast.error('Fehler beim Senden der Nachricht');
     }
   };
 
