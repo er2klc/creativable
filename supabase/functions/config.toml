@@ -1,0 +1,6 @@
+
+# project_id should always come first
+project_id = "agqaitxlmxztqyhpcjau"
+
+[process-context-embeddings]
+verify_jwt = true

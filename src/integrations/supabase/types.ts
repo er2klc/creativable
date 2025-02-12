@@ -142,44 +142,62 @@ export type Database = {
       }
       content_embeddings: {
         Row: {
+          chunk_index: number | null
           content: string
           content_type: string
           created_at: string | null
           embedding: string | null
           id: string
+          last_processed_at: string | null
           metadata: Json | null
           processed_at: string | null
           processing_error: string | null
           processing_status: string | null
+          relevance_score: number | null
+          source_id: string | null
+          source_type: string | null
           team_id: string | null
+          total_chunks: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          chunk_index?: number | null
           content: string
           content_type: string
           created_at?: string | null
           embedding?: string | null
           id?: string
+          last_processed_at?: string | null
           metadata?: Json | null
           processed_at?: string | null
           processing_error?: string | null
           processing_status?: string | null
+          relevance_score?: number | null
+          source_id?: string | null
+          source_type?: string | null
           team_id?: string | null
+          total_chunks?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          chunk_index?: number | null
           content?: string
           content_type?: string
           created_at?: string | null
           embedding?: string | null
           id?: string
+          last_processed_at?: string | null
           metadata?: Json | null
           processed_at?: string | null
           processing_error?: string | null
           processing_status?: string | null
+          relevance_score?: number | null
+          source_id?: string | null
+          source_type?: string | null
           team_id?: string | null
+          total_chunks?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -569,6 +587,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      embedding_processing_status: {
+        Row: {
+          content_type: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          metadata: Json | null
+          processed_at: string | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          content_type: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          content_type?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          metadata?: Json | null
+          processed_at?: string | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       keywords: {
         Row: {
@@ -1113,6 +1164,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      nexus_context: {
+        Row: {
+          content: string
+          context_type: string
+          created_at: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          processing_status: string | null
+          relevance_score: number | null
+          source_id: string | null
+          source_type: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          context_type: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          processing_status?: string | null
+          relevance_score?: number | null
+          source_id?: string | null
+          source_type?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          context_type?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          processing_status?: string | null
+          relevance_score?: number | null
+          source_id?: string | null
+          source_type?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       nexus_embeddings: {
         Row: {
