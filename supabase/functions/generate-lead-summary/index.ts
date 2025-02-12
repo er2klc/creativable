@@ -128,38 +128,81 @@ serve(async (req) => {
 
     const insights = await generateActionableInsights(lead, posts, settings.openai_api_key);
 
-    // Store the summary with error handling
-    const { error: summaryError } = await supabase
+    // Prüfen, ob bereits eine Zusammenfassung existiert
+    const { data: existingSummary } = await supabase
       .from("lead_summaries")
-      .upsert({
-        lead_id: leadId,
-        summary: insights,
-        analysis_date: new Date().toISOString(),
-        metadata: {
-          analyzed_posts_count: posts?.length || 0,
-          language,
-        }
-      });
+      .select("id")
+      .eq("lead_id", leadId)
+      .maybeSingle();
+
+    let summaryOperation;
+    if (existingSummary) {
+      // Update existierende Zusammenfassung
+      summaryOperation = supabase
+        .from("lead_summaries")
+        .update({
+          summary: insights,
+          analysis_date: new Date().toISOString(),
+          metadata: {
+            analyzed_posts_count: posts?.length || 0,
+            language,
+            updated_at: new Date().toISOString()
+          }
+        })
+        .eq("lead_id", leadId);
+    } else {
+      // Neue Zusammenfassung erstellen
+      summaryOperation = supabase
+        .from("lead_summaries")
+        .insert({
+          lead_id: leadId,
+          summary: insights,
+          analysis_date: new Date().toISOString(),
+          metadata: {
+            analyzed_posts_count: posts?.length || 0,
+            language,
+            created_at: new Date().toISOString()
+          }
+        });
+    }
+
+    const { error: summaryError } = await summaryOperation;
 
     if (summaryError) {
       console.error("Error storing summary:", summaryError);
+      throw new Error(`Fehler beim Speichern der Zusammenfassung: ${summaryError.message}`);
     }
 
     return new Response(
-      JSON.stringify({ insights }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({ 
+        success: true,
+        data: {
+          insights,
+          metadata: {
+            analyzed_posts_count: posts?.length || 0,
+            language
+          }
+        }
+      }),
+      { 
+        headers: { 
+          ...corsHeaders, 
+          "Content-Type": "application/json" 
+        } 
+      }
     );
 
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in generate-lead-summary:", error);
     return new Response(
       JSON.stringify({
+        success: false,
         error: error.message,
-        details: "Check the function logs for more information",
+        details: "Detaillierte Fehlerinformationen finden Sie in den Funktionslogs"
       }),
       {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       }
     );
   }
