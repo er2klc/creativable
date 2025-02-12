@@ -140,6 +140,50 @@ export type Database = {
           },
         ]
       }
+      content_embeddings: {
+        Row: {
+          content: string
+          content_type: string
+          created_at: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          team_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          content_type: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          team_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          content_type?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          team_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_embeddings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dashboard_shortcuts: {
         Row: {
           created_at: string | null
@@ -3382,6 +3426,21 @@ export type Database = {
           user_id_input: string
         }
         Returns: undefined
+      }
+      match_content: {
+        Args: {
+          query_embedding: string
+          match_threshold: number
+          match_count: number
+          search_content_type: string
+        }
+        Returns: {
+          id: string
+          content: string
+          similarity: number
+          metadata: Json
+          team_id: string
+        }[]
       }
       match_user_embeddings: {
         Args: {
