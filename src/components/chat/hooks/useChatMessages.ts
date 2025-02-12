@@ -24,6 +24,7 @@ export const useChatMessages = ({
     handleInputChange,
     handleSubmit: originalHandleSubmit,
     setMessages,
+    setInput,
     isLoading 
   } = useChat({
     api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
@@ -66,6 +67,9 @@ export const useChatMessages = ({
       
       // Setze zuerst die Benutzernachricht
       setMessages(prev => [...prev, userMessage]);
+      
+      // Leere das Input-Feld
+      setInput('');
       
       // Warte einen Frame für das Rendering
       await new Promise(resolve => requestAnimationFrame(resolve));
