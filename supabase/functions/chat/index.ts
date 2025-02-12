@@ -27,10 +27,7 @@ serve(async (req) => {
       throw new Error("OpenAI API key is required");
     }
 
-    // Initialize OpenAI with the new API version
     const openai = new OpenAI({ apiKey });
-
-    // Initialize Supabase
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
@@ -46,39 +43,47 @@ serve(async (req) => {
       console.error('Error fetching user profile:', profileError);
     }
 
-    // Get current contact if on contact route
+    // Extrahiere Contact ID aus der Route
     let currentContact = null;
+    let contactContext = null;
     if (currentRoute?.startsWith('contacts/')) {
       const contactId = currentRoute.split('/')[1];
-      const { data: contact, error: contactError } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('id', contactId)
+      console.log('Fetching detailed contact context for:', contactId);
+      
+      const { data: contextData, error: contextError } = await supabase
+        .rpc('get_contact_context', {
+          p_user_id: userId,
+          p_contact_id: contactId
+        })
         .single();
       
-      if (!contactError && contact) {
-        currentContact = contact;
+      if (!contextError && contextData) {
+        contactContext = contextData;
+        currentContact = {
+          ...contextData,
+          recent_posts: contextData.recent_posts || [],
+          recent_notes: contextData.recent_notes || [],
+          recent_messages: contextData.recent_messages || []
+        };
       }
     }
 
     // Get last user message for context search
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
     
-    // Suche nach relevanten Kontakten
-    console.log('Searching for leads with query:', lastUserMessage.content);
-    const { data: relevantLeads, error: leadsError } = await supabase.rpc(
-      'match_lead_content',
-      {
+    // Suche nach relevanten Kontakten basierend auf dem Nachrichteninhalt
+    console.log('Searching for relevant contacts with query:', lastUserMessage.content);
+    const { data: relevantContacts, error: contactError } = await supabase
+      .rpc('match_contact_content', {
         p_user_id: userId,
         query_text: lastUserMessage.content,
         match_count: 5
-      }
-    );
+      });
 
-    if (leadsError) {
-      console.error('Error fetching leads:', leadsError);
+    if (contactError) {
+      console.error('Error searching contacts:', contactError);
     } else {
-      console.log('Found relevant leads:', relevantLeads);
+      console.log('Found relevant contacts:', relevantContacts);
     }
 
     // Get embedding for the last message
@@ -119,24 +124,45 @@ serve(async (req) => {
       if (userProfile.is_admin) enhancedSystemMessage += "- Admin-Benutzer\n";
     }
 
-    // Add current contact context if available
+    // Add detailed contact context if available
     if (currentContact) {
       enhancedSystemMessage += "\nAktueller Kontakt:\n";
       enhancedSystemMessage += `- Name: ${currentContact.name}\n`;
       enhancedSystemMessage += `- Platform: ${currentContact.platform}\n`;
       enhancedSystemMessage += `- Industry: ${currentContact.industry}\n`;
-      if (currentContact.last_interaction_date) {
-        enhancedSystemMessage += `- Letzte Interaktion: ${new Date(currentContact.last_interaction_date).toLocaleDateString()}\n`;
+      enhancedSystemMessage += `- Bio: ${currentContact.social_media_bio || 'Keine Bio verfügbar'}\n`;
+      enhancedSystemMessage += `- Follower: ${currentContact.social_media_followers || 0}\n`;
+      enhancedSystemMessage += `- Engagement Rate: ${(currentContact.social_media_engagement_rate || 0).toFixed(2)}%\n`;
+      
+      if (currentContact.recent_posts && currentContact.recent_posts.length > 0) {
+        enhancedSystemMessage += "\nLetzte Posts:\n";
+        currentContact.recent_posts.forEach((post: any) => {
+          enhancedSystemMessage += `- ${post.content} (${post.likes_count} Likes, ${post.comments_count} Kommentare)\n`;
+        });
+      }
+
+      if (currentContact.recent_notes && currentContact.recent_notes.length > 0) {
+        enhancedSystemMessage += "\nLetzte Notizen:\n";
+        currentContact.recent_notes.slice(0, 3).forEach((note: string) => {
+          enhancedSystemMessage += `- ${note}\n`;
+        });
+      }
+
+      if (currentContact.recent_messages && currentContact.recent_messages.length > 0) {
+        enhancedSystemMessage += "\nLetzte Nachrichten:\n";
+        currentContact.recent_messages.slice(0, 3).forEach((message: string) => {
+          enhancedSystemMessage += `- ${message}\n`;
+        });
       }
     }
     
-    // Add relevant contacts
-    if (relevantLeads && relevantLeads.length > 0) {
-      enhancedSystemMessage += "\nRelevante Kontakte:\n";
-      relevantLeads.forEach(lead => {
-        enhancedSystemMessage += `- ${lead.name} (${lead.platform}): ${lead.industry}, Status: ${lead.status}\n`;
-        if (lead.notes && lead.notes.length > 0) {
-          enhancedSystemMessage += `  Letzte Notizen: ${lead.notes[0]}\n`;
+    // Add relevant contacts if found
+    if (relevantContacts && relevantContacts.length > 0) {
+      enhancedSystemMessage += "\nÄhnliche Kontakte:\n";
+      relevantContacts.forEach((contact: any) => {
+        enhancedSystemMessage += `- ${contact.name} (Ähnlichkeit: ${(contact.similarity * 100).toFixed(1)}%)\n`;
+        if (contact.matching_content.bio_match) {
+          enhancedSystemMessage += `  Bio: ${contact.matching_content.bio_match}\n`;
         }
       });
     }
@@ -144,18 +170,18 @@ serve(async (req) => {
     // Add other context
     if (relevantContext && relevantContext.length > 0) {
       enhancedSystemMessage += "\nWeiterer relevanter Kontext:\n";
-      relevantContext.forEach(ctx => {
+      relevantContext.forEach((ctx: any) => {
         enhancedSystemMessage += `[${ctx.source}] ${ctx.content}\n`;
       });
     }
+
+    console.log('Enhanced system message:', enhancedSystemMessage);
 
     // Update system message with context
     const enhancedMessages = [
       { role: 'system', content: enhancedSystemMessage },
       ...messages.slice(1)
     ];
-
-    console.log('Enhanced system message:', enhancedSystemMessage);
 
     // Get response from OpenAI using the streaming API
     const stream = await openai.chat.completions.create({
