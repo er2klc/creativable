@@ -22,7 +22,10 @@ serve(async (req) => {
     // Get unprocessed content (where embedding is null)
     const { data: unprocessedContent, error: fetchError } = await supabase
       .from('content_embeddings')
-      .select('*, settings:user_id(openai_api_key)')
+      .select(`
+        *,
+        user_settings:settings!inner(openai_api_key)
+      `)
       .is('embedding', null)
       .limit(10);
 
@@ -34,13 +37,13 @@ serve(async (req) => {
     for (const content of unprocessedContent || []) {
       try {
         // Get user's OpenAI API key from settings
-        if (!content.settings?.openai_api_key) {
+        if (!content.user_settings?.openai_api_key) {
           throw new Error(`No OpenAI API key found for user ${content.user_id}`);
         }
 
         // Initialize OpenAI with user's API key
         const openai = new OpenAI({
-          apiKey: content.settings.openai_api_key,
+          apiKey: content.user_settings.openai_api_key,
         });
 
         // Generate embedding
