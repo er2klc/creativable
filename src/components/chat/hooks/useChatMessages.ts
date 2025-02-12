@@ -1,6 +1,7 @@
 
 import { useChat } from "ai/react";
 import { toast } from "sonner";
+import { useCallback } from "react";
 
 interface UseChatMessagesProps {
   sessionToken: string | null;
@@ -21,7 +22,7 @@ export const useChatMessages = ({
     messages, 
     input, 
     handleInputChange, 
-    handleSubmit, 
+    handleSubmit: originalHandleSubmit, 
     setMessages,
     isLoading 
   } = useChat({
@@ -41,26 +42,29 @@ export const useChatMessages = ({
         content: systemMessage,
       }
     ],
-    onError: (error) => {
-      console.error("Chat error:", error);
-      // Detailliertere Fehlermeldung
-      if (error.message.includes("Failed to parse")) {
-        console.error("Stream parsing error:", error);
-        toast.error("Fehler beim Verarbeiten der Antwort");
-      } else if (error.message.includes("Failed to fetch")) {
-        console.error("Network error:", error);
-        toast.error("Netzwerkfehler - Bitte überprüfen Sie Ihre Verbindung");
-      } else {
-        toast.error("Fehler beim Senden der Nachricht");
+    onResponse: (response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
     },
     onFinish: (message) => {
-      console.log("Chat finished:", message);
+      console.log("Chat finished, final message:", message);
     },
-    experimental_streamData: true
+    onError: (error) => {
+      console.error("Chat error:", error);
+      if (error.message.includes("Failed to parse")) {
+        console.error("Stream parsing error:", error);
+        toast.error("Fehler beim Verarbeiten der Stream-Antwort");
+      } else if (error.message.includes("Failed to fetch")) {
+        console.error("Network error:", error);
+        toast.error("Verbindungsfehler - Bitte überprüfen Sie Ihre Internetverbindung");
+      } else {
+        toast.error(`Fehler: ${error.message}`);
+      }
+    }
   });
 
-  const resetMessages = () => {
+  const resetMessages = useCallback(() => {
     setMessages([
       {
         id: "system",
@@ -68,16 +72,29 @@ export const useChatMessages = ({
         content: systemMessage,
       }
     ]);
-  };
+  }, [setMessages, systemMessage]);
 
-  const wrappedHandleSubmit = async (e: React.FormEvent) => {
+  const updateLastMessage = useCallback((content: string) => {
+    setMessages((messages) => {
+      const updatedMessages = [...messages];
+      if (updatedMessages.length > 0) {
+        const lastMessage = updatedMessages[updatedMessages.length - 1];
+        if (lastMessage.role === 'assistant') {
+          lastMessage.content = content;
+        }
+      }
+      return updatedMessages;
+    });
+  }, [setMessages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
     
     try {
-      await handleSubmit(e);
+      await originalHandleSubmit(e);
     } catch (error) {
-      console.error("Error in handleSubmit:", error);
+      console.error("Submit error:", error);
       toast.error("Fehler beim Senden der Nachricht");
     }
   };
@@ -86,9 +103,10 @@ export const useChatMessages = ({
     messages,
     input,
     handleInputChange,
-    handleSubmit: wrappedHandleSubmit,
+    handleSubmit,
     setMessages,
     resetMessages,
+    updateLastMessage,
     isLoading
   };
 };

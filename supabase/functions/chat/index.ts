@@ -98,17 +98,13 @@ serve(async (req) => {
       throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    // Set up stream transformation
     const stream = new TransformStream();
     const writer = stream.writable.getWriter();
     const encoder = new TextEncoder();
     const decoder = new TextDecoder();
-
-    // Generate a consistent message ID for the entire stream
     const messageId = crypto.randomUUID();
-    let fullContent = '';
+    let currentContent = '';
 
-    // Process the stream
     (async () => {
       const reader = response.body!.getReader();
       
@@ -117,13 +113,14 @@ serve(async (req) => {
           const { done, value } = await reader.read();
           
           if (done) {
-            if (fullContent) {
-              await writer.write(encoder.encode(`data: ${JSON.stringify({
-                id: messageId,
-                role: 'assistant',
-                content: fullContent
-              })}\n\n`));
-            }
+            // Sende nur die finale Nachricht am Ende
+            const finalMessage = {
+              id: messageId,
+              role: 'assistant',
+              content: currentContent,
+              done: true
+            };
+            await writer.write(encoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
             await writer.write(encoder.encode('data: [DONE]\n\n'));
             await writer.close();
             break;
@@ -133,31 +130,38 @@ serve(async (req) => {
           const lines = chunk.split('\n');
 
           for (const line of lines) {
-            if (!line.trim() || !line.startsWith('data: ')) continue;
-            
-            const data = line.slice(6); // Remove 'data: ' prefix
-            if (data === '[DONE]') continue;
-            
+            if (!line.trim() || !line.startsWith('data: ')) {
+              continue;
+            }
+
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              continue;
+            }
+
             try {
               const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content || '';
+              const delta = parsed.choices?.[0]?.delta?.content || '';
               
-              if (content) {
-                fullContent += content;
-                await writer.write(encoder.encode(`data: ${JSON.stringify({
+              if (delta) {
+                currentContent += delta;
+                const deltaMessage = {
                   id: messageId,
                   role: 'assistant',
-                  content: fullContent
-                })}\n\n`));
+                  content: currentContent,
+                  delta: delta,
+                  done: false
+                };
+                await writer.write(encoder.encode(`data: ${JSON.stringify(deltaMessage)}\n\n`));
               }
             } catch (error) {
-              console.error('Error processing chunk:', error, 'Line:', line);
+              console.error('Stream processing error:', error);
               continue;
             }
           }
         }
       } catch (error) {
-        console.error('Stream processing error:', error);
+        console.error('Stream error:', error);
         await writer.close();
       }
     })();
@@ -172,7 +176,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error("Error in chat function:", error);
+    console.error("Chat function error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
       headers: { 
