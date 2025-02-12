@@ -43,7 +43,16 @@ export const useChatMessages = ({
     ],
     onError: (error) => {
       console.error("Chat error:", error);
-      toast.error("Fehler beim Senden der Nachricht");
+      // Detailliertere Fehlermeldung
+      if (error.message.includes("Failed to parse")) {
+        console.error("Stream parsing error:", error);
+        toast.error("Fehler beim Verarbeiten der Antwort");
+      } else if (error.message.includes("Failed to fetch")) {
+        console.error("Network error:", error);
+        toast.error("Netzwerkfehler - Bitte überprüfen Sie Ihre Verbindung");
+      } else {
+        toast.error("Fehler beim Senden der Nachricht");
+      }
     },
     onFinish: (message) => {
       console.log("Chat finished:", message);
@@ -61,15 +70,23 @@ export const useChatMessages = ({
     ]);
   };
 
+  const wrappedHandleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+    
+    try {
+      await handleSubmit(e);
+    } catch (error) {
+      console.error("Error in handleSubmit:", error);
+      toast.error("Fehler beim Senden der Nachricht");
+    }
+  };
+
   return {
     messages,
     input,
     handleInputChange,
-    handleSubmit: (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!input.trim()) return;
-      handleSubmit(e);
-    },
+    handleSubmit: wrappedHandleSubmit,
     setMessages,
     resetMessages,
     isLoading
