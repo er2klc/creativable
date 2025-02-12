@@ -136,28 +136,31 @@ serve(async (req) => {
         summary: insights,
         analysis_date: new Date().toISOString(),
         metadata: {
-          version: "2.0",
+          analyzed_posts_count: posts?.length || 0,
           language,
-          post_count: posts?.length || 0
         }
-      }, { 
-        onConflict: 'lead_id'  // This ensures we update if a summary already exists
       });
 
     if (summaryError) {
-      console.error("Error saving summary:", summaryError);
-      throw new Error("Fehler beim Speichern der Zusammenfassung.");
+      console.error("Error storing summary:", summaryError);
     }
 
     return new Response(
-      JSON.stringify({ summary: insights }),
+      JSON.stringify({ insights }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (error) {
-    console.error("Error in generate-lead-summary:", error);
+    console.error("Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message || "Ein unerwarteter Fehler ist aufgetreten." }),
-      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      JSON.stringify({
+        error: error.message,
+        details: "Check the function logs for more information",
+      }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
     );
   }
 });
