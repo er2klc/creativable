@@ -96,15 +96,17 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     switch (flowState) {
       case 'contact_selection':
         return (
-          <ChatContactList
-            contacts={contacts}
-            onSelect={handleContactSelection}
-            selectedId={selectedContact?.id}
-          />
+          <div className="border-t bg-background">
+            <ChatContactList
+              contacts={contacts}
+              onSelect={handleContactSelection}
+              selectedId={selectedContact?.id}
+            />
+          </div>
         );
       case 'template_selection':
         return (
-          <div className="min-h-[120px] border-t bg-background">
+          <div className="border-t bg-background">
             <MessageTemplateSelector
               onSelect={handleTemplateSelection}
               selectedType={selectedTemplateType}
@@ -115,7 +117,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         const templateMessage = generateTemplateMessage();
         if (templateMessage) {
           return (
-            <div className="min-h-[120px] border-t bg-background">
+            <div className="border-t bg-background">
               <MessagePreview
                 message={templateMessage}
                 onEdit={() => setFlowState('template_selection')}
@@ -139,28 +141,28 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className={cn(
-          "p-0 gap-0 bg-background",
+          "flex flex-col p-0 gap-0 bg-background overflow-hidden",
           isMobile 
             ? "w-full h-[100dvh] max-w-full m-0 rounded-none" 
-            : "sm:max-w-[700px] h-[80vh]",
-          "flex flex-col"
+            : "sm:max-w-[700px] h-[80vh]"
         )}
         onClick={(e) => e.stopPropagation()} 
         hideClose
       >
         <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
-        <div className="flex flex-col flex-1 min-h-0 h-full">
-          <div className="flex-1 min-h-0 overflow-hidden relative">
-            <ChatMessages messages={messages} scrollRef={scrollRef} />
-          </div>
-          {renderFlowContent()}
-          <div className="sticky bottom-0 bg-background border-t pt-4 pb-4 px-4">
-            <ChatInput 
-              input={input}
-              handleInputChange={handleInputChange}
-              handleSubmit={handleSubmit}
-            />
-          </div>
+        
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ChatMessages messages={messages} scrollRef={scrollRef} />
+        </div>
+
+        {renderFlowContent()}
+        
+        <div className="w-full mt-auto border-t bg-background px-4 py-4">
+          <ChatInput 
+            input={input}
+            handleInputChange={handleInputChange}
+            handleSubmit={handleSubmit}
+          />
         </div>
       </DialogContent>
     </Dialog>
