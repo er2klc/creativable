@@ -73,13 +73,23 @@ export function PhaseAnalysisButton({
     checkAnalysisExists();
   }, [leadId, phaseId, settings?.language]);
 
-  // If no IDs are available, don't render the button
+  // Debug logging for render cycle
+  console.log('PhaseAnalysisButton render state:', {
+    leadId,
+    phaseId,
+    analysisExists,
+    checkingAnalysis,
+    isLoading,
+    timestamp: new Date().toISOString()
+  });
+
+  // Wenn keine ID vorhanden ist, zeigen wir nichts an
   if (!leadId || !phaseId) {
     console.log('No IDs available, not rendering button');
     return null;
   }
 
-  // If we're checking, show loading state
+  // Wenn wir noch prüfen, zeigen wir den Loading-Button
   if (checkingAnalysis) {
     console.log('Checking analysis, showing loading state');
     return (
@@ -93,12 +103,13 @@ export function PhaseAnalysisButton({
     );
   }
 
-  // If an analysis exists, don't show the button
+  // Wenn eine Analyse existiert, zeigen wir nichts an
   if (analysisExists) {
     console.log('Analysis exists, not showing button');
     return null;
   }
 
+  // Zeige den Generate-Button
   console.log('Rendering generate analysis button');
   return (
     <Button

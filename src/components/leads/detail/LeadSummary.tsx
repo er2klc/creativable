@@ -124,24 +124,26 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     loadLatestAnalysis();
   }, [lead.id, lead.phase_id]);
 
-  // Early return if no lead data
   if (!lead?.id || !lead?.phase_id) {
+    console.log('Missing required lead data');
     return null;
   }
 
-  // Show button if no analysis exists
+  // Wenn keine Analyse existiert, zeigen wir den Button an
   if (!latestAnalysis) {
     return (
-      <PhaseAnalysisButton 
-        isLoading={isLoading} 
-        leadId={lead.id} 
-        phaseId={lead.phase_id} 
-        onGenerateAnalysis={generateAnalysis} 
-      />
+      <div className="w-full bg-white">
+        <PhaseAnalysisButton 
+          isLoading={isLoading} 
+          leadId={lead.id} 
+          phaseId={lead.phase_id} 
+          onGenerateAnalysis={generateAnalysis} 
+        />
+      </div>
     );
   }
 
-  // Show existing analysis
+  // Zeige existierende Analyse
   return (
     <NexusTimelineCard
       content={latestAnalysis.content}
