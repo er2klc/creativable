@@ -1,6 +1,6 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useChatContext } from "@/hooks/use-chat-context";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
@@ -8,11 +8,10 @@ import { ChatInput } from "./ChatInput";
 import { useChatSetup } from "./hooks/useChatSetup";
 import { useChatMessages } from "./hooks/useChatMessages";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Tables } from "@/integrations/supabase/types";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { ChatContactList } from "./contact-selection/ChatContactList";
-import { useChatTemplates } from "@/hooks/use-chat-templates";
+import { useChatFlow } from "./hooks/useChatFlow";
+import { MessageTemplateSelector } from "./template-selection/MessageTemplateSelector";
+import { MessagePreview } from "./message-preview/MessagePreview";
 
 interface ChatDialogProps {
   open: boolean;
@@ -23,7 +22,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const { systemMessage } = useChatContext();
   const isMobile = useIsMobile();
-  const [selectedContact, setSelectedContact] = useState<Tables<"leads"> | null>(null);
 
   const {
     sessionToken,
@@ -33,28 +31,23 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     currentTeamId,
   } = useChatSetup(open);
 
-  const { data: contacts = [] } = useQuery({
-    queryKey: ['leads'],
-    queryFn: async () => {
-      if (!userId) return [];
-      
-      const { data, error } = await supabase
-        .from('leads')
-        .select('*')
-        .eq('user_id', userId)
-        .order('name');
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!userId,
-  });
+  const {
+    flowState,
+    selectedContact,
+    selectedTemplateType,
+    contacts,
+    handleUserMessage,
+    handleContactSelection,
+    handleTemplateSelection,
+    generateTemplateMessage,
+    reset
+  } = useChatFlow(userId);
 
   const {
     messages,
     input,
     handleInputChange,
-    handleSubmit,
+    handleSubmit: originalHandleSubmit,
     resetMessages
   } = useChatMessages({
     sessionToken,
@@ -64,14 +57,20 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     systemMessage
   });
 
-  const handleDialogClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
+
+    const isMessageCommand = handleUserMessage(input);
+    if (!isMessageCommand) {
+      await originalHandleSubmit(e);
+    }
   };
 
   const handleClose = () => {
     onOpenChange(false);
     resetMessages();
-    setSelectedContact(null);
+    reset();
   };
 
   if (!isReady) {
@@ -87,27 +86,56 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     );
   }
 
-  const showContactList = messages.length === 0 || 
-    messages[messages.length - 1]?.content?.toLowerCase().includes('nachricht') ||
-    messages[messages.length - 1]?.content?.toLowerCase().includes('schreib');
+  const renderFlowContent = () => {
+    switch (flowState) {
+      case 'contact_selection':
+        return (
+          <ChatContactList
+            contacts={contacts}
+            onSelect={handleContactSelection}
+            selectedId={selectedContact?.id}
+          />
+        );
+      case 'template_selection':
+        return (
+          <MessageTemplateSelector
+            onSelect={handleTemplateSelection}
+            selectedType={selectedTemplateType}
+          />
+        );
+      case 'message_preview':
+        const templateMessage = generateTemplateMessage();
+        if (templateMessage) {
+          return (
+            <MessagePreview
+              message={templateMessage}
+              onEdit={() => setFlowState('template_selection')}
+              onSend={async () => {
+                await originalHandleSubmit({
+                  preventDefault: () => {},
+                } as React.FormEvent, templateMessage);
+                reset();
+              }}
+            />
+          );
+        }
+        return null;
+      default:
+        return null;
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className={isMobile ? "w-full h-full max-w-full m-0 p-0 rounded-none" : "sm:max-w-[500px]"}
-        onClick={handleDialogClick} 
+        onClick={(e) => e.stopPropagation()} 
         hideClose
       >
         <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
         <div className={`flex flex-col ${isMobile ? "h-[calc(100vh-4rem)]" : "h-[600px]"}`}>
           <ChatMessages messages={messages} scrollRef={scrollRef} />
-          {showContactList && (
-            <ChatContactList
-              contacts={contacts}
-              onSelect={setSelectedContact}
-              selectedId={selectedContact?.id}
-            />
-          )}
+          {renderFlowContent()}
           <ChatInput 
             input={input}
             handleInputChange={handleInputChange}
