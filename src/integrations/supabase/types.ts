@@ -1258,6 +1258,8 @@ export type Database = {
           color: string | null
           content: string
           created_at: string | null
+          icon_color: string | null
+          icon_type: string | null
           id: string
           lead_id: string
           metadata: Json | null
@@ -1269,6 +1271,8 @@ export type Database = {
           color?: string | null
           content: string
           created_at?: string | null
+          icon_color?: string | null
+          icon_type?: string | null
           id?: string
           lead_id: string
           metadata?: Json | null
@@ -1280,6 +1284,8 @@ export type Database = {
           color?: string | null
           content?: string
           created_at?: string | null
+          icon_color?: string | null
+          icon_type?: string | null
           id?: string
           lead_id?: string
           metadata?: Json | null

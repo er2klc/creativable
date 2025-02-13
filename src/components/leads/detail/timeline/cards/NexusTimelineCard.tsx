@@ -18,12 +18,16 @@ interface NexusTimelineCardProps {
       };
     };
     template_type?: string;
+    phase?: {
+      id: string;
+      name: string;
+    };
     generated_at?: string;
   };
-  onAccept?: () => void;
+  onDelete?: () => void;
 }
 
-export const NexusTimelineCard = ({ content, metadata, onAccept }: NexusTimelineCardProps) => {
+export const NexusTimelineCard = ({ content, metadata, onDelete }: NexusTimelineCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const copyToClipboard = async () => {
@@ -50,13 +54,19 @@ export const NexusTimelineCard = ({ content, metadata, onAccept }: NexusTimeline
               <span className="capitalize">{metadata.template_type}</span>
             </>
           )}
+          {metadata.phase?.name && (
+            <>
+              <span>•</span>
+              <span>{metadata.phase.name}</span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={copyToClipboard}>
             <Copy className="h-4 w-4" />
           </Button>
-          {onAccept && (
-            <Button variant="ghost" size="icon" onClick={onAccept}>
+          {onDelete && (
+            <Button variant="ghost" size="icon" onClick={onDelete}>
               <ThumbsUp className="h-4 w-4" />
             </Button>
           )}
