@@ -6,7 +6,7 @@ export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
   type: note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
   content: note.content,
   created_at: note.created_at,
-  timestamp: note.created_at,
+  timestamp: note.metadata?.timestamp || note.created_at,
   metadata: note.metadata,
   status: note.status
 });
@@ -102,31 +102,26 @@ export const createStatusChangeItem = (
 };
 
 export const deduplicateTimelineItems = (items: TimelineItem[]): TimelineItem[] => {
-  const phaseChanges = new Map<string, TimelineItem>();
-  const otherItems = new Map<string, TimelineItem>();
+  const uniqueItems = new Map<string, TimelineItem>();
   
   items.forEach(item => {
-    if (item.type === 'phase_change' || (item.metadata?.type === 'phase_change')) {
-      const phase = item.metadata?.newPhase || item.metadata?.phase_name;
-      const key = `${item.timestamp}-${phase}`;
-      
-      if (!phaseChanges.has(key) || 
-          new Date(item.created_at || '') > new Date(phaseChanges.get(key)?.created_at || '')) {
-        phaseChanges.set(key, item);
-      }
+    let key: string;
+    
+    if (item.type === 'phase_change' || item.metadata?.type === 'phase_change') {
+      // Für Phasenänderungen den change_hash als Schlüssel verwenden
+      key = item.metadata?.change_hash || item.id;
     } else {
-      if (!otherItems.has(item.id)) {
-        otherItems.set(item.id, item);
-      }
+      // Für alle anderen Items die ID als Schlüssel verwenden
+      key = item.id;
+    }
+    
+    const existingItem = uniqueItems.get(key);
+    if (!existingItem || new Date(item.timestamp) > new Date(existingItem.timestamp)) {
+      uniqueItems.set(key, item);
     }
   });
 
-  const deduplicatedItems = [
-    ...Array.from(phaseChanges.values()),
-    ...Array.from(otherItems.values())
-  ];
-
-  return deduplicatedItems.sort((a, b) => {
+  return Array.from(uniqueItems.values()).sort((a, b) => {
     const dateA = new Date(a.timestamp || a.created_at || '');
     const dateB = new Date(b.timestamp || b.created_at || '');
     return dateB.getTime() - dateA.getTime();

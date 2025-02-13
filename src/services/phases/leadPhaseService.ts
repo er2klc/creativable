@@ -8,6 +8,9 @@ export const updateLeadPhase = async (
   newPhaseName: string,
   userId: string
 ) => {
+  const timestamp = new Date().toISOString();
+  const changeHash = `${leadId}-${timestamp}-${phaseId}`;
+
   // WICHTIG: Erst prüfen ob sich die Phase tatsächlich geändert hat!
   const { data: currentLead } = await supabase
     .from("leads")
@@ -21,8 +24,6 @@ export const updateLeadPhase = async (
     return null;
   }
 
-  const timestamp = new Date().toISOString();
-
   // Phase hat sich geändert - Update durchführen
   const { error: updateError } = await supabase
     .from("leads")
@@ -35,23 +36,33 @@ export const updateLeadPhase = async (
 
   if (updateError) throw updateError;
 
-  // Eine einzige, konsistente Notiz für die Phasenänderung erstellen
-  const { error: noteError } = await supabase
+  // Prüfen ob bereits eine Notiz für diese Änderung existiert
+  const { data: existingNotes } = await supabase
     .from("notes")
-    .insert({
-      lead_id: leadId,
-      user_id: userId,
-      content: `Phase wurde von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
-      metadata: {
-        type: 'phase_change',
-        oldPhase: oldPhaseName,
-        newPhase: newPhaseName,
-        change_hash: `${leadId}-${timestamp}-${phaseId}`, // Eindeutiger Hash
-        timestamp
-      }
-    });
+    .select("id")
+    .eq("lead_id", leadId)
+    .eq("metadata->type", "phase_change")
+    .eq("metadata->change_hash", changeHash);
 
-  if (noteError) throw noteError;
+  // Nur eine neue Notiz erstellen, wenn noch keine existiert
+  if (!existingNotes || existingNotes.length === 0) {
+    const { error: noteError } = await supabase
+      .from("notes")
+      .insert({
+        lead_id: leadId,
+        user_id: userId,
+        content: `Phase wurde von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
+        metadata: {
+          type: 'phase_change',
+          oldPhase: oldPhaseName,
+          newPhase: newPhaseName,
+          change_hash: changeHash,
+          timestamp
+        }
+      });
+
+    if (noteError) throw noteError;
+  }
 
   return { success: true };
 };
