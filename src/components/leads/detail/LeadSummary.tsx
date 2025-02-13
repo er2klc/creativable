@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Bot, Loader2 } from "lucide-react";
