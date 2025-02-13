@@ -9,8 +9,6 @@ export const updateLeadPhase = async (
   userId: string
 ) => {
   // WICHTIG: Erst prüfen ob sich die Phase tatsächlich geändert hat!
-  // Keine Meldung oder Datenbankaktualisierung wenn die Phase gleich bleibt.
-  // Dies verhindert unnötige Benachrichtigungen und Datenbankoperationen.
   const { data: currentLead } = await supabase
     .from("leads")
     .select("phase_id")
@@ -23,17 +21,37 @@ export const updateLeadPhase = async (
     return null;
   }
 
+  const timestamp = new Date().toISOString();
+
   // Phase hat sich geändert - Update durchführen
   const { error: updateError } = await supabase
     .from("leads")
     .update({
       phase_id: phaseId,
       last_action: "Phase changed",
-      last_action_date: new Date().toISOString(),
+      last_action_date: timestamp,
     })
     .eq("id", leadId);
 
   if (updateError) throw updateError;
+
+  // Eine einzige, konsistente Notiz für die Phasenänderung erstellen
+  const { error: noteError } = await supabase
+    .from("notes")
+    .insert({
+      lead_id: leadId,
+      user_id: userId,
+      content: `Phase wurde von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
+      metadata: {
+        type: 'phase_change',
+        oldPhase: oldPhaseName,
+        newPhase: newPhaseName,
+        change_hash: `${leadId}-${timestamp}-${phaseId}`, // Eindeutiger Hash
+        timestamp
+      }
+    });
+
+  if (noteError) throw noteError;
 
   return { success: true };
 };

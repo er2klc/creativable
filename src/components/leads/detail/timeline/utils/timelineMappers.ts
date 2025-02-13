@@ -1,4 +1,3 @@
-
 import { TimelineItem } from "../TimelineUtils";
 import { Tables } from "@/integrations/supabase/types";
 
@@ -102,26 +101,34 @@ export const createStatusChangeItem = (
   };
 };
 
-// Neue Funktion zum Deduplizieren von Timeline Items
 export const deduplicateTimelineItems = (items: TimelineItem[]): TimelineItem[] => {
-  const seen = new Set<string>();
+  const phaseChanges = new Map<string, TimelineItem>();
+  const otherItems = new Map<string, TimelineItem>();
   
-  return items.filter(item => {
-    // Phase change deduplication
-    if (item.metadata?.type === 'phase_change' && item.metadata.change_hash) {
-      const hash = item.metadata.change_hash as string;
-      if (seen.has(hash)) {
-        return false;
+  items.forEach(item => {
+    if (item.type === 'phase_change' || (item.metadata?.type === 'phase_change')) {
+      const phase = item.metadata?.newPhase || item.metadata?.phase_name;
+      const key = `${item.timestamp}-${phase}`;
+      
+      if (!phaseChanges.has(key) || 
+          new Date(item.created_at || '') > new Date(phaseChanges.get(key)?.created_at || '')) {
+        phaseChanges.set(key, item);
       }
-      seen.add(hash);
-      return true;
+    } else {
+      if (!otherItems.has(item.id)) {
+        otherItems.set(item.id, item);
+      }
     }
-    
-    // Standard deduplication by ID
-    if (seen.has(item.id)) {
-      return false;
-    }
-    seen.add(item.id);
-    return true;
+  });
+
+  const deduplicatedItems = [
+    ...Array.from(phaseChanges.values()),
+    ...Array.from(otherItems.values())
+  ];
+
+  return deduplicatedItems.sort((a, b) => {
+    const dateA = new Date(a.timestamp || a.created_at || '');
+    const dateB = new Date(b.timestamp || b.created_at || '');
+    return dateB.getTime() - dateA.getTime();
   });
 };
