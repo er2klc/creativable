@@ -173,70 +173,87 @@ Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, u
     const openAIData = await openAIResponse.json();
     const analysis = openAIData.choices[0].message.content;
 
-    // Create a note for the timeline with proper metadata
-    const { data: timelineNote, error: noteError } = await supabase
-      .from('notes')
-      .insert({
-        lead_id: leadId,
-        user_id: userId,
-        content: analysis,
-        metadata: {
-          type: 'phase_analysis',
-          phase: {
-            id: phaseId,
-            name: phaseData.pipeline_phases.name
-          },
-          timestamp: new Date().toISOString(),
-          analysis_type: phaseData.action_type,
-          analysis: {
-            social_media_bio: lead.social_media_bio,
-            hashtags: lead.social_media_posts?.[0]?.hashtags,
-            engagement_metrics: {
-              followers: lead.social_media_followers,
-              engagement_rate: lead.social_media_engagement_rate
+    try {
+      // Create a note for the timeline with proper metadata
+      const { data: timelineNote, error: noteError } = await supabase
+        .from('notes')
+        .insert({
+          lead_id: leadId,
+          user_id: userId,
+          content: analysis,
+          metadata: {
+            type: 'phase_analysis',
+            phase: {
+              id: phaseId,
+              name: phaseData.pipeline_phases.name
+            },
+            timestamp: new Date().toISOString(),
+            analysis_type: phaseData.action_type,
+            analysis: {
+              social_media_bio: lead.social_media_bio,
+              hashtags: lead.social_media_posts?.[0]?.hashtags,
+              engagement_metrics: {
+                followers: lead.social_media_followers,
+                engagement_rate: lead.social_media_engagement_rate
+              }
             }
           }
-        }
-      })
-      .select()
-      .single();
+        })
+        .select()
+        .single();
 
-    if (noteError) throw noteError;
+      if (noteError) throw noteError;
 
-    // Save analysis to database
-    const { data: savedAnalysis, error: analysisError } = await supabase
-      .from('phase_based_analyses')
-      .insert({
-        lead_id: leadId,
-        phase_id: phaseId,
-        analysis_type: phaseData.action_type,
-        content: analysis,
-        metadata: {
-          context: {
-            phase_name: phaseData.pipeline_phases.name,
-            generated_at: new Date().toISOString(),
-            user_id: userId,
-            business_context: businessContext
-          }
+      // Save analysis to database
+      const { data: savedAnalysis, error: analysisError } = await supabase
+        .from('phase_based_analyses')
+        .insert({
+          lead_id: leadId,
+          phase_id: phaseId,
+          analysis_type: phaseData.action_type,
+          content: analysis,
+          metadata: {
+            context: {
+              phase_name: phaseData.pipeline_phases.name,
+              generated_at: new Date().toISOString(),
+              user_id: userId,
+              business_context: businessContext
+            }
+          },
+          completed: true,
+          completed_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (analysisError) throw analysisError;
+
+      return new Response(
+        JSON.stringify({
+          analysis: savedAnalysis,
+          timelineNote,
+          message: "Phasenanalyse erfolgreich erstellt"
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         },
-        completed: true,
-        completed_at: new Date().toISOString()
-      })
-      .select()
-      .single();
-
-    if (analysisError) throw analysisError;
-
-    return new Response(
-      JSON.stringify({
-        analysis: savedAnalysis,
-        timelineNote,
-        message: "Phasenanalyse erfolgreich erstellt"
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    );
+      );
+    } catch (err) {
+      // Wenn es ein Unique Constraint Fehler ist, geben wir eine freundliche Nachricht zurück
+      if (err.code === '23505') {
+        return new Response(
+          JSON.stringify({ 
+            error: "Eine Analyse für diese Phase existiert bereits",
+            details: err.message
+          }),
+          {
+            status: 409,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      throw err;
+    }
   } catch (err) {
     console.error('Error in phase analysis:', err);
     return new Response(JSON.stringify({ error: err.message }), {
