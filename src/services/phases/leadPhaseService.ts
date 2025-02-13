@@ -20,29 +20,11 @@ const getPhaseChangeMessage = (
   // Emoji für die neue Phase bestimmen
   const emoji = phaseEmojis[newPhaseName] || "✨";
 
-  // Wenn keine alte Phase vorhanden ist (erster Eintrag)
-  if (!oldPhaseName) {
-    return {
-      content: `Neuer Kontakt startet in Phase "${newPhaseName}"`,
-      emoji
-    };
-  }
-
-  // Bewegungsrichtung ermitteln durch Vergleich der Phasennamen
-  // (Dies ist nur ein Beispiel - Sie müssten die tatsächliche Reihenfolge Ihrer Phasen kennen)
-  const isForward = true; // TODO: Implementieren Sie hier Ihre Logik für die Richtung
-
-  if (isForward) {
-    return {
-      content: `Weiter zu Phase "${newPhaseName}"`,
-      emoji
-    };
-  } else {
-    return {
-      content: `Zurück zu Phase "${newPhaseName}"`,
-      emoji
-    };
-  }
+  // Einheitlicher Text für alle Phasenänderungen
+  return {
+    content: `Kontakt ist jetzt in Phase "${newPhaseName}"`,
+    emoji
+  };
 };
 
 export const updateLeadPhase = async (
@@ -99,7 +81,7 @@ export const updateLeadPhase = async (
       .insert({
         lead_id: leadId,
         user_id: userId,
-        content: message.content, // Nur den Text ohne Emoji
+        content: message.content,
         metadata: {
           type: 'phase_change',
           oldPhase: oldPhaseName,
