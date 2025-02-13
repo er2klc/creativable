@@ -26,8 +26,27 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
     if (isLoading) return;
 
-    setIsLoading(true);
     try {
+      // Zuerst prüfen wir, ob bereits eine Analyse existiert
+      const { data: existingAnalysis } = await supabase
+        .from("phase_based_analyses")
+        .select("*")
+        .eq("lead_id", lead.id)
+        .eq("phase_id", lead.phase_id)
+        .maybeSingle();
+
+      if (existingAnalysis) {
+        console.log('Analysis already exists, loading it:', existingAnalysis);
+        setLatestAnalysis(existingAnalysis);
+        toast.info(
+          settings?.language === "en"
+            ? "Analysis already exists for this phase"
+            : "Eine Analyse für diese Phase existiert bereits"
+        );
+        return;
+      }
+
+      setIsLoading(true);
       console.log('Generating analysis for:', {
         leadId: lead.id,
         phaseId: lead.phase_id,
@@ -42,7 +61,15 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        // Wenn es ein Konflikt ist (409), versuchen wir die existierende Analyse zu laden
+        if (error.status === 409) {
+          console.log('Conflict detected, loading existing analysis');
+          await loadLatestAnalysis();
+          return;
+        }
+        throw error;
+      }
       
       if (data.error) {
         console.error('Error from edge function:', data.error);
@@ -58,17 +85,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       );
     } catch (error: any) {
       console.error("Error generating analysis:", error);
-      
-      if (error.status === 409) {
-        toast.error(
-          settings?.language === "en"
-            ? "Analysis for this phase already exists"
-            : "Eine Analyse für diese Phase existiert bereits"
-        );
-        loadLatestAnalysis();
-        return;
-      }
-
       toast.error(
         settings?.language === "en"
           ? "Error generating analysis"
@@ -114,6 +130,10 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   };
 
   useEffect(() => {
+    console.log('LeadSummary useEffect triggered with:', {
+      leadId: lead.id,
+      phaseId: lead.phase_id
+    });
     loadLatestAnalysis();
   }, [lead.id, lead.phase_id]);
 
