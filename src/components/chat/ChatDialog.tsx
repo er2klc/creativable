@@ -98,25 +98,29 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         );
       case 'template_selection':
         return (
-          <MessageTemplateSelector
-            onSelect={handleTemplateSelection}
-            selectedType={selectedTemplateType}
-          />
+          <div className="h-[120px] min-h-[120px] border-t">
+            <MessageTemplateSelector
+              onSelect={handleTemplateSelection}
+              selectedType={selectedTemplateType}
+            />
+          </div>
         );
       case 'message_preview':
         const templateMessage = generateTemplateMessage();
         if (templateMessage) {
           return (
-            <MessagePreview
-              message={templateMessage}
-              onEdit={() => setFlowState('template_selection')}
-              onSend={async () => {
-                await originalHandleSubmit({
-                  preventDefault: () => {},
-                } as React.FormEvent, templateMessage);
-                reset();
-              }}
-            />
+            <div className="h-[120px] min-h-[120px] border-t">
+              <MessagePreview
+                message={templateMessage}
+                onEdit={() => setFlowState('template_selection')}
+                onSend={async () => {
+                  await originalHandleSubmit({
+                    preventDefault: () => {},
+                  } as React.FormEvent, templateMessage);
+                  reset();
+                }}
+              />
+            </div>
           );
         }
         return null;
@@ -128,13 +132,18 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
-        className={isMobile ? "w-full h-full max-w-full m-0 p-0 rounded-none" : "sm:max-w-[500px]"}
+        className={cn(
+          isMobile ? "w-full h-full max-w-full m-0 p-0 rounded-none" : "sm:max-w-[500px]",
+          "flex flex-col"
+        )}
         onClick={(e) => e.stopPropagation()} 
         hideClose
       >
         <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
-        <div className={`flex flex-col ${isMobile ? "h-[calc(100vh-4rem)]" : "h-[600px]"}`}>
-          <ChatMessages messages={messages} scrollRef={scrollRef} />
+        <div className="flex flex-col flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <ChatMessages messages={messages} scrollRef={scrollRef} />
+          </div>
           {renderFlowContent()}
           <ChatInput 
             input={input}
