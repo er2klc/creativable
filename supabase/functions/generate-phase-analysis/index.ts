@@ -26,25 +26,20 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // First, try to get existing analysis
-    const { data: existingAnalysis, error: existingError } = await supabase
+    // Check if analysis already exists
+    const { data: existingAnalysis } = await supabase
       .from('phase_based_analyses')
-      .select('*')
+      .select('id')
       .eq('lead_id', leadId)
       .eq('phase_id', phaseId)
-      .maybeSingle();
+      .single();
 
-    if (existingError) throw existingError;
-
-    // If analysis exists, return it
     if (existingAnalysis) {
       return new Response(
-        JSON.stringify({
-          analysis: existingAnalysis,
-          message: "Existing analysis retrieved"
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        JSON.stringify({ error: 'Analysis for this phase already exists' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
     }
@@ -178,67 +173,92 @@ Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, u
     const openAIData = await openAIResponse.json();
     const analysis = openAIData.choices[0].message.content;
 
-    // Begin transaction
-    const { data: savedAnalysis, error: trxError } = await supabase.rpc('create_phase_analysis', {
-      p_lead_id: leadId,
-      p_phase_id: phaseId,
-      p_user_id: userId,
-      p_content: analysis,
-      p_analysis_type: phaseData.action_type,
-      p_metadata: {
-        context: {
-          phase_name: phaseData.pipeline_phases.name,
-          generated_at: new Date().toISOString(),
+    try {
+      // Create a note for the timeline with proper metadata
+      const { data: timelineNote, error: noteError } = await supabase
+        .from('notes')
+        .insert({
+          lead_id: leadId,
           user_id: userId,
-          business_context: businessContext
-        }
-      }
-    });
+          content: analysis,
+          metadata: {
+            type: 'phase_analysis',
+            phase: {
+              id: phaseId,
+              name: phaseData.pipeline_phases.name
+            },
+            timestamp: new Date().toISOString(),
+            analysis_type: phaseData.action_type,
+            analysis: {
+              social_media_bio: lead.social_media_bio,
+              hashtags: lead.social_media_posts?.[0]?.hashtags,
+              engagement_metrics: {
+                followers: lead.social_media_followers,
+                engagement_rate: lead.social_media_engagement_rate
+              }
+            }
+          }
+        })
+        .select()
+        .single();
 
-    if (trxError) {
-      if (trxError.code === '23505') {
-        // If we got a duplicate error, try to fetch the existing analysis
-        const { data: existingAnalysis } = await supabase
-          .from('phase_based_analyses')
-          .select('*')
-          .eq('lead_id', leadId)
-          .eq('phase_id', phaseId)
-          .single();
+      if (noteError) throw noteError;
 
+      // Save analysis to database
+      const { data: savedAnalysis, error: analysisError } = await supabase
+        .from('phase_based_analyses')
+        .insert({
+          lead_id: leadId,
+          phase_id: phaseId,
+          analysis_type: phaseData.action_type,
+          content: analysis,
+          metadata: {
+            context: {
+              phase_name: phaseData.pipeline_phases.name,
+              generated_at: new Date().toISOString(),
+              user_id: userId,
+              business_context: businessContext
+            }
+          },
+          completed: true,
+          completed_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (analysisError) throw analysisError;
+
+      return new Response(
+        JSON.stringify({
+          analysis: savedAnalysis,
+          timelineNote,
+          message: "Phasenanalyse erfolgreich erstellt"
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    } catch (err) {
+      // Wenn es ein Unique Constraint Fehler ist, geben wir eine freundliche Nachricht zurück
+      if (err.code === '23505') {
         return new Response(
-          JSON.stringify({
-            analysis: existingAnalysis,
-            message: "Existing analysis retrieved"
+          JSON.stringify({ 
+            error: "Eine Analyse für diese Phase existiert bereits",
+            details: err.message
           }),
           {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 409,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
       }
-      throw trxError;
+      throw err;
     }
-
-    return new Response(
-      JSON.stringify({
-        analysis: savedAnalysis,
-        message: "Phase analysis created successfully"
-      }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-
   } catch (err) {
     console.error('Error in phase analysis:', err);
-    return new Response(
-      JSON.stringify({ 
-        error: err.message,
-        details: err
-      }), 
-      {
-        status: err.status || 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ error: err.message }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
