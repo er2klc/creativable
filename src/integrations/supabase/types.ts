@@ -1255,6 +1255,7 @@ export type Database = {
       }
       notes: {
         Row: {
+          analysis_context: Json | null
           color: string | null
           content: string
           created_at: string | null
@@ -1263,11 +1264,13 @@ export type Database = {
           id: string
           lead_id: string
           metadata: Json | null
+          phase_analysis_id: string | null
           phase_change_details: Json | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          analysis_context?: Json | null
           color?: string | null
           content: string
           created_at?: string | null
@@ -1276,11 +1279,13 @@ export type Database = {
           id?: string
           lead_id: string
           metadata?: Json | null
+          phase_analysis_id?: string | null
           phase_change_details?: Json | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          analysis_context?: Json | null
           color?: string | null
           content?: string
           created_at?: string | null
@@ -1289,6 +1294,7 @@ export type Database = {
           id?: string
           lead_id?: string
           metadata?: Json | null
+          phase_analysis_id?: string | null
           phase_change_details?: Json | null
           updated_at?: string | null
           user_id?: string
@@ -1299,6 +1305,13 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_phase_analysis_id_fkey"
+            columns: ["phase_analysis_id"]
+            isOneToOne: false
+            referencedRelation: "phase_based_analyses"
             referencedColumns: ["id"]
           },
         ]
@@ -1449,6 +1462,95 @@ export type Database = {
             columns: ["phase_id"]
             isOneToOne: false
             referencedRelation: "partner_onboarding_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phase_based_analyses: {
+        Row: {
+          action_items: Json | null
+          analysis_type: string
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          phase_id: string
+          recommendations: Json | null
+        }
+        Insert: {
+          action_items?: Json | null
+          analysis_type: string
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          phase_id: string
+          recommendations?: Json | null
+        }
+        Update: {
+          action_items?: Json | null
+          analysis_type?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          phase_id?: string
+          recommendations?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phase_based_analyses_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "phase_based_analyses_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      phase_rules: {
+        Row: {
+          action_type: string
+          created_at: string | null
+          id: string
+          phase_id: string
+          rules: Json
+          updated_at: string | null
+        }
+        Insert: {
+          action_type: string
+          created_at?: string | null
+          id?: string
+          phase_id: string
+          rules?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          action_type?: string
+          created_at?: string | null
+          id?: string
+          phase_id?: string
+          rules?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "phase_rules_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_phases"
             referencedColumns: ["id"]
           },
         ]
