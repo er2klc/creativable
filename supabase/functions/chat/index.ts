@@ -32,6 +32,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Initialize enhancedSystemMessage with base content
+    let enhancedSystemMessage = messages[0].content + "\n\n";
+
     // Get user profile information
     const { data: userProfile, error: profileError } = await supabase
       .from('profiles')
@@ -115,7 +118,7 @@ serve(async (req) => {
         if (!searchError && matchingContacts?.length > 0) {
           console.log('Found matching contacts:', matchingContacts);
           // Add contact information to context
-          enhancedSystemMessage += "\n\nGefundene Kontakte:\n";
+          enhancedSystemMessage += "\nGefundene Kontakte:\n";
           matchingContacts.forEach(contact => {
             enhancedSystemMessage += `\n${contact.name}\n`;
             enhancedSystemMessage += `- Platform: ${contact.platform}\n`;
@@ -136,9 +139,6 @@ serve(async (req) => {
         }
       }
     }
-
-    // Build enhanced system message with context
-    let enhancedSystemMessage = messages[0].content + "\n\n";
 
     // Add user context if available
     if (userProfile) {
