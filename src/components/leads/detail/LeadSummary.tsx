@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [hasAnalysis, setHasAnalysis] = useState(false);
+  const [showButton, setShowButton] = useState(true);
 
   const generateAnalysis = async () => {
     if (!user) {
@@ -26,6 +26,21 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
     try {
       setIsLoading(true);
+      
+      // Erst prüfen ob eine Analyse existiert
+      const { data: existingAnalysis } = await supabase
+        .from("phase_based_analyses")
+        .select("id")
+        .eq("lead_id", lead.id)
+        .eq("phase_id", lead.phase_id)
+        .maybeSingle();
+
+      if (existingAnalysis) {
+        setShowButton(false);
+        return;
+      }
+
+      // Wenn keine Analyse existiert, generiere eine neue
       const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
         body: {
           leadId: lead.id,
@@ -41,7 +56,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         return;
       }
 
-      setHasAnalysis(true);
+      setShowButton(false);
       toast.success(
         settings?.language === "en"
           ? "Analysis generated successfully"
@@ -59,23 +74,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  // Einfache Prüfung ob eine Analyse existiert
-  const checkAnalysis = async () => {
-    const { data } = await supabase
-      .from("phase_based_analyses")
-      .select("id")
-      .eq("lead_id", lead.id)
-      .eq("phase_id", lead.phase_id)
-      .maybeSingle();
-    
-    setHasAnalysis(!!data);
-  };
-
-  useEffect(() => {
-    checkAnalysis();
-  }, [lead.id, lead.phase_id]);
-
-  if (hasAnalysis) {
+  if (!showButton) {
     return <NexusTimelineCard 
       content="Analyse bereits generiert"
       metadata={{
