@@ -41,9 +41,9 @@ export const updateLeadPhase = async (
     .from("notes")
     .select("id")
     .eq("lead_id", leadId)
-    .eq("metadata->type", "phase_change")
-    .eq("metadata->oldPhase", oldPhaseName)
-    .eq("metadata->newPhase", newPhaseName)
+    .eq("metadata->>type", "phase_change")
+    .eq("metadata->>oldPhase", oldPhaseName)
+    .eq("metadata->>newPhase", newPhaseName)
     .gte("created_at", fiveSecondsAgo);
 
   // Nur eine neue Notiz erstellen, wenn keine kürzlich erstellte existiert
