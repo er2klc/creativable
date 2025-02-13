@@ -3469,6 +3469,7 @@ export type Database = {
           last_interaction_date: string
           last_post_content: string
           last_post_date: string
+          sort_order: number
         }[]
       }
       get_user_teams: {
