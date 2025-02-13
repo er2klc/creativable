@@ -26,14 +26,25 @@ export function PhaseAnalysisButton({
   useEffect(() => {
     const checkAnalysisExists = async () => {
       try {
+        console.log('Checking if analysis exists for:', {
+          leadId,
+          phaseId
+        });
+
         setCheckingAnalysis(true);
-        const { data } = await supabase
+        const { data, error } = await supabase
           .from('phase_based_analyses')
           .select('id')
           .eq('lead_id', leadId)
           .eq('phase_id', phaseId)
           .maybeSingle();
         
+        if (error) {
+          console.error('Error checking analysis:', error);
+          throw error;
+        }
+
+        console.log('Analysis check result:', { exists: !!data });
         setAnalysisExists(!!data);
       } catch (error) {
         console.error('Error checking analysis:', error);
@@ -50,8 +61,10 @@ export function PhaseAnalysisButton({
     checkAnalysisExists();
   }, [leadId, phaseId, settings?.language]);
 
-  if (checkingAnalysis) return null;
-  if (analysisExists) return null;
+  // Wenn wir noch prüfen oder bereits eine Analyse existiert, zeigen wir nichts an
+  if (checkingAnalysis || analysisExists) {
+    return null;
+  }
 
   return (
     <Button

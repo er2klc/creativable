@@ -1,7 +1,6 @@
 
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
-import { Bot, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadSummaryProps } from "./types/summary";
@@ -25,10 +24,16 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       return;
     }
 
-    if (isLoading) return; // Prevent multiple calls while loading
+    if (isLoading) return;
 
     setIsLoading(true);
     try {
+      console.log('Generating analysis for:', {
+        leadId: lead.id,
+        phaseId: lead.phase_id,
+        userId: user.id
+      });
+
       const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
         body: {
           leadId: lead.id,
@@ -40,7 +45,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       if (error) throw error;
       
       if (data.error) {
-        // Handle known errors from the edge function
+        console.error('Error from edge function:', data.error);
         toast.error(data.error);
         return;
       }
@@ -54,14 +59,12 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     } catch (error: any) {
       console.error("Error generating analysis:", error);
       
-      // Handle specific error cases
       if (error.status === 409) {
         toast.error(
           settings?.language === "en"
             ? "Analysis for this phase already exists"
             : "Eine Analyse für diese Phase existiert bereits"
         );
-        // Reload the latest analysis
         loadLatestAnalysis();
         return;
       }
@@ -76,9 +79,13 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  // Lade die letzte Analyse beim ersten Rendern
   const loadLatestAnalysis = async () => {
     try {
+      console.log('Loading latest analysis for:', {
+        leadId: lead.id,
+        phaseId: lead.phase_id
+      });
+
       const { data, error } = await supabase
         .from("phase_based_analyses")
         .select("*")
@@ -88,13 +95,21 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         .limit(1)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error loading analysis:', error);
+        throw error;
+      }
 
+      console.log('Latest analysis data:', data);
+      
       if (data) {
         setLatestAnalysis(data);
+      } else {
+        setLatestAnalysis(null);
       }
     } catch (error) {
       console.error("Error loading analysis:", error);
+      setLatestAnalysis(null);
     }
   };
 
@@ -102,14 +117,18 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     loadLatestAnalysis();
   }, [lead.id, lead.phase_id]);
 
+  // Wenn keine Analyse existiert, zeigen wir den Button an
   if (!latestAnalysis) {
+    console.log('No analysis found, showing analysis button');
     return (
-      <PhaseAnalysisButton 
-        isLoading={isLoading} 
-        leadId={lead.id} 
-        phaseId={lead.phase_id} 
-        onGenerateAnalysis={generateAnalysis} 
-      />
+      <div className="w-full">
+        <PhaseAnalysisButton 
+          isLoading={isLoading} 
+          leadId={lead.id} 
+          phaseId={lead.phase_id} 
+          onGenerateAnalysis={generateAnalysis} 
+        />
+      </div>
     );
   }
 
