@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -27,18 +26,25 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Check if analysis already exists
-    const { data: existingAnalysis } = await supabase
+    const { data: existingAnalysis, error: existingError } = await supabase
       .from('phase_based_analyses')
-      .select('id')
+      .select('*')
       .eq('lead_id', leadId)
       .eq('phase_id', phaseId)
       .single();
 
+    if (existingError && existingError.code !== 'PGRST116') {
+      throw existingError;
+    }
+
     if (existingAnalysis) {
       return new Response(
-        JSON.stringify({ error: 'Analysis for this phase already exists' }),
-        { 
-          status: 400,
+        JSON.stringify({
+          analysis: existingAnalysis,
+          message: "Existierende Analyse geladen"
+        }),
+        {
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         }
       );
@@ -157,14 +163,8 @@ Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, u
       body: JSON.stringify({
         model: 'gpt-4-0125-preview',
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt
-          },
-          {
-            role: 'user',
-            content: userPrompt
-          }
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
         ],
         temperature: 0.7,
       }),
@@ -173,76 +173,70 @@ Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, u
     const openAIData = await openAIResponse.json();
     const analysis = openAIData.choices[0].message.content;
 
-    try {
-      // Save analysis to database
-      const { data: savedAnalysis, error: analysisError } = await supabase
-        .from('phase_based_analyses')
-        .insert({
-          lead_id: leadId,
-          phase_id: phaseId,
-          analysis_type: phaseData.action_type,
-          content: analysis,
-          metadata: {
-            context: {
-              phase_name: phaseData.pipeline_phases.name,
-              generated_at: new Date().toISOString(),
-              user_id: userId,
-              business_context: businessContext
-            }
-          },
-          completed: true,
-          completed_at: new Date().toISOString()
-        })
-        .select()
-        .single();
-
-      if (analysisError) {
-        // If it's a unique constraint error, return a specific error message
-        if (analysisError.code === '23505') {
-          return new Response(
-            JSON.stringify({ 
-              error: "Eine Analyse für diese Phase existiert bereits",
-              details: analysisError.message
-            }),
-            {
-              status: 409,
-              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-            }
-          );
+    // Use a transaction to ensure atomicity
+    const { data: savedAnalysis, error: transactionError } = await supabase.rpc(
+      'create_phase_analysis',
+      {
+        p_lead_id: leadId,
+        p_phase_id: phaseId,
+        p_user_id: userId,
+        p_analysis_type: phaseData.action_type,
+        p_content: analysis,
+        p_metadata: {
+          context: {
+            phase_name: phaseData.pipeline_phases.name,
+            generated_at: new Date().toISOString(),
+            user_id: userId,
+            business_context: businessContext
+          }
         }
-        throw analysisError;
       }
+    );
 
-      return new Response(
-        JSON.stringify({
-          analysis: savedAnalysis,
-          message: "Phasenanalyse erfolgreich erstellt"
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        },
-      );
-    } catch (err) {
-      // If it's a unique constraint error, handle it gracefully
-      if (err.code === '23505') {
+    if (transactionError) {
+      if (transactionError.code === '23505') {
+        // If it's a duplicate, fetch and return the existing analysis
+        const { data: existingAnalysis } = await supabase
+          .from('phase_based_analyses')
+          .select('*')
+          .eq('lead_id', leadId)
+          .eq('phase_id', phaseId)
+          .single();
+
         return new Response(
-          JSON.stringify({ 
-            error: "Eine Analyse für diese Phase existiert bereits",
-            details: err.message
+          JSON.stringify({
+            analysis: existingAnalysis,
+            message: "Existierende Analyse geladen"
           }),
           {
-            status: 409,
+            status: 200,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           }
         );
       }
-      throw err;
+      throw transactionError;
     }
+
+    return new Response(
+      JSON.stringify({
+        analysis: savedAnalysis,
+        message: "Phasenanalyse erfolgreich erstellt"
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    );
   } catch (err) {
     console.error('Error in phase analysis:', err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    });
+    return new Response(
+      JSON.stringify({ 
+        error: err.message,
+        details: err
+      }), 
+      {
+        status: err.status || 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    );
   }
 });
