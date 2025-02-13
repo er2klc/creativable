@@ -1,15 +1,17 @@
+
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PlatformIndicator } from "./PlatformIndicator";
+import { cn } from "@/lib/utils";
 
 interface LeadAvatarProps {
   imageUrl?: string | null;
   name: string;
   platform: string;
-  isVerified?: boolean; // Neue Prop hinzugefügt
+  isVerified?: boolean;
+  className?: string;
 }
 
-export const LeadAvatar = ({ imageUrl, name, platform, isVerified }: LeadAvatarProps) => {
-  // Get initials from name
+export const LeadAvatar = ({ imageUrl, name, platform, isVerified, className }: LeadAvatarProps) => {
   const initials = name
     ?.split(' ')
     .map(n => n[0])
@@ -18,7 +20,7 @@ export const LeadAvatar = ({ imageUrl, name, platform, isVerified }: LeadAvatarP
 
   return (
     <div className="relative">
-      <Avatar className="h-20 w-20">
+      <Avatar className={cn("h-20 w-20", className)}>
         {imageUrl ? (
           <AvatarImage 
             src={imageUrl} 
@@ -32,10 +34,8 @@ export const LeadAvatar = ({ imageUrl, name, platform, isVerified }: LeadAvatarP
         )}
       </Avatar>
       
-      {/* Platform Icon */}
       <PlatformIndicator platform={platform} />
 
-      {/* Verifizierungs-Haken */}
       {isVerified && (
         <div className="absolute bottom-0 right-0 w-6 h-6 flex items-center justify-center">
           <svg

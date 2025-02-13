@@ -24,8 +24,8 @@ export const ChatContactCard = ({ contact, onClick, selected }: ChatContactCardP
       )}
       onClick={onClick}
     >
-      <div className="p-2 space-y-1">
-        <div className="flex items-center gap-2">
+      <div className="p-1 space-y-0.5">
+        <div className="flex items-center gap-1">
           <LeadAvatar
             imageUrl={contact.social_media_profile_image_url}
             name={displayName}
