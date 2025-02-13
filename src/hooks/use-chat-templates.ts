@@ -5,7 +5,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "./use-settings";
 
 interface TemplateContext {
-  contact: Tables<"leads"];
+  contact: Tables<"leads">;  // Fixed syntax here - removed extra bracket
   userProfile?: {
     display_name?: string | null;
     email?: string | null;
@@ -73,3 +73,4 @@ export const useChatTemplates = () => {
     generateMessage
   };
 };
+
