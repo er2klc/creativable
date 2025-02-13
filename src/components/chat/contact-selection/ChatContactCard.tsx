@@ -53,12 +53,12 @@ export const ChatContactCard = ({ contact, onClick, selected }: ChatContactCardP
         )}
 
         {/* Social Stats - kompakt und nur wenn vorhanden */}
-        {(contact.social_media_followers !== null || contact.social_media_following !== null) && (
+        {(typeof contact.social_media_followers === 'number' || typeof contact.social_media_following === 'number') && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            {contact.social_media_followers !== null && (
+            {typeof contact.social_media_followers === 'number' && (
               <span>{formatNumber(contact.social_media_followers)} Followers</span>
             )}
-            {contact.social_media_following !== null && (
+            {typeof contact.social_media_following === 'number' && (
               <>
                 <span>•</span>
                 <span>{formatNumber(contact.social_media_following)} Following</span>
@@ -72,7 +72,9 @@ export const ChatContactCard = ({ contact, onClick, selected }: ChatContactCardP
 };
 
 // Helper function for formatting numbers
-const formatNumber = (num: number) => {
+const formatNumber = (num: number | null | undefined): string => {
+  if (num == null) return '0';
+  
   if (num >= 1000000) {
     return (num / 1000000).toFixed(1) + 'M';
   }
