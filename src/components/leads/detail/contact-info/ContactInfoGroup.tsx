@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -48,6 +49,24 @@ export function ContactInfoGroup({
 
   const handleToggleReordering = () => {
     setIsReordering(!isReordering);
+  };
+
+  const renderChildren = () => {
+    return React.Children.map(children, (child) => {
+      if (React.isValidElement(child)) {
+        // Nur spezielle Props hinzufügen wenn es eine React-Komponente ist
+        const additionalProps = typeof child.type === "function" ? {
+          isVisible: showEmpty,
+          isReordering
+        } : {};
+
+        return React.cloneElement(child, {
+          ...child.props,
+          ...additionalProps
+        });
+      }
+      return child;
+    });
   };
 
   return (
@@ -108,16 +127,7 @@ export function ContactInfoGroup({
               onComplete={() => setIsAddingField(false)}
             />
           )}
-          {React.Children.map(children, child => {
-            if (React.isValidElement(child)) {
-              return React.cloneElement(child, {
-                ...child.props,
-                isVisible: showEmpty,
-                isReordering: isReordering
-              });
-            }
-            return child;
-          })}
+          {renderChildren()}
         </div>
       )}
     </div>
