@@ -1470,6 +1470,8 @@ export type Database = {
         Row: {
           action_items: Json | null
           analysis_type: string
+          completed: boolean | null
+          completed_at: string | null
           content: string
           created_at: string | null
           created_by: string | null
@@ -1482,6 +1484,8 @@ export type Database = {
         Insert: {
           action_items?: Json | null
           analysis_type: string
+          completed?: boolean | null
+          completed_at?: string | null
           content: string
           created_at?: string | null
           created_by?: string | null
@@ -1494,6 +1498,8 @@ export type Database = {
         Update: {
           action_items?: Json | null
           analysis_type?: string
+          completed?: boolean | null
+          completed_at?: string | null
           content?: string
           created_at?: string | null
           created_by?: string | null
