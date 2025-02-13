@@ -174,36 +174,6 @@ Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, u
     const analysis = openAIData.choices[0].message.content;
 
     try {
-      // Create a note for the timeline with proper metadata
-      const { data: timelineNote, error: noteError } = await supabase
-        .from('notes')
-        .insert({
-          lead_id: leadId,
-          user_id: userId,
-          content: analysis,
-          metadata: {
-            type: 'phase_analysis',
-            phase: {
-              id: phaseId,
-              name: phaseData.pipeline_phases.name
-            },
-            timestamp: new Date().toISOString(),
-            analysis_type: phaseData.action_type,
-            analysis: {
-              social_media_bio: lead.social_media_bio,
-              hashtags: lead.social_media_posts?.[0]?.hashtags,
-              engagement_metrics: {
-                followers: lead.social_media_followers,
-                engagement_rate: lead.social_media_engagement_rate
-              }
-            }
-          }
-        })
-        .select()
-        .single();
-
-      if (noteError) throw noteError;
-
       // Save analysis to database
       const { data: savedAnalysis, error: analysisError } = await supabase
         .from('phase_based_analyses')
@@ -226,12 +196,26 @@ Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, u
         .select()
         .single();
 
-      if (analysisError) throw analysisError;
+      if (analysisError) {
+        // If it's a unique constraint error, return a specific error message
+        if (analysisError.code === '23505') {
+          return new Response(
+            JSON.stringify({ 
+              error: "Eine Analyse für diese Phase existiert bereits",
+              details: analysisError.message
+            }),
+            {
+              status: 409,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+            }
+          );
+        }
+        throw analysisError;
+      }
 
       return new Response(
         JSON.stringify({
           analysis: savedAnalysis,
-          timelineNote,
           message: "Phasenanalyse erfolgreich erstellt"
         }),
         {
@@ -239,7 +223,7 @@ Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, u
         },
       );
     } catch (err) {
-      // Wenn es ein Unique Constraint Fehler ist, geben wir eine freundliche Nachricht zurück
+      // If it's a unique constraint error, handle it gracefully
       if (err.code === '23505') {
         return new Response(
           JSON.stringify({ 
