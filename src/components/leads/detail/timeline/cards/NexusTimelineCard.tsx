@@ -1,14 +1,24 @@
 
 import { cn } from "@/lib/utils";
-import { Bot, Copy, ThumbsUp } from "lucide-react";
+import { Bot, Copy, ThumbsUp, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { useSettings } from "@/hooks/use-settings";
+import ReactMarkdown from 'react-markdown';
 
 interface NexusTimelineCardProps {
   content: string;
   metadata: {
     type: string;
+    analysis_type?: string;
+    completed?: boolean;
+    completed_at?: string;
+    phase?: {
+      id: string;
+      name: string;
+    };
+    timestamp?: string;
     analysis?: {
       social_media_bio?: string;
       hashtags?: string[];
@@ -17,27 +27,42 @@ interface NexusTimelineCardProps {
         engagement_rate?: number;
       };
     };
-    template_type?: string;
-    phase?: {
-      id: string;
-      name: string;
-    };
-    generated_at?: string;
   };
   onDelete?: () => void;
+  onRegenerate?: () => void;
+  isRegenerating?: boolean;
 }
 
-export const NexusTimelineCard = ({ content, metadata, onDelete }: NexusTimelineCardProps) => {
+export const NexusTimelineCard = ({ 
+  content, 
+  metadata, 
+  onDelete,
+  onRegenerate,
+  isRegenerating 
+}: NexusTimelineCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { settings } = useSettings();
+  const maxPreviewLength = 300;
 
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(content);
-      toast.success("Nachricht in die Zwischenablage kopiert");
+      toast.success(
+        settings?.language === "en"
+          ? "Analysis copied to clipboard"
+          : "Analyse in die Zwischenablage kopiert"
+      );
     } catch (err) {
-      toast.error("Fehler beim Kopieren der Nachricht");
+      toast.error(
+        settings?.language === "en"
+          ? "Error copying analysis"
+          : "Fehler beim Kopieren der Analyse"
+      );
     }
   };
+
+  const shouldTruncate = content.length > maxPreviewLength;
+  const displayContent = isExpanded ? content : content.slice(0, maxPreviewLength) + (shouldTruncate ? '...' : '');
 
   return (
     <div className={cn(
@@ -48,20 +73,32 @@ export const NexusTimelineCard = ({ content, metadata, onDelete }: NexusTimeline
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <Bot className="h-4 w-4" />
           <span>Nexus AI</span>
-          {metadata.template_type && (
-            <>
-              <span>•</span>
-              <span className="capitalize">{metadata.template_type}</span>
-            </>
-          )}
           {metadata.phase?.name && (
             <>
               <span>•</span>
               <span>{metadata.phase.name}</span>
             </>
           )}
+          {metadata.completed && (
+            <>
+              <span>•</span>
+              <span className="text-green-500">
+                {settings?.language === "en" ? "Completed" : "Abgeschlossen"}
+              </span>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2">
+          {onRegenerate && (
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={onRegenerate}
+              disabled={isRegenerating}
+            >
+              <RefreshCw className={cn("h-4 w-4", isRegenerating && "animate-spin")} />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" onClick={copyToClipboard}>
             <Copy className="h-4 w-4" />
           </Button>
@@ -73,9 +110,30 @@ export const NexusTimelineCard = ({ content, metadata, onDelete }: NexusTimeline
         </div>
       </div>
 
-      <div className="text-sm whitespace-pre-wrap">
-        {content}
+      <div className="prose prose-sm max-w-none dark:prose-invert">
+        <ReactMarkdown>{displayContent}</ReactMarkdown>
       </div>
+
+      {shouldTruncate && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="w-full mt-2"
+        >
+          {isExpanded ? (
+            <>
+              <ChevronUp className="h-4 w-4 mr-2" />
+              {settings?.language === "en" ? "Show less" : "Weniger anzeigen"}
+            </>
+          ) : (
+            <>
+              <ChevronDown className="h-4 w-4 mr-2" />
+              {settings?.language === "en" ? "Show more" : "Mehr anzeigen"}
+            </>
+          )}
+        </Button>
+      )}
 
       {metadata.analysis && (
         <div className="mt-4 pt-4 border-t">

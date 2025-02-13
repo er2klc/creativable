@@ -11,7 +11,7 @@ const corsHeaders = {
 interface PhaseAnalysisRequest {
   leadId: string;
   phaseId: string;
-  previousPhaseId?: string;
+  userId: string;
 }
 
 serve(async (req) => {
@@ -20,7 +20,7 @@ serve(async (req) => {
   }
 
   try {
-    const { leadId, phaseId, previousPhaseId } = await req.json() as PhaseAnalysisRequest;
+    const { leadId, phaseId, userId } = await req.json() as PhaseAnalysisRequest;
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -60,87 +60,35 @@ serve(async (req) => {
 
     if (!phaseData) throw new Error('Phase rules not found');
 
-    // Prepare analysis context based on phase type
-    const analysisContext = {
-      lead: {
-        name: lead.name,
-        platform: lead.platform,
-        industry: lead.industry,
-        socialMedia: {
-          bio: lead.social_media_bio,
-          followers: lead.social_media_followers,
-          following: lead.social_media_following,
-          engagementRate: lead.social_media_engagement_rate,
-          interests: lead.social_media_interests,
-        },
-      },
-      currentPhase: phaseData.pipeline_phases.name,
-      previousPhase: previousPhaseId,
-      rules: phaseData.rules,
-    };
-
     // Generate phase-specific prompt
-    let systemPrompt = "You are an AI assistant specialized in analyzing social media profiles and business opportunities. ";
-    let userPrompt = "";
+    let systemPrompt = `You are an AI assistant specialized in analyzing social media profiles and business opportunities. Format your response using markdown with sections. Include emojis where appropriate.
 
-    switch (phaseData.action_type) {
-      case 'initial_analysis':
-        systemPrompt += "Focus on identifying potential opportunities and engagement patterns.";
-        userPrompt = `Analyze this social media profile for business potential:
-          - Bio: ${lead.social_media_bio}
-          - Followers: ${lead.social_media_followers}
-          - Following: ${lead.social_media_following}
-          - Engagement Rate: ${lead.social_media_engagement_rate}
-          - Interests: ${lead.social_media_interests?.join(', ')}
-          
-          Provide a detailed analysis including:
-          1. Profile Overview
-          2. Engagement Quality
-          3. Business Potential
-          4. Recommended Approach
-          5. Key Topics to Discuss`;
-        break;
+Key sections to include:
+1. Profile Overview 📊
+2. Engagement Analysis 📈
+3. Business Potential 💼
+4. Recommended Approach 🎯
+5. Key Topics 💡
 
-      case 'message_analysis':
-        systemPrompt += "Focus on conversation analysis and meeting potential.";
-        userPrompt = `Analyze the current interaction state:
-          - Previous Messages: ${JSON.stringify(lead.messages)}
-          - Current Phase: ${phaseData.pipeline_phases.name}
-          
-          Provide analysis of:
-          1. Conversation Progress
-          2. Interest Level
-          3. Next Best Action
-          4. Meeting Recommendation`;
-        break;
+Make it concise but informative.`;
 
-      case 'meeting_analysis':
-        systemPrompt += "Focus on meeting preparation and key talking points.";
-        userPrompt = `Prepare meeting analysis based on:
-          - Profile: ${lead.social_media_bio}
-          - Industry: ${lead.industry}
-          - Previous Interactions: ${JSON.stringify(lead.notes)}
-          
-          Create meeting preparation including:
-          1. Key Discussion Points
-          2. Potential Objections
-          3. Success Indicators
-          4. Follow-up Strategy`;
-        break;
+    let userPrompt = `Analyze this profile for the ${phaseData.pipeline_phases.name} phase:
+      
+Social Media Profile:
+- Bio: ${lead.social_media_bio || 'Not provided'}
+- Followers: ${lead.social_media_followers || 'Unknown'}
+- Following: ${lead.social_media_following || 'Unknown'}
+- Engagement Rate: ${lead.social_media_engagement_rate || 'Unknown'}
+- Interests: ${lead.social_media_interests?.join(', ') || 'None specified'}
+- Industry: ${lead.industry || 'Not specified'}
+- Platform: ${lead.platform || 'Not specified'}
 
-      case 'presentation_tracking':
-        systemPrompt += "Focus on engagement and follow-up strategy.";
-        userPrompt = `Analyze presentation phase:
-          - Industry: ${lead.industry}
-          - Previous Notes: ${JSON.stringify(lead.notes)}
-          
-          Provide strategy for:
-          1. Engagement Tracking
-          2. Follow-up Timing
-          3. Success Metrics
-          4. Conversion Approach`;
-        break;
-    }
+Recent Activity:
+${lead.notes?.map((note: any) => `- ${note.content}`).join('\n') || 'No recent activity'}
+
+Phase Context: ${phaseData.pipeline_phases.name}
+
+Provide a detailed analysis with actionable insights and clear recommendations.`;
 
     // Generate analysis using OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -150,7 +98,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini',
+        model: 'gpt-4',
         messages: [
           {
             role: 'system',
@@ -161,6 +109,7 @@ serve(async (req) => {
             content: userPrompt
           }
         ],
+        temperature: 0.7,
       }),
     });
 
@@ -170,40 +119,25 @@ serve(async (req) => {
     // Save analysis to database
     const { data: savedAnalysis, error: analysisError } = await supabase
       .from('phase_based_analyses')
-      .insert({
+      .upsert({
         lead_id: leadId,
         phase_id: phaseId,
         analysis_type: phaseData.action_type,
         content: analysis,
         metadata: {
-          context: analysisContext,
-          generated_at: new Date().toISOString(),
-          phase_name: phaseData.pipeline_phases.name,
-        }
+          context: {
+            phase_name: phaseData.pipeline_phases.name,
+            generated_at: new Date().toISOString(),
+            user_id: userId
+          }
+        },
+        completed: true,
+        completed_at: new Date().toISOString()
       })
       .select()
       .single();
 
     if (analysisError) throw analysisError;
-
-    // Create a note with the analysis
-    const { error: noteError } = await supabase
-      .from('notes')
-      .insert({
-        lead_id: leadId,
-        content: analysis,
-        phase_analysis_id: savedAnalysis.id,
-        metadata: {
-          type: 'phase_analysis',
-          analysis_type: phaseData.action_type,
-          phase: {
-            id: phaseId,
-            name: phaseData.pipeline_phases.name
-          }
-        }
-      });
-
-    if (noteError) throw noteError;
 
     return new Response(
       JSON.stringify({

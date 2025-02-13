@@ -1,22 +1,19 @@
 
 import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Bot, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { LeadSummaryProps } from "./types/summary";
 import { NexusTimelineCard } from "./timeline/cards/NexusTimelineCard";
 import { useAuth } from "@/hooks/use-auth";
+import { PhaseAnalysisButton } from "./components/PhaseAnalysisButton";
 
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [latestAnalysis, setLatestAnalysis] = useState<any>(null);
-  const [isOpen, setIsOpen] = useState(false);
 
   const generateAnalysis = async () => {
     if (!user) {
@@ -30,7 +27,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
     setIsLoading(true);
     try {
-      // Generiere die Analyse mit der neuen Edge Function
       const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
         body: {
           leadId: lead.id,
@@ -42,8 +38,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       if (error) throw error;
 
       setLatestAnalysis(data.analysis);
-      setIsOpen(true);
-      
       toast.success(
         settings?.language === "en"
           ? "Analysis generated successfully"
@@ -78,7 +72,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
         if (data) {
           setLatestAnalysis(data);
-          setIsOpen(true);
         }
       } catch (error) {
         console.error("Error loading analysis:", error);
@@ -88,78 +81,24 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     loadLatestAnalysis();
   }, [lead.id, lead.phase_id]);
 
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              <span className="text-lg font-semibold">
-                {settings?.language === "en" ? "AI Analysis" : "KI Analyse"}
-              </span>
-            </div>
-            <Button
-              onClick={isOpen ? generateAnalysis : () => setIsOpen(true)}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              ) : (
-                <Bot className="h-4 w-4 mr-2" />
-              )}
-              {getButtonText()}
-            </Button>
-          </div>
-
-          <CollapsibleContent>
-            {latestAnalysis ? (
-              <NexusTimelineCard
-                content={latestAnalysis.content}
-                metadata={{
-                  type: 'phase_analysis',
-                  analysis_type: latestAnalysis.analysis_type,
-                  phase: latestAnalysis.metadata?.phase,
-                  timestamp: latestAnalysis.created_at,
-                  ...latestAnalysis.metadata
-                }}
-              />
-            ) : (
-              <Button
-                onClick={generateAnalysis}
-                disabled={isLoading}
-                className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Bot className="h-4 w-4 mr-2" />
-                )}
-                {settings?.language === "en"
-                  ? "Generate AI Analysis"
-                  : "KI Analyse generieren"}
-              </Button>
-            )}
-          </CollapsibleContent>
-        </Collapsible>
-      </CardContent>
-    </Card>
-  );
-
-  function getButtonText() {
-    if (isLoading) {
-      return settings?.language === "en" ? "Generating..." : "Generiere...";
-    }
-    if (!latestAnalysis) {
-      return settings?.language === "en"
-        ? "Generate AI Analysis"
-        : "KI Analyse generieren";
-    }
-    if (!isOpen) {
-      return settings?.language === "en" ? "View AI Analysis" : "KI Analyse ansehen";
-    }
-    return settings?.language === "en"
-      ? "Generate New Analysis"
-      : "Neue Analyse generieren";
+  if (!latestAnalysis) {
+    return <PhaseAnalysisButton isLoading={isLoading} onGenerateAnalysis={generateAnalysis} />;
   }
+
+  return (
+    <NexusTimelineCard
+      content={latestAnalysis.content}
+      metadata={{
+        type: 'phase_analysis',
+        analysis_type: latestAnalysis.analysis_type,
+        phase: latestAnalysis.metadata?.phase,
+        timestamp: latestAnalysis.created_at,
+        completed: latestAnalysis.completed,
+        completed_at: latestAnalysis.completed_at,
+        ...latestAnalysis.metadata
+      }}
+      onRegenerate={generateAnalysis}
+      isRegenerating={isLoading}
+    />
+  );
 }
