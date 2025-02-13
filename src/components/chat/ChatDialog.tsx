@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRef } from "react";
 import { useChatContext } from "@/hooks/use-chat-context";
@@ -12,6 +11,7 @@ import { ChatContactList } from "./contact-selection/ChatContactList";
 import { useChatFlow } from "./hooks/useChatFlow";
 import { MessageTemplateSelector } from "./template-selection/MessageTemplateSelector";
 import { MessagePreview } from "./message-preview/MessagePreview";
+import { cn } from "@/lib/utils";
 
 interface ChatDialogProps {
   open: boolean;
