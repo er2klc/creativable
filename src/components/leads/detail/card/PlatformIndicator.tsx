@@ -1,3 +1,4 @@
+
 import { Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -7,7 +8,7 @@ interface PlatformIndicatorProps {
 
 export const PlatformIndicator = ({ platform }: PlatformIndicatorProps) => {
   const getPlatformIcon = (platform: string) => {
-    switch (platform.toLowerCase()) {
+    switch ((platform || '').toLowerCase()) {
       case 'instagram':
         return <Instagram className="h-5 w-5 text-white" />;
       case 'linkedin':
@@ -22,7 +23,7 @@ export const PlatformIndicator = ({ platform }: PlatformIndicatorProps) => {
   };
 
   const getColor = (platform: string) => {
-    switch (platform.toLowerCase()) {
+    switch ((platform || '').toLowerCase()) {
       case 'instagram':
         return 'bg-gradient-to-br from-purple-600 to-pink-500';
       case 'linkedin':
