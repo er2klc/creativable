@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Bot, Loader2 } from "lucide-react";
@@ -7,8 +8,6 @@ import { LeadSummaryProps } from "./types/summary";
 import { NexusTimelineCard } from "./timeline/cards/NexusTimelineCard";
 import { useAuth } from "@/hooks/use-auth";
 import { PhaseAnalysisButton } from "./components/PhaseAnalysisButton";
-import { LeadAvatar } from "./components/LeadAvatar";
-import { Lock } from "lucide-react";
 
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
@@ -115,54 +114,19 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center space-x-4">
-        <LeadAvatar
-          imageUrl={lead.social_media_profile_image_url}
-          name={lead.name}
-          platform={lead.platform}
-          isVerified={lead.social_media_verified}
-          isPrivate={lead.social_media_is_private}
-          className="w-16 h-16" // Larger size for contact details
-        />
-        <div>
-          <h2 className="text-xl font-semibold">{lead.name}</h2>
-          {lead.social_media_username && (
-            <p className="text-sm text-muted-foreground">
-              @{lead.social_media_username}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {lead.social_media_is_private ? (
-        <div className="bg-gray-50 rounded-lg p-6 text-center">
-          <Lock className="w-8 h-8 text-gray-400 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {settings?.language === "en" ? "Private Profile" : "Privates Profil"}
-          </h3>
-          <p className="text-gray-600 max-w-md mx-auto">
-            {settings?.language === "en" 
-              ? "This is a private Instagram account. We respect the user's privacy settings and cannot display their social media activity."
-              : "Dies ist ein privates Instagram-Profil. Wir respektieren die Privatsphäre-Einstellungen und können keine Social Media Aktivitäten anzeigen."}
-          </p>
-        </div>
-      ) : (
-        <NexusTimelineCard
-          content={latestAnalysis.content}
-          metadata={{
-            type: 'phase_analysis',
-            analysis_type: latestAnalysis.analysis_type,
-            phase: latestAnalysis.metadata?.phase,
-            timestamp: latestAnalysis.created_at,
-            completed: latestAnalysis.completed,
-            completed_at: latestAnalysis.completed_at,
-            ...latestAnalysis.metadata
-          }}
-          onRegenerate={generateAnalysis}
-          isRegenerating={isLoading}
-        />
-      )}
-    </div>
+    <NexusTimelineCard
+      content={latestAnalysis.content}
+      metadata={{
+        type: 'phase_analysis',
+        analysis_type: latestAnalysis.analysis_type,
+        phase: latestAnalysis.metadata?.phase,
+        timestamp: latestAnalysis.created_at,
+        completed: latestAnalysis.completed,
+        completed_at: latestAnalysis.completed_at,
+        ...latestAnalysis.metadata
+      }}
+      onRegenerate={generateAnalysis}
+      isRegenerating={isLoading}
+    />
   );
 }
