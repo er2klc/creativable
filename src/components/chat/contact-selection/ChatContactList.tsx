@@ -12,15 +12,20 @@ export const ChatContactList = ({ contacts, onSelect, selectedId }: ChatContactL
   if (!contacts.length) return null;
 
   return (
-    <div className="space-y-2 max-h-[300px] overflow-y-auto p-2">
-      {contacts.map((contact) => (
-        <ChatContactCard
-          key={contact.id}
-          contact={contact}
-          onClick={() => onSelect(contact)}
-          selected={contact.id === selectedId}
-        />
-      ))}
+    <div className="relative w-full">
+      <div className="flex overflow-x-auto no-scrollbar snap-x snap-mandatory py-2">
+        <div className="flex gap-2 px-2">
+          {contacts.map((contact) => (
+            <ChatContactCard
+              key={contact.id}
+              contact={contact}
+              onClick={() => onSelect(contact)}
+              selected={contact.id === selectedId}
+            />
+          ))}
+        </div>
+      </div>
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 bg-gradient-to-l from-background to-transparent w-12 h-full pointer-events-none" />
     </div>
   );
 };

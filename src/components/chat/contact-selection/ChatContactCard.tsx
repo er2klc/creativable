@@ -1,5 +1,6 @@
+
 import { LeadAvatar } from "@/components/leads/detail/card/LeadAvatar";
-import { LeadSocialStats } from "@/components/leads/detail/card/LeadSocialStats";
+import { PlatformIndicator } from "@/components/leads/detail/card/PlatformIndicator";
 import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 import { Briefcase } from "lucide-react";
@@ -18,41 +19,65 @@ export const ChatContactCard = ({ contact, onClick, selected }: ChatContactCardP
   return (
     <div
       className={cn(
-        "p-4 rounded-lg border cursor-pointer transition-all",
+        "w-[200px] flex-shrink-0 snap-start rounded-lg border cursor-pointer transition-all",
         "hover:bg-accent hover:border-accent",
         selected && "border-primary bg-primary/5",
         !selected && "border-border bg-card"
       )}
       onClick={onClick}
     >
-      <div className="flex items-center gap-4">
-        <LeadAvatar
-          imageUrl={contact.social_media_profile_image_url}
-          name={displayName}
-          platform={contact.platform}
-          className="h-10 w-10"
-        />
-        <div className="flex-1 min-w-0">
-          <div className="font-medium truncate">{displayName}</div>
-          {socialUsername && (
-            <div className="text-sm text-muted-foreground truncate">@{socialUsername}</div>
-          )}
-          {contact.position && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-              <Briefcase className="h-3 w-3" />
-              <span className="truncate">{contact.position}</span>
-            </div>
-          )}
-        </div>
-        {(contact.social_media_followers !== null || contact.social_media_following !== null) && (
-          <LeadSocialStats
-            followers={contact.social_media_followers}
-            following={contact.social_media_following}
-            engagement_rate={contact.social_media_engagement_rate}
-            compact
+      <div className="p-2 space-y-2">
+        <div className="flex items-center gap-2">
+          <LeadAvatar
+            imageUrl={contact.social_media_profile_image_url}
+            name={displayName}
+            platform={contact.platform}
+            className="h-10 w-10"
           />
+          <div className="min-w-0 flex-1">
+            <div className="font-medium text-sm truncate">{displayName}</div>
+            {socialUsername && (
+              <div className="text-xs text-muted-foreground truncate">
+                @{socialUsername}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Kompakte Anzeige von Position/Beruf */}
+        {contact.position && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Briefcase className="h-3 w-3" />
+            <span className="truncate">{contact.position}</span>
+          </div>
+        )}
+
+        {/* Social Stats - kompakt und nur wenn vorhanden */}
+        {(contact.social_media_followers !== null || contact.social_media_following !== null) && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {contact.social_media_followers !== null && (
+              <span>{formatNumber(contact.social_media_followers)} Followers</span>
+            )}
+            {contact.social_media_following !== null && (
+              <>
+                <span>•</span>
+                <span>{formatNumber(contact.social_media_following)} Following</span>
+              </>
+            )}
+          </div>
         )}
       </div>
     </div>
   );
+};
+
+// Helper function for formatting numbers
+const formatNumber = (num: number) => {
+  if (num >= 1000000) {
+    return (num / 1000000).toFixed(1) + 'M';
+  }
+  if (num >= 1000) {
+    return (num / 1000).toFixed(1) + 'K';
+  }
+  return num.toString();
 };

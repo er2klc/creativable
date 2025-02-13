@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -13,12 +14,11 @@ export default {
     container: {
       center: true,
       padding: {
-        DEFAULT: "60px", // Padding für alle Bildschirmgrößen
+        DEFAULT: "60px",
       },
       screens: {
-        sm: "100%", // Max-Breite nur bis zur Handygröße
-        md: "100%", // Max-Breite nur bis zur Tablet-Größe
-        // Keine weiteren max-width Definitionen für größere Bildschirme
+        sm: "100%",
+        md: "100%",
       },
     },
     extend: {
