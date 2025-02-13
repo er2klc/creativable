@@ -33,7 +33,7 @@ export function PhaseAnalysisButton({
 
         setCheckingAnalysis(true);
         const { data, error } = await supabase
-          .from('phase_based_analyses')
+          .from('lead_phase_analyses') // Hier die neue Tabelle verwenden
           .select('id')
           .eq('lead_id', leadId)
           .eq('phase_id', phaseId)
