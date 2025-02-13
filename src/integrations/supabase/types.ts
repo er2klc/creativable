@@ -3448,6 +3448,29 @@ export type Database = {
           phase_info: Json
         }[]
       }
+      get_contextual_contacts: {
+        Args: {
+          p_user_id: string
+          p_context: string
+          p_phase_id?: string
+          p_keyword?: string
+          p_limit?: number
+        }
+        Returns: {
+          id: string
+          name: string
+          platform: string
+          social_media_username: string
+          social_media_profile_image_url: string
+          social_media_followers: number
+          social_media_following: number
+          phase_id: string
+          phase_name: string
+          last_interaction_date: string
+          last_post_content: string
+          last_post_date: string
+        }[]
+      }
       get_user_teams: {
         Args: {
           uid: string

@@ -17,20 +17,20 @@ export const ChatContactCard = ({ contact, onClick, selected }: ChatContactCardP
   return (
     <div
       className={cn(
-        "w-[160px] flex-shrink-0 snap-start rounded-lg border cursor-pointer transition-all",
+        "w-[140px] flex-shrink-0 snap-start rounded-lg border cursor-pointer transition-all",
         "hover:bg-accent hover:border-accent",
         selected && "border-primary bg-primary/5",
         !selected && "border-border bg-card"
       )}
       onClick={onClick}
     >
-      <div className="p-2 space-y-1.5">
+      <div className="p-2 space-y-1">
         <div className="flex items-center gap-2">
           <LeadAvatar
             imageUrl={contact.social_media_profile_image_url}
             name={displayName}
             platform={contact.platform}
-            className="h-8 w-8"
+            className="h-6 w-6"
           />
           <div className="min-w-0 flex-1">
             <div className="font-medium text-xs truncate">{displayName}</div>
@@ -43,14 +43,14 @@ export const ChatContactCard = ({ contact, onClick, selected }: ChatContactCardP
         </div>
 
         {contact.position && (
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
             <Briefcase className="h-2.5 w-2.5" />
             <span className="truncate">{contact.position}</span>
           </div>
         )}
 
         {(typeof contact.social_media_followers === 'number' || typeof contact.social_media_following === 'number') && (
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+          <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground">
             {typeof contact.social_media_followers === 'number' && (
               <span>{formatNumber(contact.social_media_followers)} Followers</span>
             )}

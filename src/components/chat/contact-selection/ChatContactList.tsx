@@ -1,7 +1,7 @@
 
 import { Tables } from "@/integrations/supabase/types";
 import { ChatContactCard } from "./ChatContactCard";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface ChatContactListProps {
   contacts: Tables<"leads">[];
@@ -13,8 +13,8 @@ export const ChatContactList = ({ contacts, onSelect, selectedId }: ChatContactL
   if (!contacts.length) return null;
 
   return (
-    <div className="w-full h-[120px] min-h-[120px] py-2 border-t">
-      <ScrollArea className="w-full h-full" type="scroll">
+    <div className="w-full h-[100px] min-h-[100px] py-2 border-t">
+      <ScrollArea className="w-full h-full" orientation="horizontal">
         <div className="flex gap-2 px-4">
           {contacts.map((contact) => (
             <ChatContactCard
@@ -25,7 +25,6 @@ export const ChatContactList = ({ contacts, onSelect, selectedId }: ChatContactL
             />
           ))}
         </div>
-        <ScrollBar orientation="horizontal" />
       </ScrollArea>
     </div>
   );
