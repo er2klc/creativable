@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,14 @@ export const TaskForm = ({ leadId }: TaskFormProps) => {
       setTitle("");
       setDeadline("");
     },
+    onError: (error) => {
+      console.error("Error adding task:", error);
+      toast.error(
+        settings?.language === "en" 
+          ? "Error adding task" 
+          : "Fehler beim Hinzufügen der Aufgabe"
+      );
+    }
   });
 
   const handleSubmit = (e: React.FormEvent) => {

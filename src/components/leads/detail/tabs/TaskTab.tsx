@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,18 +22,27 @@ export const TaskTab = ({ leadId }: TaskTabProps) => {
       .from("tasks")
       .insert({
         lead_id: leadId,
-        title: newTask,
+        title: newTask, // Hier "title" statt "content" verwenden
         color: '#FFE2DD',
         user_id: user?.id,
       });
 
     if (error) {
       console.error("Error adding task:", error);
+      toast.error(
+        settings?.language === "en" 
+          ? "Error adding task" 
+          : "Fehler beim Hinzufügen der Aufgabe"
+      );
       return;
     }
 
     setNewTask("");
-    toast.success(settings?.language === "en" ? "Task added" : "Aufgabe hinzugefügt");
+    toast.success(
+      settings?.language === "en" 
+        ? "Task added" 
+        : "Aufgabe hinzugefügt"
+    );
   };
 
   return (
