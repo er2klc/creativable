@@ -105,17 +105,9 @@ export const deduplicateTimelineItems = (items: TimelineItem[]): TimelineItem[] 
   const uniqueItems = new Map<string, TimelineItem>();
   
   items.forEach(item => {
-    let key: string;
-    
-    if (item.type === 'phase_change' || item.metadata?.type === 'phase_change') {
-      // Für Phasenänderungen den change_hash als Schlüssel verwenden
-      key = item.metadata?.change_hash || item.id;
-    } else {
-      // Für alle anderen Items die ID als Schlüssel verwenden
-      key = item.id;
-    }
-    
+    const key = item.content;
     const existingItem = uniqueItems.get(key);
+    
     if (!existingItem || new Date(item.timestamp) > new Date(existingItem.timestamp)) {
       uniqueItems.set(key, item);
     }

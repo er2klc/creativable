@@ -28,12 +28,8 @@ export const useLeadPhaseMutation = () => {
       return updateLeadPhase(leadId, phaseId, oldPhaseName, newPhaseName, user.id);
     },
     onSuccess: (data, variables) => {
-      // Invalidate the leads query to update the kanban board
       queryClient.invalidateQueries({ queryKey: ["leads"] });
-      
-      // Invalidate the specific lead query to update the timeline
       queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
-      // Also invalidate the lead-with-relations query which is used in the timeline
       queryClient.invalidateQueries({ queryKey: ["lead-with-relations", variables.leadId] });
       
       toast({
