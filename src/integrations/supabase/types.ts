@@ -702,6 +702,69 @@ export type Database = {
           },
         ]
       }
+      lead_phase_analyses: {
+        Row: {
+          action_items: Json | null
+          analysis_type: string
+          completed: boolean | null
+          completed_at: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          phase_id: string
+          recommendations: Json | null
+          updated_at: string | null
+        }
+        Insert: {
+          action_items?: Json | null
+          analysis_type: string
+          completed?: boolean | null
+          completed_at?: string | null
+          content: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          phase_id: string
+          recommendations?: Json | null
+          updated_at?: string | null
+        }
+        Update: {
+          action_items?: Json | null
+          analysis_type?: string
+          completed?: boolean | null
+          completed_at?: string | null
+          content?: string
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          phase_id?: string
+          recommendations?: Json | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_phase_analyses_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_phase_analyses_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_phases"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_subscriptions: {
         Row: {
           created_at: string | null
@@ -3514,6 +3577,7 @@ export type Database = {
           metadata: Json | null
           phase_id: string
           recommendations: Json | null
+          updated_at: string | null
         }
       }
       create_youtube_metadata: {
