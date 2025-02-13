@@ -1,3 +1,4 @@
+
 import { TimelineItem } from "../TimelineUtils";
 import { Tables } from "@/integrations/supabase/types";
 
@@ -105,7 +106,11 @@ export const deduplicateTimelineItems = (items: TimelineItem[]): TimelineItem[] 
   const uniqueItems = new Map<string, TimelineItem>();
   
   items.forEach(item => {
-    const key = item.content;
+    // Für Phasenänderungen einen spezifischen Schlüssel erstellen
+    const key = item.type === 'phase_change' 
+      ? `${item.metadata?.oldPhase}-${item.metadata?.newPhase}-${item.timestamp}`
+      : item.content;
+      
     const existingItem = uniqueItems.get(key);
     
     if (!existingItem || new Date(item.timestamp) > new Date(existingItem.timestamp)) {

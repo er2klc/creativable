@@ -35,22 +35,37 @@ export const updateLeadPhase = async (
 
   if (updateError) throw updateError;
 
-  // Neue Notiz erstellen
-  const { error: noteError } = await supabase
+  // Prüfen ob bereits eine Notiz für diese spezifische Änderung in den letzten 5 Sekunden existiert
+  const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
+  const { data: existingNotes } = await supabase
     .from("notes")
-    .insert({
-      lead_id: leadId,
-      user_id: userId,
-      content: `Phase wurde von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
-      metadata: {
-        type: 'phase_change',
-        oldPhase: oldPhaseName,
-        newPhase: newPhaseName,
-        timestamp
-      }
-    });
+    .select("id")
+    .eq("lead_id", leadId)
+    .eq("metadata->type", "phase_change")
+    .eq("metadata->oldPhase", oldPhaseName)
+    .eq("metadata->newPhase", newPhaseName)
+    .gte("created_at", fiveSecondsAgo);
 
-  if (noteError) throw noteError;
+  // Nur eine neue Notiz erstellen, wenn keine kürzlich erstellte existiert
+  if (!existingNotes || existingNotes.length === 0) {
+    const { error: noteError } = await supabase
+      .from("notes")
+      .insert({
+        lead_id: leadId,
+        user_id: userId,
+        content: `Phase wurde von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
+        metadata: {
+          type: 'phase_change',
+          oldPhase: oldPhaseName,
+          newPhase: newPhaseName,
+          timestamp
+        }
+      });
+
+    if (noteError) throw noteError;
+  } else {
+    console.log("Skipping note creation - similar note exists within last 5 seconds");
+  }
 
   return { success: true };
 };
