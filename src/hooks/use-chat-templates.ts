@@ -5,7 +5,7 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "./use-settings";
 
 interface TemplateContext {
-  contact: Tables<"leads">;  // Fixed syntax here - removed extra bracket
+  contact: Tables<"leads">;
   userProfile?: {
     display_name?: string | null;
     email?: string | null;
@@ -51,7 +51,21 @@ export const useChatTemplates = () => {
     type: MessageTemplateType,
     context: TemplateContext
   ): string => {
-    const template = getMessageTemplate(type, context.contact.platform as Platform);
+    // Standardplattform als Fallback
+    const defaultPlatform: Platform = "LinkedIn";
+    
+    // Sichere Konvertierung der Plattform
+    const platform = (context.contact.platform as Platform) || defaultPlatform;
+    
+    // Template mit Fallback holen
+    const template = getMessageTemplate(type, platform);
+    
+    // Wenn kein Template gefunden wurde, Fallback auf LinkedIn Template
+    if (!template) {
+      console.warn(`Kein Template gefunden für Typ ${type} und Plattform ${platform}, verwende LinkedIn Template`);
+      return generateMessage(type, { ...context, contact: { ...context.contact, platform: defaultPlatform } });
+    }
+
     const placeholders = getTemplatePlaceholders(template, context);
 
     const messageParts = [
@@ -73,4 +87,3 @@ export const useChatTemplates = () => {
     generateMessage
   };
 };
-
