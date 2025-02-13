@@ -1,3 +1,4 @@
+
 import { TimelineItem } from "../TimelineUtils";
 import { Tables } from "@/integrations/supabase/types";
 
@@ -99,4 +100,28 @@ export const createStatusChangeItem = (
       timestamp
     }
   };
+};
+
+// Neue Funktion zum Deduplizieren von Timeline Items
+export const deduplicateTimelineItems = (items: TimelineItem[]): TimelineItem[] => {
+  const seen = new Set<string>();
+  
+  return items.filter(item => {
+    // Phase change deduplication
+    if (item.metadata?.type === 'phase_change' && item.metadata.change_hash) {
+      const hash = item.metadata.change_hash as string;
+      if (seen.has(hash)) {
+        return false;
+      }
+      seen.add(hash);
+      return true;
+    }
+    
+    // Standard deduplication by ID
+    if (seen.has(item.id)) {
+      return false;
+    }
+    seen.add(item.id);
+    return true;
+  });
 };
