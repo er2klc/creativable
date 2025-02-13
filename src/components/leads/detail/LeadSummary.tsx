@@ -9,21 +9,33 @@ import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { LeadSummaryProps } from "./types/summary";
 import { NexusTimelineCard } from "./timeline/cards/NexusTimelineCard";
+import { useAuth } from "@/hooks/use-auth";
 
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [latestAnalysis, setLatestAnalysis] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   const generateAnalysis = async () => {
+    if (!user) {
+      toast.error(
+        settings?.language === "en"
+          ? "You must be logged in"
+          : "Sie müssen angemeldet sein"
+      );
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Generiere die Analyse mit der neuen Edge Function
       const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
         body: {
           leadId: lead.id,
-          phaseId: lead.phase_id
+          phaseId: lead.phase_id,
+          userId: user.id
         }
       });
 
@@ -52,18 +64,24 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   // Lade die letzte Analyse beim ersten Rendern
   useEffect(() => {
     const loadLatestAnalysis = async () => {
-      const { data } = await supabase
-        .from("phase_based_analyses")
-        .select("*")
-        .eq("lead_id", lead.id)
-        .eq("phase_id", lead.phase_id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from("phase_based_analyses")
+          .select("*")
+          .eq("lead_id", lead.id)
+          .eq("phase_id", lead.phase_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
 
-      if (data) {
-        setLatestAnalysis(data);
-        setIsOpen(true);
+        if (error) throw error;
+
+        if (data) {
+          setLatestAnalysis(data);
+          setIsOpen(true);
+        }
+      } catch (error) {
+        console.error("Error loading analysis:", error);
       }
     };
 
