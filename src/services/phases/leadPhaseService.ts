@@ -41,8 +41,8 @@ export const updateLeadPhase = async (
     .from("notes")
     .select("id")
     .eq("lead_id", leadId)
-    .eq("metadata->type", "phase_change")
-    .eq("metadata->change_hash", changeHash);
+    .eq("metadata->>type", "phase_change")
+    .eq("metadata->>change_hash", changeHash);
 
   // Nur eine neue Notiz erstellen, wenn noch keine existiert
   if (!existingNotes || existingNotes.length === 0) {
