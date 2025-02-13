@@ -1,9 +1,7 @@
 
-import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "./LeadInfoCard";
-import { LeadSummary } from "./LeadSummary";
 import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { LeadWithRelations } from "@/types/leads";
@@ -35,10 +33,6 @@ export const LeadDetailContent = ({
       <div className="grid grid-cols-12 gap-6 p-6 bg-gray-50 min-h-[calc(100vh-10rem)] mt-32">
         {/* Left Column - 4/12 */}
         <div className="col-span-4 space-y-6">
-          <div className="space-y-4">
-            <LeadSummary lead={lead} />
-          </div>
-          
           <LeadInfoCard 
             lead={lead} 
             onUpdate={(updates) => {
