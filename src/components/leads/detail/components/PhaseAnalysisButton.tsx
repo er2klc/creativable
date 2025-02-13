@@ -2,7 +2,6 @@
 import { Bot, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
-import { useState } from "react";
 
 interface PhaseAnalysisButtonProps {
   isLoading: boolean;

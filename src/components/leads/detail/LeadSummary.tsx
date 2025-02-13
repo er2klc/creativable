@@ -12,7 +12,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [latestAnalysis, setLatestAnalysis] = useState<any>(null);
+  const [hasAnalysis, setHasAnalysis] = useState(false);
 
   const generateAnalysis = async () => {
     if (!user) {
@@ -24,17 +24,8 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       return;
     }
 
-    if (isLoading) return;
-
     try {
       setIsLoading(true);
-      console.log('Generating analysis for:', {
-        leadId: lead.id,
-        phaseId: lead.phase_id,
-        userId: user.id,
-        timestamp: new Date().toISOString()
-      });
-
       const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
         body: {
           leadId: lead.id,
@@ -43,29 +34,20 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         }
       });
 
-      if (error) {
-        console.error('Error from edge function:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       if (data.error) {
-        console.error('Error from edge function:', data.error);
         toast.error(data.error);
         return;
       }
 
-      console.log('Analysis generated successfully:', {
-        analysisId: data.analysis?.id,
-        timestamp: new Date().toISOString()
-      });
-
-      setLatestAnalysis(data.analysis);
+      setHasAnalysis(true);
       toast.success(
         settings?.language === "en"
           ? "Analysis generated successfully"
           : "Analyse erfolgreich generiert"
       );
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error generating analysis:", error);
       toast.error(
         settings?.language === "en"
@@ -77,72 +59,40 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  const loadLatestAnalysis = async () => {
-    try {
-      console.log('Loading latest analysis for:', {
-        leadId: lead.id,
-        phaseId: lead.phase_id,
-        timestamp: new Date().toISOString()
-      });
-
-      const { data, error } = await supabase
-        .from("phase_based_analyses")
-        .select("*")
-        .eq("lead_id", lead.id)
-        .eq("phase_id", lead.phase_id)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error loading analysis:', error);
-        throw error;
-      }
-
-      console.log('Latest analysis data:', {
-        hasData: !!data,
-        analysisId: data?.id,
-        timestamp: new Date().toISOString()
-      });
-      
-      setLatestAnalysis(data);
-    } catch (error) {
-      console.error("Error loading analysis:", error);
-      setLatestAnalysis(null);
-    }
+  // Einfache Prüfung ob eine Analyse existiert
+  const checkAnalysis = async () => {
+    const { data } = await supabase
+      .from("phase_based_analyses")
+      .select("id")
+      .eq("lead_id", lead.id)
+      .eq("phase_id", lead.phase_id)
+      .maybeSingle();
+    
+    setHasAnalysis(!!data);
   };
 
   useEffect(() => {
-    loadLatestAnalysis();
+    checkAnalysis();
   }, [lead.id, lead.phase_id]);
 
-  // Wenn keine Analyse existiert, zeigen wir den Button an
-  if (!latestAnalysis) {
-    return (
-      <PhaseAnalysisButton 
-        isLoading={isLoading} 
-        leadId={lead.id} 
-        phaseId={lead.phase_id} 
-        onGenerateAnalysis={generateAnalysis} 
-      />
-    );
-  }
-
-  // Zeige existierende Analyse
-  return (
-    <NexusTimelineCard
-      content={latestAnalysis.content}
+  if (hasAnalysis) {
+    return <NexusTimelineCard 
+      content="Analyse bereits generiert"
       metadata={{
         type: 'phase_analysis',
-        analysis_type: latestAnalysis.analysis_type,
-        phase: latestAnalysis.metadata?.phase,
-        timestamp: latestAnalysis.created_at,
-        completed: latestAnalysis.completed,
-        completed_at: latestAnalysis.completed_at,
-        ...latestAnalysis.metadata
+        timestamp: new Date().toISOString()
       }}
       onRegenerate={generateAnalysis}
       isRegenerating={isLoading}
+    />;
+  }
+
+  return (
+    <PhaseAnalysisButton 
+      isLoading={isLoading}
+      leadId={lead.id}
+      phaseId={lead.phase_id}
+      onGenerateAnalysis={generateAnalysis}
     />
   );
 }
