@@ -3437,6 +3437,17 @@ export type Database = {
           recent_messages: string[]
         }[]
       }
+      get_contact_social_insights: {
+        Args: {
+          contact_id: string
+        }
+        Returns: {
+          recent_posts: Json
+          engagement_stats: Json
+          content_insights: Json
+          phase_info: Json
+        }[]
+      }
       get_user_teams: {
         Args: {
           uid: string
