@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import OpenAI from "https://esm.sh/openai@4.28.0";
@@ -89,48 +88,54 @@ serve(async (req) => {
     // Get last user message for context search
     const lastUserMessage = messages.filter(m => m.role === 'user').pop();
     
-    // Search for relevant contacts based on message content
-    console.log('Searching for relevant contacts with query:', lastUserMessage.content);
-    const { data: relevantContacts, error: contactError } = await supabase
-      .rpc('match_contact_content', {
-        p_user_id: userId,
-        query_text: lastUserMessage.content,
-        match_count: 5
-      });
+    // Check if message contains a name for contact search
+    const messageText = lastUserMessage.content.toLowerCase();
+    if (messageText.includes('nachricht') || messageText.includes('schreib') || messageText.includes('message')) {
+      console.log('Message appears to be a contact request, searching for names...');
+      
+      // Extract potential name from message
+      const words = messageText.split(' ');
+      const nameIndex = words.findIndex(w => 
+        w === 'für' || w === 'an' || w === 'to' || w === 'for'
+      );
+      
+      if (nameIndex !== -1 && words[nameIndex + 1]) {
+        const searchName = words[nameIndex + 1];
+        console.log('Searching for contact with name:', searchName);
+        
+        // Search for contacts
+        const { data: matchingContacts, error: searchError } = await supabase
+          .rpc('match_lead_content', {
+            p_user_id: userId,
+            query_text: searchName,
+            match_count: 5
+          });
 
-    if (contactError) {
-      console.error('Error searching contacts:', contactError);
-    } else {
-      console.log('Found relevant contacts:', relevantContacts);
-    }
-
-    // Get embedding for semantic search
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-ada-002",
-      input: lastUserMessage.content,
-    });
-    
-    const queryEmbedding = embeddingResponse.data[0].embedding;
-
-    // Search for relevant context with embedding
-    console.log('Searching for context with embedding');
-    const { data: relevantContext, error: searchError } = await supabase.rpc(
-      'match_combined_content',
-      {
-        query_embedding: JSON.stringify(queryEmbedding),
-        match_threshold: 0.7,
-        match_count: 5,
-        p_user_id: userId,
-        p_team_id: teamId
+        if (!searchError && matchingContacts?.length > 0) {
+          console.log('Found matching contacts:', matchingContacts);
+          // Add contact information to context
+          enhancedSystemMessage += "\n\nGefundene Kontakte:\n";
+          matchingContacts.forEach(contact => {
+            enhancedSystemMessage += `\n${contact.name}\n`;
+            enhancedSystemMessage += `- Platform: ${contact.platform}\n`;
+            if (contact.social_media_followers) {
+              enhancedSystemMessage += `- Follower: ${contact.social_media_followers}\n`;
+            }
+            if (contact.social_media_engagement_rate) {
+              enhancedSystemMessage += `- Engagement Rate: ${(contact.social_media_engagement_rate * 100).toFixed(2)}%\n`;
+            }
+            if (contact.social_media_bio) {
+              enhancedSystemMessage += `- Bio: ${contact.social_media_bio}\n`;
+            }
+            enhancedSystemMessage += `- Branche: ${contact.industry}\n`;
+            if (contact.notes?.length > 0) {
+              enhancedSystemMessage += `- Letzte Notizen: ${contact.notes[0]}\n`;
+            }
+          });
+        }
       }
-    );
-
-    if (searchError) {
-      console.error('Error searching for context:', searchError);
-    } else {
-      console.log('Found relevant context:', relevantContext);
     }
-    
+
     // Build enhanced system message with context
     let enhancedSystemMessage = messages[0].content + "\n\n";
 
@@ -216,6 +221,34 @@ serve(async (req) => {
       { role: 'system', content: enhancedSystemMessage },
       ...messages.slice(1)
     ];
+
+    // Get embedding for semantic search
+    const embeddingResponse = await openai.embeddings.create({
+      model: "text-embedding-ada-002",
+      input: lastUserMessage.content,
+    });
+    
+    const queryEmbedding = embeddingResponse.data[0].embedding;
+
+    // Search for relevant context with embedding
+    console.log('Searching for context with embedding');
+    const { data: relevantContext, error: searchError } = await supabase.rpc(
+      'match_combined_content',
+      {
+        query_embedding: JSON.stringify(queryEmbedding),
+        match_threshold: 0.7,
+        match_count: 5,
+        p_user_id: userId,
+        p_team_id: teamId
+      }
+    );
+
+    if (searchError) {
+      console.error('Error searching for context:', searchError);
+    } else {
+      console.log('Found relevant context:', relevantContext);
+    }
+    
 
     // Get response from OpenAI using the streaming API
     const stream = await openai.chat.completions.create({
