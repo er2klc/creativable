@@ -4,21 +4,25 @@ import { cn } from "@/lib/utils";
 
 interface PlatformIndicatorProps {
   platform: string;
+  size?: 'xs' | 'sm' | 'md';
 }
 
-export const PlatformIndicator = ({ platform }: PlatformIndicatorProps) => {
+export const PlatformIndicator = ({ 
+  platform, 
+  size = 'sm' 
+}: PlatformIndicatorProps) => {
   const getPlatformIcon = (platform: string) => {
     switch ((platform || '').toLowerCase()) {
       case 'instagram':
-        return <Instagram className="h-5 w-5 text-white" />;
+        return <Instagram className="text-white" />;
       case 'linkedin':
-        return <Linkedin className="h-5 w-5 text-white" />;
+        return <Linkedin className="text-white" />;
       case 'facebook':
-        return <Facebook className="h-5 w-5 text-white" />;
+        return <Facebook className="text-white" />;
       case 'tiktok':
-        return <Video className="h-5 w-5 text-white" />;
+        return <Video className="text-white" />;
       default:
-        return <Users className="h-5 w-5 text-white" />;
+        return <Users className="text-white" />;
     }
   };
 
@@ -37,12 +41,28 @@ export const PlatformIndicator = ({ platform }: PlatformIndicatorProps) => {
     }
   };
 
+  const sizeClasses = {
+    'xs': 'w-6 h-6 -right-1 -top-1',
+    'sm': 'w-8 h-8 -right-2 -top-2',
+    'md': 'w-10 h-10 -right-3 -top-3'
+  };
+
+  const iconSizes = {
+    'xs': 'h-4 w-4',
+    'sm': 'h-5 w-5',
+    'md': 'h-6 w-6'
+  };
+
   return (
     <div className={cn(
-      "absolute -right-2 -top-2 rounded-full w-8 h-8 border-2 border-white shadow-lg flex items-center justify-center",
-      getColor(platform)
+      "absolute rounded-full border-2 border-white shadow-lg flex items-center justify-center",
+      getColor(platform),
+      sizeClasses[size]
     )}>
-      {getPlatformIcon(platform)}
+      <div className={cn("flex items-center justify-center", iconSizes[size])}>
+        {getPlatformIcon(platform)}
+      </div>
     </div>
   );
 };
+

@@ -10,6 +10,7 @@ interface LeadAvatarProps {
   isVerified?: boolean;
   className?: string;
   showPlatform?: boolean;
+  avatarSize?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
 export const LeadAvatar = ({ 
@@ -18,7 +19,8 @@ export const LeadAvatar = ({
   platform, 
   isVerified, 
   className,
-  showPlatform = true
+  showPlatform = true,
+  avatarSize = 'md'
 }: LeadAvatarProps) => {
   const initials = name
     ?.split(' ')
@@ -26,9 +28,20 @@ export const LeadAvatar = ({
     .join('')
     .toUpperCase() || '';
 
+  const sizeClasses = {
+    'sm': 'h-8 w-8',
+    'md': 'h-10 w-10',
+    'lg': 'h-16 w-16',
+    'xl': 'h-24 w-24'
+  };
+
   return (
     <div className="relative inline-flex">
-      <Avatar className={cn("relative", className)}>
+      <Avatar className={cn(
+        "relative", 
+        sizeClasses[avatarSize], 
+        className
+      )}>
         {imageUrl ? (
           <AvatarImage 
             src={imageUrl} 
@@ -44,7 +57,10 @@ export const LeadAvatar = ({
       
       {showPlatform && (
         <div className="absolute -right-2 -top-1">
-          <PlatformIndicator platform={platform} />
+          <PlatformIndicator 
+            platform={platform} 
+            size={avatarSize === 'lg' || avatarSize === 'xl' ? 'sm' : 'xs'} 
+          />
         </div>
       )}
 
@@ -63,3 +79,4 @@ export const LeadAvatar = ({
     </div>
   );
 };
+
