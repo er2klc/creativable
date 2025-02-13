@@ -168,11 +168,12 @@ export const TimelineItemCard = ({
     // Für phase_change und andere Typen
     return (
       <div className="relative group">
-        {/* Wenn ein Emoji in den Metadaten vorhanden ist, zeigen wir es am Anfang an */}
-        {metadata?.emoji && (
-          <span className="mr-2">{metadata.emoji}</span>
-        )}
-        <div className="whitespace-pre-wrap break-words inline">{content}</div>
+        <div className="flex items-center">
+          {metadata?.emoji && (
+            <span className="mr-2">{metadata.emoji}</span>
+          )}
+          <div className="whitespace-pre-wrap break-words">{content}</div>
+        </div>
         {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
     );
