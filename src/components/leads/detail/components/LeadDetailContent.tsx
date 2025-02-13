@@ -3,10 +3,10 @@ import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "../LeadInfoCard";
 import { CompactPhaseSelector } from "../CompactPhaseSelector";
-import { LeadTimeline } from "../LeadTimeline";
 import { ContactFieldManager } from "../contact-info/ContactFieldManager";
 import { LeadWithRelations } from "@/types/leads";
 import { LeadDetailTabs } from "../LeadDetailTabs";
+import { LeadTimeline } from "../LeadTimeline";
 import { LeadSummary } from "../LeadSummary";
 
 interface LeadDetailContentProps {
@@ -36,7 +36,8 @@ export const LeadDetailContent = ({
   console.log('LeadDetailContent rendering with lead:', {
     id: lead.id,
     phase_id: lead.phase_id,
-    status: lead.status
+    status: lead.status,
+    timestamp: new Date().toISOString()
   });
 
   return (
@@ -52,7 +53,7 @@ export const LeadDetailContent = ({
           )}
           
           {/* AI Analysis Section */}
-          <div className="bg-white rounded-lg shadow-sm p-4">
+          <div className="w-full bg-white p-4 rounded-lg shadow-sm">
             <LeadSummary lead={lead} />
           </div>
           
