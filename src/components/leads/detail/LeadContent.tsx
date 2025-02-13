@@ -1,17 +1,14 @@
-import { Bot } from "lucide-react";
+
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "./LeadInfoCard";
 import { TaskList } from "./TaskList";
 import { NoteList } from "./NoteList";
-import { LeadSummary } from "./LeadSummary";
 import { LeadMessages } from "./LeadMessages";
 import { CompactPhaseSelector } from "./CompactPhaseSelector";
 import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { LeadWithRelations } from "@/types/leads";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface LeadContentProps {
   lead: LeadWithRelations;
@@ -34,16 +31,6 @@ export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadCon
             onUpdateLead={onUpdateLead}
           />
         )}
-        
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <Bot className="h-5 w-5" />
-            <h3 className="text-lg font-semibold">
-              {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-            </h3>
-          </div>
-          <LeadSummary lead={lead} />
-        </div>
         
         <LeadInfoCard 
           lead={lead} 

@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
@@ -5,6 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ChevronDown } from "lucide-react";
 import { usePipelineManagement } from "./hooks/usePipelineManagement";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useSettings } from "@/hooks/use-settings";
 
 interface CompactPhaseSelectorProps {
   lead: Tables<"leads">;
@@ -16,6 +21,8 @@ export function CompactPhaseSelector({
   onUpdateLead
 }: CompactPhaseSelectorProps) {
   const session = useSession();
+  const { settings } = useSettings();
+  const [phaseAnalysisExists, setPhaseAnalysisExists] = useState<{[key: string]: boolean}>({});
   const {
     selectedPipelineId,
     setSelectedPipelineId,
@@ -23,6 +30,28 @@ export function CompactPhaseSelector({
     phases,
     updateLeadPipeline
   } = usePipelineManagement(lead.pipeline_id);
+
+  // Prüfe ob eine Analyse für eine Phase existiert
+  const checkExistingAnalysis = async (phaseId: string) => {
+    const { data } = await supabase
+      .from('phase_based_analyses')
+      .select('id')
+      .eq('lead_id', lead.id)
+      .eq('phase_id', phaseId)
+      .single();
+    
+    setPhaseAnalysisExists(prev => ({
+      ...prev,
+      [phaseId]: !!data
+    }));
+  };
+
+  // Überprüfe alle Phasen beim Laden
+  useEffect(() => {
+    phases.forEach(phase => {
+      checkExistingAnalysis(phase.id);
+    });
+  }, [phases, lead.id]);
 
   // Only show if lead has no status or status is 'lead'
   if (lead.status && lead.status !== 'lead') {
@@ -35,6 +64,17 @@ export function CompactPhaseSelector({
 
   const handlePhaseChange = async (phaseId: string) => {
     if (!session?.user?.id || !selectedPipelineId) return;
+    
+    // Prüfe ob bereits eine Analyse existiert
+    const exists = phaseAnalysisExists[phaseId];
+    if (exists) {
+      toast.info(
+        settings?.language === "en"
+          ? "An analysis for this phase already exists"
+          : "Für diese Phase existiert bereits eine Analyse"
+      );
+      return;
+    }
     
     // Don't update if the phase hasn't changed
     if (phaseId === lead.phase_id && selectedPipelineId === lead.pipeline_id) {
@@ -73,6 +113,7 @@ export function CompactPhaseSelector({
           {phases.map((phase, index) => {
             const isActive = phase.id === lead.phase_id && selectedPipelineId === lead.pipeline_id;
             const isPast = phase.order_index < (currentPhase?.order_index || 0) && selectedPipelineId === lead.pipeline_id;
+            const hasAnalysis = phaseAnalysisExists[phase.id];
             
             return (
               <div 
@@ -85,8 +126,10 @@ export function CompactPhaseSelector({
                     "w-8 h-8 rounded-full flex items-center justify-center transition-all relative",
                     "hover:scale-110 transform duration-200 ease-in-out mb-2",
                     isActive ? "bg-blue-600 text-white" :
-                    isPast ? "bg-blue-200" : "bg-white border-2 border-gray-200"
+                    isPast ? "bg-blue-200" : "bg-white border-2 border-gray-200",
+                    hasAnalysis && "ring-2 ring-purple-500"
                   )}
+                  title={hasAnalysis ? (settings?.language === "en" ? "Analysis exists" : "Analyse existiert") : ""}
                 >
                   {index + 1}
                 </button>
