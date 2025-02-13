@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { LeadAvatar } from "./LeadAvatar";
 import { LeadSocialStats } from "./LeadSocialStats";
@@ -95,13 +96,14 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4">
         <LeadAvatar
           imageUrl={lead.social_media_profile_image_url}
           name={displayName}
           platform={lead.platform}
+          avatarSize="xl"
         />
-        <div className="flex-1">
+        <div className="flex-1 pt-2">
           <div className="font-medium text-lg flex items-center justify-between">
             <span>{displayName}</span>
             {canScan && (

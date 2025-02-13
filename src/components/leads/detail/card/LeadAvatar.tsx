@@ -35,6 +35,17 @@ export const LeadAvatar = ({
     'xl': 'h-24 w-24'
   };
 
+  const getPlatformSize = (avatarSize: string): 'xs' | 'sm' | 'md' => {
+    switch (avatarSize) {
+      case 'xl':
+        return 'md';
+      case 'lg':
+        return 'sm';
+      default:
+        return 'xs';
+    }
+  };
+
   return (
     <div className="relative inline-flex">
       <Avatar className={cn(
@@ -49,19 +60,17 @@ export const LeadAvatar = ({
             className="object-cover"
           />
         ) : (
-          <AvatarFallback className="bg-primary/10 text-xs font-semibold">
+          <AvatarFallback className="bg-primary/10 text-sm font-semibold">
             {initials}
           </AvatarFallback>
         )}
       </Avatar>
       
       {showPlatform && (
-        <div className="absolute -right-2 -top-1">
-          <PlatformIndicator 
-            platform={platform} 
-            size={avatarSize === 'lg' || avatarSize === 'xl' ? 'sm' : 'xs'} 
-          />
-        </div>
+        <PlatformIndicator 
+          platform={platform} 
+          size={getPlatformSize(avatarSize)} 
+        />
       )}
 
       {isVerified && (
@@ -79,4 +88,3 @@ export const LeadAvatar = ({
     </div>
   );
 };
-

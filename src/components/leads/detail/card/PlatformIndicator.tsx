@@ -42,15 +42,15 @@ export const PlatformIndicator = ({
   };
 
   const sizeClasses = {
-    'xs': 'w-6 h-6 -right-1 -top-1',
-    'sm': 'w-8 h-8 -right-2 -top-2',
-    'md': 'w-10 h-10 -right-3 -top-3'
+    'xs': 'w-5 h-5 -right-1 -top-1',
+    'sm': 'w-6 h-6 -right-1 -top-1',
+    'md': 'w-8 h-8 -right-2 -top-2'
   };
 
   const iconSizes = {
-    'xs': 'h-4 w-4',
-    'sm': 'h-5 w-5',
-    'md': 'h-6 w-6'
+    'xs': 'h-3 w-3',
+    'sm': 'h-3.5 w-3.5',
+    'md': 'h-4 w-4'
   };
 
   return (
@@ -65,4 +65,3 @@ export const PlatformIndicator = ({
     </div>
   );
 };
-
