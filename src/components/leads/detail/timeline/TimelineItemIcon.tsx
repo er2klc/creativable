@@ -1,4 +1,3 @@
-
 import { 
   MessageSquare, 
   CheckSquare, 
@@ -21,6 +20,7 @@ import {
   Heart,
   Clock,
   ThumbsDown,
+  Bot,
   Youtube,
   Video,
   Eye
@@ -77,6 +77,11 @@ export const TimelineItemIcon = ({
         case 'lead': return UserPlus;
         default: return ArrowUpCircle;
       }
+    }
+
+    // Handle phase analysis first
+    if (metadata?.type === 'phase_analysis') {
+      return Bot;
     }
 
     // Handle other types
@@ -137,6 +142,10 @@ export const TimelineItemIcon = ({
       }
     }
 
+    if (metadata?.type === 'phase_analysis') {
+      return 'bg-gradient-to-r from-blue-500 to-purple-500';
+    }
+
     switch (type) {
       case 'task':
         return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
@@ -171,4 +180,3 @@ export const TimelineItemIcon = ({
     </div>
   );
 };
-

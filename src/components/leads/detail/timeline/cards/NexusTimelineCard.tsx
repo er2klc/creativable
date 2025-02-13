@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { Bot, Copy, ThumbsUp, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { Bot, Copy, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,6 @@ interface NexusTimelineCardProps {
 export const NexusTimelineCard = ({ 
   content, 
   metadata, 
-  onDelete,
   onRegenerate,
   isRegenerating 
 }: NexusTimelineCardProps) => {
@@ -65,92 +64,73 @@ export const NexusTimelineCard = ({
   const displayContent = isExpanded ? content : content.slice(0, maxPreviewLength) + (shouldTruncate ? '...' : '');
 
   return (
-    <div className={cn(
-      "rounded-lg p-4 space-y-2 relative",
-      "before:absolute before:inset-0 before:rounded-lg before:p-[1px]",
-      "before:bg-gradient-to-r before:from-blue-500 before:to-purple-500",
-      "before:-z-10",
-      "after:absolute after:inset-[1px] after:rounded-lg",
-      "after:bg-background after:-z-10"
-    )}>
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Bot className="h-4 w-4" />
-          <span>Nexus AI</span>
-          {metadata.phase?.name && (
-            <>
-              <span>•</span>
-              <span>{metadata.phase.name}</span>
-            </>
-          )}
-          {metadata.completed && (
-            <>
-              <span>•</span>
-              <span className="text-green-500">
-                {settings?.language === "en" ? "Completed" : "Abgeschlossen"}
-              </span>
-            </>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {onRegenerate && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={onRegenerate}
-              disabled={isRegenerating}
-            >
-              <RefreshCw className={cn("h-4 w-4", isRegenerating && "animate-spin")} />
+    <div className="rounded-lg relative">
+      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500" />
+      <div className="relative m-[1px] bg-white rounded-[7px] p-4 space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Bot className="h-4 w-4" />
+            <span>Nexus AI</span>
+            {metadata.phase?.name && (
+              <>
+                <span>•</span>
+                <span>{metadata.phase.name}</span>
+              </>
+            )}
+            {metadata.completed && (
+              <>
+                <span>•</span>
+                <span className="text-green-500">
+                  {settings?.language === "en" ? "Completed" : "Abgeschlossen"}
+                </span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            {onRegenerate && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onRegenerate}
+                disabled={isRegenerating}
+              >
+                <RefreshCw className={cn("h-4 w-4", isRegenerating && "animate-spin")} />
+              </Button>
+            )}
+            <Button variant="ghost" size="icon" onClick={copyToClipboard}>
+              <Copy className="h-4 w-4" />
             </Button>
-          )}
-          <Button variant="ghost" size="icon" onClick={copyToClipboard}>
-            <Copy className="h-4 w-4" />
-          </Button>
-          {onDelete && (
-            <Button variant="ghost" size="icon" onClick={onDelete}>
-              <ThumbsUp className="h-4 w-4" />
-            </Button>
-          )}
+          </div>
         </div>
-      </div>
 
-      <div className="prose prose-sm max-w-none dark:prose-invert">
-        <ReactMarkdown>{displayContent}</ReactMarkdown>
-      </div>
+        <div className="prose prose-sm max-w-none dark:prose-invert">
+          <ReactMarkdown>{displayContent}</ReactMarkdown>
+        </div>
 
-      {shouldTruncate && (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="w-full mt-2"
-        >
-          {isExpanded ? (
-            <>
-              <ChevronUp className="h-4 w-4 mr-2" />
-              {settings?.language === "en" ? "Show less" : "Weniger anzeigen"}
-            </>
-          ) : (
-            <>
-              <ChevronDown className="h-4 w-4 mr-2" />
-              {settings?.language === "en" ? "Show more" : "Mehr anzeigen"}
-            </>
-          )}
-        </Button>
-      )}
-
-      {metadata.analysis && (
-        <div className="mt-4 pt-4 border-t">
+        {shouldTruncate && (
           <Button
             variant="ghost"
-            className="text-xs w-full justify-start"
+            size="sm"
             onClick={() => setIsExpanded(!isExpanded)}
+            className="w-full"
           >
-            {isExpanded ? "Analyse ausblenden" : "Analyse anzeigen"}
+            {isExpanded ? (
+              <>
+                <ChevronUp className="h-4 w-4 mr-2" />
+                {settings?.language === "en" ? "Show less" : "Weniger anzeigen"}
+              </>
+            ) : (
+              <>
+                <ChevronDown className="h-4 w-4 mr-2" />
+                {settings?.language === "en" ? "Show more" : "Mehr anzeigen"}
+              </>
+            )}
           </Button>
-          
-          {isExpanded && (
-            <div className="mt-2 space-y-2 text-xs text-muted-foreground">
+        )}
+
+        {metadata.analysis && (
+          <div className="pt-4 border-t">
+            <div className="space-y-2 text-xs text-muted-foreground">
               {metadata.analysis.social_media_bio && (
                 <div>
                   <strong>Bio:</strong> {metadata.analysis.social_media_bio}
@@ -172,9 +152,9 @@ export const NexusTimelineCard = ({
                 </div>
               )}
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
