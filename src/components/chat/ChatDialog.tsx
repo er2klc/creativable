@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRef } from "react";
 import { useChatContext } from "@/hooks/use-chat-context";
@@ -76,9 +77,14 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   if (!isReady) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className={isMobile ? "w-full h-full max-w-full m-0 p-0 rounded-none" : "sm:max-w-[500px]"}>
+        <DialogContent 
+          className={cn(
+            "p-0 gap-0 bg-background",
+            isMobile ? "w-full h-[100dvh] max-w-full m-0 rounded-none" : "sm:max-w-[700px] h-[80vh]"
+          )}
+        >
           <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
-          <div className="flex items-center justify-center h-[600px]">
+          <div className="flex items-center justify-center h-full">
             <p className="text-muted-foreground">Initialisiere Chat...</p>
           </div>
         </DialogContent>
@@ -98,7 +104,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         );
       case 'template_selection':
         return (
-          <div className="h-[120px] min-h-[120px] border-t">
+          <div className="min-h-[120px] border-t bg-background">
             <MessageTemplateSelector
               onSelect={handleTemplateSelection}
               selectedType={selectedTemplateType}
@@ -109,7 +115,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         const templateMessage = generateTemplateMessage();
         if (templateMessage) {
           return (
-            <div className="h-[120px] min-h-[120px] border-t">
+            <div className="min-h-[120px] border-t bg-background">
               <MessagePreview
                 message={templateMessage}
                 onEdit={() => setFlowState('template_selection')}
@@ -133,23 +139,28 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className={cn(
-          isMobile ? "w-full h-full max-w-full m-0 p-0 rounded-none" : "sm:max-w-[500px]",
+          "p-0 gap-0 bg-background",
+          isMobile 
+            ? "w-full h-[100dvh] max-w-full m-0 rounded-none" 
+            : "sm:max-w-[700px] h-[80vh]",
           "flex flex-col"
         )}
         onClick={(e) => e.stopPropagation()} 
         hideClose
       >
         <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
-        <div className="flex flex-col flex-1 min-h-0">
-          <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex flex-col flex-1 min-h-0 h-full">
+          <div className="flex-1 min-h-0 overflow-hidden relative">
             <ChatMessages messages={messages} scrollRef={scrollRef} />
           </div>
           {renderFlowContent()}
-          <ChatInput 
-            input={input}
-            handleInputChange={handleInputChange}
-            handleSubmit={handleSubmit}
-          />
+          <div className="sticky bottom-0 bg-background border-t pt-4 pb-4 px-4">
+            <ChatInput 
+              input={input}
+              handleInputChange={handleInputChange}
+              handleSubmit={handleSubmit}
+            />
+          </div>
         </div>
       </DialogContent>
     </Dialog>

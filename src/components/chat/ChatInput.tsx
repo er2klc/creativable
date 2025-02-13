@@ -11,7 +11,7 @@ interface ChatInputProps {
 
 export const ChatInput = ({ input, handleInputChange, handleSubmit }: ChatInputProps) => {
   return (
-    <form onSubmit={handleSubmit} className="flex items-center gap-2 mt-4">
+    <form onSubmit={handleSubmit} className="flex items-center gap-2">
       <Input
         placeholder="Schreibe eine Nachricht..."
         value={input}
