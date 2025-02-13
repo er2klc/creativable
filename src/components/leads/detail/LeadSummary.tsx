@@ -31,7 +31,8 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       console.log('Generating analysis for:', {
         leadId: lead.id,
         phaseId: lead.phase_id,
-        userId: user.id
+        userId: user.id,
+        timestamp: new Date().toISOString()
       });
 
       const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
@@ -43,12 +44,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       });
 
       if (error) {
-        // Wenn es ein Konflikt ist (409), versuchen wir die existierende Analyse zu laden
-        if (error.status === 409) {
-          console.log('Conflict detected, loading existing analysis');
-          await loadLatestAnalysis();
-          return;
-        }
+        console.error('Error from edge function:', error);
         throw error;
       }
       
@@ -57,6 +53,11 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         toast.error(data.error);
         return;
       }
+
+      console.log('Analysis generated successfully:', {
+        analysisId: data.analysis?.id,
+        timestamp: new Date().toISOString()
+      });
 
       setLatestAnalysis(data.analysis);
       toast.success(
@@ -80,7 +81,8 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     try {
       console.log('Loading latest analysis for:', {
         leadId: lead.id,
-        phaseId: lead.phase_id
+        phaseId: lead.phase_id,
+        timestamp: new Date().toISOString()
       });
 
       const { data, error } = await supabase
@@ -97,13 +99,13 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         throw error;
       }
 
-      console.log('Latest analysis data:', data);
+      console.log('Latest analysis data:', {
+        hasData: !!data,
+        analysisId: data?.id,
+        timestamp: new Date().toISOString()
+      });
       
-      if (data) {
-        setLatestAnalysis(data);
-      } else {
-        setLatestAnalysis(null);
-      }
+      setLatestAnalysis(data);
     } catch (error) {
       console.error("Error loading analysis:", error);
       setLatestAnalysis(null);
@@ -113,16 +115,25 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   useEffect(() => {
     console.log('LeadSummary useEffect triggered with:', {
       leadId: lead.id,
-      phaseId: lead.phase_id
+      phaseId: lead.phase_id,
+      timestamp: new Date().toISOString()
     });
     loadLatestAnalysis();
   }, [lead.id, lead.phase_id]);
 
-  // Wenn keine Analyse existiert, zeigen wir den Button an
+  // Render logging
+  console.log('LeadSummary render state:', {
+    hasAnalysis: !!latestAnalysis,
+    isLoading,
+    leadId: lead.id,
+    phaseId: lead.phase_id,
+    timestamp: new Date().toISOString()
+  });
+
   if (!latestAnalysis) {
     console.log('No analysis found, showing analysis button');
     return (
-      <div className="w-full">
+      <div className="w-full bg-white p-4 rounded-lg shadow-sm">
         <PhaseAnalysisButton 
           isLoading={isLoading} 
           leadId={lead.id} 

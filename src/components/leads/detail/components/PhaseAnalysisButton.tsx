@@ -25,10 +25,16 @@ export function PhaseAnalysisButton({
 
   useEffect(() => {
     const checkAnalysisExists = async () => {
+      if (!leadId || !phaseId) {
+        console.log('Missing required IDs:', { leadId, phaseId });
+        return;
+      }
+
       try {
-        console.log('Checking if analysis exists for:', {
+        console.log('Checking analysis existence for:', {
           leadId,
-          phaseId
+          phaseId,
+          timestamp: new Date().toISOString()
         });
 
         setCheckingAnalysis(true);
@@ -44,7 +50,12 @@ export function PhaseAnalysisButton({
           throw error;
         }
 
-        console.log('Analysis check result:', { exists: !!data });
+        console.log('Analysis check result:', { 
+          exists: !!data,
+          data,
+          timestamp: new Date().toISOString()
+        });
+        
         setAnalysisExists(!!data);
       } catch (error) {
         console.error('Error checking analysis:', error);
@@ -53,26 +64,34 @@ export function PhaseAnalysisButton({
             ? "Error checking analysis status" 
             : "Fehler beim Prüfen des Analysestatus"
         );
-        // Bei einem Fehler setzen wir analysisExists auf false,
-        // damit der Button trotzdem angezeigt wird
         setAnalysisExists(false);
       } finally {
         setCheckingAnalysis(false);
       }
     };
 
-    if (leadId && phaseId) {
-      checkAnalysisExists();
-    }
+    checkAnalysisExists();
   }, [leadId, phaseId, settings?.language]);
+
+  // Debug logging for render cycle
+  console.log('PhaseAnalysisButton render state:', {
+    leadId,
+    phaseId,
+    analysisExists,
+    checkingAnalysis,
+    isLoading,
+    timestamp: new Date().toISOString()
+  });
 
   // Wenn keine ID vorhanden ist, zeigen wir nichts an
   if (!leadId || !phaseId) {
+    console.log('No IDs available, not rendering button');
     return null;
   }
 
   // Wenn wir noch prüfen, zeigen wir den Button an, aber deaktiviert
   if (checkingAnalysis) {
+    console.log('Checking analysis, showing loading state');
     return (
       <Button
         disabled
@@ -86,9 +105,11 @@ export function PhaseAnalysisButton({
 
   // Wenn eine Analyse existiert, zeigen wir nichts an
   if (analysisExists) {
+    console.log('Analysis exists, not showing button');
     return null;
   }
 
+  console.log('Rendering generate analysis button');
   return (
     <Button
       onClick={onGenerateAnalysis}
