@@ -3492,6 +3492,30 @@ export type Database = {
             }
             Returns: unknown
           }
+      create_phase_analysis: {
+        Args: {
+          p_lead_id: string
+          p_phase_id: string
+          p_user_id: string
+          p_analysis_type: string
+          p_content: string
+          p_metadata: Json
+        }
+        Returns: {
+          action_items: Json | null
+          analysis_type: string
+          completed: boolean | null
+          completed_at: string | null
+          content: string
+          created_at: string | null
+          created_by: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          phase_id: string
+          recommendations: Json | null
+        }
+      }
       create_youtube_metadata: {
         Args: {
           title: string
