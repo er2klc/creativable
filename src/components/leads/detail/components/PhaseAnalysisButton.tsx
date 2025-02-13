@@ -73,7 +73,6 @@ export function PhaseAnalysisButton({
     checkAnalysisExists();
   }, [leadId, phaseId, settings?.language]);
 
-  // Debug logging for render cycle
   console.log('PhaseAnalysisButton render state:', {
     leadId,
     phaseId,
@@ -83,46 +82,30 @@ export function PhaseAnalysisButton({
     timestamp: new Date().toISOString()
   });
 
-  // Wenn keine ID vorhanden ist, zeigen wir nichts an
-  if (!leadId || !phaseId) {
-    console.log('No IDs available, not rendering button');
-    return null;
-  }
-
-  // Wenn wir noch prüfen, zeigen wir den Loading-Button
-  if (checkingAnalysis) {
-    console.log('Checking analysis, showing loading state');
-    return (
-      <Button
-        disabled
-        className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-      >
-        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-        {settings?.language === "en" ? "Checking..." : "Prüfe..."}
-      </Button>
-    );
-  }
-
-  // Wenn eine Analyse existiert, zeigen wir nichts an
-  if (analysisExists) {
-    console.log('Analysis exists, not showing button');
-    return null;
-  }
-
-  // Zeige den Generate-Button
-  console.log('Rendering generate analysis button');
   return (
-    <Button
-      onClick={onGenerateAnalysis}
-      disabled={isLoading}
-      className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
-    >
-      {isLoading ? (
-        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-      ) : (
-        <Bot className="h-4 w-4 mr-2" />
-      )}
-      {settings?.language === "en" ? "Generate AI Analysis" : "KI Analyse generieren"}
-    </Button>
+    <div className="w-full p-4 rounded-lg bg-white shadow-sm">
+      {checkingAnalysis ? (
+        <Button
+          disabled
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+        >
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          {settings?.language === "en" ? "Checking..." : "Prüfe..."}
+        </Button>
+      ) : (!analysisExists && (
+        <Button
+          onClick={onGenerateAnalysis}
+          disabled={isLoading}
+          className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+        >
+          {isLoading ? (
+            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+          ) : (
+            <Bot className="h-4 w-4 mr-2" />
+          )}
+          {settings?.language === "en" ? "Generate AI Analysis" : "KI Analyse generieren"}
+        </Button>
+      ))}
+    </div>
   );
 }

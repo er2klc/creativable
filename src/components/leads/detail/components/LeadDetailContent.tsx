@@ -53,9 +53,7 @@ export const LeadDetailContent = ({
           )}
           
           {/* AI Analysis Section */}
-          <div className="w-full bg-white p-4 rounded-lg shadow-sm">
-            <LeadSummary lead={lead} />
-          </div>
+          <LeadSummary lead={lead} />
           
           <LeadInfoCard 
             lead={lead} 

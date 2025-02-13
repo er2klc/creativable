@@ -124,22 +124,23 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     loadLatestAnalysis();
   }, [lead.id, lead.phase_id]);
 
-  if (!lead?.id || !lead?.phase_id) {
-    console.log('Missing required lead data');
-    return null;
-  }
+  console.log('LeadSummary render state:', {
+    hasLead: !!lead?.id,
+    hasPhase: !!lead?.phase_id,
+    hasLatestAnalysis: !!latestAnalysis,
+    isLoading,
+    timestamp: new Date().toISOString()
+  });
 
   // Wenn keine Analyse existiert, zeigen wir den Button an
   if (!latestAnalysis) {
     return (
-      <div className="w-full bg-white">
-        <PhaseAnalysisButton 
-          isLoading={isLoading} 
-          leadId={lead.id} 
-          phaseId={lead.phase_id} 
-          onGenerateAnalysis={generateAnalysis} 
-        />
-      </div>
+      <PhaseAnalysisButton 
+        isLoading={isLoading} 
+        leadId={lead?.id || ''} 
+        phaseId={lead?.phase_id || ''} 
+        onGenerateAnalysis={generateAnalysis} 
+      />
     );
   }
 
