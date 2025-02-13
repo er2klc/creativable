@@ -1,3 +1,4 @@
+
 import { TimelineItemType } from "./TimelineUtils";
 import { TimelineItemIcon } from "./TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
@@ -56,15 +57,26 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         {formatDateTime(item.timestamp, settings?.language)}
       </div>
       
-      <div className="flex gap-4 items-start group relative">
-        <TimelineItemIcon 
-          type={item.type} 
-          status={item.metadata?.status} 
-          platform={item.platform}
-          metadata={item.metadata}
-        />
-        <div className="absolute left-8 top-[1.1rem] w-4 h-0.5 bg-gray-400" />
-        {renderContent()}
+      <div className="relative">
+        <div className="flex items-start gap-6">
+          {/* Icon Container mit fester Breite */}
+          <div className="w-8 flex-shrink-0">
+            <TimelineItemIcon 
+              type={item.type} 
+              status={item.metadata?.status} 
+              platform={item.platform}
+              metadata={item.metadata}
+            />
+          </div>
+          
+          {/* Horizontale Linie mit korrigierter Position */}
+          <div className="absolute left-8 top-4 w-6 h-0.5 bg-gray-200" />
+          
+          {/* Content Container mit mehr Abstand */}
+          <div className="flex-1 min-w-0 pl-2">
+            {renderContent()}
+          </div>
+        </div>
       </div>
     </motion.div>
   );

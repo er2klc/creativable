@@ -1,3 +1,4 @@
+
 import { 
   MessageSquare, 
   CheckSquare, 
@@ -175,8 +176,9 @@ export const TimelineItemIcon = ({
      metadata.event_type === 'video_progress') ? 'h-5 w-5' : 'h-4 w-4';
 
   return (
-    <div className={`z-10 flex items-center justify-center w-8 h-8 rounded-full ${getIconColor()}`}>
-      <Icon className={`${iconSize} text-white`} />
+    <div className="z-10 flex items-center justify-center w-8 h-8 rounded-full relative">
+      <div className={`absolute inset-0 rounded-full ${getIconColor()}`} />
+      <Icon className={`${iconSize} text-white relative z-20`} />
     </div>
   );
 };
