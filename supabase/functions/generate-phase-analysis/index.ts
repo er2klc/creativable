@@ -34,6 +34,9 @@ serve(async (req) => {
         social_media_posts (
           *
         ),
+        linkedin_posts (
+          *
+        ),
         notes (
           *
         ),
@@ -60,35 +63,47 @@ serve(async (req) => {
 
     if (!phaseData) throw new Error('Phase rules not found');
 
+    // Prepare social media data
+    const instagramData = lead.apify_instagram_data || {};
+    const socialMediaPosts = lead.social_media_posts || [];
+    const linkedinPosts = lead.linkedin_posts || [];
+
     // Generate phase-specific prompt
-    let systemPrompt = `You are an AI assistant specialized in analyzing social media profiles and business opportunities. Format your response using markdown with sections. Include emojis where appropriate.
+    let systemPrompt = `Du bist ein KI-Assistent, der auf die Analyse von Social Media Profilen und Geschäftsmöglichkeiten spezialisiert ist. 
+Formatiere deine Antwort mit Markdown und nutze passende Emojis.
 
-Key sections to include:
-1. Profile Overview 📊
-2. Engagement Analysis 📈
-3. Business Potential 💼
-4. Recommended Approach 🎯
-5. Key Topics 💡
+Strukturiere die Analyse in folgende Abschnitte:
+1. Profil Übersicht 📊
+2. Engagement Analyse 📈
+3. Geschäftspotential 💼
+4. Empfohlene Vorgehensweise 🎯
+5. Wichtige Themen 💡
 
-Make it concise but informative.`;
+Halte die Analyse prägnant aber informativ. Verwende AUSSCHLIESSLICH Deutsch.`;
 
-    let userPrompt = `Analyze this profile for the ${phaseData.pipeline_phases.name} phase:
+    let userPrompt = `Analysiere dieses Profil für die Phase "${phaseData.pipeline_phases.name}":
       
-Social Media Profile:
-- Bio: ${lead.social_media_bio || 'Not provided'}
-- Followers: ${lead.social_media_followers || 'Unknown'}
-- Following: ${lead.social_media_following || 'Unknown'}
-- Engagement Rate: ${lead.social_media_engagement_rate || 'Unknown'}
-- Interests: ${lead.social_media_interests?.join(', ') || 'None specified'}
-- Industry: ${lead.industry || 'Not specified'}
-- Platform: ${lead.platform || 'Not specified'}
+Social Media Profil:
+- Bio: ${lead.social_media_bio || 'Nicht angegeben'}
+- Followers: ${lead.social_media_followers || instagramData.followersCount || 'Unbekannt'}
+- Following: ${lead.social_media_following || instagramData.followsCount || 'Unbekannt'}
+- Engagement Rate: ${lead.social_media_engagement_rate || 'Unbekannt'}
+- Interessen: ${lead.social_media_interests?.join(', ') || 'Keine angegeben'}
+- Branche: ${lead.industry || 'Nicht angegeben'}
+- Plattform: ${lead.platform || 'Nicht angegeben'}
 
-Recent Activity:
-${lead.notes?.map((note: any) => `- ${note.content}`).join('\n') || 'No recent activity'}
+Instagram Posts (${socialMediaPosts.length}):
+${socialMediaPosts.slice(0, 5).map((post: any) => `- ${post.content || 'Visueller Post'} (Likes: ${post.likes_count}, Kommentare: ${post.comments_count})`).join('\n')}
 
-Phase Context: ${phaseData.pipeline_phases.name}
+LinkedIn Posts (${linkedinPosts.length}):
+${linkedinPosts.slice(0, 5).map((post: any) => `- ${post.content || 'LinkedIn Update'} (Reaktionen: ${post.reactions?.count || 0})`).join('\n')}
 
-Provide a detailed analysis with actionable insights and clear recommendations.`;
+Letzte Aktivitäten:
+${lead.notes?.map((note: any) => `- ${note.content}`).join('\n') || 'Keine Aktivitäten'}
+
+Phasen-Kontext: ${phaseData.pipeline_phases.name}
+
+Erstelle eine detaillierte Analyse mit umsetzbaren Erkenntnissen und klaren Empfehlungen.`;
 
     // Generate analysis using OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -116,6 +131,25 @@ Provide a detailed analysis with actionable insights and clear recommendations.`
     const openAIData = await openAIResponse.json();
     const analysis = openAIData.choices[0].message.content;
 
+    // Create a note for the timeline
+    const { data: timelineNote, error: noteError } = await supabase
+      .from('notes')
+      .insert({
+        lead_id: leadId,
+        user_id: userId,
+        content: analysis,
+        metadata: {
+          type: 'phase_analysis',
+          phase: phaseData.pipeline_phases.name,
+          timestamp: new Date().toISOString(),
+          analysis_type: phaseData.action_type
+        }
+      })
+      .select()
+      .single();
+
+    if (noteError) throw noteError;
+
     // Save analysis to database
     const { data: savedAnalysis, error: analysisError } = await supabase
       .from('phase_based_analyses')
@@ -142,7 +176,8 @@ Provide a detailed analysis with actionable insights and clear recommendations.`
     return new Response(
       JSON.stringify({
         analysis: savedAnalysis,
-        message: "Phase analysis completed successfully"
+        timelineNote,
+        message: "Phasenanalyse erfolgreich erstellt"
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

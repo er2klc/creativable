@@ -66,8 +66,12 @@ export const NexusTimelineCard = ({
 
   return (
     <div className={cn(
-      "rounded-lg border bg-card p-4 space-y-2",
-      "hover:border-primary/20 transition-all"
+      "rounded-lg p-4 space-y-2 relative",
+      "before:absolute before:inset-0 before:rounded-lg before:p-[1px]",
+      "before:bg-gradient-to-r before:from-blue-500 before:to-purple-500",
+      "before:-z-10",
+      "after:absolute after:inset-[1px] after:rounded-lg",
+      "after:bg-background after:-z-10"
     )}>
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

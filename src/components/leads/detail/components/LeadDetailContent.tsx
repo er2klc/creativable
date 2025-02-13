@@ -1,8 +1,8 @@
+
 import { Bot } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "../LeadInfoCard";
-import { LeadSummary } from "../LeadSummary";
 import { CompactPhaseSelector } from "../CompactPhaseSelector";
 import { LeadTimeline } from "../LeadTimeline";
 import { ContactFieldManager } from "../contact-info/ContactFieldManager";
@@ -44,16 +44,6 @@ export const LeadDetailContent = ({
               onUpdateLead={onUpdateLead}
             />
           )}
-          
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              <h3 className="text-lg font-semibold">
-                {settings?.language === "en" ? "AI Summary" : "KI-Zusammenfassung"}
-              </h3>
-            </div>
-            <LeadSummary lead={lead} />
-          </div>
           
           <LeadInfoCard 
             lead={lead} 
