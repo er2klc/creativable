@@ -26,6 +26,31 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // Check if analysis already exists
+    const { data: existingAnalysis } = await supabase
+      .from('phase_based_analyses')
+      .select('id')
+      .eq('lead_id', leadId)
+      .eq('phase_id', phaseId)
+      .single();
+
+    if (existingAnalysis) {
+      return new Response(
+        JSON.stringify({ error: 'Analysis for this phase already exists' }),
+        { 
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    // Get business context from settings
+    const { data: settings } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+
     // Fetch lead data with all necessary information
     const { data: lead } = await supabase
       .from('leads')
@@ -49,7 +74,7 @@ serve(async (req) => {
 
     if (!lead) throw new Error('Lead not found');
 
-    // Get phase information and rules
+    // Get phase information
     const { data: phaseData } = await supabase
       .from('phase_rules')
       .select(`
@@ -63,34 +88,51 @@ serve(async (req) => {
 
     if (!phaseData) throw new Error('Phase rules not found');
 
-    // Prepare social media data
+    // Prepare social media insights
     const instagramData = lead.apify_instagram_data || {};
     const socialMediaPosts = lead.social_media_posts || [];
     const linkedinPosts = lead.linkedin_posts || [];
 
-    // Generate phase-specific prompt
-    let systemPrompt = `Du bist ein KI-Assistent, der auf die Analyse von Social Media Profilen und Geschäftsmöglichkeiten spezialisiert ist. 
-Formatiere deine Antwort mit Markdown und nutze passende Emojis.
+    // Create enhanced business context
+    const businessContext = {
+      companyName: settings?.company_name || '',
+      productsServices: settings?.products_services || '',
+      targetAudience: settings?.target_audience || '',
+      usp: settings?.usp || '',
+      businessDescription: settings?.business_description || ''
+    };
 
-Strukturiere die Analyse in folgende Abschnitte:
-1. Profil Übersicht 📊
-2. Engagement Analyse 📈
-3. Geschäftspotential 💼
-4. Empfohlene Vorgehensweise 🎯
-5. Wichtige Themen 💡
+    let systemPrompt = `Du bist ein hochspezialisierter Business Development Assistent für ${businessContext.companyName}. 
+Deine Aufgabe ist es, Social Media Profile zu analysieren und konkrete Handlungsempfehlungen zu geben.
 
-Halte die Analyse prägnant aber informativ. Verwende AUSSCHLIESSLICH Deutsch.`;
+Nutze diese Informationen über uns:
+🏢 Unternehmen: ${businessContext.businessDescription}
+🎯 Zielgruppe: ${businessContext.targetAudience}
+💫 USP: ${businessContext.usp}
+🛍️ Produkte/Services: ${businessContext.productsServices}
+
+Analysiere das Profil und erstelle einen strukturierten Bericht, der uns hilft, diesen Kontakt optimal anzusprechen.
+Formatiere die Ausgabe mit Markdown und passenden Emojis.
+
+Strukturiere die Analyse in:
+1. 👤 Profil & Reichweite
+2. 📊 Engagement & Aktivität
+3. 🎯 Relevanz für uns
+4. 💡 Ansprache-Strategie
+5. ⚡️ Quick-Wins & nächste Schritte`;
 
     let userPrompt = `Analysiere dieses Profil für die Phase "${phaseData.pipeline_phases.name}":
       
-Social Media Profil:
+Profil Basics:
+- Name: ${lead.name}
 - Bio: ${lead.social_media_bio || 'Nicht angegeben'}
 - Followers: ${lead.social_media_followers || instagramData.followersCount || 'Unbekannt'}
 - Following: ${lead.social_media_following || instagramData.followsCount || 'Unbekannt'}
 - Engagement Rate: ${lead.social_media_engagement_rate || 'Unbekannt'}
 - Interessen: ${lead.social_media_interests?.join(', ') || 'Keine angegeben'}
 - Branche: ${lead.industry || 'Nicht angegeben'}
-- Plattform: ${lead.platform || 'Nicht angegeben'}
+- Position: ${lead.position || 'Nicht angegeben'}
+- Unternehmen: ${lead.company_name || 'Nicht angegeben'}
 
 Instagram Posts (${socialMediaPosts.length}):
 ${socialMediaPosts.slice(0, 5).map((post: any) => `- ${post.content || 'Visueller Post'} (Likes: ${post.likes_count}, Kommentare: ${post.comments_count})`).join('\n')}
@@ -103,7 +145,7 @@ ${lead.notes?.map((note: any) => `- ${note.content}`).join('\n') || 'Keine Aktiv
 
 Phasen-Kontext: ${phaseData.pipeline_phases.name}
 
-Erstelle eine detaillierte Analyse mit umsetzbaren Erkenntnissen und klaren Empfehlungen.`;
+Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, umsetzbare Empfehlungen.`;
 
     // Generate analysis using OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -113,7 +155,7 @@ Erstelle eine detaillierte Analyse mit umsetzbaren Erkenntnissen und klaren Empf
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-4',
+        model: 'gpt-4-0125-preview',
         messages: [
           {
             role: 'system',
@@ -131,7 +173,7 @@ Erstelle eine detaillierte Analyse mit umsetzbaren Erkenntnissen und klaren Empf
     const openAIData = await openAIResponse.json();
     const analysis = openAIData.choices[0].message.content;
 
-    // Create a note for the timeline
+    // Create a note for the timeline with proper metadata
     const { data: timelineNote, error: noteError } = await supabase
       .from('notes')
       .insert({
@@ -140,9 +182,20 @@ Erstelle eine detaillierte Analyse mit umsetzbaren Erkenntnissen und klaren Empf
         content: analysis,
         metadata: {
           type: 'phase_analysis',
-          phase: phaseData.pipeline_phases.name,
+          phase: {
+            id: phaseId,
+            name: phaseData.pipeline_phases.name
+          },
           timestamp: new Date().toISOString(),
-          analysis_type: phaseData.action_type
+          analysis_type: phaseData.action_type,
+          analysis: {
+            social_media_bio: lead.social_media_bio,
+            hashtags: lead.social_media_posts?.[0]?.hashtags,
+            engagement_metrics: {
+              followers: lead.social_media_followers,
+              engagement_rate: lead.social_media_engagement_rate
+            }
+          }
         }
       })
       .select()
@@ -153,7 +206,7 @@ Erstelle eine detaillierte Analyse mit umsetzbaren Erkenntnissen und klaren Empf
     // Save analysis to database
     const { data: savedAnalysis, error: analysisError } = await supabase
       .from('phase_based_analyses')
-      .upsert({
+      .insert({
         lead_id: leadId,
         phase_id: phaseId,
         analysis_type: phaseData.action_type,
@@ -162,7 +215,8 @@ Erstelle eine detaillierte Analyse mit umsetzbaren Erkenntnissen und klaren Empf
           context: {
             phase_name: phaseData.pipeline_phases.name,
             generated_at: new Date().toISOString(),
-            user_id: userId
+            user_id: userId,
+            business_context: businessContext
           }
         },
         completed: true,

@@ -1,4 +1,3 @@
-
 import { useSettings } from "@/hooks/use-settings";
 import { NoteCard } from "./cards/NoteCard";
 import { TaskCard } from "./cards/TaskCard";
@@ -7,11 +6,13 @@ import { AppointmentCard } from "./cards/AppointmentCard";
 import { MetadataDisplay } from "./cards/MetadataDisplay";
 import { DeleteButton } from "./cards/DeleteButton";
 import { StatusCard } from "./cards/StatusCard";
+import { NexusTimelineCard } from "./cards/NexusTimelineCard";
 
 interface TimelineItemCardProps {
   type: string;
   content: string;
   metadata?: {
+    type?: string;
     dueDate?: string;
     fileName?: string;
     fileType?: string;
@@ -23,13 +24,24 @@ interface TimelineItemCardProps {
     updatedAt?: string;
     oldDate?: string;
     newDate?: string;
-    type?: string;
     oldStatus?: string;
     newStatus?: string;
     last_edited_at?: string;
     meetingType?: string;
     color?: string;
     timestamp?: string;
+    phase?: {
+      id: string;
+      name: string;
+    };
+    analysis?: {
+      social_media_bio?: string;
+      hashtags?: string[];
+      engagement_metrics?: {
+        followers?: number;
+        engagement_rate?: number;
+      };
+    };
   };
   status?: string;
   onDelete?: () => void;
@@ -49,6 +61,17 @@ export const TimelineItemCard = ({
   isCompleted,
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
+
+  // If this is a phase analysis, use the NexusTimelineCard
+  if (metadata?.type === 'phase_analysis') {
+    return (
+      <NexusTimelineCard
+        content={content}
+        metadata={metadata}
+        onDelete={onDelete}
+      />
+    );
+  }
 
   const getBorderColor = () => {
     // Debugging für Statusänderungen
