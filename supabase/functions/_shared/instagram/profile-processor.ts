@@ -1,3 +1,4 @@
+
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { InstagramProfile } from '../types/instagram.ts';
 
@@ -6,15 +7,21 @@ export async function processInstagramProfile(
   leadId: string,
   supabaseClient: ReturnType<typeof createClient>
 ): Promise<void> {
-  console.log('Processing profile data:', { leadId, username: profile.username });
-
-  // Calculate engagement metrics
-  const allHashtags = new Set<string>();
-  profile.latestPosts?.forEach((post) => {
-    post.hashtags?.forEach((tag) => allHashtags.add(tag));
+  console.log('Processing profile data:', { 
+    leadId, 
+    username: profile.username,
+    isPrivate: profile.private 
   });
 
-  const engagementRate = profile.followersCount ? 
+  // Calculate engagement metrics only for public profiles
+  const allHashtags = new Set<string>();
+  if (!profile.private && profile.latestPosts) {
+    profile.latestPosts.forEach((post) => {
+      post.hashtags?.forEach((tag) => allHashtags.add(tag));
+    });
+  }
+
+  const engagementRate = !profile.private && profile.followersCount ? 
     ((profile.latestPosts?.reduce((sum, post) => 
       sum + (parseInt(post.likesCount as string) || 0) + (parseInt(post.commentsCount as string) || 0), 0) / 
       (profile.latestPosts?.length || 1)) / parseInt(profile.followersCount as string))
@@ -64,14 +71,18 @@ export async function processInstagramProfile(
       social_media_following: parseInt(profile.followsCount as string) || 0,
       social_media_engagement_rate: engagementRate,
       social_media_profile_image_url: newProfileImageUrl,
-      apify_instagram_data: profile.latestPosts, // Updated from social_media_posts
       social_media_verified: profile.verified,
+      social_media_is_private: profile.private,
+      apify_instagram_data: profile.private ? [] : profile.latestPosts,
       social_media_categories: profile.businessCategoryName ? [profile.businessCategoryName] : null,
       social_media_interests: Array.from(allHashtags),
       last_social_media_scan: new Date().toISOString()
     })
     .eq('id', leadId);
 
-  // Log completion
-  console.log('Profile processing completed successfully:', { leadId, username: profile.username });
+  console.log('Profile processing completed successfully:', { 
+    leadId, 
+    username: profile.username,
+    isPrivate: profile.private 
+  });
 }
