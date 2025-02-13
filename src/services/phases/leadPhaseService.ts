@@ -1,6 +1,50 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
+const getPhaseChangeMessage = (
+  oldPhaseName: string | null, 
+  newPhaseName: string
+): { content: string; emoji: string } => {
+  // Wenn keine alte Phase vorhanden ist (erster Eintrag)
+  if (!oldPhaseName) {
+    return {
+      content: `Neuer Kontakt startet in Phase "${newPhaseName}"`,
+      emoji: "👋"
+    };
+  }
+
+  // Standard-Emojis für verschiedene Phasen
+  const phaseEmojis: { [key: string]: string } = {
+    "Erstkontakt": "👋",
+    "Erstgespräch": "🗣️",
+    "Angebot": "📝",
+    "Verhandlung": "🤝",
+    "Abschluss": "🎉",
+    "Follow Up": "📞",
+    "Onboarding": "🚀",
+    "Nachfassen": "✍️"
+  };
+
+  // Emoji für die neue Phase bestimmen
+  const emoji = phaseEmojis[newPhaseName] || "✨";
+
+  // Bewegungsrichtung ermitteln durch Vergleich der Phasennamen
+  // (Dies ist nur ein Beispiel - Sie müssten die tatsächliche Reihenfolge Ihrer Phasen kennen)
+  const isForward = true; // TODO: Implementieren Sie hier Ihre Logik für die Richtung
+
+  if (isForward) {
+    return {
+      content: `Weiter zu Phase "${newPhaseName}"`,
+      emoji
+    };
+  } else {
+    return {
+      content: `Zurück zu Phase "${newPhaseName}"`,
+      emoji
+    };
+  }
+};
+
 export const updateLeadPhase = async (
   leadId: string,
   phaseId: string,
@@ -48,17 +92,20 @@ export const updateLeadPhase = async (
 
   // Nur eine neue Notiz erstellen, wenn keine kürzlich erstellte existiert
   if (!existingNotes || existingNotes.length === 0) {
+    const message = getPhaseChangeMessage(oldPhaseName, newPhaseName);
+    
     const { error: noteError } = await supabase
       .from("notes")
       .insert({
         lead_id: leadId,
         user_id: userId,
-        content: `Phase wurde von "${oldPhaseName}" zu "${newPhaseName}" geändert`,
+        content: `${message.emoji} ${message.content}`,
         metadata: {
           type: 'phase_change',
           oldPhase: oldPhaseName,
           newPhase: newPhaseName,
-          timestamp
+          timestamp,
+          emoji: message.emoji
         }
       });
 

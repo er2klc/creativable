@@ -1,3 +1,4 @@
+
 import { useSettings } from "@/hooks/use-settings";
 import { NoteCard } from "./cards/NoteCard";
 import { TaskCard } from "./cards/TaskCard";
@@ -42,6 +43,7 @@ interface TimelineItemCardProps {
         engagement_rate?: number;
       };
     };
+    emoji?: string;
   };
   status?: string;
   onDelete?: () => void;
@@ -163,9 +165,14 @@ export const TimelineItemCard = ({
       );
     }
 
+    // Für phase_change und andere Typen
     return (
       <div className="relative group">
-        <div className="whitespace-pre-wrap break-words">{content}</div>
+        {/* Wenn ein Emoji in den Metadaten vorhanden ist, zeigen wir es am Anfang an */}
+        {metadata?.emoji && (
+          <span className="mr-2">{metadata.emoji}</span>
+        )}
+        <div className="whitespace-pre-wrap break-words inline">{content}</div>
         {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
     );
