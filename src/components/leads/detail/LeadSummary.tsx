@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
 import { Bot, Loader2 } from "lucide-react";
@@ -8,124 +8,118 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { LeadSummaryProps } from "./types/summary";
-import { SummarySection } from "./components/SummarySection";
-import { SummaryControls } from "./components/SummaryControls";
+import { NexusTimelineCard } from "./timeline/cards/NexusTimelineCard";
 
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
-  const [summary, setSummary] = useState<string>("");
   const [isLoading, setIsLoading] = useState(false);
-  const [hasGenerated, setHasGenerated] = useState(false);
+  const [latestAnalysis, setLatestAnalysis] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    const loadExistingSummary = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("lead_summaries")
-          .select("*")
-          .eq("lead_id", lead.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Error loading summary:", error);
-          return;
-        }
-
-        if (data) {
-          setSummary(data.summary);
-          setHasGenerated(true);
-        }
-      } catch (error) {
-        console.error("Error in loadExistingSummary:", error);
-      }
-    };
-
-    loadExistingSummary();
-  }, [lead.id]);
-
-  const generateSummary = async () => {
+  const generateAnalysis = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-lead-summary', {
+      // Generiere die Analyse mit der neuen Edge Function
+      const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
         body: {
           leadId: lead.id,
-          language: settings?.language || 'de'
-        },
+          phaseId: lead.phase_id
+        }
       });
 
       if (error) throw error;
 
-      if (!data?.summary) {
-        throw new Error("Keine Zusammenfassung generiert");
-      }
-
-      setSummary(data.summary);
-      setHasGenerated(true);
+      setLatestAnalysis(data.analysis);
       setIsOpen(true);
+      
       toast.success(
         settings?.language === "en"
-          ? "Summary generated successfully"
-          : "Zusammenfassung erfolgreich generiert"
+          ? "Analysis generated successfully"
+          : "Analyse erfolgreich generiert"
       );
     } catch (error) {
-      console.error('Error generating summary:', error);
+      console.error("Error generating analysis:", error);
       toast.error(
         settings?.language === "en"
-          ? "Error generating summary"
-          : "Fehler beim Generieren der Zusammenfassung"
+          ? "Error generating analysis"
+          : "Fehler beim Generieren der Analyse"
       );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const getButtonText = () => {
-    if (isLoading) {
-      return settings?.language === "en" ? "Generating..." : "Generiere...";
-    }
-    if (!hasGenerated) {
-      return settings?.language === "en" ? "Generate AI Summary" : "KI Zusammenfassung generieren";
-    }
-    if (!isOpen) {
-      return settings?.language === "en" ? "View AI Summary" : "KI Zusammenfassung ansehen";
-    }
-    return settings?.language === "en" ? "Generate New Summary" : "KI Zusammenfassung neu generieren";
-  };
+  // Lade die letzte Analyse beim ersten Rendern
+  useEffect(() => {
+    const loadLatestAnalysis = async () => {
+      const { data } = await supabase
+        .from("phase_based_analyses")
+        .select("*")
+        .eq("lead_id", lead.id)
+        .eq("phase_id", lead.phase_id)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
 
-  const formatSummary = (text: string) => {
-    const sections = text.split(/\n\s*\n/).filter(Boolean);
-    return sections.map((section, index) => (
-      <SummarySection key={index} section={section} />
-    ));
-  };
+      if (data) {
+        setLatestAnalysis(data);
+        setIsOpen(true);
+      }
+    };
+
+    loadLatestAnalysis();
+  }, [lead.id, lead.phase_id]);
 
   return (
     <Card>
       <CardContent className="pt-6">
         <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-          <SummaryControls
-            isLoading={isLoading}
-            hasGenerated={hasGenerated}
-            isOpen={isOpen}
-            buttonText={getButtonText()}
-            onCollapse={() => setIsOpen(false)}
-            onGenerateClick={generateSummary}
-          />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Bot className="h-5 w-5" />
+              <span className="text-lg font-semibold">
+                {settings?.language === "en" ? "AI Analysis" : "KI Analyse"}
+              </span>
+            </div>
+            <Button
+              onClick={isOpen ? generateAnalysis : () => setIsOpen(true)}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Bot className="h-4 w-4 mr-2" />
+              )}
+              {getButtonText()}
+            </Button>
+          </div>
 
           <CollapsibleContent>
-            {hasGenerated ? (
-              <div className="space-y-4">
-                {formatSummary(summary)}
-              </div>
+            {latestAnalysis ? (
+              <NexusTimelineCard
+                content={latestAnalysis.content}
+                metadata={{
+                  type: 'phase_analysis',
+                  analysis_type: latestAnalysis.analysis_type,
+                  phase: latestAnalysis.metadata?.phase,
+                  timestamp: latestAnalysis.created_at,
+                  ...latestAnalysis.metadata
+                }}
+              />
             ) : (
               <Button
-                onClick={generateSummary}
+                onClick={generateAnalysis}
                 disabled={isLoading}
                 className="w-full mb-4 bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
               >
-                {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Bot className="h-4 w-4 mr-2" />}
-                {getButtonText()}
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Bot className="h-4 w-4 mr-2" />
+                )}
+                {settings?.language === "en"
+                  ? "Generate AI Analysis"
+                  : "KI Analyse generieren"}
               </Button>
             )}
           </CollapsibleContent>
@@ -133,5 +127,21 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       </CardContent>
     </Card>
   );
-}
 
+  function getButtonText() {
+    if (isLoading) {
+      return settings?.language === "en" ? "Generating..." : "Generiere...";
+    }
+    if (!latestAnalysis) {
+      return settings?.language === "en"
+        ? "Generate AI Analysis"
+        : "KI Analyse generieren";
+    }
+    if (!isOpen) {
+      return settings?.language === "en" ? "View AI Analysis" : "KI Analyse ansehen";
+    }
+    return settings?.language === "en"
+      ? "Generate New Analysis"
+      : "Neue Analyse generieren";
+  }
+}
