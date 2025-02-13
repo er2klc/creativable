@@ -1,3 +1,4 @@
+
 import { useSession } from "@supabase/auth-helpers-react";
 import { Tables } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
@@ -30,39 +31,6 @@ export function CompactPhaseSelector({
     updateLeadPipeline
   } = usePipelineManagement(lead.pipeline_id);
 
-  // Prüfe ob eine Analyse für eine Phase existiert
-  const checkExistingAnalysis = async (phaseId: string) => {
-    try {
-      const { data } = await supabase
-        .from('phase_based_analyses')
-        .select('id')
-        .eq('lead_id', lead.id)
-        .eq('phase_id', phaseId)
-        .maybeSingle(); // Geändert von .single() zu .maybeSingle()
-      
-      setPhaseAnalysisExists(prev => ({
-        ...prev,
-        [phaseId]: !!data
-      }));
-    } catch (error) {
-      console.error('Error checking phase analysis:', error);
-    }
-  };
-
-  // Überprüfe alle Phasen beim Laden
-  useEffect(() => {
-    if (phases && lead.id) {
-      phases.forEach(phase => {
-        checkExistingAnalysis(phase.id);
-      });
-    }
-  }, [phases, lead.id]);
-
-  // Only show if lead has no status or status is 'lead'
-  if (lead.status && lead.status !== 'lead') {
-    return null;
-  }
-
   const handlePipelineChange = (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
   };
@@ -70,42 +38,16 @@ export function CompactPhaseSelector({
   const handlePhaseChange = async (phaseId: string) => {
     if (!session?.user?.id || !selectedPipelineId) return;
     
-    try {
-      // Prüfe ob bereits eine Analyse existiert
-      const { data } = await supabase
-        .from('phase_based_analyses')
-        .select('id')
-        .eq('lead_id', lead.id)
-        .eq('phase_id', phaseId)
-        .maybeSingle(); // Auch hier .maybeSingle() verwenden
-      
-      if (data) {
-        toast.info(
-          settings?.language === "en"
-            ? "An analysis for this phase already exists"
-            : "Für diese Phase existiert bereits eine Analyse"
-        );
-        return;
-      }
-      
-      // Don't update if the phase hasn't changed
-      if (phaseId === lead.phase_id && selectedPipelineId === lead.pipeline_id) {
-        return;
-      }
-      
-      updateLeadPipeline.mutate({
-        leadId: lead.id,
-        pipelineId: selectedPipelineId,
-        phaseId: phaseId
-      });
-    } catch (error) {
-      console.error('Error handling phase change:', error);
-      toast.error(
-        settings?.language === "en"
-          ? "Error checking phase analysis"
-          : "Fehler beim Prüfen der Phasenanalyse"
-      );
+    // Don't update if the phase hasn't changed
+    if (phaseId === lead.phase_id && selectedPipelineId === lead.pipeline_id) {
+      return;
     }
+    
+    updateLeadPipeline.mutate({
+      leadId: lead.id,
+      pipelineId: selectedPipelineId,
+      phaseId: phaseId
+    });
   };
 
   const handleContactTypeChange = (type: string, checked: boolean) => {
