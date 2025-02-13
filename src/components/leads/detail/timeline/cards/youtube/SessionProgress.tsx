@@ -6,9 +6,8 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SessionProgressProps {
-  sessions: Session[];
-  language?: string;
   viewId?: string;
+  language?: string;
 }
 
 export const SessionProgress = ({ viewId, language }: SessionProgressProps) => {
@@ -70,11 +69,9 @@ export const SessionProgress = ({ viewId, language }: SessionProgressProps) => {
           <Progress 
             value={session.max_progress} 
             className="h-2.5 bg-gray-200" 
-            indicatorClassName="bg-green-500 transition-all duration-300"
           />
         </div>
       ))}
     </div>
   );
 };
-

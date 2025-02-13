@@ -78,6 +78,14 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   };
 
   const loadLatestAnalysis = async () => {
+    if (!lead?.id || !lead?.phase_id) {
+      console.log('Missing required IDs for analysis:', { 
+        leadId: lead?.id, 
+        phaseId: lead?.phase_id 
+      });
+      return;
+    }
+
     try {
       console.log('Loading latest analysis for:', {
         leadId: lead.id,
@@ -113,25 +121,15 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   };
 
   useEffect(() => {
-    console.log('LeadSummary useEffect triggered with:', {
-      leadId: lead.id,
-      phaseId: lead.phase_id,
-      timestamp: new Date().toISOString()
-    });
     loadLatestAnalysis();
   }, [lead.id, lead.phase_id]);
 
-  // Render logging
-  console.log('LeadSummary render state:', {
-    hasAnalysis: !!latestAnalysis,
-    isLoading,
-    leadId: lead.id,
-    phaseId: lead.phase_id,
-    timestamp: new Date().toISOString()
-  });
+  if (!lead?.id || !lead?.phase_id) {
+    console.log('Missing required lead data');
+    return null;
+  }
 
   if (!latestAnalysis) {
-    console.log('No analysis found, showing analysis button');
     return (
       <div className="w-full bg-white p-4 rounded-lg shadow-sm">
         <PhaseAnalysisButton 
