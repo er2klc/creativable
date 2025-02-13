@@ -78,14 +78,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   };
 
   const loadLatestAnalysis = async () => {
-    if (!lead?.id || !lead?.phase_id) {
-      console.log('Missing required IDs for analysis:', { 
-        leadId: lead?.id, 
-        phaseId: lead?.phase_id 
-      });
-      return;
-    }
-
     try {
       console.log('Loading latest analysis for:', {
         leadId: lead.id,
@@ -124,30 +116,15 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     loadLatestAnalysis();
   }, [lead.id, lead.phase_id]);
 
-  console.log('LeadSummary render state:', {
-    hasLead: !!lead?.id,
-    hasPhase: !!lead?.phase_id,
-    hasLatestAnalysis: !!latestAnalysis,
-    isLoading,
-    timestamp: new Date().toISOString()
-  });
-
-  if (!lead?.id || !lead?.phase_id) {
-    console.log('Missing required lead data');
-    return null;
-  }
-
   // Wenn keine Analyse existiert, zeigen wir den Button an
   if (!latestAnalysis) {
     return (
-      <div className="w-full">
-        <PhaseAnalysisButton 
-          isLoading={isLoading} 
-          leadId={lead.id} 
-          phaseId={lead.phase_id} 
-          onGenerateAnalysis={generateAnalysis} 
-        />
-      </div>
+      <PhaseAnalysisButton 
+        isLoading={isLoading} 
+        leadId={lead.id} 
+        phaseId={lead.phase_id} 
+        onGenerateAnalysis={generateAnalysis} 
+      />
     );
   }
 
