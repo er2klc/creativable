@@ -21,7 +21,7 @@ export function PhaseAnalysisButton({
 }: PhaseAnalysisButtonProps) {
   const { settings } = useSettings();
   const [analysisExists, setAnalysisExists] = useState(false);
-  const [checkingAnalysis, setCheckingAnalysis] = useState(true);
+  const [checkingAnalysis, setCheckingAnalysis] = useState(false);
 
   useEffect(() => {
     const checkAnalysisExists = async () => {
@@ -33,7 +33,7 @@ export function PhaseAnalysisButton({
 
         setCheckingAnalysis(true);
         const { data, error } = await supabase
-          .from('lead_phase_analyses') // Hier die neue Tabelle verwenden
+          .from('phase_based_analyses')
           .select('id')
           .eq('lead_id', leadId)
           .eq('phase_id', phaseId)
@@ -53,16 +53,39 @@ export function PhaseAnalysisButton({
             ? "Error checking analysis status" 
             : "Fehler beim Prüfen des Analysestatus"
         );
+        // Bei einem Fehler setzen wir analysisExists auf false,
+        // damit der Button trotzdem angezeigt wird
+        setAnalysisExists(false);
       } finally {
         setCheckingAnalysis(false);
       }
     };
 
-    checkAnalysisExists();
+    if (leadId && phaseId) {
+      checkAnalysisExists();
+    }
   }, [leadId, phaseId, settings?.language]);
 
-  // Wenn wir noch prüfen oder bereits eine Analyse existiert, zeigen wir nichts an
-  if (checkingAnalysis || analysisExists) {
+  // Wenn keine ID vorhanden ist, zeigen wir nichts an
+  if (!leadId || !phaseId) {
+    return null;
+  }
+
+  // Wenn wir noch prüfen, zeigen wir den Button an, aber deaktiviert
+  if (checkingAnalysis) {
+    return (
+      <Button
+        disabled
+        className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white"
+      >
+        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+        {settings?.language === "en" ? "Checking..." : "Prüfe..."}
+      </Button>
+    );
+  }
+
+  // Wenn eine Analyse existiert, zeigen wir nichts an
+  if (analysisExists) {
     return null;
   }
 

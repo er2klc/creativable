@@ -27,25 +27,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     if (isLoading) return;
 
     try {
-      // Zuerst prüfen wir, ob bereits eine Analyse existiert
-      const { data: existingAnalysis } = await supabase
-        .from("phase_based_analyses")
-        .select("*")
-        .eq("lead_id", lead.id)
-        .eq("phase_id", lead.phase_id)
-        .maybeSingle();
-
-      if (existingAnalysis) {
-        console.log('Analysis already exists, loading it:', existingAnalysis);
-        setLatestAnalysis(existingAnalysis);
-        toast.info(
-          settings?.language === "en"
-            ? "Analysis already exists for this phase"
-            : "Eine Analyse für diese Phase existiert bereits"
-        );
-        return;
-      }
-
       setIsLoading(true);
       console.log('Generating analysis for:', {
         leadId: lead.id,
