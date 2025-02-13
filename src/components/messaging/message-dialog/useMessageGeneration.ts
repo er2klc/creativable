@@ -9,6 +9,12 @@ export function useMessageGeneration() {
   const generateMessage = async (lead: Tables<"leads">) => {
     setIsGenerating(true);
     try {
+      const { data: phase } = await supabase
+        .from("pipeline_phases")
+        .select("name")
+        .eq("id", lead.phase_id)
+        .single();
+
       const { data, error } = await supabase.functions.invoke("generate-message", {
         body: {
           leadName: lead.name,
@@ -16,6 +22,8 @@ export function useMessageGeneration() {
           leadIndustry: lead.industry,
           companyName: lead.company_name,
           usp: lead.usp,
+          phaseName: phase?.name,
+          phaseId: lead.phase_id,
         },
       });
 

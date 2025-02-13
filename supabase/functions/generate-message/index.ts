@@ -14,6 +14,8 @@ interface MessageGenerationRequest {
   leadIndustry: string;
   companyName?: string;
   usp?: string;
+  phaseName?: string;
+  phaseId: string;
 }
 
 serve(async (req) => {
@@ -22,7 +24,7 @@ serve(async (req) => {
   }
 
   try {
-    const { leadName, leadPlatform, leadIndustry, companyName, usp } = await req.json() as MessageGenerationRequest
+    const { leadName, leadPlatform, leadIndustry, companyName, usp, phaseName, phaseId } = await req.json() as MessageGenerationRequest
 
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -35,6 +37,14 @@ serve(async (req) => {
       .eq('name', leadName)
       .single()
 
+    // Get existing messages to check interaction history
+    const { data: existingMessages } = await supabase
+      .from('notes')
+      .select('*')
+      .eq('lead_id', lead.id)
+      .eq('metadata->>type', 'nexus_ai_message')
+      .order('created_at', { ascending: false })
+
     // Analyze social media data
     const socialAnalysis = {
       platform: leadPlatform,
@@ -45,8 +55,37 @@ serve(async (req) => {
       industry: leadIndustry
     }
 
+    // Determine message type based on phase and history
+    const isFirstContact = !existingMessages || existingMessages.length === 0
+    const templateType = isFirstContact ? 'first_contact' : 'follow_up'
+    
+    // Phase-specific message guidelines
+    let phaseGuidelines = ""
+    if (phaseName) {
+      const normalizedPhaseName = phaseName.toLowerCase()
+      if (normalizedPhaseName.includes('neu') || normalizedPhaseName.includes('kontakt') || normalizedPhaseName.includes('phase 1')) {
+        phaseGuidelines = `
+- Focus on establishing initial connection
+- Show genuine interest in their work
+- Keep it light and engaging
+- Mention something specific from their profile`
+      } else if (normalizedPhaseName.includes('follow') || normalizedPhaseName.includes('phase 2')) {
+        phaseGuidelines = `
+- Reference previous interaction if any
+- Go deeper into their interests/work
+- Share relevant value proposition
+- Suggest specific next steps`
+      } else if (normalizedPhaseName.includes('präsentation') || normalizedPhaseName.includes('abschluss')) {
+        phaseGuidelines = `
+- Be more direct about collaboration
+- Reference specific opportunities
+- Include clear call-to-action
+- Suggest concrete meeting time/format`
+      }
+    }
+
     // Generate prompt based on analysis
-    const prompt = `Generate a personalized first contact message for ${leadName} with the following context:
+    const prompt = `Generate a personalized ${templateType === 'first_contact' ? 'first contact' : 'follow-up'} message for ${leadName} with the following context:
 
 Platform: ${socialAnalysis.platform}
 Industry: ${socialAnalysis.industry}
@@ -59,13 +98,18 @@ Company Info:
 ${companyName ? `Company: ${companyName}` : ''}
 ${usp ? `USP: ${usp}` : ''}
 
+Current Phase: ${phaseName || 'Unknown'}
+
 Guidelines:
 - Keep it concise (2-3 sentences)
 - Be personal and authentic
 - Reference their work or interests
 - Include a clear call-to-action
 - Follow ${socialAnalysis.platform} best practices
-- Don't be too sales-focused`
+- Don't be too sales-focused
+${phaseGuidelines}`
+
+    console.log("Generating message with prompt:", prompt)
 
     // Generate message using OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -108,7 +152,11 @@ Guidelines:
               engagement_rate: socialAnalysis.engagement_rate
             }
           },
-          template_type: 'first_contact',
+          template_type: templateType,
+          phase: {
+            id: phaseId,
+            name: phaseName
+          },
           generated_at: new Date().toISOString()
         }
       })
@@ -117,10 +165,13 @@ Guidelines:
 
     if (noteError) throw noteError
 
+    console.log("Generated message saved:", note)
+
     return new Response(
       JSON.stringify({
         message: generatedMessage,
-        note_id: note.id
+        note_id: note.id,
+        template_type: templateType
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
