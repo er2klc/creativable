@@ -101,7 +101,7 @@ export const LeadCardHeader = ({ lead }: LeadCardHeaderProps) => {
           imageUrl={lead.social_media_profile_image_url}
           name={displayName}
           platform={lead.platform}
-          avatarSize="xl"
+          avatarSize="lg"
         />
         <div className="flex-1 pt-2">
           <div className="font-medium text-lg flex items-center justify-between">
