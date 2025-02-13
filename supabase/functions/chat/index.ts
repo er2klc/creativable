@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import OpenAI from "https://esm.sh/openai@4.28.0";
@@ -194,61 +195,12 @@ serve(async (req) => {
         });
       }
     }
-    
-    // Add relevant contacts if found
-    if (relevantContacts?.length > 0) {
-      enhancedSystemMessage += "\nÄhnliche Kontakte:\n";
-      relevantContacts.forEach((contact: any) => {
-        enhancedSystemMessage += `- ${contact.name} (Ähnlichkeit: ${(contact.similarity * 100).toFixed(1)}%)\n`;
-        if (contact.matching_content.bio_match) {
-          enhancedSystemMessage += `  Bio: ${contact.matching_content.bio_match}\n`;
-        }
-      });
-    }
-
-    // Add other context
-    if (relevantContext?.length > 0) {
-      enhancedSystemMessage += "\nWeiterer relevanter Kontext:\n";
-      relevantContext.forEach((ctx: any) => {
-        enhancedSystemMessage += `[${ctx.source}] ${ctx.content}\n`;
-      });
-    }
-
-    console.log('Enhanced system message:', enhancedSystemMessage);
 
     // Update system message with context
     const enhancedMessages = [
       { role: 'system', content: enhancedSystemMessage },
       ...messages.slice(1)
     ];
-
-    // Get embedding for semantic search
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-ada-002",
-      input: lastUserMessage.content,
-    });
-    
-    const queryEmbedding = embeddingResponse.data[0].embedding;
-
-    // Search for relevant context with embedding
-    console.log('Searching for context with embedding');
-    const { data: relevantContext, error: searchError } = await supabase.rpc(
-      'match_combined_content',
-      {
-        query_embedding: JSON.stringify(queryEmbedding),
-        match_threshold: 0.7,
-        match_count: 5,
-        p_user_id: userId,
-        p_team_id: teamId
-      }
-    );
-
-    if (searchError) {
-      console.error('Error searching for context:', searchError);
-    } else {
-      console.log('Found relevant context:', relevantContext);
-    }
-    
 
     // Get response from OpenAI using the streaming API
     const stream = await openai.chat.completions.create({
