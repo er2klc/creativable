@@ -73,6 +73,7 @@ export function PhaseAnalysisButton({
     checkAnalysisExists();
   }, [leadId, phaseId, settings?.language]);
 
+  // Debug logging for render cycle
   console.log('PhaseAnalysisButton render state:', {
     leadId,
     phaseId,
@@ -82,8 +83,14 @@ export function PhaseAnalysisButton({
     timestamp: new Date().toISOString()
   });
 
+  // Wenn keine ID vorhanden ist, zeigen wir nichts an
+  if (!leadId || !phaseId) {
+    console.log('No IDs available, not rendering button');
+    return null;
+  }
+
   return (
-    <div className="w-full p-4 rounded-lg bg-white shadow-sm">
+    <div className="rounded-lg bg-white p-4 shadow-sm">
       {checkingAnalysis ? (
         <Button
           disabled
