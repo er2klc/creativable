@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
@@ -25,19 +26,23 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    console.log('Starting analysis generation for:', { leadId, phaseId, userId });
+
     // Check if analysis already exists
     const { data: existingAnalysis, error: existingError } = await supabase
-      .from('phase_based_analyses')
+      .from('lead_phase_analyses')
       .select('*')
       .eq('lead_id', leadId)
       .eq('phase_id', phaseId)
       .single();
 
     if (existingError && existingError.code !== 'PGRST116') {
+      console.error('Error checking existing analysis:', existingError);
       throw existingError;
     }
 
     if (existingAnalysis) {
+      console.log('Found existing analysis:', existingAnalysis.id);
       return new Response(
         JSON.stringify({
           analysis: existingAnalysis,
@@ -153,6 +158,8 @@ Phasen-Kontext: ${phaseData.pipeline_phases.name}
 
 Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, umsetzbare Empfehlungen.`;
 
+    console.log('Generating analysis with OpenAI...');
+
     // Generate analysis using OpenAI
     const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -173,8 +180,10 @@ Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, u
     const openAIData = await openAIResponse.json();
     const analysis = openAIData.choices[0].message.content;
 
-    // Use a transaction to ensure atomicity
-    const { data: savedAnalysis, error: transactionError } = await supabase.rpc(
+    console.log('Analysis generated, storing in database...');
+
+    // Store analysis using the new database function
+    const { data: savedAnalysis, error: saveError } = await supabase.rpc(
       'create_phase_analysis',
       {
         p_lead_id: leadId,
@@ -193,29 +202,12 @@ Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, u
       }
     );
 
-    if (transactionError) {
-      if (transactionError.code === '23505') {
-        // If it's a duplicate, fetch and return the existing analysis
-        const { data: existingAnalysis } = await supabase
-          .from('phase_based_analyses')
-          .select('*')
-          .eq('lead_id', leadId)
-          .eq('phase_id', phaseId)
-          .single();
-
-        return new Response(
-          JSON.stringify({
-            analysis: existingAnalysis,
-            message: "Existierende Analyse geladen"
-          }),
-          {
-            status: 200,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-          }
-        );
-      }
-      throw transactionError;
+    if (saveError) {
+      console.error('Error saving analysis:', saveError);
+      throw saveError;
     }
+
+    console.log('Analysis saved successfully:', savedAnalysis?.id);
 
     return new Response(
       JSON.stringify({
