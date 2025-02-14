@@ -20,19 +20,35 @@ export interface TeamCategory {
   }
 }
 
-export const useTeamCategories = (teamId?: string) => {
+export const useTeamCategories = (teamSlug?: string) => {
   const queryClient = useQueryClient();
 
-  // Query for fetching categories
+  // First fetch team by slug to get the correct UUID
+  const { data: team, isLoading: isTeamLoading } = useQuery({
+    queryKey: ['team', teamSlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamSlug)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!teamSlug,
+  });
+
+  // Then fetch categories using the team's UUID
   const { 
     data: categories = [], 
-    isLoading, 
+    isLoading: isCategoriesLoading, 
     error,
     refetch 
   } = useQuery({
-    queryKey: ['team-categories', teamId],
+    queryKey: ['team-categories', team?.id],
     queryFn: async () => {
-      if (!teamId) return [];
+      if (!team?.id) return [];
 
       const { data: categories, error: categoriesError } = await supabase
         .from('team_categories')
@@ -42,7 +58,7 @@ export const useTeamCategories = (teamId?: string) => {
             size
           )
         `)
-        .eq('team_id', teamId)
+        .eq('team_id', team.id)
         .order('order_index');
 
       if (categoriesError) throw categoriesError;
@@ -57,7 +73,7 @@ export const useTeamCategories = (teamId?: string) => {
         color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
       }));
     },
-    enabled: !!teamId,
+    enabled: !!team?.id,
   });
 
   // Create category mutation
@@ -67,7 +83,7 @@ export const useTeamCategories = (teamId?: string) => {
         .from('team_categories')
         .insert({
           ...newCategory,
-          team_id: teamId,
+          team_id: team?.id,
         })
         .select()
         .single();
@@ -76,7 +92,7 @@ export const useTeamCategories = (teamId?: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-categories', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['team-categories', team?.id] });
       toast.success("Kategorie erfolgreich erstellt");
     },
     onError: (error) => {
@@ -99,7 +115,7 @@ export const useTeamCategories = (teamId?: string) => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-categories', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['team-categories', team?.id] });
       toast.success("Kategorie erfolgreich aktualisiert");
     },
     onError: (error) => {
@@ -119,7 +135,7 @@ export const useTeamCategories = (teamId?: string) => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-categories', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['team-categories', team?.id] });
       toast.success("Kategorie erfolgreich gelöscht");
     },
     onError: (error) => {
@@ -130,7 +146,7 @@ export const useTeamCategories = (teamId?: string) => {
 
   // Real-time subscription
   useEffect(() => {
-    if (!teamId) return;
+    if (!team?.id) return;
 
     const channel = supabase
       .channel('team_categories_changes')
@@ -140,10 +156,10 @@ export const useTeamCategories = (teamId?: string) => {
           event: '*',
           schema: 'public',
           table: 'team_categories',
-          filter: `team_id=eq.${teamId}`
+          filter: `team_id=eq.${team.id}`
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['team-categories', teamId] });
+          queryClient.invalidateQueries({ queryKey: ['team-categories', team.id] });
         }
       )
       .subscribe();
@@ -151,7 +167,9 @@ export const useTeamCategories = (teamId?: string) => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [teamId, queryClient]);
+  }, [team?.id, queryClient]);
+
+  const isLoading = isTeamLoading || isCategoriesLoading;
 
   return {
     categories,
