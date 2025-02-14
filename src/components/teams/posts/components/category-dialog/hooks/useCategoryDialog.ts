@@ -42,12 +42,11 @@ export const useCategoryDialog = (teamId?: string) => {
         const category = categories?.find(cat => cat.id === value);
         if (category) {
           console.log("Loading category data:", category);
-          // Explicitly check and set each value with fallbacks
-          setCategoryName(category.name || '');
+          setCategoryName(category.name);
           setIsPublic(category.is_public ?? true);
           setSelectedIcon(category.icon || defaultIcon);
           setSelectedColor(category.color || defaultColor);
-          setSelectedSize(category.team_category_settings?.[0]?.size || 'small');
+          setSelectedSize(category.size || 'small');
         } else {
           console.error("Category not found:", value);
           toast.error("Kategorie konnte nicht gefunden werden");
@@ -90,11 +89,7 @@ export const useCategoryDialog = (teamId?: string) => {
         await queryClient.invalidateQueries({ queryKey: ['team-categories'] });
         toast.success(selectedCategory === "new" ? "Kategorie erstellt" : "Kategorie aktualisiert");
         setOpen(false);
-        
-        if (selectedCategory === "new") {
-          setSelectedCategory("new");
-          resetForm();
-        }
+        resetForm();
       }
     } catch (error) {
       console.error("Error saving category:", error);
@@ -114,7 +109,6 @@ export const useCategoryDialog = (teamId?: string) => {
         await queryClient.invalidateQueries({ queryKey: ['team-categories'] });
         toast.success("Kategorie gelöscht");
         setOpen(false);
-        setSelectedCategory("new");
         resetForm();
       }
     } catch (error) {

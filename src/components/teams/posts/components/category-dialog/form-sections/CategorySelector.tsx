@@ -5,15 +5,15 @@ interface CategorySelectorProps {
   selectedCategory: string;
   onCategoryChange: (value: string) => void;
   categories?: any[];
-  isAdmin?: boolean;
 }
 
 export const CategorySelector = ({
   selectedCategory,
   onCategoryChange,
-  categories,
-  isAdmin = false
+  categories
 }: CategorySelectorProps) => {
+  console.log("CategorySelector rendered with:", { selectedCategory, categoriesCount: categories?.length });
+
   return (
     <div className="grid gap-2">
       <Select
@@ -25,7 +25,7 @@ export const CategorySelector = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="new">Neue Kategorie</SelectItem>
-          {categories?.filter(category => isAdmin || category.is_public).map((category) => (
+          {categories?.map((category) => (
             <SelectItem key={category.id} value={category.id}>
               {category.name}
             </SelectItem>

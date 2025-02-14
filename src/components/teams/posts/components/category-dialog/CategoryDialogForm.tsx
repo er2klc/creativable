@@ -37,31 +37,46 @@ export const CategoryDialogForm = ({
   onSizeChange,
   categories
 }: CategoryDialogFormProps) => {
+  console.log("CategoryDialogForm rendered with:", {
+    selectedCategory,
+    categoryName,
+    isPublic,
+    selectedIcon,
+    selectedColor,
+    selectedSize
+  });
+
   return (
-    <div className="grid gap-4 py-4">
+    <div className="space-y-4 py-4">
+      <CategorySelector
+        selectedCategory={selectedCategory}
+        onCategoryChange={onCategoryChange}
+        categories={categories}
+      />
+
       <CategoryNameInput
-        categoryName={categoryName}
-        onCategoryNameChange={onCategoryNameChange}
-      />
-
-      <IconSelector
-        selectedIcon={selectedIcon}
-        onIconChange={onIconChange}
-      />
-
-      <ColorSelector
-        selectedColor={selectedColor}
-        onColorChange={onColorChange}
-      />
-
-      <SizeSelector
-        selectedSize={selectedSize}
-        onSizeChange={onSizeChange}
+        value={categoryName}
+        onChange={onCategoryNameChange}
       />
 
       <VisibilityToggle
         isPublic={isPublic}
-        onPublicChange={onPublicChange}
+        onChange={onPublicChange}
+      />
+
+      <IconSelector
+        selectedIcon={selectedIcon}
+        onChange={onIconChange}
+      />
+
+      <ColorSelector
+        selectedColor={selectedColor}
+        onChange={onColorChange}
+      />
+
+      <SizeSelector
+        selectedSize={selectedSize}
+        onChange={onSizeChange}
       />
     </div>
   );
