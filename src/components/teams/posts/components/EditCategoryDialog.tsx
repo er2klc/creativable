@@ -1,3 +1,4 @@
+
 import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -120,56 +121,54 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <div className="max-h-[400px] overflow-auto">
           <AdminCategoriesScroll
             activeTab={selectedCategory}
             onCategoryClick={handleCategoryChange}
             teamSlug={teamSlug || ''}
           />
-          
-          <div className="max-h-[400px] overflow-y-auto">
-            {isLoading ? (
-              <div className="py-4 text-center text-muted-foreground">
-                Laden...
-              </div>
-            ) : (
-              <CategoryDialogForm
-                categoryName={categoryName}
-                isPublic={isPublic}
-                selectedIcon={selectedIcon}
-                selectedColor={selectedColor}
-                selectedSize={selectedSize}
-                onCategoryNameChange={setCategoryName}
-                onPublicChange={setIsPublic}
-                onIconChange={setSelectedIcon}
-                onColorChange={setSelectedColor}
-                onSizeChange={setSelectedSize}
-                categories={categories}
-              />
-            )}
+        </div>
+        
+        {isLoading ? (
+          <div className="py-4 text-center text-muted-foreground">
+            Laden...
           </div>
+        ) : (
+          <CategoryDialogForm
+            categoryName={categoryName}
+            isPublic={isPublic}
+            selectedIcon={selectedIcon}
+            selectedColor={selectedColor}
+            selectedSize={selectedSize}
+            onCategoryNameChange={setCategoryName}
+            onPublicChange={setIsPublic}
+            onIconChange={setSelectedIcon}
+            onColorChange={setSelectedColor}
+            onSizeChange={setSelectedSize}
+            categories={categories}
+          />
+        )}
 
-          <div className="flex justify-between gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Abbrechen
-            </Button>
-            <div className="flex gap-2">
-              {selectedCategory !== "new" && (
-                <Button 
-                  variant="destructive" 
-                  onClick={handleDelete}
-                  disabled={isSubmitting || isLoading}
-                >
-                  Löschen
-                </Button>
-              )}
+        <div className="flex justify-between gap-2 pt-4">
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            Abbrechen
+          </Button>
+          <div className="flex gap-2">
+            {selectedCategory !== "new" && (
               <Button 
-                onClick={handleSubmit}
-                disabled={isSubmitting || isLoading || !categoryName.trim()}
+                variant="destructive" 
+                onClick={handleDelete}
+                disabled={isSubmitting || isLoading}
               >
-                {selectedCategory !== "new" ? "Speichern" : "Erstellen"}
+                Löschen
               </Button>
-            </div>
+            )}
+            <Button 
+              onClick={handleSubmit}
+              disabled={isSubmitting || isLoading || !categoryName.trim()}
+            >
+              {selectedCategory !== "new" ? "Speichern" : "Erstellen"}
+            </Button>
           </div>
         </div>
       </DialogContent>
