@@ -12,6 +12,7 @@ import { usePostSubmission } from "./hooks/usePostSubmission";
 import { CreatePostCategoriesScroll } from "../components/categories/CreatePostCategoriesScroll";
 import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTeamCategories } from "@/hooks/useTeamCategories";
 
 interface FormValues {
   title: string;
@@ -53,6 +54,7 @@ export const CreatePostForm = ({
   
   const { isUploading, setIsUploading, handleFileUpload } = useFileUpload(teamId);
   const { handleSubmission } = usePostSubmission(teamId, form.watch('categoryId'), onSuccess, teamMembers);
+  const { data: categories } = useTeamCategories(teamSlug);
 
   const onSubmit = async (values: FormValues) => {
     if (!values.categoryId) {
