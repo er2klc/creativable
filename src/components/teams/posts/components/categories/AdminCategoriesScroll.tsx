@@ -11,7 +11,7 @@ import { iconMap } from "../category-dialog/constants";
 
 interface AdminCategoriesScrollProps {
   activeTab: string;
-  onCategoryClick: (categorySlug?: string) => void;
+  onCategoryClick: (categoryId?: string) => void;
   teamSlug: string;
 }
 
@@ -79,6 +79,18 @@ export const AdminCategoriesScroll = ({
           className="flex gap-2 py-2 px-4"
           onScroll={handleScroll}
         >
+          <Badge
+            variant="outline"
+            className={cn(
+              "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2 shrink-0",
+              "bg-blue-50 hover:bg-blue-100 text-blue-700",
+              activeTab === "new" ? "border-primary" : "border-transparent"
+            )}
+            onClick={() => onCategoryClick("new")}
+          >
+            + Neue Kategorie
+          </Badge>
+          
           {categories?.map((category) => {
             const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
             return (
@@ -96,8 +108,8 @@ export const AdminCategoriesScroll = ({
                 {category.name}
                 {!category.is_public && <Lock className="h-3 w-3 ml-2" />}
               </Badge>
-            );
-          })}
+            )}
+          )}
         </div>
         <ScrollBar orientation="horizontal" className="h-2.5" />
       </ScrollArea>
