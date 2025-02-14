@@ -3,6 +3,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { availableColors } from "../constants";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 interface ColorSelectorProps {
   selectedColor: string;
@@ -16,14 +17,27 @@ export const ColorSelector = ({
   // Find the color option that matches the selected color
   const currentColor = availableColors.find(color => color.value === selectedColor);
 
+  // Debug logging to track color selection issues
+  useEffect(() => {
+    if (!currentColor) {
+      console.warn('Selected color not found in availableColors:', selectedColor);
+      console.log('Available colors:', availableColors.map(c => c.value));
+    }
+  }, [selectedColor, currentColor]);
+
+  const handleColorChange = (value: string) => {
+    console.log('Color changed to:', value);
+    onColorChange(value);
+  };
+
   return (
     <div className="grid gap-2">
       <Label>Hintergrundfarbe für die Kategorie</Label>
       <Select
         value={selectedColor}
-        onValueChange={onColorChange}
+        onValueChange={handleColorChange}
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full">
           <SelectValue>
             {currentColor ? (
               <div className="flex items-center gap-2">
@@ -31,7 +45,7 @@ export const ColorSelector = ({
                 <span>{currentColor.name}</span>
               </div>
             ) : (
-              "Farbe auswählen"
+              <span className="text-muted-foreground">Farbe auswählen</span>
             )}
           </SelectValue>
         </SelectTrigger>

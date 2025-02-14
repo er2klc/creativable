@@ -43,6 +43,7 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
   } = useTeamCategories(teamSlug);
 
   const handleCategoryChange = (value: string) => {
+    console.log('Category changed to:', value);
     setSelectedCategory(value);
     
     if (value === "new") {
@@ -54,6 +55,7 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
     } else {
       const category = categories?.find(cat => cat.id === value);
       if (category) {
+        console.log('Loading category data:', category);
         setCategoryName(category.name);
         setIsPublic(category.is_public ?? true);
         setSelectedIcon(category.icon || "MessageCircle");
@@ -74,6 +76,14 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
       return;
     }
 
+    console.log('Submitting category:', {
+      name: categoryName,
+      isPublic,
+      icon: selectedIcon,
+      color: selectedColor,
+      size: selectedSize
+    });
+
     try {
       if (selectedCategory === "new") {
         await createCategory({
@@ -83,6 +93,7 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
           color: selectedColor,
           created_by: user.id
         });
+        toast.success("Kategorie erfolgreich erstellt");
       } else {
         await updateCategory({
           id: selectedCategory,
@@ -91,10 +102,12 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
           icon: selectedIcon,
           color: selectedColor
         });
+        toast.success("Kategorie erfolgreich aktualisiert");
       }
       setOpen(false);
     } catch (error) {
       console.error("Error saving category:", error);
+      toast.error("Fehler beim Speichern der Kategorie");
     }
   };
 
@@ -103,9 +116,11 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
 
     try {
       await deleteCategory(selectedCategory);
+      toast.success("Kategorie erfolgreich gelöscht");
       setOpen(false);
     } catch (error) {
       console.error("Error deleting category:", error);
+      toast.error("Fehler beim Löschen der Kategorie");
     }
   };
 
