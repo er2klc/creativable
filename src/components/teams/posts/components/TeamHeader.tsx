@@ -1,11 +1,11 @@
 
-import { MessageSquare, Plus } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useNavigate } from "react-router-dom";
 import { EditCategoryDialog } from "./EditCategoryDialog";
 import { CreatePostDialog } from "../CreatePostDialog";
-import { useQuery } from "@tanstack/react-query";
+import { useQueries } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 
@@ -19,41 +19,51 @@ export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) =
   const navigate = useNavigate();
   const user = useUser();
 
-  // First fetch team by slug to get the correct UUID
-  const { data: team, isLoading: isTeamLoading } = useQuery({
-    queryKey: ['team', teamSlug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id')
-        .eq('slug', teamSlug)
-        .maybeSingle();
+  const [{ data: team, isLoading: isTeamLoading }, { data: teamMember, isLoading: isTeamMemberLoading }] = useQueries({
+    queries: [
+      {
+        queryKey: ['team', teamSlug],
+        queryFn: async () => {
+          const { data, error } = await supabase
+            .from('teams')
+            .select('id')
+            .eq('slug', teamSlug)
+            .maybeSingle();
 
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!teamSlug,
+          if (error) throw error;
+          return data;
+        },
+        enabled: !!teamSlug,
+      },
+      {
+        queryKey: ['team-member-role', teamSlug],
+        queryFn: async () => {
+          if (!user?.id || !teamSlug) return null;
+
+          const { data: team } = await supabase
+            .from('teams')
+            .select('id')
+            .eq('slug', teamSlug)
+            .maybeSingle();
+
+          if (!team?.id) return null;
+
+          const { data, error } = await supabase
+            .from('team_members')
+            .select('role')
+            .eq('team_id', team.id)
+            .eq('user_id', user.id)
+            .single();
+
+          if (error) throw error;
+          return data;
+        },
+        enabled: !!teamSlug && !!user?.id,
+      }
+    ]
   });
 
-  // Then fetch member role using the team's UUID
-  const { data: teamMember } = useQuery({
-    queryKey: ['team-member-role', team?.id],
-    queryFn: async () => {
-      if (!team?.id || !user?.id) return null;
-
-      const { data, error } = await supabase
-        .from('team_members')
-        .select('role')
-        .eq('team_id', team.id)
-        .eq('user_id', user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!team?.id && !!user?.id,
-  });
-
+  const isLoading = isTeamLoading || isTeamMemberLoading;
   const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
 
   return (
@@ -80,8 +90,8 @@ export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) =
               <div className="w-[300px]">
                 <SearchBar />
               </div>
-              {isAdmin && <EditCategoryDialog teamSlug={teamSlug} />}
-              {team?.id && <CreatePostDialog teamId={team.id} />}
+              {!isLoading && isAdmin && <EditCategoryDialog teamSlug={teamSlug} />}
+              {!isLoading && team?.id && <CreatePostDialog teamId={team.id} />}
             </div>
             <HeaderActions profile={null} userEmail={userEmail} />
           </div>
