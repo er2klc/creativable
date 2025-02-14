@@ -60,7 +60,7 @@ export const useTeamCategories = (teamSlug?: string) => {
           team_category_settings (
             size
           ),
-          team_category_post_counts!inner (
+          team_category_post_counts (
             post_count
           )
         `)
