@@ -1,7 +1,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Plus, MessageCircle } from "lucide-react";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
 import { iconMap } from "../category-dialog/constants";
@@ -25,7 +25,7 @@ export const AdminCategoriesScroll = ({
 
   return (
     <ScrollArea className="w-full">
-      <div className="flex gap-2 py-2 px-4">
+      <div className="flex gap-2 pb-2">
         <Button
           variant="outline"
           className="gap-2 shrink-0"
@@ -54,6 +54,7 @@ export const AdminCategoriesScroll = ({
           )}
         )}
       </div>
+      <ScrollBar orientation="horizontal" className="h-2.5" />
     </ScrollArea>
   );
 };
