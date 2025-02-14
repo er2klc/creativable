@@ -113,7 +113,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
           <Settings className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[725px]">
+      <DialogContent className="sm:max-w-[725px] h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Kategorien verwalten</DialogTitle>
           <DialogDescription>
@@ -121,54 +121,58 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
           </DialogDescription>
         </DialogHeader>
 
-        <div className="max-h-[400px] overflow-auto">
-          <AdminCategoriesScroll
-            activeTab={selectedCategory}
-            onCategoryClick={handleCategoryChange}
-            teamSlug={teamSlug || ''}
-          />
-        </div>
-        
-        {isLoading ? (
-          <div className="py-4 text-center text-muted-foreground">
-            Laden...
+        <div className="flex flex-col flex-grow overflow-hidden">
+          <div className="mb-4">
+            <AdminCategoriesScroll
+              activeTab={selectedCategory}
+              onCategoryClick={handleCategoryChange}
+              teamSlug={teamSlug || ''}
+            />
           </div>
-        ) : (
-          <CategoryDialogForm
-            categoryName={categoryName}
-            isPublic={isPublic}
-            selectedIcon={selectedIcon}
-            selectedColor={selectedColor}
-            selectedSize={selectedSize}
-            onCategoryNameChange={setCategoryName}
-            onPublicChange={setIsPublic}
-            onIconChange={setSelectedIcon}
-            onColorChange={setSelectedColor}
-            onSizeChange={setSelectedSize}
-            categories={categories}
-          />
-        )}
-
-        <div className="flex justify-between gap-2 pt-4">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Abbrechen
-          </Button>
-          <div className="flex gap-2">
-            {selectedCategory !== "new" && (
-              <Button 
-                variant="destructive" 
-                onClick={handleDelete}
-                disabled={isSubmitting || isLoading}
-              >
-                Löschen
-              </Button>
+          
+          <div className="flex-grow overflow-y-auto min-h-0 pr-2">
+            {isLoading ? (
+              <div className="py-4 text-center text-muted-foreground">
+                Laden...
+              </div>
+            ) : (
+              <CategoryDialogForm
+                categoryName={categoryName}
+                isPublic={isPublic}
+                selectedIcon={selectedIcon}
+                selectedColor={selectedColor}
+                selectedSize={selectedSize}
+                onCategoryNameChange={setCategoryName}
+                onPublicChange={setIsPublic}
+                onIconChange={setSelectedIcon}
+                onColorChange={setSelectedColor}
+                onSizeChange={setSelectedSize}
+                categories={categories}
+              />
             )}
-            <Button 
-              onClick={handleSubmit}
-              disabled={isSubmitting || isLoading || !categoryName.trim()}
-            >
-              {selectedCategory !== "new" ? "Speichern" : "Erstellen"}
+          </div>
+
+          <div className="flex justify-between gap-2 pt-4 mt-4 border-t">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Abbrechen
             </Button>
+            <div className="flex gap-2">
+              {selectedCategory !== "new" && (
+                <Button 
+                  variant="destructive" 
+                  onClick={handleDelete}
+                  disabled={isSubmitting || isLoading}
+                >
+                  Löschen
+                </Button>
+              )}
+              <Button 
+                onClick={handleSubmit}
+                disabled={isSubmitting || isLoading || !categoryName.trim()}
+              >
+                {selectedCategory !== "new" ? "Speichern" : "Erstellen"}
+              </Button>
+            </div>
           </div>
         </div>
       </DialogContent>
