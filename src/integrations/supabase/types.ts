@@ -2584,6 +2584,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "team_category_settings_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "team_category_post_counts"
+            referencedColumns: ["category_id"]
+          },
+          {
             foreignKeyName: "team_category_settings_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
@@ -3067,6 +3074,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "team_posts_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "team_category_post_counts"
+            referencedColumns: ["category_id"]
+          },
+          {
             foreignKeyName: "team_posts_created_by_fkey"
             columns: ["created_by"]
             isOneToOne: false
@@ -3507,6 +3521,22 @@ export type Database = {
           platform_id: string | null
         }
         Relationships: []
+      }
+      team_category_post_counts: {
+        Row: {
+          category_id: string | null
+          post_count: number | null
+          team_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_categories_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_post_comments_count: {
         Row: {
