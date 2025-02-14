@@ -31,8 +31,21 @@ export const TabScrollArea = ({
 
   const { categories, isLoading } = useTeamCategories(teamSlug);
 
-  const isDialogView = window.location.pathname.includes('/posts/');
-  const filteredCategories = categories?.filter(category => isAdmin || category.is_public);
+  // Check if we're in a post detail view (not just category view)
+  const isPostDetailView = window.location.pathname.includes('/posts/') && 
+                          !window.location.pathname.includes('/posts/category/');
+
+  // Filter categories that have posts
+  const filteredCategories = categories?.filter(category => {
+    // If admin, include categories regardless of posts
+    if (isAdmin) return true;
+    
+    // For non-admins, check if category is public
+    const isPublicCategory = category.is_public;
+    
+    // Return true only if the category is public and has posts
+    return isPublicCategory;
+  });
 
   if (isLoading) {
     return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
@@ -57,7 +70,7 @@ export const TabScrollArea = ({
           className="flex gap-2 py-2 px-4"
           onScroll={handleScroll}
         >
-          {!isDialogView && (
+          {!isPostDetailView && (
             <Badge
               variant="outline"
               className={cn(
