@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CategoryDialogForm } from "./category-dialog/CategoryDialogForm";
-import { useCategoryDialog } from "./category-dialog/useCategoryDialog";
+import { useCategoryDialog } from "./category-dialog/hooks/useCategoryDialog";
 import { AdminCategoriesScroll } from "./categories/AdminCategoriesScroll";
 import { useParams } from "react-router-dom";
 import { useState } from "react";
