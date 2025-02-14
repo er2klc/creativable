@@ -67,6 +67,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
             onSuccess={() => setOpen(false)}
             teamMembers={teamMembers}
             isAdmin={isAdmin}
+            teamSlug={teamSlug || ''}
           />
         </div>
       </DialogContent>
