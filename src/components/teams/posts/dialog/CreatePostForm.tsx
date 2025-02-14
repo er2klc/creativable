@@ -11,7 +11,7 @@ import { useFileUpload } from "./hooks/useFileUpload";
 import { usePostSubmission } from "./hooks/usePostSubmission";
 import { CreatePostCategoriesScroll } from "../components/categories/CreatePostCategoriesScroll";
 import { toast } from "sonner";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
 
 interface FormValues {
@@ -32,6 +32,7 @@ interface CreatePostFormProps {
     originalFiles?: string[] | null;
   };
   isAdmin?: boolean;
+  teamSlug: string;
 }
 
 export const CreatePostForm = ({ 
@@ -41,7 +42,8 @@ export const CreatePostForm = ({
   teamMembers,
   initialValues,
   editMode,
-  isAdmin = false
+  isAdmin = false,
+  teamSlug
 }: CreatePostFormProps) => {
   const form = useForm<FormValues>({
     defaultValues: {
@@ -49,12 +51,11 @@ export const CreatePostForm = ({
       categoryId: defaultCategoryId || ''
     }
   });
-  const location = useLocation();
-  const teamSlug = location.pathname.split('/')[3];
   
   const { isUploading, setIsUploading, handleFileUpload } = useFileUpload(teamId);
   const { handleSubmission } = usePostSubmission(teamId, form.watch('categoryId'), onSuccess, teamMembers);
   const { data: categories } = useTeamCategories(teamSlug);
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
 
   const onSubmit = async (values: FormValues) => {
     if (!values.categoryId) {
@@ -78,6 +79,7 @@ export const CreatePostForm = ({
   };
 
   const handleCategoryChange = (categorySlug?: string) => {
+    setSelectedCategory(categorySlug);
     const category = categories?.find(c => c.slug === categorySlug);
     if (category) {
       form.setValue('categoryId', category.id);
@@ -87,16 +89,16 @@ export const CreatePostForm = ({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="sticky top-0 bg-white z-10 pb-4">
+        <div className="sticky top-0 bg-background z-10 pb-4 -mx-6 px-6 pt-2">
           <CreatePostCategoriesScroll 
-            activeTab={categories?.find(c => c.id === form.watch('categoryId'))?.slug || ''}
+            activeTab={selectedCategory || ''}
             onCategoryClick={handleCategoryChange}
             isAdmin={isAdmin}
             teamSlug={teamSlug}
           />
         </div>
         
-        <div className="space-y-4 px-4">
+        <div className="space-y-4">
           <TitleField form={form} />
           <ContentField 
             form={form} 
@@ -105,7 +107,7 @@ export const CreatePostForm = ({
           />
           <FileField form={form} />
           
-          <div className="sticky bottom-0 bg-white pt-4 border-t mt-4">
+          <div className="sticky bottom-0 bg-background pt-4 border-t mt-4">
             <div className="flex justify-end">
               <Button type="submit" disabled={isUploading}>
                 {isUploading ? (

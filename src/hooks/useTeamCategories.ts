@@ -52,7 +52,7 @@ export const useTeamCategories = (teamSlug?: string) => {
           size: category.team_category_settings?.[0]?.size || 'small'
         },
         post_count: category.team_category_post_counts?.[0]?.post_count || 0,
-        is_public: category.is_public === null ? true : category.is_public,
+        is_public: category.is_public ?? true,
         icon: category.icon || 'MessageCircle',
         color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
       }));

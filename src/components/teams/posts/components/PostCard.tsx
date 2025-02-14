@@ -7,7 +7,6 @@ import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { Post } from "../types/post";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 
 interface PostCardProps {
   post: Post;
@@ -23,22 +22,17 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   }
 
   const categoryColor = post.team_categories.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]";
-  const borderColor = categoryColor.split(' ')[0].replace('bg-', 'border-');
 
   return (
     <Card 
       key={post.id} 
-      className={cn(
-        "bg-card hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden",
-        "border-l-4",
-        borderColor
-      )}
+      className="hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden"
       onClick={() => navigate(`/unity/team/${teamSlug}/posts/${post.slug}`)}
     >
       <div className="space-y-4">
-        <div className="p-4 space-y-4 bg-muted/5">
+        <div className="p-4 space-y-4">
           <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
+            <Avatar className="h-10 w-10 border-2 border-primary/10">
               <AvatarImage src={post.author.avatar_url || ''} />
               <AvatarFallback>
                 {post.author.display_name?.substring(0, 2).toUpperCase() || '??'}
@@ -54,13 +48,22 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
                   locale: de,
                 })}</span>
                 <span>•</span>
-                <span className="text-primary/80">{post.team_categories.name}</span>
+                <Badge 
+                  variant="secondary"
+                  className={categoryColor}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
+                  }}
+                >
+                  {post.team_categories.name}
+                </Badge>
               </div>
             </div>
           </div>
           
           <div>
-            <h3 className="text-lg font-semibold line-clamp-2 mb-2">
+            <h3 className="text-lg font-semibold mb-2">
               {post.title}
             </h3>
             {post.content && (
@@ -74,30 +77,15 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
           </div>
         </div>
         
-        <div className="px-4 pb-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <ThumbsUp className="h-4 w-4" />
-              <span className="text-sm">0</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-muted-foreground">
-              <MessageSquare className="h-4 w-4" />
-              <span className="text-sm">{post.team_post_comments || 0}</span>
-            </div>
+        <div className="px-4 pb-4 flex items-center gap-4 text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <ThumbsUp className="h-4 w-4" />
+            <span className="text-sm">0</span>
           </div>
-          <Badge 
-            variant="secondary"
-            className={cn(
-              "cursor-pointer",
-              categoryColor
-            )}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
-            }}
-          >
-            {post.team_categories.name}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            <MessageSquare className="h-4 w-4" />
+            <span className="text-sm">{post.team_post_comments || 0}</span>
+          </div>
         </div>
       </div>
     </Card>

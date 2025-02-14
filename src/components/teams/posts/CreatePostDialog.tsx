@@ -10,12 +10,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CreatePostForm } from "./dialog/CreatePostForm";
-import { useTeamMembers } from "./dialog/useTeamMembers";
+import { useTeamMembers } from "./dialog/hooks/useTeamMembers";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
-import { CreatePostCategoriesScroll } from "./components/categories/CreatePostCategoriesScroll";
 
 interface CreatePostDialogProps {
   teamId: string;
@@ -56,11 +55,11 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
           Neuer Beitrag
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] p-0">
+      <DialogContent className="sm:max-w-[600px] p-0 max-h-[90vh] overflow-hidden">
         <DialogHeader className="p-6 pb-0">
           <DialogTitle>Neuen Beitrag erstellen</DialogTitle>
         </DialogHeader>
-        <div className="px-6 pb-6">
+        <div className="px-6 pb-6 overflow-y-auto">
           <CreatePostForm
             teamId={teamId}
             categoryId={categoryId}
