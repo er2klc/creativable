@@ -6,7 +6,6 @@ import { SizeSelector } from "./form-sections/SizeSelector";
 import { VisibilityToggle } from "./form-sections/VisibilityToggle";
 
 interface CategoryDialogFormProps {
-  selectedCategory: string;
   categoryName: string;
   isPublic: boolean;
   selectedIcon: string;
@@ -17,7 +16,6 @@ interface CategoryDialogFormProps {
   onIconChange: (value: string) => void;
   onColorChange: (value: string) => void;
   onSizeChange: (value: string) => void;
-  categories?: any[];
 }
 
 export const CategoryDialogForm = ({
