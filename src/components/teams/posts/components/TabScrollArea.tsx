@@ -37,7 +37,7 @@ export const TabScrollArea = ({
 
   // Filter categories that have posts
   const filteredCategories = categories?.filter(category => {
-    // If admin, include categories regardless of posts
+    // If admin, include all categories for their team
     if (isAdmin) return true;
     
     // For non-admins, check if category is public and has posts
@@ -87,10 +87,7 @@ export const TabScrollArea = ({
           )}
           {filteredCategories?.map((category) => {
             // Get the icon component, with guaranteed fallback to MessageCircle
-            let IconComponent = MessageCircle;
-            if (category.icon && typeof category.icon === 'string' && iconMap[category.icon]) {
-              IconComponent = iconMap[category.icon];
-            }
+            const IconComponent = category.icon && iconMap[category.icon] ? iconMap[category.icon] : MessageCircle;
             
             return (
               <Badge

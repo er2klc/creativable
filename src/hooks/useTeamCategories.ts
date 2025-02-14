@@ -60,7 +60,7 @@ export const useTeamCategories = (teamSlug?: string) => {
           team_category_settings (
             size
           ),
-          team_category_post_counts (
+          team_category_post_counts!inner (
             post_count
           )
         `)
@@ -177,8 +177,6 @@ export const useTeamCategories = (teamSlug?: string) => {
       supabase.removeChannel(channel);
     };
   }, [team?.id, queryClient]);
-
-  const isLoading = isTeamLoading || isCategoriesLoading;
 
   return {
     categories,
