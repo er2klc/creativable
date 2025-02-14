@@ -80,7 +80,7 @@ export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) =
               <div className="w-[300px]">
                 <SearchBar />
               </div>
-              {isAdmin && <EditCategoryDialog teamId={team?.id} />}
+              {isAdmin && <EditCategoryDialog teamSlug={teamSlug} />}
               {team?.id && <CreatePostDialog teamId={team.id} />}
             </div>
             <HeaderActions profile={null} userEmail={userEmail} />

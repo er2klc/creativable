@@ -11,16 +11,15 @@ import {
 } from "@/components/ui/dialog";
 import { CategoryDialogForm } from "./category-dialog/CategoryDialogForm";
 import { AdminCategoriesScroll } from "./categories/AdminCategoriesScroll";
-import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
 
 interface EditCategoryDialogProps {
-  teamId?: string;
+  teamSlug: string;
 }
 
-export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
+export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("new");
   const [categoryName, setCategoryName] = useState("");
@@ -29,7 +28,6 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
 
-  const { teamSlug } = useParams();
   const { 
     categories,
     isLoading,
@@ -39,7 +37,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     isCreating,
     isUpdating,
     isDeleting
-  } = useTeamCategories(teamId);
+  } = useTeamCategories(teamSlug);
 
   const handleCategoryChange = (value: string) => {
     setSelectedCategory(value);
@@ -71,7 +69,6 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     try {
       if (selectedCategory === "new") {
         await createCategory({
-          team_id: teamId!,
           name: categoryName.trim(),
           is_public: isPublic,
           icon: selectedIcon,
@@ -125,7 +122,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
           <AdminCategoriesScroll
             activeTab={selectedCategory}
             onCategoryClick={handleCategoryChange}
-            teamSlug={teamSlug || ''}
+            teamSlug={teamSlug}
           />
         </div>
         
