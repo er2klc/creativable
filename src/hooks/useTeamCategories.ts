@@ -1,8 +1,6 @@
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
-import { toast } from "sonner";
 
 export interface TeamCategory {
   id: string;
@@ -14,7 +12,6 @@ export interface TeamCategory {
   is_public: boolean;
   order_index: number;
   slug: string;
-  created_by: string;
   post_count?: number;
   settings?: {
     size: string;
@@ -22,52 +19,32 @@ export interface TeamCategory {
 }
 
 export const useTeamCategories = (teamSlug?: string) => {
-  const queryClient = useQueryClient();
-
-  // First fetch team by slug to get the correct UUID
-  const { data: team, isLoading: isTeamLoading } = useQuery({
-    queryKey: ['team', teamSlug],
+  return useQuery({
+    queryKey: ['team-categories', teamSlug],
     queryFn: async () => {
-      if (!teamSlug) return null;
+      if (!teamSlug) return [];
       
-      const { data, error } = await supabase
+      // First get the team ID
+      const { data: team } = await supabase
         .from('teams')
         .select('id')
         .eq('slug', teamSlug)
-        .maybeSingle();
+        .single();
 
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!teamSlug,
-  });
+      if (!team) return [];
 
-  // Then fetch categories using the team's UUID
-  const { 
-    data: categories = [], 
-    isLoading: isCategoriesLoading, 
-    error,
-    refetch 
-  } = useQuery({
-    queryKey: ['team-categories', team?.id],
-    queryFn: async () => {
-      if (!team?.id) return [];
-
-      const { data: categories, error: categoriesError } = await supabase
+      // Then get the categories with their settings and post counts
+      const { data: categories, error } = await supabase
         .from('team_categories')
         .select(`
           *,
-          team_category_settings (
-            size
-          ),
-          team_category_post_counts!inner (
-            post_count
-          )
+          team_category_settings (size),
+          team_category_post_counts (post_count)
         `)
         .eq('team_id', team.id)
         .order('order_index');
 
-      if (categoriesError) throw categoriesError;
+      if (error) throw error;
 
       return categories.map(category => ({
         ...category,
@@ -80,114 +57,6 @@ export const useTeamCategories = (teamSlug?: string) => {
         color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
       }));
     },
-    enabled: !!team?.id,
+    enabled: !!teamSlug,
   });
-
-  // Create category mutation
-  const createCategory = useMutation({
-    mutationFn: async (newCategory: Omit<TeamCategory, 'id' | 'slug' | 'order_index'>) => {
-      if (!team?.id) throw new Error('Team ID is required');
-      
-      const { data, error } = await supabase
-        .from('team_categories')
-        .insert({
-          ...newCategory,
-          team_id: team.id,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-categories', team?.id] });
-      toast.success("Kategorie erfolgreich erstellt");
-    },
-    onError: (error) => {
-      console.error('Error creating category:', error);
-      toast.error("Fehler beim Erstellen der Kategorie");
-    }
-  });
-
-  // Update category mutation
-  const updateCategory = useMutation({
-    mutationFn: async ({ id, ...updates }: Partial<TeamCategory> & { id: string }) => {
-      const { data, error } = await supabase
-        .from('team_categories')
-        .update(updates)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-categories', team?.id] });
-      toast.success("Kategorie erfolgreich aktualisiert");
-    },
-    onError: (error) => {
-      console.error('Error updating category:', error);
-      toast.error("Fehler beim Aktualisieren der Kategorie");
-    }
-  });
-
-  // Delete category mutation
-  const deleteCategory = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from('team_categories')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-categories', team?.id] });
-      toast.success("Kategorie erfolgreich gelöscht");
-    },
-    onError: (error) => {
-      console.error('Error deleting category:', error);
-      toast.error("Fehler beim Löschen der Kategorie");
-    }
-  });
-
-  // Real-time subscription
-  useEffect(() => {
-    if (!team?.id) return;
-
-    const channel = supabase
-      .channel('team_categories_changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'team_categories',
-          filter: `team_id=eq.${team.id}`
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['team-categories', team.id] });
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [team?.id, queryClient]);
-
-  return {
-    categories,
-    isLoading: isTeamLoading || isCategoriesLoading,
-    error,
-    refetch,
-    createCategory: createCategory.mutateAsync,
-    updateCategory: updateCategory.mutateAsync,
-    deleteCategory: deleteCategory.mutateAsync,
-    isCreating: createCategory.isLoading,
-    isUpdating: updateCategory.isLoading,
-    isDeleting: deleteCategory.isLoading
-  };
 };

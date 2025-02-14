@@ -29,20 +29,13 @@ export const PostCategoriesScroll = ({
     scrollTabs
   } = useTabScroll();
 
-  const defaultTabColors = {
-    all: 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]',
-    1: 'bg-[#FEF7CD] hover:bg-[#EEB691] text-[#8B4513]',
-    2: 'bg-[#FEC6A1] hover:bg-[#EEB691] text-[#8B4513]',
-    3: 'bg-[#E5DEFF] hover:bg-[#D5CEEF] text-[#483D8B]',
-    4: 'bg-[#FFDEE2] hover:bg-[#EFCED2] text-[#8B3D3D]',
-    5: 'bg-[#FDE1D3] hover:bg-[#EDD1C3] text-[#8B5742]',
-    6: 'bg-[#D3E4FD] hover:bg-[#C3D4ED] text-[#4A708B]',
-    7: 'bg-[#F1F0FB] hover:bg-[#E1E0EB] text-[#4A4A4A]',
-  };
-
   const { data: categories, isLoading } = useTeamCategories(teamSlug);
 
-  const filteredCategories = categories?.filter(category => isAdmin || category.is_public);
+  // Filter categories to only show ones with posts for non-admins
+  const filteredCategories = categories?.filter(category => {
+    if (isAdmin) return true;
+    return category.is_public && (!category.post_count || category.post_count > 0);
+  });
 
   if (isLoading) {
     return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
@@ -71,7 +64,7 @@ export const PostCategoriesScroll = ({
             variant="outline"
             className={cn(
               "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 shrink-0",
-              defaultTabColors.all,
+              "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
               activeTab === 'all' ? "border-primary" : "border-transparent"
             )}
             onClick={() => onCategoryClick()}
@@ -80,7 +73,7 @@ export const PostCategoriesScroll = ({
             Alle Beiträge
           </Badge>
           
-          {filteredCategories?.map((category, index) => {
+          {filteredCategories?.map((category) => {
             const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
             return (
               <Badge
@@ -88,7 +81,7 @@ export const PostCategoriesScroll = ({
                 variant="outline"
                 className={cn(
                   "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2 shrink-0",
-                  category.color || defaultTabColors[(index % 7 + 1) as keyof typeof defaultTabColors],
+                  category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
                   activeTab === category.slug ? "border-primary" : "border-transparent"
                 )}
                 onClick={() => onCategoryClick(category.slug)}
@@ -96,6 +89,9 @@ export const PostCategoriesScroll = ({
                 <IconComponent className="h-4 w-4" />
                 {category.name}
                 {!category.is_public && <Lock className="h-3 w-3 ml-2" />}
+                {category.post_count > 0 && (
+                  <span className="ml-1 text-xs">({category.post_count})</span>
+                )}
               </Badge>
             )}
           )}
