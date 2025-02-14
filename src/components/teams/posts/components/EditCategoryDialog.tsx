@@ -10,58 +10,101 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CategoryDialogForm } from "./category-dialog/CategoryDialogForm";
-import { useCategoryDialog } from "./category-dialog/hooks/useCategoryDialog";
 import { AdminCategoriesScroll } from "./categories/AdminCategoriesScroll";
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useTeamCategories } from "@/hooks/useTeamCategories";
 
 interface EditCategoryDialogProps {
   teamId?: string;
 }
 
 export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
-  const {
-    open,
-    setOpen,
-    selectedCategory,
-    categoryName,
-    isPublic,
-    selectedIcon,
-    selectedColor,
-    selectedSize,
-    categories,
-    isLoading,
-    handleCategoryChange,
-    setCategoryName,
-    setIsPublic,
-    setSelectedIcon,
-    setSelectedColor,
-    setSelectedSize,
-    handleSave,
-    handleDelete
-  } = useCategoryDialog(teamId);
+  const [open, setOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string>("new");
+  const [categoryName, setCategoryName] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
+  const [selectedIcon, setSelectedIcon] = useState("MessageCircle");
+  const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
+  const [selectedSize, setSelectedSize] = useState("small");
 
   const { teamSlug } = useParams();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { 
+    categories,
+    isLoading,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    isCreating,
+    isUpdating,
+    isDeleting
+  } = useTeamCategories(teamId);
+
+  const handleCategoryChange = (value: string) => {
+    setSelectedCategory(value);
+    
+    if (value === "new") {
+      setCategoryName("");
+      setIsPublic(true);
+      setSelectedIcon("MessageCircle");
+      setSelectedColor("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
+      setSelectedSize("small");
+    } else {
+      const category = categories?.find(cat => cat.id === value);
+      if (category) {
+        setCategoryName(category.name);
+        setIsPublic(category.is_public ?? true);
+        setSelectedIcon(category.icon || "MessageCircle");
+        setSelectedColor(category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
+        setSelectedSize(category.settings?.size || "small");
+      }
+    }
+  };
 
   const handleSubmit = async () => {
     if (!categoryName.trim()) {
       toast.error("Bitte geben Sie einen Kategorienamen ein");
       return;
     }
-    
-    setIsSubmitting(true);
+
     try {
-      await handleSave();
+      if (selectedCategory === "new") {
+        await createCategory({
+          team_id: teamId!,
+          name: categoryName.trim(),
+          is_public: isPublic,
+          icon: selectedIcon,
+          color: selectedColor,
+          created_by: "user_id" // This should come from auth context
+        });
+      } else {
+        await updateCategory({
+          id: selectedCategory,
+          name: categoryName.trim(),
+          is_public: isPublic,
+          icon: selectedIcon,
+          color: selectedColor
+        });
+      }
       setOpen(false);
     } catch (error) {
       console.error("Error saving category:", error);
-      toast.error("Fehler beim Speichern der Kategorie");
-    } finally {
-      setIsSubmitting(false);
     }
   };
+
+  const handleDelete = async () => {
+    if (selectedCategory === "new") return;
+
+    try {
+      await deleteCategory(selectedCategory);
+      setOpen(false);
+    } catch (error) {
+      console.error("Error deleting category:", error);
+    }
+  };
+
+  const isSubmitting = isCreating || isUpdating || isDeleting;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -92,7 +135,6 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
           </div>
         ) : (
           <CategoryDialogForm
-            selectedCategory={selectedCategory}
             categoryName={categoryName}
             isPublic={isPublic}
             selectedIcon={selectedIcon}
