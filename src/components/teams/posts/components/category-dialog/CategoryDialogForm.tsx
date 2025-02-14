@@ -4,6 +4,7 @@ import { IconSelector } from "./form-sections/IconSelector";
 import { ColorSelector } from "./form-sections/ColorSelector";
 import { SizeSelector } from "./form-sections/SizeSelector";
 import { VisibilityToggle } from "./form-sections/VisibilityToggle";
+import { Tables } from "@/integrations/supabase/types";
 
 interface CategoryDialogFormProps {
   categoryName: string;
@@ -16,6 +17,7 @@ interface CategoryDialogFormProps {
   onIconChange: (value: string) => void;
   onColorChange: (value: string) => void;
   onSizeChange: (value: string) => void;
+  categories?: Tables<"team_categories">[];
 }
 
 export const CategoryDialogForm = ({
@@ -39,17 +41,17 @@ export const CategoryDialogForm = ({
 
       <IconSelector
         selectedIcon={selectedIcon}
-        onChange={onIconChange}
+        onIconChange={onIconChange}
       />
 
       <ColorSelector
         selectedColor={selectedColor}
-        onChange={onColorChange}
+        onColorChange={onColorChange}
       />
 
       <SizeSelector
         selectedSize={selectedSize}
-        onChange={onSizeChange}
+        onSizeChange={onSizeChange}
       />
 
       <VisibilityToggle

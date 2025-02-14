@@ -23,17 +23,15 @@ export const IconSelector = ({
     }
   }, [selectedIcon, SelectedIconComponent]);
 
-  const handleIconChange = (value: string) => {
-    console.log('Icon changed to:', value);
-    onIconChange(value);
-  };
-
   return (
     <div className="grid gap-2">
       <Label>Icon für die Kategorie</Label>
       <Select
         value={selectedIcon}
-        onValueChange={handleIconChange}
+        onValueChange={(value: string) => {
+          console.log('Icon selection changed:', value);
+          onIconChange(value);
+        }}
       >
         <SelectTrigger className="w-full">
           <SelectValue>
