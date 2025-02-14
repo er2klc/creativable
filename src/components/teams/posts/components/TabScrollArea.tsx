@@ -40,11 +40,12 @@ export const TabScrollArea = ({
     // If admin, include categories regardless of posts
     if (isAdmin) return true;
     
-    // For non-admins, check if category is public
+    // For non-admins, check if category is public and has posts
     const isPublicCategory = category.is_public;
+    const hasPosts = category.post_count && category.post_count > 0;
     
     // Return true only if the category is public and has posts
-    return isPublicCategory;
+    return isPublicCategory && hasPosts;
   });
 
   if (isLoading) {

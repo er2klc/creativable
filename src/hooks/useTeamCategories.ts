@@ -15,6 +15,7 @@ export interface TeamCategory {
   order_index: number;
   slug: string;
   created_by: string;
+  post_count?: number;
   settings?: {
     size: string;
   }
@@ -58,6 +59,9 @@ export const useTeamCategories = (teamSlug?: string) => {
           *,
           team_category_settings (
             size
+          ),
+          team_category_post_counts!inner (
+            post_count
           )
         `)
         .eq('team_id', team.id)
@@ -70,6 +74,7 @@ export const useTeamCategories = (teamSlug?: string) => {
         settings: {
           size: category.team_category_settings?.[0]?.size || 'small'
         },
+        post_count: category.team_category_post_counts?.[0]?.post_count || 0,
         is_public: category.is_public === null ? true : category.is_public,
         icon: category.icon || 'MessageCircle',
         color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
@@ -177,7 +182,7 @@ export const useTeamCategories = (teamSlug?: string) => {
 
   return {
     categories,
-    isLoading,
+    isLoading: isTeamLoading || isCategoriesLoading,
     error,
     refetch,
     createCategory: createCategory.mutateAsync,
