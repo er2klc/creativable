@@ -10,26 +10,24 @@ export const useCategoriesQuery = (teamId?: string) => {
 
       const { data: categories, error: categoriesError } = await supabase
         .from('team_categories')
-        .select('*')
+        .select(`
+          *,
+          team_category_settings (
+            size
+          )
+        `)
         .eq('team_id', teamId)
         .order('order_index');
 
       if (categoriesError) throw categoriesError;
 
-      const { data: settings, error: settingsError } = await supabase
-        .from('team_category_settings')
-        .select('*')
-        .eq('team_id', teamId);
-
-      if (settingsError) throw settingsError;
-
-      return categories.map(category => {
-        const setting = settings.find(s => s.category_id === category.id);
-        return {
-          ...category,
-          size: setting?.size || 'small'
-        };
-      });
+      return categories.map(category => ({
+        ...category,
+        size: category.team_category_settings?.[0]?.size || 'small',
+        is_public: category.is_public ?? true,
+        icon: category.icon || 'MessageCircle',
+        color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
+      }));
     },
     enabled: !!teamId,
   });
