@@ -5,8 +5,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ArrowLeft, ArrowRight, Lock, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabScroll } from "../../hooks/useTabScroll";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useTeamCategories } from "@/hooks/useTeamCategories";
 import { iconMap } from "../category-dialog/constants";
 
 interface PostCategoriesScrollProps {
@@ -30,38 +29,6 @@ export const PostCategoriesScroll = ({
     scrollTabs
   } = useTabScroll();
 
-  const { data: team } = useQuery({
-    queryKey: ['team', teamSlug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id')
-        .eq('slug', teamSlug)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!teamSlug,
-  });
-
-  const { data: categories } = useQuery({
-    queryKey: ['team-categories', team?.id],
-    queryFn: async () => {
-      if (!team?.id) return [];
-
-      const { data, error } = await supabase
-        .from('team_categories')
-        .select('*')
-        .eq('team_id', team.id)
-        .order('order_index');
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!team?.id,
-  });
-
   const defaultTabColors = {
     all: 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]',
     1: 'bg-[#FEF7CD] hover:bg-[#EEB691] text-[#8B4513]',
@@ -73,7 +40,13 @@ export const PostCategoriesScroll = ({
     7: 'bg-[#F1F0FB] hover:bg-[#E1E0EB] text-[#4A4A4A]',
   };
 
+  const { data: categories, isLoading } = useTeamCategories(teamSlug);
+
   const filteredCategories = categories?.filter(category => isAdmin || category.is_public);
+
+  if (isLoading) {
+    return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
+  }
 
   return (
     <div className="relative w-full">

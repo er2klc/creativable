@@ -5,8 +5,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { ArrowLeft, ArrowRight, Lock, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabScroll } from "../../hooks/useTabScroll";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useTeamCategories } from "@/hooks/useTeamCategories";
 import { iconMap } from "../category-dialog/constants";
 
 interface CreatePostCategoriesScrollProps {
@@ -30,37 +29,7 @@ export const CreatePostCategoriesScroll = ({
     scrollTabs
   } = useTabScroll();
 
-  const { data: team } = useQuery({
-    queryKey: ['team', teamSlug],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id')
-        .eq('slug', teamSlug)
-        .maybeSingle();
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!teamSlug,
-  });
-
-  const { data: categories } = useQuery({
-    queryKey: ['team-categories', team?.id],
-    queryFn: async () => {
-      if (!team?.id) return [];
-
-      const { data, error } = await supabase
-        .from('team_categories')
-        .select('*')
-        .eq('team_id', team.id)
-        .order('order_index');
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!team?.id,
-  });
+  const { data: categories, isLoading } = useTeamCategories(teamSlug);
 
   const filteredCategories = categories?.filter(category => isAdmin || category.is_public);
 

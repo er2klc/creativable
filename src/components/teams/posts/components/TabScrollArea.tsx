@@ -2,11 +2,11 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { ArrowLeft, ArrowRight, Lock, MessageCircle, Megaphone, Calendar, Trophy, Video, Users, Star, Heart, HelpCircle, Rocket, FileText, Lightbulb, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, Lock, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTabScroll } from "../hooks/useTabScroll";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { useTeamCategories } from "@/hooks/useTeamCategories";
+import { iconMap } from "./category-dialog/constants";
 
 interface TabScrollAreaProps {
   activeTab: string;
@@ -15,23 +15,12 @@ interface TabScrollAreaProps {
   teamSlug: string;
 }
 
-const iconMap: { [key: string]: any } = {
-  'MessageCircle': MessageCircle,
-  'Megaphone': Megaphone,
-  'Calendar': Calendar,
-  'Trophy': Trophy,
-  'Video': Video,
-  'Users': Users,
-  'Star': Star,
-  'Heart': Heart,
-  'HelpCircle': HelpCircle,
-  'Rocket': Rocket,
-  'FileText': FileText,
-  'Lightbulb': Lightbulb,
-  'Target': Target
-};
-
-export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }: TabScrollAreaProps) => {
+export const TabScrollArea = ({ 
+  activeTab, 
+  onCategoryClick, 
+  isAdmin, 
+  teamSlug 
+}: TabScrollAreaProps) => {
   const {
     scrollContainerRef,
     showLeftArrow,
@@ -40,72 +29,14 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
     scrollTabs
   } = useTabScroll();
 
-  const { data: team, isLoading: isTeamLoading } = useQuery({
-    queryKey: ['team', teamSlug],
-    queryFn: async () => {
-      console.log('Fetching team with slug:', teamSlug);
-      
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id')
-        .eq('slug', teamSlug)
-        .maybeSingle();
-
-      if (error) {
-        console.error('Error fetching team:', error);
-        throw error;
-      }
-
-      console.log('Found team:', data);
-      return data;
-    },
-    enabled: !!teamSlug,
-  });
-
-  const { data: allCategories, isLoading: isCategoriesLoading } = useQuery({
-    queryKey: ['team-categories', team?.id],
-    queryFn: async () => {
-      if (!team?.id) {
-        console.log('No team ID available, skipping categories fetch');
-        return [];
-      }
-
-      console.log('Fetching categories for team ID:', team.id);
-      const { data, error } = await supabase
-        .from('team_categories')
-        .select('*')
-        .eq('team_id', team.id)
-        .order('order_index');
-
-      if (error) {
-        console.error('Error fetching categories:', error);
-        throw error;
-      }
-
-      console.log('Found categories:', data);
-      return data;
-    },
-    enabled: !!team?.id,
-  });
-
-  // Default Pastellfarben für die Tabs wenn keine custom Farbe definiert ist
-  const defaultTabColors = {
-    all: 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]',
-    1: 'bg-[#FEF7CD] hover:bg-[#EEB691] text-[#8B4513]',
-    2: 'bg-[#FEC6A1] hover:bg-[#EEB691] text-[#8B4513]',
-    3: 'bg-[#E5DEFF] hover:bg-[#D5CEEF] text-[#483D8B]',
-    4: 'bg-[#FFDEE2] hover:bg-[#EFCED2] text-[#8B3D3D]',
-    5: 'bg-[#FDE1D3] hover:bg-[#EDD1C3] text-[#8B5742]',
-    6: 'bg-[#D3E4FD] hover:bg-[#C3D4ED] text-[#4A708B]',
-    7: 'bg-[#F1F0FB] hover:bg-[#E1E0EB] text-[#4A4A4A]',
-  };
-
-  if (isTeamLoading || isCategoriesLoading) {
-    return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
-  }
+  const { categories, isLoading } = useTeamCategories(teamSlug);
 
   const isDialogView = window.location.pathname.includes('/posts/');
-  const categories = allCategories?.filter(category => isAdmin || category.is_public);
+  const filteredCategories = categories?.filter(category => isAdmin || category.is_public);
+
+  if (isLoading) {
+    return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
+  }
 
   return (
     <div className="relative w-full">
@@ -131,7 +62,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
               variant="outline"
               className={cn(
                 "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 shrink-0",
-                defaultTabColors.all,
+                "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
                 activeTab === 'all' ? "border-primary" : "border-transparent"
               )}
               onClick={() => onCategoryClick()}
@@ -140,7 +71,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
               Alle Beiträge
             </Badge>
           )}
-          {categories?.map((category, index) => {
+          {filteredCategories?.map((category, index) => {
             const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
             return (
               <Badge
@@ -148,7 +79,7 @@ export const TabScrollArea = ({ activeTab, onCategoryClick, isAdmin, teamSlug }:
                 variant="outline"
                 className={cn(
                   "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2 shrink-0",
-                  category.color || defaultTabColors[(index % 7 + 1) as keyof typeof defaultTabColors],
+                  category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
                   activeTab === category.slug ? "border-primary" : "border-transparent"
                 )}
                 onClick={() => onCategoryClick(category.slug)}
