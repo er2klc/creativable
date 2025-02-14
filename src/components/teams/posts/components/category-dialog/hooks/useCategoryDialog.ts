@@ -5,19 +5,30 @@ import { useCategoryMutations } from "./useCategoryMutations";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
+const defaultColor = "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]";
+const defaultIcon = "MessageCircle";
+
 export const useCategoryDialog = (teamId?: string) => {
   const [open, setOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("new");
   const [categoryName, setCategoryName] = useState("");
   const [isPublic, setIsPublic] = useState(true);
-  const [selectedIcon, setSelectedIcon] = useState("MessageCircle");
-  const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
+  const [selectedIcon, setSelectedIcon] = useState(defaultIcon);
+  const [selectedColor, setSelectedColor] = useState(defaultColor);
   const [selectedSize, setSelectedSize] = useState("small");
   const [isLoading, setIsLoading] = useState(false);
   
   const queryClient = useQueryClient();
   const { categories } = useCategoryQueries(teamId);
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
+
+  const resetForm = () => {
+    setCategoryName("");
+    setIsPublic(true);
+    setSelectedIcon(defaultIcon);
+    setSelectedColor(defaultColor);
+    setSelectedSize("small");
+  };
 
   const handleCategoryChange = async (value: string) => {
     console.log("Changing category to:", value);
@@ -26,30 +37,27 @@ export const useCategoryDialog = (teamId?: string) => {
     
     try {
       if (value === "new") {
-        // Reset form for new category
-        setCategoryName("");
-        setIsPublic(true);
-        setSelectedIcon("MessageCircle");
-        setSelectedColor("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
-        setSelectedSize("small");
+        resetForm();
       } else {
-        // Find and populate form with existing category data
         const category = categories?.find(cat => cat.id === value);
         if (category) {
           console.log("Loading category data:", category);
-          setCategoryName(category.name);
-          setIsPublic(category.is_public);
-          setSelectedIcon(category.icon);
-          setSelectedColor(category.color);
-          setSelectedSize(category.size);
+          // Explicitly check and set each value with fallbacks
+          setCategoryName(category.name || '');
+          setIsPublic(category.is_public ?? true);
+          setSelectedIcon(category.icon || defaultIcon);
+          setSelectedColor(category.color || defaultColor);
+          setSelectedSize(category.team_category_settings?.[0]?.size || 'small');
         } else {
           console.error("Category not found:", value);
           toast.error("Kategorie konnte nicht gefunden werden");
+          resetForm();
         }
       }
     } catch (error) {
       console.error("Error loading category:", error);
       toast.error("Fehler beim Laden der Kategorie");
+      resetForm();
     } finally {
       setIsLoading(false);
     }
@@ -79,20 +87,13 @@ export const useCategoryDialog = (teamId?: string) => {
       );
 
       if (success) {
-        // Invalidate queries to refresh the data
         await queryClient.invalidateQueries({ queryKey: ['team-categories'] });
-        
         toast.success(selectedCategory === "new" ? "Kategorie erstellt" : "Kategorie aktualisiert");
         setOpen(false);
         
-        // Reset form
         if (selectedCategory === "new") {
           setSelectedCategory("new");
-          setCategoryName("");
-          setIsPublic(true);
-          setSelectedIcon("MessageCircle");
-          setSelectedColor("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
-          setSelectedSize("small");
+          resetForm();
         }
       }
     } catch (error) {
@@ -110,13 +111,11 @@ export const useCategoryDialog = (teamId?: string) => {
     try {
       const success = await deleteCategory(selectedCategory);
       if (success) {
-        // Invalidate queries to refresh the data
         await queryClient.invalidateQueries({ queryKey: ['team-categories'] });
-        
         toast.success("Kategorie gelöscht");
         setOpen(false);
         setSelectedCategory("new");
-        setCategoryName("");
+        resetForm();
       }
     } catch (error) {
       console.error("Error deleting category:", error);
