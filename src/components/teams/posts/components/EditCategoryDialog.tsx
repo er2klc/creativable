@@ -14,6 +14,7 @@ import { AdminCategoriesScroll } from "./categories/AdminCategoriesScroll";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface EditCategoryDialogProps {
   teamSlug: string;
@@ -27,6 +28,8 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
   const [selectedIcon, setSelectedIcon] = useState("MessageCircle");
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
+  
+  const user = useUser();
 
   const { 
     categories,
@@ -66,6 +69,11 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
       return;
     }
 
+    if (!user) {
+      toast.error("Sie müssen angemeldet sein");
+      return;
+    }
+
     try {
       if (selectedCategory === "new") {
         await createCategory({
@@ -73,7 +81,7 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
           is_public: isPublic,
           icon: selectedIcon,
           color: selectedColor,
-          created_by: "user_id" // This should come from auth context
+          created_by: user.id
         });
       } else {
         await updateCategory({
