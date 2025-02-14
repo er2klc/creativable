@@ -31,12 +31,12 @@ export const TabScrollArea = ({
 
   const { categories, isLoading } = useTeamCategories(teamSlug);
 
+  const isDialogView = window.location.pathname.includes('/posts/');
+  const filteredCategories = categories?.filter(category => isAdmin || category.is_public);
+
   if (isLoading) {
     return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
   }
-
-  const isDialogView = window.location.pathname.includes('/posts/');
-  const filteredCategories = categories?.filter(category => isAdmin || category.is_public);
 
   return (
     <div className="relative w-full">
@@ -71,8 +71,8 @@ export const TabScrollArea = ({
               Alle Beiträge
             </Badge>
           )}
-          {filteredCategories?.map((category) => {
-            const IconComponent = category.icon && iconMap[category.icon] ? iconMap[category.icon] : MessageCircle;
+          {filteredCategories?.map((category, index) => {
+            const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
             return (
               <Badge
                 key={category.id}
