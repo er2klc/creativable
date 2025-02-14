@@ -6,9 +6,10 @@ import { UseFormReturn } from "react-hook-form";
 interface ContentFieldProps {
   form: UseFormReturn<any>;
   teamMembers?: any[];
+  preventSubmitOnEnter?: boolean;
 }
 
-export const ContentField = ({ form, teamMembers }: ContentFieldProps) => {
+export const ContentField = ({ form, teamMembers, preventSubmitOnEnter = false }: ContentFieldProps) => {
   return (
     <FormField
       control={form.control}
@@ -28,6 +29,15 @@ export const ContentField = ({ form, teamMembers }: ContentFieldProps) => {
               }}
               onHashtag={(tag) => {
                 console.log('Added hashtag:', tag);
+              }}
+              preventSubmitOnEnter={preventSubmitOnEnter}
+              editorProps={{
+                handleKeyDown: (view, event) => {
+                  // Prevent form submission on formatting shortcuts
+                  if (event.ctrlKey || event.metaKey) {
+                    event.stopPropagation();
+                  }
+                }
               }}
             />
           </FormControl>

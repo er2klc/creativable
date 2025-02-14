@@ -31,7 +31,10 @@ export const CreatePostCategoriesScroll = ({
 
   const { data: categories, isLoading } = useTeamCategories(teamSlug);
 
-  const filteredCategories = categories?.filter(category => isAdmin || category.is_public);
+  // Show all categories for posting - we don't filter by post_count here
+  const filteredCategories = categories?.filter(category => 
+    isAdmin || category.is_public
+  );
 
   return (
     <div className="relative w-full">
