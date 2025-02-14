@@ -30,6 +30,7 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
     selectedColor,
     selectedSize,
     categories,
+    isLoading,
     handleCategoryChange,
     setCategoryName,
     setIsPublic,
@@ -42,20 +43,6 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
 
   const { teamSlug } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const handleCategorySelection = (categoryId?: string) => {
-    console.log("Selected category:", categoryId);
-    if (!categoryId) return;
-    const category = categories?.find(c => c.id === categoryId);
-    if (category) {
-      handleCategoryChange(category.id);
-      setSelectedColor(category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]');
-      setSelectedIcon(category.icon || 'MessageCircle');
-      setCategoryName(category.name);
-      setIsPublic(category.is_public ?? true);
-      setSelectedSize(category.size || 'small');
-    }
-  };
 
   const handleSubmit = async () => {
     if (!categoryName.trim()) return;
@@ -86,26 +73,32 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
         <div className="max-h-[400px] overflow-auto">
           <AdminCategoriesScroll
             activeTab={selectedCategory}
-            onCategoryClick={handleCategorySelection}
+            onCategoryClick={handleCategoryChange}
             teamSlug={teamSlug || ''}
           />
         </div>
         
-        <CategoryDialogForm
-          selectedCategory={selectedCategory}
-          categoryName={categoryName}
-          isPublic={isPublic}
-          selectedIcon={selectedIcon}
-          selectedColor={selectedColor}
-          selectedSize={selectedSize}
-          onCategoryChange={handleCategoryChange}
-          onCategoryNameChange={setCategoryName}
-          onPublicChange={setIsPublic}
-          onIconChange={setSelectedIcon}
-          onColorChange={setSelectedColor}
-          onSizeChange={setSelectedSize}
-          categories={categories}
-        />
+        {isLoading ? (
+          <div className="py-4 text-center text-muted-foreground">
+            Laden...
+          </div>
+        ) : (
+          <CategoryDialogForm
+            selectedCategory={selectedCategory}
+            categoryName={categoryName}
+            isPublic={isPublic}
+            selectedIcon={selectedIcon}
+            selectedColor={selectedColor}
+            selectedSize={selectedSize}
+            onCategoryChange={handleCategoryChange}
+            onCategoryNameChange={setCategoryName}
+            onPublicChange={setIsPublic}
+            onIconChange={setSelectedIcon}
+            onColorChange={setSelectedColor}
+            onSizeChange={setSelectedSize}
+            categories={categories}
+          />
+        )}
 
         <div className="flex justify-between gap-2 pt-4">
           <Button variant="outline" onClick={() => setOpen(false)}>
@@ -113,13 +106,17 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
           </Button>
           <div className="flex gap-2">
             {selectedCategory !== "new" && (
-              <Button variant="destructive" onClick={handleDelete}>
+              <Button 
+                variant="destructive" 
+                onClick={handleDelete}
+                disabled={isSubmitting || isLoading}
+              >
                 Löschen
               </Button>
             )}
             <Button 
               onClick={handleSubmit}
-              disabled={isSubmitting || !categoryName.trim()}
+              disabled={isSubmitting || isLoading || !categoryName.trim()}
             >
               {selectedCategory !== "new" ? "Speichern" : "Erstellen"}
             </Button>
