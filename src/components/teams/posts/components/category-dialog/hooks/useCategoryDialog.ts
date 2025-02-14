@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useCategoryQueries } from "./useCategoryQueries";
+import { useTeamCategories } from "@/hooks/useTeamCategories";
 import { useCategoryMutations } from "./useCategoryMutations";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ export const useCategoryDialog = (teamId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   
   const queryClient = useQueryClient();
-  const { categories } = useCategoryQueries(teamId);
+  const { categories } = useTeamCategories(teamId);
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
 
   const resetForm = () => {
@@ -46,7 +46,7 @@ export const useCategoryDialog = (teamId?: string) => {
           setIsPublic(category.is_public ?? true);
           setSelectedIcon(category.icon || defaultIcon);
           setSelectedColor(category.color || defaultColor);
-          setSelectedSize(category.size || 'small');
+          setSelectedSize(category.settings?.size || 'small');
         } else {
           console.error("Category not found:", value);
           toast.error("Kategorie konnte nicht gefunden werden");
