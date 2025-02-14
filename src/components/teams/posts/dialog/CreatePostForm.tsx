@@ -11,8 +11,8 @@ import { useFileUpload } from "./hooks/useFileUpload";
 import { usePostSubmission } from "./hooks/usePostSubmission";
 import { CreatePostCategoriesScroll } from "../components/categories/CreatePostCategoriesScroll";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface FormValues {
   title: string;
@@ -88,8 +88,8 @@ export const CreatePostForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="sticky top-0 bg-background z-10 pb-4 -mx-6 px-6 pt-2">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
+        <div className="sticky top-0 bg-background z-10 border-b px-6 py-2">
           <CreatePostCategoriesScroll 
             activeTab={selectedCategory || ''}
             onCategoryClick={handleCategoryChange}
@@ -98,28 +98,30 @@ export const CreatePostForm = ({
           />
         </div>
         
-        <div className="space-y-4">
-          <TitleField form={form} />
-          <ContentField 
-            form={form} 
-            teamMembers={teamMembers}
-            preventSubmitOnEnter={true}
-          />
-          <FileField form={form} />
-          
-          <div className="sticky bottom-0 bg-background pt-4 border-t mt-4">
-            <div className="flex justify-end">
-              <Button type="submit" disabled={isUploading}>
-                {isUploading ? (
-                  <>
-                    <Upload className="h-4 w-4 mr-2 animate-spin" />
-                    Wird hochgeladen...
-                  </>
-                ) : (
-                  editMode ? 'Aktualisieren' : 'Erstellen'
-                )}
-              </Button>
-            </div>
+        <ScrollArea className="flex-1 px-6">
+          <div className="py-4 space-y-4">
+            <TitleField form={form} />
+            <ContentField 
+              form={form} 
+              teamMembers={teamMembers}
+              preventSubmitOnEnter={true}
+            />
+            <FileField form={form} />
+          </div>
+        </ScrollArea>
+
+        <div className="sticky bottom-0 bg-background px-6 py-4 border-t mt-auto">
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isUploading}>
+              {isUploading ? (
+                <>
+                  <Upload className="h-4 w-4 mr-2 animate-spin" />
+                  Wird hochgeladen...
+                </>
+              ) : (
+                editMode ? 'Aktualisieren' : 'Erstellen'
+              )}
+            </Button>
           </div>
         </div>
       </form>

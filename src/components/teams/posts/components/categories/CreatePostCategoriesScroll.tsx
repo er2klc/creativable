@@ -49,13 +49,13 @@ export const CreatePostCategoriesScroll = ({
         </Button>
       )}
       
-      <ScrollArea className="w-full border-b">
+      <ScrollArea className="w-full">
         <div 
           ref={scrollContainerRef}
-          className="flex gap-2 py-2 px-4"
+          className="flex gap-2 py-2"
           onScroll={handleScroll}
         >
-          {filteredCategories?.map((category, index) => {
+          {filteredCategories?.map((category) => {
             const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
             return (
               <Badge
