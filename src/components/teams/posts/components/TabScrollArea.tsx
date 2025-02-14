@@ -71,8 +71,10 @@ export const TabScrollArea = ({
               Alle Beiträge
             </Badge>
           )}
-          {filteredCategories?.map((category, index) => {
-            const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
+          {filteredCategories?.map((category) => {
+            // Get icon component with fallback to MessageCircle
+            const IconComponent = (category.icon && iconMap[category.icon]) || MessageCircle;
+            
             return (
               <Badge
                 key={category.id}
