@@ -2,7 +2,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus } from "lucide-react";
+import { Plus, MessageCircle } from "lucide-react";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
 import { iconMap } from "../category-dialog/constants";
 
@@ -36,7 +36,9 @@ export const AdminCategoriesScroll = ({
         </Button>
         
         {categories?.map((category) => {
-          const IconComponent = category.icon ? iconMap[category.icon] : iconMap.MessageCircle;
+          // Safely get the icon component or fallback to MessageCircle
+          const IconComponent = category.icon && iconMap[category.icon] ? iconMap[category.icon] : MessageCircle;
+          
           return (
             <Badge
               key={category.id}
@@ -51,8 +53,8 @@ export const AdminCategoriesScroll = ({
               <IconComponent className="h-4 w-4" />
               {category.name}
             </Badge>
-          )}
-        )}
+          );
+        })}
       </div>
     </ScrollArea>
   );
