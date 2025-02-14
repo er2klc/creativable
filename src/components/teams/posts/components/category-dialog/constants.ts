@@ -57,28 +57,8 @@ export const availableIcons: IconOption[] = [
   { name: "Target", icon: Target }
 ];
 
-interface ColorOption {
-  name: string;
-  value: string;
-}
-
-export const availableColors: ColorOption[] = [
-  { name: "Hellgrün", value: "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]" },
-  { name: "Rosa", value: "bg-[#F8E8E8] hover:bg-[#E8D8D8] text-[#4A2A2A]" },
-  { name: "Hellblau", value: "bg-[#E8E8F8] hover:bg-[#D8D8E8] text-[#2A2A4A]" },
-  { name: "Hellgelb", value: "bg-[#F8F8E8] hover:bg-[#E8E8D8] text-[#4A4A2A]" },
-  { name: "Helllila", value: "bg-[#F8E8F8] hover:bg-[#E8D8E8] text-[#4A2A4A]" },
-  { name: "Hellcyan", value: "bg-[#E8F8F8] hover:bg-[#D8E8E8] text-[#2A4A4A]" },
-  { name: "Pfirsich", value: "bg-[#FFE8E0] hover:bg-[#EFD8D0] text-[#4A3A2A]" },
-  { name: "Mintgrün", value: "bg-[#E0FFE8] hover:bg-[#D0EFD8] text-[#2A4A3A]" },
-  { name: "Lavendel", value: "bg-[#F0E8FF] hover:bg-[#E0D8EF] text-[#3A2A4A]" },
-  { name: "Hellkoralle", value: "bg-[#FFE8E8] hover:bg-[#EFD8D8] text-[#4A2A2A]" },
-  { name: "Hellolive", value: "bg-[#F8FFE8] hover:bg-[#E8EFD8] text-[#3A4A2A]" },
-  { name: "Helltürkis", value: "bg-[#E8FFF8] hover:bg-[#D8EFE8] text-[#2A4A4A]" }
-];
-
+// Create a mapping of icon names to components
 export const iconMap: { [key: string]: LucideIcon } = availableIcons.reduce((acc, { name, icon }) => ({
   ...acc,
   [name]: icon
 }), {});
-

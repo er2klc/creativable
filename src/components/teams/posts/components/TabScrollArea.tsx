@@ -72,8 +72,11 @@ export const TabScrollArea = ({
             </Badge>
           )}
           {filteredCategories?.map((category) => {
-            // Get icon component with fallback to MessageCircle
-            const IconComponent = (category.icon && iconMap[category.icon]) || MessageCircle;
+            // Get the icon component, with guaranteed fallback to MessageCircle
+            let IconComponent = MessageCircle;
+            if (category.icon && typeof category.icon === 'string' && iconMap[category.icon]) {
+              IconComponent = iconMap[category.icon];
+            }
             
             return (
               <Badge
