@@ -27,6 +27,8 @@ export const useTeamCategories = (teamSlug?: string) => {
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
+      if (!teamSlug) return null;
+      
       const { data, error } = await supabase
         .from('teams')
         .select('id')
@@ -79,11 +81,13 @@ export const useTeamCategories = (teamSlug?: string) => {
   // Create category mutation
   const createCategory = useMutation({
     mutationFn: async (newCategory: Omit<TeamCategory, 'id' | 'slug' | 'order_index'>) => {
+      if (!team?.id) throw new Error('Team ID is required');
+      
       const { data, error } = await supabase
         .from('team_categories')
         .insert({
           ...newCategory,
-          team_id: team?.id,
+          team_id: team.id,
         })
         .select()
         .single();
