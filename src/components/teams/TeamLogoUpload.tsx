@@ -1,3 +1,4 @@
+
 interface TeamLogoUploadProps {
   currentLogoUrl?: string | null;
   onLogoChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -12,10 +13,14 @@ export const TeamLogoUpload = ({
   logoPreview
 }: TeamLogoUploadProps) => {
   return (
-    <div className="h-full w-full">
+    <div className="w-full h-[200px]">
       {logoPreview ? (
         <div className="relative h-full w-full">
-          <img src={logoPreview} alt="" className="h-full w-full object-cover rounded-md" style={{ height: '100%', width: '100%' }}/>
+          <img 
+            src={logoPreview} 
+            alt="" 
+            className="max-h-[200px] w-full object-contain rounded-md"
+          />
           <button
             type="button"
             onClick={onLogoRemove}
@@ -28,7 +33,11 @@ export const TeamLogoUpload = ({
         </div>
       ) : currentLogoUrl ? (
         <div className="relative h-full w-full">
-          <img src={currentLogoUrl} alt="" className="h-full w-full object-cover rounded-md" />
+          <img 
+            src={currentLogoUrl} 
+            alt="" 
+            className="max-h-[200px] w-full object-contain rounded-md"
+          />
           <button
             type="button"
             onClick={onLogoRemove}
@@ -40,8 +49,8 @@ export const TeamLogoUpload = ({
           </button>
         </div>
       ) : (
-        <div className="h-full w-full border-dashed border-2 border-gray-300 flex items-center justify-center rounded-md">
-          <label className="cursor-pointer">
+        <div className="h-full w-full border-dashed border-2 border-gray-300 flex items-center justify-center rounded-md bg-gray-50">
+          <label className="cursor-pointer flex flex-col items-center gap-2">
             <input
               type="file"
               accept="image/*"
@@ -51,6 +60,7 @@ export const TeamLogoUpload = ({
             <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
+            <span className="text-sm text-gray-500">Logo hochladen</span>
           </label>
         </div>
       )}

@@ -48,7 +48,7 @@ export const CreateTeamForm = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="name">Team Name</Label>
         <Input
@@ -58,17 +58,17 @@ export const CreateTeamForm = ({
           placeholder="Geben Sie einen Team-Namen ein"
         />
       </div>
+      
       <div className="space-y-2">
         <Label htmlFor="description">Beschreibung</Label>
-        <div className="max-h-[200px] overflow-y-auto border rounded-md">
-          <div className="sticky top-0 z-10 bg-background border-b">
-            <TiptapEditor
-              content={description}
-              onChange={setDescription}
-            />
-          </div>
+        <div className="h-[150px] overflow-y-auto border rounded-md">
+          <TiptapEditor
+            content={description}
+            onChange={setDescription}
+          />
         </div>
       </div>
+
       <div className="space-y-2">
         <Label htmlFor="videoUrl">Team Video URL (optional)</Label>
         <Input
@@ -78,7 +78,9 @@ export const CreateTeamForm = ({
           placeholder="Fügen Sie eine Video-URL hinzu"
         />
       </div>
+
       <div className="space-y-2">
+        <Label>Team Logo</Label>
         <TeamLogoUpload
           logoPreview={logoPreview}
           onLogoChange={handleLogoChange}
