@@ -14,6 +14,7 @@ import { useCategoryDialog } from "./category-dialog/hooks/useCategoryDialog";
 import { AdminCategoriesScroll } from "./categories/AdminCategoriesScroll";
 import { useParams } from "react-router-dom";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface EditCategoryDialogProps {
   teamId?: string;
@@ -45,11 +46,18 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    if (!categoryName.trim()) return;
+    if (!categoryName.trim()) {
+      toast.error("Bitte geben Sie einen Kategorienamen ein");
+      return;
+    }
+    
     setIsSubmitting(true);
     try {
       await handleSave();
       setOpen(false);
+    } catch (error) {
+      console.error("Error saving category:", error);
+      toast.error("Fehler beim Speichern der Kategorie");
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +98,6 @@ export const EditCategoryDialog = ({ teamId }: EditCategoryDialogProps) => {
             selectedIcon={selectedIcon}
             selectedColor={selectedColor}
             selectedSize={selectedSize}
-            onCategoryChange={handleCategoryChange}
             onCategoryNameChange={setCategoryName}
             onPublicChange={setIsPublic}
             onIconChange={setSelectedIcon}

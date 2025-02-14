@@ -1,5 +1,4 @@
 
-import { CategorySelector } from "./form-sections/CategorySelector";
 import { CategoryNameInput } from "./form-sections/CategoryNameInput";
 import { IconSelector } from "./form-sections/IconSelector";
 import { ColorSelector } from "./form-sections/ColorSelector";
@@ -13,7 +12,6 @@ interface CategoryDialogFormProps {
   selectedIcon: string;
   selectedColor: string;
   selectedSize: string;
-  onCategoryChange: (value: string) => void;
   onCategoryNameChange: (value: string) => void;
   onPublicChange: (value: boolean) => void;
   onIconChange: (value: string) => void;
@@ -23,45 +21,22 @@ interface CategoryDialogFormProps {
 }
 
 export const CategoryDialogForm = ({
-  selectedCategory,
   categoryName,
   isPublic,
   selectedIcon,
   selectedColor,
   selectedSize,
-  onCategoryChange,
   onCategoryNameChange,
   onPublicChange,
   onIconChange,
   onColorChange,
   onSizeChange,
-  categories
 }: CategoryDialogFormProps) => {
-  console.log("CategoryDialogForm rendered with:", {
-    selectedCategory,
-    categoryName,
-    isPublic,
-    selectedIcon,
-    selectedColor,
-    selectedSize
-  });
-
   return (
     <div className="space-y-4 py-4">
-      <CategorySelector
-        selectedCategory={selectedCategory}
-        onCategoryChange={onCategoryChange}
-        categories={categories}
-      />
-
       <CategoryNameInput
         value={categoryName}
         onChange={onCategoryNameChange}
-      />
-
-      <VisibilityToggle
-        isPublic={isPublic}
-        onChange={onPublicChange}
       />
 
       <IconSelector
@@ -77,6 +52,11 @@ export const CategoryDialogForm = ({
       <SizeSelector
         selectedSize={selectedSize}
         onChange={onSizeChange}
+      />
+
+      <VisibilityToggle
+        isPublic={isPublic}
+        onChange={onPublicChange}
       />
     </div>
   );
