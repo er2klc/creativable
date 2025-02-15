@@ -22,10 +22,10 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
     return null;
   }
 
-  // Convert color to Tailwind classes if it's a raw color value
-  const categoryColor = post.team_categories.color?.startsWith('#') 
-    ? `bg-[${post.team_categories.color}] hover:bg-opacity-90 text-white`
-    : post.team_categories.color || "bg-primary/10 hover:bg-primary/20 text-primary";
+  // Direkt die Hex-Farbe als Tailwind-Klasse verwenden
+  const categoryColor = post.team_categories.color 
+    ? `bg-[${post.team_categories.color}]`
+    : "bg-primary/10";
 
   return (
     <Card 
@@ -38,7 +38,9 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 border-2 border-primary/10">
               <AvatarImage 
-                src={post.author.avatar_url || ''} 
+                src={post.author.avatar_url?.startsWith('http') 
+                  ? post.author.avatar_url 
+                  : `/storage/v1/object/public/avatars/${post.author.avatar_url}`} 
                 alt={post.author.display_name || 'Avatar'}
               />
               <AvatarFallback className="bg-primary/5">
@@ -56,7 +58,10 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
                 })}</span>
                 <span>•</span>
                 <Badge 
-                  className={cn(categoryColor)}
+                  className={cn(
+                    categoryColor,
+                    "text-white hover:bg-opacity-90"
+                  )}
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
