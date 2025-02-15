@@ -2,8 +2,15 @@
 /**
  * Konstruiert die vollständige URL für ein Profilbild aus dem Supabase Storage
  */
-export const getAvatarUrl = (avatarPath?: string | null): string => {
-  if (!avatarPath) return '';
+export const getAvatarUrl = (avatarPath?: string | null, email?: string | null): string => {
+  if (!avatarPath) {
+    // Wenn kein Avatar vorhanden ist, generiere einen Default-Avatar mit den Initialen
+    if (email) {
+      const initial = email.charAt(0).toUpperCase();
+      return `https://ui-avatars.com/api/?name=${initial}&background=random`;
+    }
+    return '';
+  }
   
   // Wenn es bereits eine vollständige URL ist
   if (avatarPath.startsWith('http')) {

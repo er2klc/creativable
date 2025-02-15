@@ -22,7 +22,8 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
             author:profiles!team_posts_created_by_fkey (
               id,
               display_name,
-              avatar_url
+              avatar_url,
+              email
             ),
             team_post_comments:team_post_comments (
               id

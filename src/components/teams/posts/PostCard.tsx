@@ -7,7 +7,6 @@ import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { Post } from "../types/post";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
 import { getAvatarUrl, getCategoryStyle } from "@/lib/supabase-utils";
 
 interface PostCardProps {
@@ -23,6 +22,8 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   }
 
   const categoryStyle = getCategoryStyle(post.team_categories.color);
+  const displayName = post.author.display_name || 'Unbekannt';
+  const avatarUrl = getAvatarUrl(post.author.avatar_url, post.author.email);
 
   return (
     <Card 
@@ -35,16 +36,16 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 border-2 border-primary/10">
               <AvatarImage 
-                src={getAvatarUrl(post.author.avatar_url)}
-                alt={post.author.display_name || 'Avatar'}
+                src={avatarUrl}
+                alt={displayName}
               />
               <AvatarFallback className="bg-primary/5">
-                {post.author.display_name?.substring(0, 2).toUpperCase() || '??'}
+                {displayName.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <span className="font-medium">
-                {post.author.display_name || 'Unbekannt'}
+                {displayName}
               </span>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{formatDistanceToNow(new Date(post.created_at), {

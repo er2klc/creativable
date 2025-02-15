@@ -8,8 +8,9 @@ export interface Post extends Tables<"team_posts"> {
     color: string;
   };
   author: {
-    display_name: string;
+    display_name: string | null;
     avatar_url?: string | null;
+    email?: string | null;
   };
   team_post_comments: number;
   edited?: boolean;
