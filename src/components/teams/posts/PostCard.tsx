@@ -22,9 +22,18 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
     return null;
   }
 
-  // Direkt die Hex-Farbe als Tailwind-Klasse verwenden
+  // Konstruiere die vollständige Avatar-URL
+  const avatarUrl = post.author.avatar_url?.startsWith('http') 
+    ? post.author.avatar_url 
+    : post.author.avatar_url 
+      ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/avatars/${post.author.avatar_url}`
+      : '';
+
+  // Stelle sicher, dass die Farbe korrekt formatiert ist
   const categoryColor = post.team_categories.color 
-    ? `bg-[${post.team_categories.color}]`
+    ? post.team_categories.color.startsWith('#')
+      ? `bg-[${post.team_categories.color}]`
+      : post.team_categories.color
     : "bg-primary/10";
 
   return (
@@ -38,9 +47,7 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 border-2 border-primary/10">
               <AvatarImage 
-                src={post.author.avatar_url?.startsWith('http') 
-                  ? post.author.avatar_url 
-                  : `/storage/v1/object/public/avatars/${post.author.avatar_url}`} 
+                src={avatarUrl}
                 alt={post.author.display_name || 'Avatar'}
               />
               <AvatarFallback className="bg-primary/5">

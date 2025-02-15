@@ -24,7 +24,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
               display_name,
               avatar_url
             ),
-            team_post_comments (
+            team_post_comments:team_post_comments (
               id
             )
           `)
@@ -49,14 +49,14 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           return [];
         }
 
-        console.log("Raw posts data:", data);
+        // Log für Debugging
+        console.log("Raw posts data:", JSON.stringify(data, null, 2));
         
         const transformedData = data.map(post => ({
           ...post,
           team_post_comments: post.team_post_comments?.length || 0
         }));
         
-        console.log("Transformed posts data:", transformedData);
         return transformedData;
       } catch (error) {
         console.error("Unexpected error in useTeamPosts:", error);
