@@ -18,12 +18,25 @@ export const useCategoryMutations = () => {
     selectedSize: string
   ) => {
     if (!user) {
+      console.error("No user found");
       toast.error("Nicht authentifiziert");
       return false;
     }
 
+    console.log("Creating/updating category with data:", {
+      teamId,
+      selectedCategory,
+      categoryName,
+      isPublic,
+      selectedIcon,
+      selectedColor,
+      selectedSize
+    });
+
     try {
       if (selectedCategory !== "new") {
+        console.log("Updating existing category:", selectedCategory);
+        
         const { error: categoryError } = await supabase
           .from("team_categories")
           .update({ 
@@ -34,7 +47,12 @@ export const useCategoryMutations = () => {
           })
           .eq("id", selectedCategory);
 
-        if (categoryError) throw categoryError;
+        if (categoryError) {
+          console.error("Error updating category:", categoryError);
+          throw categoryError;
+        }
+
+        console.log("Category updated successfully");
 
         const { error: settingsError } = await supabase
           .from("team_category_settings")
@@ -44,8 +62,15 @@ export const useCategoryMutations = () => {
             size: selectedSize
           });
 
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error("Error updating category settings:", settingsError);
+          throw settingsError;
+        }
+
+        console.log("Category settings updated successfully");
       } else {
+        console.log("Creating new category for team:", teamId);
+        
         const { data: newCategory, error: categoryError } = await supabase
           .from("team_categories")
           .insert({
@@ -59,7 +84,12 @@ export const useCategoryMutations = () => {
           .select()
           .single();
 
-        if (categoryError) throw categoryError;
+        if (categoryError) {
+          console.error("Error creating category:", categoryError);
+          throw categoryError;
+        }
+
+        console.log("New category created successfully:", newCategory);
 
         const { error: settingsError } = await supabase
           .from("team_category_settings")
@@ -69,15 +99,20 @@ export const useCategoryMutations = () => {
             size: selectedSize
           });
 
-        if (settingsError) throw settingsError;
+        if (settingsError) {
+          console.error("Error creating category settings:", settingsError);
+          throw settingsError;
+        }
+
+        console.log("Category settings created successfully");
       }
 
       await queryClient.invalidateQueries({ queryKey: ["team-categories"] });
-      toast.success("Kategorie erfolgreich gespeichert");
       return true;
-    } catch (error) {
-      console.error("Error saving category:", error);
-      toast.error("Fehler beim Speichern der Kategorie");
+    } catch (error: any) {
+      console.error("Detailed error in category mutation:", error);
+      const errorMessage = error.message || "Fehler beim Speichern der Kategorie";
+      toast.error(errorMessage);
       return false;
     }
   };
@@ -85,20 +120,26 @@ export const useCategoryMutations = () => {
   const handleDelete = async (selectedCategory: string) => {
     if (selectedCategory === "new") return false;
 
+    console.log("Deleting category:", selectedCategory);
+
     try {
       const { error } = await supabase
         .from("team_categories")
         .delete()
         .eq("id", selectedCategory);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting category:", error);
+        throw error;
+      }
 
+      console.log("Category deleted successfully");
       await queryClient.invalidateQueries({ queryKey: ["team-categories"] });
-      toast.success("Kategorie erfolgreich gelöscht");
       return true;
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      toast.error("Fehler beim Löschen der Kategorie");
+    } catch (error: any) {
+      console.error("Detailed error in category deletion:", error);
+      const errorMessage = error.message || "Fehler beim Löschen der Kategorie";
+      toast.error(errorMessage);
       return false;
     }
   };

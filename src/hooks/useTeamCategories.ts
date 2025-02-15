@@ -22,21 +22,34 @@ export const useTeamCategories = (teamSlug?: string) => {
   return useQuery({
     queryKey: ['team-categories', teamSlug],
     queryFn: async () => {
-      if (!teamSlug) return [];
+      if (!teamSlug) {
+        console.log("No team slug provided");
+        return [];
+      }
       
+      console.log("Fetching categories for team slug:", teamSlug);
+
       // First get the team ID
-      const { data: team } = await supabase
+      const { data: team, error: teamError } = await supabase
         .from('teams')
         .select('id')
         .eq('slug', teamSlug)
         .single();
 
-      if (!team) return [];
+      if (teamError) {
+        console.error("Error fetching team:", teamError);
+        throw teamError;
+      }
+
+      if (!team) {
+        console.log("No team found for slug:", teamSlug);
+        return [];
+      }
 
       console.log("Found team ID:", team.id);
 
       // Then get the categories with their settings and post counts
-      const { data: categories, error } = await supabase
+      const { data: categories, error: categoriesError } = await supabase
         .from('team_categories')
         .select(`
           *,
@@ -46,14 +59,14 @@ export const useTeamCategories = (teamSlug?: string) => {
         .eq('team_id', team.id)
         .order('order_index');
 
-      if (error) {
-        console.error("Error fetching categories:", error);
-        throw error;
+      if (categoriesError) {
+        console.error("Error fetching categories:", categoriesError);
+        throw categoriesError;
       }
 
       console.log("Raw categories data:", categories);
 
-      return categories.map(category => ({
+      const mappedCategories = categories.map(category => ({
         ...category,
         settings: {
           size: category.team_category_settings?.[0]?.size || 'small'
@@ -63,6 +76,9 @@ export const useTeamCategories = (teamSlug?: string) => {
         icon: category.icon || 'MessageCircle',
         color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
       }));
+
+      console.log("Mapped categories:", mappedCategories);
+      return mappedCategories;
     },
     enabled: !!teamSlug,
   });
