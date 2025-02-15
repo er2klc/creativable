@@ -25,7 +25,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
               avatar_url,
               email
             ),
-            team_post_comments:team_post_comments (
+            team_post_comments (
               id
             )
           `)
@@ -55,7 +55,11 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
         
         const transformedData = data.map(post => ({
           ...post,
-          team_post_comments: post.team_post_comments?.length || 0
+          team_post_comments: post.team_post_comments?.length || 0,
+          author: {
+            ...post.author,
+            avatar_url: post.author?.avatar_url || null
+          }
         }));
         
         return transformedData;
