@@ -51,11 +51,10 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
                 })}</span>
                 <span>•</span>
                 <Badge 
-                  style={{ 
-                    backgroundColor: post.team_categories.color,
-                    color: 'white'
-                  }}
-                  className="hover:opacity-90"
+                  className={cn(
+                    getCategoryColorClass(post.team_categories.color),
+                    "text-white hover:opacity-90"
+                  )}
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
