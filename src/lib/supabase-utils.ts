@@ -9,7 +9,7 @@ export const getAvatarUrl = (avatarPath?: string | null, email?: string | null):
       const initial = email.charAt(0).toUpperCase();
       return `https://ui-avatars.com/api/?name=${initial}&background=random`;
     }
-    return '';
+    return '/lovable-uploads/45d6a707-e026-4964-aac9-4f294a2b5a1c.png';
   }
   
   // Wenn es bereits eine vollständige URL ist
@@ -37,8 +37,18 @@ export const getCategoryColorClass = (color?: string | null): string => {
     return color;
   }
 
-  // Wenn es eine vorhandene Tailwind-Klasse ist
-  return color;
+  // Tailwind-Farben mit Transparenz (z.B. bg-primary/10)
+  if (color.includes('/')) {
+    return color;
+  }
+
+  // Standard Tailwind-Farben
+  if (color.startsWith('bg-')) {
+    return color;
+  }
+
+  // Fallback für andere Farben
+  return `bg-${color}`;
 };
 
 /**
@@ -51,6 +61,7 @@ export const getCategoryStyle = (color?: string | null): React.CSSProperties => 
     return {}; // Verwende Tailwind-Klassen
   }
 
+  // Für Hex- und RGB-Farben
   return {
     backgroundColor: colorValue,
     color: 'white'
