@@ -3053,6 +3053,7 @@ export type Database = {
           team_id: string
           title: string
           updated_at: string | null
+          user_id: string
         }
         Insert: {
           category_id?: string | null
@@ -3071,6 +3072,7 @@ export type Database = {
           team_id: string
           title: string
           updated_at?: string | null
+          user_id: string
         }
         Update: {
           category_id?: string | null
@@ -3089,6 +3091,7 @@ export type Database = {
           team_id?: string
           title?: string
           updated_at?: string | null
+          user_id?: string
         }
         Relationships: [
           {

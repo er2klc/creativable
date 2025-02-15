@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface FormValues {
   title: string;
@@ -17,6 +18,7 @@ export const usePostSubmission = (
   teamMembers?: any[]
 ) => {
   const queryClient = useQueryClient();
+  const user = useUser();
 
   const extractMentions = (content: string) => {
     const mentionRegex = /@(\w+)/g;
@@ -32,6 +34,11 @@ export const usePostSubmission = (
   };
 
   const handleSubmission = async (values: FormValues, fileUrls: string[], postId?: string) => {
+    if (!user?.id) {
+      toast.error("Sie müssen angemeldet sein, um einen Beitrag zu erstellen");
+      return;
+    }
+
     try {
       const mentions = extractMentions(values.content);
       const mentionedUserIds = mentions
@@ -60,7 +67,8 @@ export const usePostSubmission = (
             category_id: categoryId,
             title: values.title,
             content: values.content,
-            created_by: (await supabase.auth.getUser()).data.user?.id,
+            created_by: user.id,
+            user_id: user.id,
             file_urls: fileUrls.length > 0 ? fileUrls : null,
           })
           .select('id')
