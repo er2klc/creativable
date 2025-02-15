@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
+import { getAvatarUrl } from "@/lib/supabase-utils";
 
 interface TeamHeaderTitleProps {
   team: {
@@ -79,7 +80,7 @@ export function TeamHeaderTitle({
           <button className="relative group">
             {team.logo_url ? (
               <Avatar className="h-32 w-32 cursor-pointer border-2 border-primary/20">
-                <AvatarImage src={team.logo_url} alt={team.name} className="object-cover" />
+                <AvatarImage src={getAvatarUrl(team.logo_url)} alt={team.name} className="object-cover" />
                 <AvatarFallback className="text-2xl">{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
             ) : (

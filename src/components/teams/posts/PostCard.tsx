@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Post } from "../types/post";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { getAvatarUrl, getCategoryColorClass } from "@/lib/supabase-utils";
 
 interface PostCardProps {
   post: Post;
@@ -17,24 +18,9 @@ interface PostCardProps {
 export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   const navigate = useNavigate();
 
-  // Early return if post data is incomplete
   if (!post?.team_categories || !post?.author) {
     return null;
   }
-
-  // Konstruiere die vollständige Avatar-URL
-  const avatarUrl = post.author.avatar_url?.startsWith('http') 
-    ? post.author.avatar_url 
-    : post.author.avatar_url 
-      ? `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/avatars/${post.author.avatar_url}`
-      : '';
-
-  // Stelle sicher, dass die Farbe korrekt formatiert ist
-  const categoryColor = post.team_categories.color 
-    ? post.team_categories.color.startsWith('#')
-      ? `bg-[${post.team_categories.color}]`
-      : post.team_categories.color
-    : "bg-primary/10";
 
   return (
     <Card 
@@ -47,7 +33,7 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 border-2 border-primary/10">
               <AvatarImage 
-                src={avatarUrl}
+                src={getAvatarUrl(post.author.avatar_url)}
                 alt={post.author.display_name || 'Avatar'}
               />
               <AvatarFallback className="bg-primary/5">
@@ -65,10 +51,11 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
                 })}</span>
                 <span>•</span>
                 <Badge 
-                  className={cn(
-                    categoryColor,
-                    "text-white hover:bg-opacity-90"
-                  )}
+                  style={{ 
+                    backgroundColor: post.team_categories.color,
+                    color: 'white'
+                  }}
+                  className="hover:opacity-90"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
