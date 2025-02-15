@@ -1,8 +1,10 @@
+
 import { Card } from "@/components/ui/card";
 import { PlatformCardContent } from "./PlatformCardContent";
 import { PlatformCardImage } from "./PlatformCardImage";
 import { PlatformCardActions } from "./PlatformCardActions";
 import { useNavigate } from "react-router-dom";
+import { useUser } from "@supabase/auth-helpers-react";
 
 interface PlatformCardProps {
   platform: any;
@@ -11,16 +13,22 @@ interface PlatformCardProps {
 
 export const PlatformCard = ({ platform, onDelete }: PlatformCardProps) => {
   const navigate = useNavigate();
+  const user = useUser();
+  
+  const hasAccess = user?.id === platform.created_by || 
+                    platform.team_stats?.some((ts: any) => 
+                      ts.teams?.team_members?.some((tm: any) => tm.user_id === user?.id)
+                    );
   
   const handleClick = () => {
-    if (platform.elevate_modules?.[0]?.id) {
+    if (hasAccess && platform.slug) {
       navigate(`/elevate/modul/${platform.slug}`);
     }
   };
 
   return (
     <Card 
-      className="group overflow-hidden bg-[#222] cursor-pointer" 
+      className={`group overflow-hidden bg-[#222] ${hasAccess ? 'cursor-pointer' : 'cursor-not-allowed opacity-70'}`}
       onClick={handleClick}
     >
       <div className="relative h-[240px]">

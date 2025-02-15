@@ -28,7 +28,12 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
     queryFn: async () => {
       const { data: platform, error } = await supabase
         .from('elevate_platforms')
-        .select('*')
+        .select(`
+          *,
+          elevate_team_access(
+            team_id
+          )
+        `)
         .eq('id', platformId)
         .maybeSingle();
       
@@ -43,6 +48,8 @@ export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatf
       setName(platform.name || "");
       setDescription(platform.description || "");
       setImageUrl(platform.image_url);
+      const teamIds = platform.elevate_team_access?.map(ta => ta.team_id) || [];
+      setSelectedTeams(teamIds);
     }
   }, [platform]);
 
