@@ -3812,6 +3812,16 @@ export type Database = {
         }
         Returns: unknown
       }
+      is_super_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_team_admin: {
+        Args: {
+          team_id: string
+        }
+        Returns: boolean
+      }
       ivfflat_bit_support: {
         Args: {
           "": unknown
