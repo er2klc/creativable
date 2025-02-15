@@ -1,10 +1,12 @@
 
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Lock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { ArrowLeft, ArrowRight, Lock, MessageCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTabScroll } from "../../hooks/useTabScroll";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
 import { iconMap } from "../category-dialog/constants";
-import { BaseCategoryScroll } from "./BaseCategoryScroll";
 
 interface PostCategoriesScrollProps {
   activeTab: string;
@@ -19,55 +21,101 @@ export const PostCategoriesScroll = ({
   isAdmin, 
   teamSlug 
 }: PostCategoriesScrollProps) => {
+  const {
+    scrollContainerRef,
+    showLeftArrow,
+    showRightArrow,
+    handleScroll,
+    scrollTabs
+  } = useTabScroll();
+
   const { data: categories, isLoading } = useTeamCategories(teamSlug);
 
-  // Filter categories to only show ones with posts for non-admins
+  // Filter categories - only show those with posts (unless admin)
   const filteredCategories = categories?.filter(category => {
-    if (isAdmin) return true;
-    return category.is_public && (!category.post_count || category.post_count > 0);
+    if (isAdmin) return true; // Admins see all categories
+    return category.post_count && category.post_count > 0;
   });
+
+  // Check if we're in a post detail view (not just category view)
+  const isPostDetailView = window.location.pathname.includes('/posts/') && 
+                          !window.location.pathname.includes('/posts/category/');
 
   if (isLoading) {
     return <div className="h-12 w-full bg-muted animate-pulse rounded-md" />;
   }
 
   return (
-    <BaseCategoryScroll className="border-b">
-      <Badge
-        variant="outline"
-        className={cn(
-          "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 shrink-0",
-          "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
-          activeTab === 'all' ? "border-primary" : "border-transparent"
-        )}
-        onClick={() => onCategoryClick()}
-      >
-        <MessageCircle className="h-4 w-4 mr-2 inline-block" />
-        Alle Beiträge
-      </Badge>
-      
-      {filteredCategories?.map((category) => {
-        const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
-        return (
-          <Badge
-            key={category.id}
-            variant="outline"
-            className={cn(
-              "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2 shrink-0",
-              category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
-              activeTab === category.slug ? "border-primary" : "border-transparent"
-            )}
-            onClick={() => onCategoryClick(category.slug)}
-          >
-            <IconComponent className="h-4 w-4" />
-            {category.name}
-            {!category.is_public && <Lock className="h-3 w-3 ml-2" />}
-            {category.post_count > 0 && (
-              <span className="ml-1 text-xs">({category.post_count})</span>
-            )}
-          </Badge>
-        )}
+    <div className="relative w-full">
+      {showLeftArrow && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute left-0 z-10 bg-white/80 hover:bg-white"
+          onClick={() => scrollTabs('left')}
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
       )}
-    </BaseCategoryScroll>
+      
+      <ScrollArea className="w-full border-b">
+        <div 
+          ref={scrollContainerRef}
+          className="flex gap-2 py-2 px-4"
+          onScroll={handleScroll}
+        >
+          {!isPostDetailView && (
+            <Badge
+              variant="outline"
+              className={cn(
+                "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 shrink-0",
+                "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
+                activeTab === 'all' ? "border-primary" : "border-transparent"
+              )}
+              onClick={() => onCategoryClick()}
+            >
+              <MessageCircle className="h-4 w-4 mr-2 inline-block" />
+              Alle Beiträge
+            </Badge>
+          )}
+          {filteredCategories?.map((category) => {
+            // Get the icon component, with guaranteed fallback to MessageCircle
+            const IconComponent = category.icon && iconMap[category.icon] ? iconMap[category.icon] : MessageCircle;
+            
+            return (
+              <Badge
+                key={category.id}
+                variant="outline"
+                className={cn(
+                  "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2 shrink-0",
+                  category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
+                  activeTab === category.slug ? "border-primary" : "border-transparent"
+                )}
+                onClick={() => onCategoryClick(category.slug)}
+              >
+                <IconComponent className="h-4 w-4" />
+                {category.name}
+                {!category.is_public && <Lock className="h-3 w-3 ml-2" />}
+                {category.post_count > 0 && (
+                  <span className="text-xs ml-1">({category.post_count})</span>
+                )}
+              </Badge>
+            )}
+          )}
+        </div>
+        <ScrollBar orientation="horizontal" className="h-2.5" />
+      </ScrollArea>
+
+      {showRightArrow && (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="absolute right-0 z-10 bg-white/80 hover:bg-white"
+          onClick={() => scrollTabs('right')}
+        >
+          <ArrowRight className="h-4 w-4" />
+        </Button>
+      )}
+    </div>
   );
 };
