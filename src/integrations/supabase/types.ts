@@ -3597,6 +3597,13 @@ export type Database = {
             }
             Returns: unknown
           }
+      check_platform_access: {
+        Args: {
+          platform_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
       check_team_member: {
         Args: {
           team_id: string
