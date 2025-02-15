@@ -17,6 +17,11 @@ export const getAvatarUrl = (avatarPath?: string | null, email?: string | null):
     return avatarPath;
   }
 
+  // Wenn es ein Lovable-Upload ist
+  if (avatarPath.startsWith('/lovable-uploads/')) {
+    return avatarPath;
+  }
+
   // Konstruiere die Supabase Storage URL
   return `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/avatars/${avatarPath}`;
 };
