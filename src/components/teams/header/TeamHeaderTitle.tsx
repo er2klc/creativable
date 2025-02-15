@@ -37,7 +37,6 @@ export function TeamHeaderTitle({
   adminMembers 
 }: TeamHeaderTitleProps) {
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
-  const [showOnlineMembers, setShowOnlineMembers] = useState(false);
 
   useEffect(() => {
     // Subscribe to presence updates for this team
@@ -81,11 +80,15 @@ export function TeamHeaderTitle({
             {team.logo_url ? (
               <Avatar className="h-32 w-32 cursor-pointer border-2 border-primary/20">
                 <AvatarImage src={getAvatarUrl(team.logo_url)} alt={team.name} className="object-cover" />
-                <AvatarFallback className="text-2xl">{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="text-2xl bg-primary/5">
+                  {team.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
             ) : (
               <Avatar className="h-32 w-32 cursor-pointer border-2 border-primary/20">
-                <AvatarFallback className="text-2xl">{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                <AvatarFallback className="text-2xl bg-primary/5">
+                  {team.name.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
             )}
             {isAdmin && (

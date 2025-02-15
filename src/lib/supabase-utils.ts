@@ -15,16 +15,32 @@ export const getAvatarUrl = (avatarPath?: string | null): string => {
 };
 
 /**
- * Konvertiert eine Kategoriefarbe in eine gültige CSS-Klasse
+ * Konvertiert eine Kategoriefarbe in eine gültige CSS-Klasse oder Style
  */
 export const getCategoryColorClass = (color?: string | null): string => {
   if (!color) return 'bg-primary/10';
 
-  // Wenn es eine Hex-Farbe ist
-  if (color.startsWith('#')) {
-    return `bg-[${color}]`;
+  // Wenn es eine Hex-Farbe oder CSS-Farbe ist
+  if (color.startsWith('#') || color.startsWith('rgb')) {
+    return color;
   }
 
-  // Wenn es bereits eine Tailwind-Klasse ist
+  // Wenn es eine vorhandene Tailwind-Klasse ist
   return color;
+};
+
+/**
+ * Erstellt ein Style-Objekt für Kategoriefarben
+ */
+export const getCategoryStyle = (color?: string | null): React.CSSProperties => {
+  const colorValue = getCategoryColorClass(color);
+  
+  if (colorValue.startsWith('bg-')) {
+    return {}; // Verwende Tailwind-Klassen
+  }
+
+  return {
+    backgroundColor: colorValue,
+    color: 'white'
+  };
 };

@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { Post } from "../types/post";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import { getAvatarUrl, getCategoryColorClass } from "@/lib/supabase-utils";
+import { getAvatarUrl, getCategoryStyle } from "@/lib/supabase-utils";
 
 interface PostCardProps {
   post: Post;
@@ -21,6 +21,8 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   if (!post?.team_categories || !post?.author) {
     return null;
   }
+
+  const categoryStyle = getCategoryStyle(post.team_categories.color);
 
   return (
     <Card 
@@ -51,10 +53,8 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
                 })}</span>
                 <span>•</span>
                 <Badge 
-                  className={cn(
-                    getCategoryColorClass(post.team_categories.color),
-                    "text-white hover:opacity-90"
-                  )}
+                  style={categoryStyle}
+                  className="hover:opacity-90"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
