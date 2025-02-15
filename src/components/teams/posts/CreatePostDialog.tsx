@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CreatePostForm } from "./dialog/CreatePostForm";
-import { useTeamMembers } from "./dialog/hooks/useTeamMembers";
+import { useTeamMembers } from "./dialog/useTeamMembers";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
