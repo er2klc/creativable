@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useTeamCategories } from "@/hooks/useTeamCategories";
+import { useCategoryQueries } from "./useCategoryQueries";
 import { useCategoryMutations } from "./useCategoryMutations";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ export const useCategoryDialog = (teamId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   
   const queryClient = useQueryClient();
-  const { categories } = useTeamCategories(teamId);
+  const { categories } = useCategoryQueries(teamId);
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
 
   const resetForm = () => {
