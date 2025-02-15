@@ -33,6 +33,8 @@ export const useTeamCategories = (teamSlug?: string) => {
 
       if (!team) return [];
 
+      console.log("Found team ID:", team.id);
+
       // Then get the categories with their settings and post counts
       const { data: categories, error } = await supabase
         .from('team_categories')
@@ -44,7 +46,12 @@ export const useTeamCategories = (teamSlug?: string) => {
         .eq('team_id', team.id)
         .order('order_index');
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching categories:", error);
+        throw error;
+      }
+
+      console.log("Raw categories data:", categories);
 
       return categories.map(category => ({
         ...category,

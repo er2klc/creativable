@@ -19,7 +19,7 @@ export const useCategoryDialog = (teamId?: string) => {
   const [isLoading, setIsLoading] = useState(false);
   
   const queryClient = useQueryClient();
-  const { data: categories } = useTeamCategories(teamId);
+  const { data: categories, isLoading: isCategoriesLoading } = useTeamCategories(teamId);
   const { handleSave: saveCategory, handleDelete: deleteCategory } = useCategoryMutations();
 
   const resetForm = () => {
@@ -129,7 +129,7 @@ export const useCategoryDialog = (teamId?: string) => {
     selectedColor,
     selectedSize,
     categories,
-    isLoading,
+    isLoading: isLoading || isCategoriesLoading,
     handleCategoryChange,
     setCategoryName,
     setIsPublic,
