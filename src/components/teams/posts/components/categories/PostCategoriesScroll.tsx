@@ -18,7 +18,6 @@ interface PostCategoriesScrollProps {
 export const PostCategoriesScroll = ({ 
   activeTab, 
   onCategoryClick, 
-  isAdmin, 
   teamSlug 
 }: PostCategoriesScrollProps) => {
   const {
@@ -31,11 +30,10 @@ export const PostCategoriesScroll = ({
 
   const { data: categories, isLoading } = useTeamCategories(teamSlug);
 
-  // Filter categories - only show those with posts (unless admin)
-  const filteredCategories = categories?.filter(category => {
-    if (isAdmin) return true; // Admins see all categories
-    return category.post_count && category.post_count > 0;
-  });
+  // Filter categories - only show those with posts for everyone
+  const filteredCategories = categories?.filter(category => 
+    category.post_count && category.post_count > 0
+  );
 
   // Check if we're in a post detail view (not just category view)
   const isPostDetailView = window.location.pathname.includes('/posts/') && 
@@ -79,7 +77,6 @@ export const PostCategoriesScroll = ({
             </Badge>
           )}
           {filteredCategories?.map((category) => {
-            // Get the icon component, with guaranteed fallback to MessageCircle
             const IconComponent = category.icon && iconMap[category.icon] ? iconMap[category.icon] : MessageCircle;
             
             return (
@@ -96,9 +93,7 @@ export const PostCategoriesScroll = ({
                 <IconComponent className="h-4 w-4" />
                 {category.name}
                 {!category.is_public && <Lock className="h-3 w-3 ml-2" />}
-                {category.post_count > 0 && (
-                  <span className="text-xs ml-1">({category.post_count})</span>
-                )}
+                <span className="text-xs ml-1">({category.post_count})</span>
               </Badge>
             )}
           )}
