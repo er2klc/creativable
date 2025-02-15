@@ -3597,6 +3597,13 @@ export type Database = {
             }
             Returns: unknown
           }
+      check_team_member: {
+        Args: {
+          team_id: string
+          user_id: string
+        }
+        Returns: boolean
+      }
       create_phase_analysis: {
         Args: {
           p_lead_id: string
