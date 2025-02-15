@@ -5,6 +5,7 @@ export interface Post extends Tables<"team_posts"> {
   team_categories: {
     name: string;
     slug: string;
+    color: string;  // Hinzugefügt
   };
   author: {
     display_name: string;

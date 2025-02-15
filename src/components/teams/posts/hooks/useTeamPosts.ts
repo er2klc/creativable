@@ -15,7 +15,9 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           .select(`
             *,
             team_categories (
-              name
+              name,
+              slug,
+              color
             ),
             author:profiles!team_posts_created_by_fkey (
               id,
