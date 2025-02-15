@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useState, useEffect } from "react";
-import { TabScrollArea } from "./components/TabScrollArea";
+import { PostCategoriesScroll } from "./components/categories/PostCategoriesScroll";
 import { TeamHeader } from "./components/TeamHeader";
 import { Team } from "./types/team";
 import { PostDetail } from "./components/PostDetail";
@@ -151,7 +151,7 @@ export function PostsAndDiscussions() {
       <div className="pt-16">
         <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
           <div className="flex items-center gap-4">
-            <TabScrollArea
+            <PostCategoriesScroll
               activeTab={activeTab}
               onCategoryClick={handleCategoryClick}
               isAdmin={isAdmin}
