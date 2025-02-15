@@ -14,7 +14,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           .from('team_posts')
           .select(`
             *,
-            team_categories (
+            team_categories!inner (
               name,
               slug,
               color
@@ -25,18 +25,11 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
               avatar_url
             ),
             team_post_comments (
-              id,
-              content,
-              created_at,
-              author:profiles!team_post_comments_created_by_fkey (
-                id,
-                display_name,
-                avatar_url
-              )
+              id
             )
           `)
           .eq('team_id', teamId)
-          .order('pinned', { ascending: false })  // Order pinned posts first
+          .order('pinned', { ascending: false })
           .order('created_at', { ascending: false });
 
         if (categoryId) {
@@ -53,9 +46,10 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
         
         if (!data || data.length === 0) {
           console.log("No posts found for teamId:", teamId, "categoryId:", categoryId);
-        } else {
-          console.log("Successfully fetched posts:", data.length, "posts found");
+          return [];
         }
+
+        console.log("Raw posts data:", data);
         
         const transformedData = data.map(post => ({
           ...post,
