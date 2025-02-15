@@ -15,15 +15,18 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { NotificationSidebar } from "@/components/notifications/NotificationSidebar";
 import { Profile } from "@/integrations/supabase/types/profiles";
+import { getAvatarUrl } from "@/lib/supabase-utils";
+import { useProfile } from "@/hooks/use-profile";
 
 interface HeaderActionsProps {
   profile?: Profile | null;
   userEmail?: string;
 }
 
-export const HeaderActions = ({ profile, userEmail }: HeaderActionsProps) => {
+export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const navigate = useNavigate();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const { data: profile } = useProfile();
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications'],
@@ -44,9 +47,8 @@ export const HeaderActions = ({ profile, userEmail }: HeaderActionsProps) => {
     navigate("/auth");
   };
 
-  const getInitials = (email: string) => {
-    return email?.charAt(0).toUpperCase() || "U";
-  };
+  const avatarUrl = getAvatarUrl(profile?.avatar_url, userEmail);
+  const displayName = profile?.display_name || userEmail?.split('@')[0] || "U";
 
   return (
     <>
@@ -72,8 +74,8 @@ export const HeaderActions = ({ profile, userEmail }: HeaderActionsProps) => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="h-8 w-8 cursor-pointer">
-              <AvatarImage src={profile?.avatar_url} />
-              <AvatarFallback>{getInitials(userEmail || "")}</AvatarFallback>
+              <AvatarImage src={avatarUrl} alt={displayName} />
+              <AvatarFallback>{displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
@@ -104,4 +106,3 @@ export const HeaderActions = ({ profile, userEmail }: HeaderActionsProps) => {
     </>
   );
 };
-
