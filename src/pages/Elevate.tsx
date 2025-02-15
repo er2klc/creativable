@@ -22,14 +22,6 @@ const fetchPlatforms = async (userId: string, selectedTeam: string | null) => {
           title,
           description,
           order_index
-        ),
-        team_stats:elevate_team_access(
-          team_id,
-          teams!inner(
-            id,
-            name,
-            team_members(user_id)
-          )
         )
       `);
 
@@ -53,23 +45,15 @@ const fetchPlatforms = async (userId: string, selectedTeam: string | null) => {
       throw error;
     }
 
-    return (platforms || []).map(platform => {
-      // Calculate stats from the nested team_stats data
-      const uniqueTeams = new Set(platform.team_stats?.map((ts: any) => ts.team_id));
-      const uniqueUsers = new Set(platform.team_stats?.flatMap((ts: any) => 
-        ts.teams?.team_members?.map((tm: any) => tm.user_id)
-      ));
-
-      return {
-        ...platform,
-        modules: platform.elevate_modules || [],
-        stats: {
-          totalTeams: uniqueTeams.size,
-          totalUsers: uniqueUsers.size,
-          progress: 0,
-        }
-      };
-    });
+    return (platforms || []).map(platform => ({
+      ...platform,
+      modules: platform.elevate_modules || [],
+      stats: {
+        totalTeams: 0,
+        totalUsers: 0,
+        progress: 0,
+      }
+    }));
   } catch (error) {
     console.error("[Debug] Error in fetchPlatforms:", error);
     throw error;
