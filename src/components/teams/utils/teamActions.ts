@@ -34,19 +34,6 @@ export const handleTeamLeave = async (teamId: string, userId: string): Promise<b
   try {
     console.log('Attempting to leave team:', teamId, 'for user:', userId);
     
-    // First check if the member exists
-    const { data: memberExists } = await supabase
-      .from('team_members')
-      .select('id')
-      .eq('team_id', teamId)
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (!memberExists) {
-      console.log('No team membership found to delete');
-      return false;
-    }
-    
     const { error } = await supabase
       .from('team_members')
       .delete()
