@@ -50,13 +50,27 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
       // Check if already a member
       const { data: existingMember, error: memberCheckError } = await supabase
         .from('team_members')
-        .select('id')
+        .select('role')
         .eq('team_id', team.id)
         .eq('user_id', user.id)
         .maybeSingle();
 
       if (existingMember) {
-        toast.error("Sie sind bereits Mitglied dieses Teams");
+        const role = existingMember.role;
+        let message = "Sie sind bereits ";
+        switch (role) {
+          case 'owner':
+            message += "Besitzer";
+            break;
+          case 'admin':
+            message += "Administrator";
+            break;
+          default:
+            message += "Mitglied";
+        }
+        message += ` des Teams "${team.name}"`;
+        
+        toast.error(message);
         setIsLoading(false);
         return;
       }
