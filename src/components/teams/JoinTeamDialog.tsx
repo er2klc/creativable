@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -29,14 +30,18 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
     try {
       const cleanJoinCode = joinCode.trim().toUpperCase();
       
-      // First, let's check if the team exists
+      // Use maybeSingle() instead of single() to handle the case where no team is found
       const { data: team, error: searchError } = await supabase
         .from('teams')
         .select('*')
         .eq('join_code', cleanJoinCode)
-        .single();
+        .maybeSingle();
 
-      if (searchError || !team) {
+      if (searchError) {
+        throw searchError;
+      }
+
+      if (!team) {
         toast.error("Ungültiger Beitritts-Code");
         setIsLoading(false);
         return;
@@ -48,7 +53,7 @@ export const JoinTeamDialog = ({ isOpen, setIsOpen, onTeamJoined }: JoinTeamDial
         .select('id')
         .eq('team_id', team.id)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (existingMember) {
         toast.error("Sie sind bereits Mitglied dieses Teams");
