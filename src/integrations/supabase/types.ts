@@ -3550,14 +3550,6 @@ export type Database = {
         }
         Relationships: []
       }
-      platform_access_cache: {
-        Row: {
-          has_access: boolean | null
-          platform_id: string | null
-          user_id: string | null
-        }
-        Relationships: []
-      }
       team_post_comments_count: {
         Row: {
           count: number | null
