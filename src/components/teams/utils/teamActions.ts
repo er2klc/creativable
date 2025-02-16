@@ -34,11 +34,12 @@ export const handleTeamLeave = async (teamId: string, userId: string): Promise<b
   try {
     console.log('Attempting to leave team:', teamId, 'for user:', userId);
     
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('team_members')
       .delete()
-      .eq('team_id', teamId)
-      .eq('user_id', userId);
+      .in('team_id', [teamId])
+      .in('user_id', [userId])
+      .select();
 
     if (error) {
       console.error('Error in team leave:', error);
@@ -46,8 +47,13 @@ export const handleTeamLeave = async (teamId: string, userId: string): Promise<b
       return false;
     }
 
-    toast.success("Team erfolgreich verlassen");
-    return true;
+    if (data && data.length > 0) {
+      toast.success("Team erfolgreich verlassen");
+      return true;
+    } else {
+      console.log('No team membership found to delete');
+      return false;
+    }
   } catch (error) {
     console.error('Error in team leave:', error);
     toast.error("Fehler beim Verlassen des Teams");
