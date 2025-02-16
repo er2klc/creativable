@@ -1,3 +1,4 @@
+
 import { Play } from "lucide-react";
 import { type Tables } from "@/integrations/supabase/types";
 import { useState } from "react";
@@ -23,7 +24,10 @@ export const TeamCardImage = ({ team }: TeamCardImageProps) => {
   };
 
   return (
-    <div className="relative w-full h-[400px] overflow-hidden cursor-pointer" onClick={handleClick}>
+    <div 
+      className="relative w-full h-full min-h-[300px] overflow-hidden cursor-pointer rounded-l-lg" 
+      onClick={handleClick}
+    >
       {showVideo && team.video_url ? (
         <iframe
           className="absolute inset-0 w-full h-full"

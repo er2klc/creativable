@@ -1,3 +1,4 @@
+
 import { LogOut, Trash2, Copy, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
@@ -11,7 +12,7 @@ interface TeamCardActionsProps {
   joinCode?: string;
   onDelete: () => void;
   onLeave: () => void;
-  onCopyJoinCode: (code: string, e?: React.MouseEvent) => void;
+  onCopyJoinCode: (code: string) => void;
   team: Tables<"teams">;
 }
 
@@ -27,14 +28,14 @@ export const TeamCardActions = ({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   return (
-    <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1" onClick={(e) => e.stopPropagation()}>
       {joinCode && (
         <Button
           variant="ghost"
           size="icon"
           onClick={(e) => {
             e.stopPropagation();
-            onCopyJoinCode(joinCode, e);
+            onCopyJoinCode(joinCode);
           }}
           className="h-8 w-8"
           title="Code kopieren"

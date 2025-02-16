@@ -1,3 +1,4 @@
+
 import { type Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { TeamCardActions } from "./TeamCardActions";
@@ -49,27 +50,29 @@ export const TeamCard = ({
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden group w-full max-w-3xl mx-auto"
+      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden w-full"
     >
-      <div className="flex flex-col">
-        <div onClick={(e) => handleClick(e, true)}>
+      <div className="grid md:grid-cols-3 gap-0">
+        <div className="md:col-span-1" onClick={(e) => handleClick(e, true)}>
           <TeamCardImage team={team} />
         </div>
         <div 
-          className="p-4 space-y-4"
+          className="md:col-span-2 p-6 flex flex-col"
           onClick={(e) => handleClick(e, false)}
         >
-          <TeamCardContent team={team} />
-          <div className="flex justify-end">
-            <TeamCardActions
-              teamId={team.id}
-              joinCode={team.join_code}
-              onDelete={() => onDelete(team.id)}
-              onLeave={() => onLeave(team.id)}
-              onCopyJoinCode={onCopyJoinCode}
-              isOwner={isTeamOwner}
-              team={team}
-            />
+          <div className="flex flex-col h-full">
+            <div className="absolute top-4 right-4 z-10">
+              <TeamCardActions
+                teamId={team.id}
+                joinCode={team.join_code}
+                onDelete={() => onDelete(team.id)}
+                onLeave={() => onLeave(team.id)}
+                onCopyJoinCode={onCopyJoinCode}
+                isOwner={isTeamOwner}
+                team={team}
+              />
+            </div>
+            <TeamCardContent team={team} />
           </div>
         </div>
       </div>
