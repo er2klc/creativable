@@ -41,10 +41,6 @@ export const handleTeamLeave = async (teamId: string, userId: string): Promise<b
       .match({ 
         team_id: teamId,
         user_id: userId 
-      })
-      .select() // Entfernt, da wir keine Daten zurück erwarten
-      .options({
-        head: true // Nur Header zurückgeben, keine Daten
       });
 
     if (error) {
