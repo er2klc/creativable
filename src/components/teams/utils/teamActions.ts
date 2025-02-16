@@ -9,8 +9,7 @@ export const handleTeamDelete = async (teamId: string): Promise<boolean> => {
     const { error } = await supabase
       .from('teams')
       .delete()
-      .eq('id', teamId)
-      .single();
+      .eq('id', teamId);
 
     if (error) {
       console.error('Error in team delete:', error);
