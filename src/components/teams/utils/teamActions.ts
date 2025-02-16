@@ -1,6 +1,9 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { QueryClient } from "@tanstack/react-query";
+
+const queryClient = new QueryClient();
 
 export const handleTeamDelete = async (teamId: string): Promise<boolean> => {
   try {
@@ -66,6 +69,10 @@ export const handleTeamLeave = async (teamId: string, userId: string): Promise<b
       return false;
     }
 
+    // Invalidate relevant queries
+    await queryClient.invalidateQueries({ queryKey: ['platforms'] });
+    await queryClient.invalidateQueries({ queryKey: ['user-teams'] });
+    
     toast.success("Team erfolgreich verlassen");
     return true;
     
@@ -75,3 +82,4 @@ export const handleTeamLeave = async (teamId: string, userId: string): Promise<b
     return false;
   }
 };
+

@@ -1,10 +1,11 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
 import { toast } from "sonner";
 import { ElevateHeader } from "@/components/elevate/ElevateHeader";
 import { PlatformList } from "@/components/elevate/PlatformList";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const fetchPlatforms = async (userId: string, selectedTeam: string | null) => {
   if (!userId) {
@@ -71,6 +72,32 @@ const Elevate = () => {
     staleTime: 0,
     gcTime: 0,
   });
+
+  // Set up realtime subscription for team_members
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('team-members-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'team_members',
+          filter: `user_id=eq.${user.id}`
+        },
+        () => {
+          console.log('Team membership changed, refetching platforms...');
+          refetch();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, refetch]);
 
   const handleDelete = async (id: string) => {
     try {
