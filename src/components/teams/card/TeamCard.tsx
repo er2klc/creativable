@@ -57,7 +57,7 @@ export const TeamCard = ({
           <TeamCardImage team={team} />
         </div>
         <div 
-          className="md:col-span-2 p-6 flex flex-col"
+          className="md:col-span-2 p-6 flex flex-col border-l border-border"
           onClick={(e) => handleClick(e, false)}
         >
           <div className="flex flex-col h-full">
