@@ -71,12 +71,24 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
     setIsSubmitting(true);
 
     try {
+      // Get team ID first
+      const { data: team, error: teamError } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamSlug)
+        .single();
+
+      if (teamError) throw teamError;
+      if (!team) throw new Error('Team nicht gefunden');
+
+      const teamId = team.id;
+
       if (selectedCategory === "new") {
         // First create the category
         const { data: newCategory, error: categoryError } = await supabase
           .from('team_categories')
           .insert({
-            team_id: (await supabase.from('teams').select('id').eq('slug', teamSlug).single()).data?.id,
+            team_id: teamId,
             name: categoryName.trim(),
             is_public: isPublic,
             icon: selectedIcon,
@@ -88,13 +100,15 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
 
         if (categoryError) throw categoryError;
 
-        // Then create the settings
+        // Then create the settings with upsert
         const { error: settingsError } = await supabase
           .from('team_category_settings')
-          .insert({
-            team_id: newCategory.team_id,
+          .upsert({
+            team_id: teamId,
             category_id: newCategory.id,
             size: selectedSize
+          }, {
+            onConflict: 'team_id,category_id'
           });
 
         if (settingsError) throw settingsError;
@@ -114,13 +128,15 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
 
         if (categoryError) throw categoryError;
 
-        // Update settings
+        // Update settings with upsert
         const { error: settingsError } = await supabase
           .from('team_category_settings')
           .upsert({
-            team_id: categories?.find(c => c.id === selectedCategory)?.team_id,
+            team_id: teamId,
             category_id: selectedCategory,
             size: selectedSize
+          }, {
+            onConflict: 'team_id,category_id'
           });
 
         if (settingsError) throw settingsError;
