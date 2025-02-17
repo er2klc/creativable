@@ -44,6 +44,52 @@ export function PostsAndDiscussions() {
     enabled: !!teamSlug,
   });
 
+  const { data: currentPost, isLoading: isPostLoading } = useQuery({
+    queryKey: ['team-post', teamSlug, postSlug],
+    queryFn: async () => {
+      if (!postSlug || !team?.id) return null;
+
+      const { data, error } = await supabase
+        .from('team_posts')
+        .select(`
+          *,
+          author:profiles!team_posts_created_by_fkey (
+            id,
+            display_name,
+            avatar_url,
+            email
+          ),
+          team_categories (
+            id,
+            name,
+            slug,
+            color
+          ),
+          team_post_comments (
+            id,
+            content,
+            created_at,
+            author:profiles!team_post_comments_created_by_fkey (
+              id,
+              display_name,
+              avatar_url
+            )
+          )
+        `)
+        .eq('slug', postSlug)
+        .eq('team_id', team.id)
+        .single();
+
+      if (error) {
+        console.error('Error fetching post:', error);
+        throw error;
+      }
+
+      return data;
+    },
+    enabled: !!postSlug && !!team?.id,
+  });
+
   const { data: teamMember } = useQuery({
     queryKey: ['team-member-role', team?.id],
     queryFn: async () => {
@@ -160,6 +206,10 @@ export function PostsAndDiscussions() {
     );
   }
 
+  if (postSlug && isPostLoading) {
+    return <LoadingState />;
+  }
+
   return (
     <>
       <TeamHeader 
@@ -189,7 +239,7 @@ export function PostsAndDiscussions() {
           <div className="w-full overflow-hidden">
             <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
               {postSlug ? (
-                <PostDetail post={post} teamSlug={teamSlug} />
+                <PostDetail post={currentPost} teamSlug={teamSlug} />
               ) : (
                 <CategoryOverview 
                   teamId={team.id} 
