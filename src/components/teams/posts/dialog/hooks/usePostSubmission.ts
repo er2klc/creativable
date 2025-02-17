@@ -45,15 +45,22 @@ export const usePostSubmission = (
         .map(name => findUserIdByName(name))
         .filter((id): id is string => id !== undefined);
 
+      const postData = {
+        title: values.title,
+        content: values.content,
+        file_urls: fileUrls.length > 0 ? fileUrls : null,
+        team_id: teamId,
+        category_id: categoryId,
+        user_id: user.id,
+        created_by: user.id,
+        mentioned_users: mentionedUserIds,
+      };
+
       if (postId) {
         // Update existing post
         const { error: postError } = await supabase
           .from('team_posts')
-          .update({
-            title: values.title,
-            content: values.content,
-            file_urls: fileUrls.length > 0 ? fileUrls : null,
-          })
+          .update(postData)
           .eq('id', postId);
 
         if (postError) throw postError;
@@ -62,15 +69,7 @@ export const usePostSubmission = (
         // Create new post
         const { data: post, error: postError } = await supabase
           .from('team_posts')
-          .insert({
-            team_id: teamId,
-            category_id: categoryId,
-            title: values.title,
-            content: values.content,
-            created_by: user.id,
-            user_id: user.id,
-            file_urls: fileUrls.length > 0 ? fileUrls : null,
-          })
+          .insert(postData)
           .select('id')
           .single();
 
@@ -83,6 +82,7 @@ export const usePostSubmission = (
               mentionedUserIds.map(userId => ({
                 post_id: post.id,
                 mentioned_user_id: userId,
+                created_by: user.id
               }))
             );
 
