@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
@@ -55,7 +56,7 @@ const LeaderBoard = () => {
     queryFn: async () => {
       const { data: teamData, error: teamError } = await supabase
         .from('teams')
-        .select('*')
+        .select('id, name, slug, logo_url, description')
         .eq('slug', teamSlug)
         .single();
 
@@ -101,6 +102,7 @@ const LeaderBoard = () => {
       <LeaderboardHeader 
         teamName={team.name}
         teamSlug={team.slug}
+        logoUrl={team.logo_url}
       />
       
       <div className="container py-8 space-y-8 mt-16">
