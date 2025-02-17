@@ -10,10 +10,11 @@ interface BaseCategoryScrollProps {
 export const BaseCategoryScroll = ({ children, className }: BaseCategoryScrollProps) => {
   return (
     <ScrollArea className={cn("w-full relative", className)}>
-      <div className="flex items-center gap-2 p-1 whitespace-nowrap overflow-x-auto scrollbar-hide">
+      <div className="flex items-center gap-2 p-1 whitespace-nowrap">
         {children}
       </div>
       <ScrollBar orientation="horizontal" className="h-2.5" />
     </ScrollArea>
   );
 };
+
