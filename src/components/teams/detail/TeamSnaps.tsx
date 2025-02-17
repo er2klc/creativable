@@ -48,6 +48,9 @@ export const TeamSnaps = ({
       navigate(`/unity/team/${currentTeamSlug}/posts`);
     } else if (snapId === "calendar") {
       onCalendarClick();
+    } else if (snapId === "leaderboard") {
+      console.log("Navigating to leaderboard with teamId:", teamId);
+      navigate(`/leaderboard/${teamId}`);
     } else {
       navigate(`/unity/team/${currentTeamSlug}/${snapId}`);
     }
