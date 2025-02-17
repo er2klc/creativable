@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -15,6 +15,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
+import { AdminCategoriesScroll } from "../categories/AdminCategoriesScroll";
 
 interface CreatePostDialogProps {
   teamId: string;
@@ -23,20 +24,21 @@ interface CreatePostDialogProps {
 
 export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { data: teamMembers } = useTeamMembers(teamId);
   const user = useUser();
   const { teamSlug } = useParams();
+
+  const { data: teamMembers } = useTeamMembers(teamId);
   
   const { data: teamMember } = useQuery({
-    queryKey: ['team-member-role', teamId],
+    queryKey: ["team-member-role", teamId],
     queryFn: async () => {
       if (!user?.id) return null;
 
       const { data, error } = await supabase
-        .from('team_members')
-        .select('role')
-        .eq('team_id', teamId)
-        .eq('user_id', user.id)
+        .from("team_members")
+        .select("role")
+        .eq("team_id", teamId)
+        .eq("user_id", user.id)
         .single();
 
       if (error) throw error;
@@ -45,7 +47,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
     enabled: !!teamId && !!user?.id,
   });
 
-  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
+  const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -58,14 +60,22 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
       <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
           <DialogTitle>Neuen Beitrag erstellen</DialogTitle>
+          <DialogDescription>
+            Erstelle einen neuen Beitrag in einer der verfügbaren Kategorien.
+          </DialogDescription>
         </DialogHeader>
+        
+        <div className="max-h-[400px] overflow-auto">
+          <AdminCategoriesScroll activeTab={categoryId || "new"} teamSlug={teamSlug || ""} />
+        </div>
+        
         <CreatePostForm
           teamId={teamId}
           categoryId={categoryId}
           onSuccess={() => setOpen(false)}
           teamMembers={teamMembers}
           isAdmin={isAdmin}
-          teamSlug={teamSlug || ''}
+          teamSlug={teamSlug || ""}
         />
       </DialogContent>
     </Dialog>
