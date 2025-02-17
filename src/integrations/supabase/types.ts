@@ -2787,6 +2787,27 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "fk_team_member_points_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_team_member_points_team_member"
+            columns: ["team_id", "user_id"]
+            isOneToOne: true
+            referencedRelation: "team_members"
+            referencedColumns: ["team_id", "user_id"]
+          },
+          {
+            foreignKeyName: "fk_team_member_points_user"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "team_member_points_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
