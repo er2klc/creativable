@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { Star } from "lucide-react";
+import { Star, Crown, Shield, User } from "lucide-react";
 
 interface TeamMemberListProps {
   members: any[];
@@ -47,6 +47,17 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
     }
   };
 
+  const getRoleIcon = (role: string) => {
+    switch (role) {
+      case 'owner':
+        return <Crown className="h-3.5 w-3.5 text-orange-500" />;
+      case 'admin':
+        return <Shield className="h-3.5 w-3.5 text-purple-500" />;
+      default:
+        return <User className="h-3.5 w-3.5 text-gray-500" />;
+    }
+  };
+
   const getRoleLabel = (role: string) => {
     switch (role) {
       case 'owner':
@@ -56,6 +67,23 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
       default:
         return 'Mitglied';
     }
+  };
+
+  const getButtonContent = (role: string) => {
+    if (role === 'admin') {
+      return (
+        <>
+          <User className="h-4 w-4 mr-2" />
+          Administrator-Rechte entziehen
+        </>
+      );
+    }
+    return (
+      <>
+        <Shield className="h-4 w-4 mr-2" />
+        Zum Administrator befördern
+      </>
+    );
   };
 
   return (
@@ -74,7 +102,17 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
                 {member.profiles?.display_name || 'Kein Name angegeben'}
               </span>
               <div className="flex items-center gap-2">
-                <Badge variant={getRoleBadgeVariant(member.role)} className="px-2 py-0.5">
+                <Badge 
+                  variant={getRoleBadgeVariant(member.role)} 
+                  className="px-2 py-0.5 flex items-center gap-1"
+                  style={{
+                    backgroundColor: member.role === 'owner' ? '#F97316' : 
+                                  member.role === 'admin' ? '#7E69AB' : 
+                                  'transparent',
+                    color: member.role === 'member' ? 'inherit' : 'white'
+                  }}
+                >
+                  {getRoleIcon(member.role)}
                   {getRoleLabel(member.role)}
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -91,9 +129,9 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
               variant="outline"
               size="sm"
               onClick={() => handleRoleChange(member.id, member.role)}
-              className="mt-3 w-full"
+              className="mt-3 w-full flex items-center justify-center"
             >
-              {member.role === 'admin' ? 'Zum Mitglied machen' : 'Zum Admin machen'}
+              {getButtonContent(member.role)}
             </Button>
           )}
         </div>
