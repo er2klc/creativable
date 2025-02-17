@@ -2,9 +2,9 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, GraduationCap } from "lucide-react";
-import { formatDuration } from "@/lib/utils";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
+import { SearchBar } from "@/components/dashboard/SearchBar";
 
 interface PlatformDetailHeaderProps {
   moduleTitle: string;
@@ -31,9 +31,10 @@ export const PlatformDetailHeader = ({
   documentsCount
 }: PlatformDetailHeaderProps) => {
   const user = useUser();
+  const isMobile = window.innerWidth < 768;
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+    <div className="fixed top-0 left-0 right-0 z-[30] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
       <div className="w-full">
         <div className="h-16 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
@@ -50,6 +51,11 @@ export const PlatformDetailHeader = ({
             </div>
             
             <div className="flex items-center gap-4">
+              {!isMobile && (
+                <div className="w-[300px]">
+                  <SearchBar />
+                </div>
+              )}
               <div className="flex gap-2">
                 {isAdmin && (
                   <Button
