@@ -51,6 +51,7 @@ export const useLeaderboardData = (teamId: string, period: LeaderboardPeriod) =>
             .order("points", { ascending: false });
           return allTimeData;
       }
-    }
+    },
+    enabled: !!teamId
   });
 };

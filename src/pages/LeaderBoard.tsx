@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { 
   Trophy, Star, UserPlus, MessageCircle, Edit, 
@@ -14,9 +13,9 @@ import { LevelCard } from "@/components/teams/leaderboard/LevelOverview/LevelCar
 import { useLeaderboardData, type LeaderboardPeriod } from "@/hooks/leaderboard/useLeaderboardData";
 import { useLevelRewards } from "@/hooks/leaderboard/useLevelRewards";
 import { useProfile } from "@/hooks/use-profile";
-import { TeamHeader } from "@/components/teams/posts/components/TeamHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { TeamHeader } from "@/components/teams/posts/components/TeamHeader";
 
 const levelThresholds = {
   0: { min: 0, max: 49, icon: UserPlus, label: "Vorstellung" },
@@ -48,19 +47,17 @@ const getNextLevelPoints = (currentPoints: number, currentLevel: number) => {
 };
 
 const LeaderBoard = () => {
-  const { teamId } = useParams<{ teamId: string }>();
+  const { teamSlug } = useParams<{ teamSlug: string }>();
   const [period, setPeriod] = useState<LeaderboardPeriod>("alltime");
-  const { data: rankings = [] } = useLeaderboardData(teamId!, period);
-  const { data: rewards = [] } = useLevelRewards(teamId!);
-  const { data: currentUser } = useProfile();
+  const navigate = useNavigate();
 
   const { data: team } = useQuery({
-    queryKey: ['team', teamId],
+    queryKey: ['team', teamSlug],
     queryFn: async () => {
       const { data: teamData, error: teamError } = await supabase
         .from('teams')
         .select('*')
-        .eq('id', teamId)
+        .eq('slug', teamSlug)
         .single();
 
       if (teamError) throw teamError;
@@ -68,7 +65,7 @@ const LeaderBoard = () => {
       const { count: memberCount, error: countError } = await supabase
         .from('team_members')
         .select('*', { count: 'exact', head: true })
-        .eq('team_id', teamId);
+        .eq('team_id', teamData.id);
 
       if (countError) throw countError;
 
@@ -77,8 +74,12 @@ const LeaderBoard = () => {
         member_count: memberCount
       };
     },
-    enabled: !!teamId,
+    enabled: !!teamSlug,
   });
+
+  const { data: rankings = [] } = useLeaderboardData(team?.id || '', period);
+  const { data: rewards = [] } = useLevelRewards(team?.id || '');
+  const { data: currentUser } = useProfile();
 
   const levelCounts = rankings.reduce((acc, member) => {
     const level = member.level || 0;

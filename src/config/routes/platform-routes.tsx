@@ -45,6 +45,11 @@ export const platformRoutes = [
     label: "Team Pulse",
   },
   {
+    path: "/unity/team/:teamSlug/leaderboard",
+    element: <LeaderBoard />,
+    label: "Leaderboard",
+  },
+  {
     path: "/elevate",
     element: <Elevate />,
     label: "Elevate",
@@ -53,10 +58,5 @@ export const platformRoutes = [
     path: "/elevate/modul/:slug",
     element: <PlatformDetail />,
     label: "Platform Detail",
-  },
-  {
-    path: "/leaderboard/:teamId",
-    element: <LeaderBoard />,
-    label: "Leaderboard",
-  },
+  }
 ];
