@@ -10,7 +10,7 @@ import { LevelCard } from "@/components/teams/leaderboard/LevelOverview/LevelCar
 import { useLeaderboardData, type LeaderboardPeriod } from "@/hooks/leaderboard/useLeaderboardData";
 import { useLevelRewards } from "@/hooks/leaderboard/useLevelRewards";
 import { useProfile } from "@/hooks/use-profile";
-import { TeamHeader } from "@/components/teams/TeamHeader";
+import { TeamHeader } from "@/components/teams/posts/components/TeamHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -24,7 +24,6 @@ const LeaderBoard = () => {
   const { data: team } = useQuery({
     queryKey: ['team', teamId],
     queryFn: async () => {
-      // Separate queries for team and member count
       const { data: teamData, error: teamError } = await supabase
         .from('teams')
         .select('*')
@@ -49,7 +48,7 @@ const LeaderBoard = () => {
   });
 
   const levelCounts = rankings.reduce((acc, member) => {
-    const level = member.level || 1;
+    const level = member.level || 0; // Geändert von 1 zu 0 als Default
     acc[level] = (acc[level] || 0) + 1;
     return acc;
   }, {} as Record<number, number>);
@@ -64,11 +63,11 @@ const LeaderBoard = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <TeamHeader 
-        team={team}
-        isInSnapView={false}
+        teamName={team.name}
+        teamSlug={team.slug}
       />
       
-      <div className="container py-8 space-y-6">
+      <div className="container py-8 space-y-6 mt-16">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Trophy className="h-8 w-8 text-red-500" />
@@ -128,7 +127,7 @@ const LeaderBoard = () => {
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <Progress 
-                      value={((member.points || 0) % 100) / 100 * 100} 
+                      value={member.points ? ((member.points % 100) / 100 * 100) : 0} 
                       className="h-2 w-32"
                     />
                     <div className="text-sm text-muted-foreground flex items-center gap-1">
@@ -139,7 +138,7 @@ const LeaderBoard = () => {
                 </div>
 
                 <div className="text-right">
-                  <div className="font-bold">{member.points}</div>
+                  <div className="font-bold">{member.points || 0}</div>
                   <div className="text-sm text-muted-foreground">Punkte</div>
                 </div>
               </div>
@@ -161,12 +160,12 @@ const LeaderBoard = () => {
                   <div>
                     <div className="font-medium">Deine Position</div>
                     <div className="text-sm text-muted-foreground">
-                      {userRanking}. Platz • {currentUserData.points} Punkte
+                      {userRanking}. Platz • {currentUserData.points || 0} Punkte
                     </div>
                   </div>
                 </div>
                 <Progress 
-                  value={((currentUserData.points || 0) % 100) / 100 * 100} 
+                  value={currentUserData.points ? ((currentUserData.points % 100) / 100 * 100) : 0} 
                   className="w-32 h-2"
                 />
               </div>
