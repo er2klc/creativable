@@ -7,6 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useQueryClient } from "@tanstack/react-query";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name muss mindestens 2 Zeichen lang sein"),
@@ -21,6 +22,7 @@ interface WelcomeDialogProps {
 }
 
 export function WelcomeDialog({ isOpen, onClose, onSubmit, categoryId }: WelcomeDialogProps) {
+  const queryClient = useQueryClient();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -29,9 +31,12 @@ export function WelcomeDialog({ isOpen, onClose, onSubmit, categoryId }: Welcome
     }
   });
 
-  const handleSubmit = (data: z.infer<typeof formSchema>) => {
-    onSubmit(data);
+  const handleSubmit = async (data: z.infer<typeof formSchema>) => {
+    await onSubmit(data);
     form.reset();
+    // Invalidate relevant queries to refresh the UI
+    queryClient.invalidateQueries({ queryKey: ['team-member-role'] });
+    queryClient.invalidateQueries({ queryKey: ['team-member-points'] });
   };
 
   return (
