@@ -1,5 +1,5 @@
+
 import { DocumentSection } from "../DocumentSection";
-import { supabase } from "@/integrations/supabase/client";
 
 interface DocumentManagerProps {
   existingFiles?: Array<{
@@ -11,14 +11,14 @@ interface DocumentManagerProps {
   }>;
   isAdmin?: boolean;
   onDocumentDeleted?: () => Promise<void>;
-  onAddDocument?: () => void;
+  lerninhalteId: string;
 }
 
 export const DocumentManager = ({ 
   existingFiles = [], 
   isAdmin = false,
   onDocumentDeleted,
-  onAddDocument
+  lerninhalteId
 }: DocumentManagerProps) => {
   return (
     <div className="col-span-4">
@@ -26,6 +26,7 @@ export const DocumentManager = ({
         documents={existingFiles}
         isAdmin={isAdmin}
         onDelete={onDocumentDeleted}
+        lerninhalteId={lerninhalteId}
       />
     </div>
   );

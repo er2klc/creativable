@@ -1,10 +1,11 @@
 
 import { useState } from "react";
-import { FileText, File, FileSpreadsheet, Trash2 } from "lucide-react";
+import { FileText, File, FileSpreadsheet, Trash2, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DocumentPreview } from "./DocumentPreview";
+import { DocumentUploadDialog } from "./DocumentUploadDialog";
 
 interface Document {
   id: string;
@@ -18,10 +19,12 @@ interface DocumentSectionProps {
   documents: Document[];
   isAdmin?: boolean;
   onDelete?: (id: string) => void;
+  lerninhalteId: string;
 }
 
-export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectionProps) => {
+export const DocumentSection = ({ documents, isAdmin, onDelete, lerninhalteId }: DocumentSectionProps) => {
   const [selectedDocument, setSelectedDocument] = useState<Document | null>(null);
+  const [showUploadDialog, setShowUploadDialog] = useState(false);
 
   const handleDelete = async (id: string) => {
     try {
@@ -60,12 +63,22 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
     }
   };
 
-  if (!documents || documents.length === 0) {
-    return null;
-  }
-
   return (
     <div className="space-y-4">
+      {isAdmin && (
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowUploadDialog(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            Dokument hinzufügen
+          </Button>
+        </div>
+      )}
+      
       <div className="space-y-2">
         {documents.map((doc) => (
           <div
@@ -92,6 +105,7 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
           </div>
         ))}
       </div>
+
       {selectedDocument && (
         <DocumentPreview
           document={{
@@ -104,6 +118,19 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
           }}
           open={!!selectedDocument}
           onOpenChange={(open) => !open && setSelectedDocument(null)}
+        />
+      )}
+
+      {isAdmin && (
+        <DocumentUploadDialog
+          open={showUploadDialog}
+          onOpenChange={setShowUploadDialog}
+          lerninhalteId={lerninhalteId}
+          onSuccess={() => {
+            if (onDelete) {
+              onDelete("refresh");
+            }
+          }}
         />
       )}
     </div>
