@@ -48,14 +48,10 @@ export const useTeamCategories = (teamSlug?: string) => {
 
       console.log("Found team ID:", team.id);
 
-      // Optimierte Abfrage mit LEFT JOIN, um NULL-Werte zu vermeiden
+      // Separate queries for better error handling
       const { data: categories, error: categoriesError } = await supabase
         .from('team_categories')
-        .select(`
-          *,
-          team_category_settings!left(size),
-          team_category_post_counts!left(post_count)
-        `)
+        .select('*')
         .eq('team_id', team.id)
         .order('order_index');
 
@@ -64,24 +60,45 @@ export const useTeamCategories = (teamSlug?: string) => {
         throw categoriesError;
       }
 
-      console.log("Raw categories data:", categories);
+      // Get settings in a separate query
+      const { data: settings, error: settingsError } = await supabase
+        .from('team_category_settings')
+        .select('*')
+        .in('category_id', categories.map(c => c.id));
 
-      // Verbesserte Mapping-Funktion mit Standardwerten
+      if (settingsError) {
+        console.error("Error fetching settings:", settingsError);
+        throw settingsError;
+      }
+
+      // Get post counts in a separate query
+      const { data: postCounts, error: postCountsError } = await supabase
+        .from('team_category_post_counts')
+        .select('*')
+        .in('category_id', categories.map(c => c.id));
+
+      if (postCountsError) {
+        console.error("Error fetching post counts:", postCountsError);
+        throw postCountsError;
+      }
+
+      console.log("Raw data:", {
+        categories,
+        settings,
+        postCounts
+      });
+
+      // Map the data together
       const mappedCategories = categories.map(category => {
-        // Extrahiere die Settings und Post-Counts aus den nested objects
-        const settings = category.team_category_settings?.[0];
-        const postCount = category.team_category_post_counts?.[0];
+        const categorySettings = settings?.find(s => s.category_id === category.id);
+        const categoryPostCount = postCounts?.find(p => p.category_id === category.id);
 
         return {
           ...category,
-          // Entferne die original nested arrays
-          team_category_settings: undefined,
-          team_category_post_counts: undefined,
-          // Setze die Werte mit vernünftigen Defaults
           settings: {
-            size: settings?.size || 'small'
+            size: categorySettings?.size || 'small'
           },
-          post_count: postCount?.post_count || 0,
+          post_count: categoryPostCount?.post_count || 0,
           is_public: category.is_public ?? true,
           icon: category.icon || 'MessageCircle',
           color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
