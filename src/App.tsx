@@ -1,3 +1,4 @@
+
 import { AppProvider } from "@/providers/AppProvider";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,12 +23,12 @@ const AppRoutes = () => {
   return (
     <>
       <Routes>
-        {/* Dynamische öffentliche Routen */}
+        {/* Public Routes */}
         {publicRoutes.map((route) => (
           <Route key={route.path} path={route.path} element={route.element} />
         ))}
 
-        {/* Dynamische geschützte Routen */}
+        {/* Protected Routes */}
         <Route
           element={
             <ProtectedRoute>
@@ -42,29 +43,7 @@ const AppRoutes = () => {
           ))}
         </Route>
 
-        {/* Statische Fallback-Routen (nur für Debugging) */}
-        <Route
-          path="/contacts"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <div>Contacts Page (Fallback)</div>
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/contacts/:id"
-          element={
-            <ProtectedRoute>
-              <AppLayout>
-                <div>Contact Detail Page (Fallback)</div>
-              </AppLayout>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* Root-Route */}
+        {/* Root Route */}
         <Route
           path="/"
           element={
@@ -75,7 +54,7 @@ const AppRoutes = () => {
           }
         />
 
-        {/* Catch-all */}
+        {/* Catch-all - This should be last */}
         <Route
           path="*"
           element={
@@ -84,16 +63,6 @@ const AppRoutes = () => {
               replace
             />
           }
-        />
-
-        {/* Legacy-Routen */}
-        <Route
-          path="/leads"
-          element={<Navigate to="/contacts" replace />}
-        />
-        <Route
-          path="/leads/:id"
-          element={<Navigate to="/contacts/:id" replace />}
         />
       </Routes>
 
