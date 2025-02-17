@@ -2,7 +2,11 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
-import { Trophy, Star } from "lucide-react";
+import { 
+  Trophy, Star, UserPlus, MessageCircle, Edit, 
+  MessageSquare, Badge, Calendar, Video, 
+  GraduationCap, Crown 
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { LeaderboardTabs } from "@/components/teams/leaderboard/LeaderboardTabs";
@@ -13,6 +17,29 @@ import { useProfile } from "@/hooks/use-profile";
 import { TeamHeader } from "@/components/teams/posts/components/TeamHeader";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+
+const levelThresholds = {
+  0: { min: 0, max: 49, icon: UserPlus, label: "Vorstellung" },
+  1: { min: 50, max: 299, icon: MessageCircle, label: "Kommentieren" },
+  2: { min: 300, max: 599, icon: Edit, label: "Beiträge" },
+  3: { min: 600, max: 999, icon: MessageSquare, label: "Chat" },
+  4: { min: 1000, max: 1499, icon: Badge, label: "Badge" },
+  5: { min: 1500, max: 2099, icon: Calendar, label: "Events" },
+  6: { min: 2100, max: 2799, icon: Star, label: "Special Badge" },
+  7: { min: 2800, max: 3599, icon: Video, label: "Premium" },
+  8: { min: 3600, max: 4499, icon: GraduationCap, label: "Mentor" },
+  9: { min: 4500, max: 5499, icon: Trophy, label: "Beta" },
+  10: { min: 5500, max: 999999, icon: Crown, label: "Leader" }
+};
+
+const calculateProgress = (points: number, level: number) => {
+  const threshold = levelThresholds[level as keyof typeof levelThresholds];
+  if (!threshold) return 0;
+  
+  const range = threshold.max - threshold.min;
+  const progress = points - threshold.min;
+  return Math.min(Math.max((progress / range) * 100, 0), 100);
+};
 
 const LeaderBoard = () => {
   const { teamId } = useParams<{ teamId: string }>();
@@ -48,7 +75,7 @@ const LeaderBoard = () => {
   });
 
   const levelCounts = rankings.reduce((acc, member) => {
-    const level = member.level || 0; // Geändert von 1 zu 0 als Default
+    const level = member.level || 0;
     acc[level] = (acc[level] || 0) + 1;
     return acc;
   }, {} as Record<number, number>);
@@ -77,21 +104,18 @@ const LeaderBoard = () => {
 
         <LeaderboardTabs currentPeriod={period} onPeriodChange={setPeriod} />
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <LevelCard
-            key={0}
-            level={0}
-            membersCount={levelCounts[0] || 0}
-            totalMembers={rankings.length}
-            rewards={rewards.filter(r => r.level === 0)}
-          />
-          {[1, 2, 3, 4, 5].map((level) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {Object.entries(levelThresholds).map(([level, info]) => (
             <LevelCard
               key={level}
-              level={level}
-              membersCount={levelCounts[level] || 0}
+              level={parseInt(level)}
+              membersCount={levelCounts[parseInt(level)] || 0}
               totalMembers={rankings.length}
-              rewards={rewards.filter(r => r.level === level)}
+              rewards={rewards.filter(r => r.level === parseInt(level))}
+              icon={info.icon}
+              label={info.label}
+              minPoints={info.min}
+              maxPoints={info.max}
             />
           ))}
         </div>
@@ -127,7 +151,7 @@ const LeaderBoard = () => {
                   </div>
                   <div className="flex items-center gap-2 mt-1">
                     <Progress 
-                      value={member.points ? ((member.points % 100) / 100 * 100) : 0} 
+                      value={calculateProgress(member.points || 0, member.level || 0)}
                       className="h-2 w-32"
                     />
                     <div className="text-sm text-muted-foreground flex items-center gap-1">
@@ -165,7 +189,7 @@ const LeaderBoard = () => {
                   </div>
                 </div>
                 <Progress 
-                  value={currentUserData.points ? ((currentUserData.points % 100) / 100 * 100) : 0} 
+                  value={calculateProgress(currentUserData.points || 0, currentUserData.level || 0)}
                   className="w-32 h-2"
                 />
               </div>
