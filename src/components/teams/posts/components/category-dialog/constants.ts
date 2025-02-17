@@ -1,7 +1,7 @@
 
 import { 
   MessageCircle, Calendar, FileText, Users, Star, 
-  Trophy, Heart, Target, HelpCircle, Rocket, LightBulb,
+  Trophy, Heart, Target, HelpCircle, Rocket, Lightbulb,
   Megaphone, Video 
 } from "lucide-react";
 
@@ -16,7 +16,7 @@ export const availableIcons = [
   { name: 'Target', icon: Target },
   { name: 'HelpCircle', icon: HelpCircle },
   { name: 'Rocket', icon: Rocket },
-  { name: 'LightBulb', icon: LightBulb },
+  { name: 'Lightbulb', icon: Lightbulb },
   { name: 'Megaphone', icon: Megaphone },
   { name: 'Video', icon: Video }
 ] as const;
