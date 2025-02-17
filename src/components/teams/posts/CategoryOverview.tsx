@@ -52,7 +52,7 @@ export const CategoryOverview = ({
     const { data, error } = await query;
 
     if (error) throw error;
-    return data;
+    return data || []; // Ensure we always return an array
   }, [teamId, categorySlug]);
 
   const {
@@ -64,10 +64,15 @@ export const CategoryOverview = ({
   } = useInfiniteQuery({
     queryKey: ['team-posts', teamId, categorySlug],
     queryFn: fetchPosts,
-    getNextPageParam: (lastPage, pages) => {
-      if (!lastPage || lastPage.length < 10) return undefined;
-      return pages.length;
+    getNextPageParam: (lastPage) => {
+      // Check if lastPage exists and has the maximum items per page
+      if (!lastPage || !Array.isArray(lastPage) || lastPage.length < 10) {
+        return undefined;
+      }
+      // If we have a full page, there might be more
+      return lastPage.length;
     },
+    initialPageParam: 0
   });
 
   if (status === "loading") {
