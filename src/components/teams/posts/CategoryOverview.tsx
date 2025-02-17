@@ -18,45 +18,55 @@ export const CategoryOverview = ({
   canPost 
 }: CategoryOverviewProps) => {
   const fetchPosts = useCallback(async ({ pageParam = 0 }) => {
-    let query = supabase
-      .from('team_posts')
-      .select(`
-        *,
-        profiles!team_posts_created_by_fkey (
-          id,
-          display_name,
-          avatar_url
-        ),
-        team_categories!team_posts_category_id_fkey (
-          id,
-          name,
-          slug
-        )
-      `)
-      .eq('team_id', teamId)
-      .order('created_at', { ascending: false })
-      .range(pageParam * 10, (pageParam + 1) * 10 - 1);
-
-    if (categorySlug && categorySlug !== 'all') {
-      const { data: category } = await supabase
-        .from('team_categories')
-        .select('id')
-        .eq('slug', categorySlug)
+    try {
+      let query = supabase
+        .from('team_posts')
+        .select(`
+          *,
+          profiles!team_posts_created_by_fkey (
+            id,
+            display_name,
+            avatar_url
+          ),
+          team_categories!team_posts_category_id_fkey (
+            id,
+            name,
+            slug
+          )
+        `)
         .eq('team_id', teamId)
-        .single();
+        .order('created_at', { ascending: false })
+        .range(pageParam * 10, (pageParam + 1) * 10 - 1);
 
-      if (category) {
-        query = query.eq('category_id', category.id);
+      if (categorySlug && categorySlug !== 'all') {
+        // First get the category
+        const { data: categories, error: categoryError } = await supabase
+          .from('team_categories')
+          .select('id')
+          .eq('slug', categorySlug)
+          .eq('team_id', teamId);
+
+        if (categoryError) {
+          console.error('Error fetching category:', categoryError);
+        } else if (categories && categories.length > 0) {
+          // Use the first matching category
+          query = query.eq('category_id', categories[0].id);
+        }
       }
-    }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) {
-      console.error('Error fetching posts:', error);
+      if (error) {
+        console.error('Error fetching posts:', error);
+        throw error;
+      }
+
+      console.log('Fetched posts:', data); // Debug log
+      return data || [];
+    } catch (error) {
+      console.error('Error in fetchPosts:', error);
       throw error;
     }
-    return data || []; // Ensure we always return an array
   }, [teamId, categorySlug]);
 
   const {
@@ -69,11 +79,9 @@ export const CategoryOverview = ({
     queryKey: ['team-posts', teamId, categorySlug],
     queryFn: fetchPosts,
     getNextPageParam: (lastPage) => {
-      // Check if lastPage exists and has the maximum items per page
       if (!lastPage || !Array.isArray(lastPage) || lastPage.length < 10) {
         return undefined;
       }
-      // If we have a full page, there might be more
       return lastPage.length;
     },
     initialPageParam: 0
