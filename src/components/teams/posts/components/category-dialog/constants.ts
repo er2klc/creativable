@@ -5,16 +5,19 @@ import {
   Calendar,
   Flag,
   Heart,
+  HelpCircle,
   Info,
   Library,
   Link,
   Mail,
   Map,
+  Megaphone,
   MessageCircle,
   Music,
   Package,
   Phone,
   Pin,
+  Rocket,
   Star,
   Tag,
   Trophy,
@@ -38,6 +41,9 @@ interface ColorOption {
 
 export const availableIcons: IconOption[] = [
   { name: "MessageCircle", icon: MessageCircle },
+  { name: "Megaphone", icon: Megaphone },
+  { name: "HelpCircle", icon: HelpCircle },
+  { name: "Rocket", icon: Rocket },
   { name: "Book", icon: Book },
   { name: "Bookmark", icon: Bookmark },
   { name: "Calendar", icon: Calendar },
@@ -75,7 +81,7 @@ export const availableColors: ColorOption[] = [
   { name: "Hellkoralle", value: "bg-[#FFE8E8] hover:bg-[#EFD8D8] text-[#4A2A2A]" },
   { name: "Hellolive", value: "bg-[#F8FFE8] hover:bg-[#E8EFD8] text-[#3A4A2A]" },
   { name: "Helltürkis", value: "bg-[#E8FFF8] hover:bg-[#D8EFE8] text-[#2A4A4A]" },
-  { name: "Soft Orange", value: "bg-[#FEC6A1] hover:bg-[#EEB691] text-[#8B4513]" }, // Added existing color from database
+  { name: "Soft Orange", value: "bg-[#FEC6A1] hover:bg-[#EEB691] text-[#8B4513]" }
 ];
 
 // Create a mapping of icon names to components
