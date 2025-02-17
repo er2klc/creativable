@@ -42,6 +42,7 @@ export const CategoryOverview = ({
         .from('team_categories')
         .select('id')
         .eq('slug', categorySlug)
+        .eq('team_id', teamId)
         .single();
 
       if (category) {
