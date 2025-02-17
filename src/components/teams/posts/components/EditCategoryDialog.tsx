@@ -15,6 +15,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
 import { useUser } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface EditCategoryDialogProps {
   teamSlug: string;
@@ -28,19 +29,10 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
   const [selectedIcon, setSelectedIcon] = useState("MessageCircle");
   const [selectedColor, setSelectedColor] = useState("bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]");
   const [selectedSize, setSelectedSize] = useState("small");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const user = useUser();
-
-  const { 
-    categories,
-    isLoading,
-    createCategory,
-    updateCategory,
-    deleteCategory,
-    isCreating,
-    isUpdating,
-    isDeleting
-  } = useTeamCategories(teamSlug);
+  const { data: categories, isLoading, refetch } = useTeamCategories(teamSlug);
 
   const handleCategoryChange = (value: string) => {
     console.log('Category changed to:', value);
@@ -76,55 +68,98 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
       return;
     }
 
-    console.log('Submitting category:', {
-      name: categoryName,
-      isPublic,
-      icon: selectedIcon,
-      color: selectedColor,
-      size: selectedSize
-    });
+    setIsSubmitting(true);
 
     try {
       if (selectedCategory === "new") {
-        await createCategory({
-          name: categoryName.trim(),
-          is_public: isPublic,
-          icon: selectedIcon,
-          color: selectedColor,
-          created_by: user.id
-        });
+        // First create the category
+        const { data: newCategory, error: categoryError } = await supabase
+          .from('team_categories')
+          .insert({
+            team_id: (await supabase.from('teams').select('id').eq('slug', teamSlug).single()).data?.id,
+            name: categoryName.trim(),
+            is_public: isPublic,
+            icon: selectedIcon,
+            color: selectedColor,
+            created_by: user.id
+          })
+          .select()
+          .single();
+
+        if (categoryError) throw categoryError;
+
+        // Then create the settings
+        const { error: settingsError } = await supabase
+          .from('team_category_settings')
+          .insert({
+            team_id: newCategory.team_id,
+            category_id: newCategory.id,
+            size: selectedSize
+          });
+
+        if (settingsError) throw settingsError;
+
         toast.success("Kategorie erfolgreich erstellt");
       } else {
-        await updateCategory({
-          id: selectedCategory,
-          name: categoryName.trim(),
-          is_public: isPublic,
-          icon: selectedIcon,
-          color: selectedColor
-        });
+        // Update category
+        const { error: categoryError } = await supabase
+          .from('team_categories')
+          .update({
+            name: categoryName.trim(),
+            is_public: isPublic,
+            icon: selectedIcon,
+            color: selectedColor
+          })
+          .eq('id', selectedCategory);
+
+        if (categoryError) throw categoryError;
+
+        // Update settings
+        const { error: settingsError } = await supabase
+          .from('team_category_settings')
+          .upsert({
+            team_id: categories?.find(c => c.id === selectedCategory)?.team_id,
+            category_id: selectedCategory,
+            size: selectedSize
+          });
+
+        if (settingsError) throw settingsError;
+
         toast.success("Kategorie erfolgreich aktualisiert");
       }
+
+      await refetch();
       setOpen(false);
     } catch (error) {
       console.error("Error saving category:", error);
       toast.error("Fehler beim Speichern der Kategorie");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async () => {
     if (selectedCategory === "new") return;
 
+    setIsSubmitting(true);
     try {
-      await deleteCategory(selectedCategory);
+      const { error } = await supabase
+        .from('team_categories')
+        .delete()
+        .eq('id', selectedCategory);
+
+      if (error) throw error;
+
       toast.success("Kategorie erfolgreich gelöscht");
+      await refetch();
       setOpen(false);
     } catch (error) {
       console.error("Error deleting category:", error);
       toast.error("Fehler beim Löschen der Kategorie");
+    } finally {
+      setIsSubmitting(false);
     }
   };
-
-  const isSubmitting = isCreating || isUpdating || isDeleting;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

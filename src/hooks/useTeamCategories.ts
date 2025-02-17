@@ -1,6 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Tables } from "@/integrations/supabase/types";
 
 export interface TeamCategory {
   id: string;
@@ -74,6 +75,12 @@ export const useTeamCategories = (teamSlug?: string) => {
       const mappedCategories = data.map(category => {
         const settings = category.team_category_settings?.[0];
         const postCount = category.team_category_post_counts?.[0];
+
+        console.log("Processing category:", category.name, {
+          settings,
+          postCount,
+          categoryId: category.id
+        });
 
         return {
           id: category.id,
