@@ -90,12 +90,14 @@ export const CreatePostForm = ({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
         <div className="sticky top-0 bg-background z-10 border-b px-6 py-2">
-          <CreatePostCategoriesScroll 
-            activeTab={selectedCategory || ''}
-            onCategoryClick={handleCategoryChange}
-            isAdmin={isAdmin}
-            teamSlug={teamSlug}
-          />
+          <ScrollArea className="w-full whitespace-nowrap">
+            <CreatePostCategoriesScroll 
+              activeTab={selectedCategory || ''}
+              onCategoryClick={handleCategoryChange}
+              isAdmin={isAdmin}
+              teamSlug={teamSlug}
+            />
+          </ScrollArea>
         </div>
         
         <ScrollArea className="flex-1 px-6">
