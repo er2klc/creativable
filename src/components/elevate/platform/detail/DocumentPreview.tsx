@@ -18,9 +18,18 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
   const fileType = document.file_type?.toLowerCase() || document.name.split('.').pop()?.toLowerCase();
   const previewUrl = document.preview_url || document.url;
 
-  const isImage = fileType?.match(/^(jpg|jpeg|png|gif|webp)$/);
-  const isPdf = fileType === 'pdf';
-  const isOfficeDoc = fileType?.match(/^(xlsx|xls|doc|docx)$/);
+  // Verbesserte MIME-Type Erkennung
+  const isImage = fileType?.includes('image') || 
+                 fileType?.match(/^(jpg|jpeg|png|gif|webp)$/);
+                 
+  const isPdf = fileType?.includes('pdf') || 
+                fileType === 'pdf' ||
+                document.name.toLowerCase().endsWith('.pdf');
+                
+  const isOfficeDoc = fileType?.includes('spreadsheet') || 
+                     fileType?.includes('word') || 
+                     fileType?.includes('excel') ||
+                     fileType?.match(/^(xlsx|xls|doc|docx)$/);
 
   const getFileIcon = () => {
     if (isImage) return <Image className="h-16 w-16 text-blue-600 mb-4" />;
@@ -34,7 +43,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
   const renderPreview = () => {
     if (isImage) {
       return (
-        <div className="flex justify-center items-center h-[80vh] overflow-auto">
+        <div className="flex justify-center items-center h-[80vh] overflow-auto bg-gray-100 rounded-lg">
           <img
             src={previewUrl}
             alt={document.name}
@@ -45,11 +54,12 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
     }
     
     if (isPdf) {
+      // Verbesserte PDF-Vorschau mit voller Funktionalität
       return (
         <div className="w-full h-[80vh]">
           <iframe
-            src={`${previewUrl}#toolbar=0&navpanes=0&embedded=true`}
-            className="w-full h-full"
+            src={previewUrl}
+            className="w-full h-full rounded-lg"
             title={document.name}
           />
         </div>
@@ -64,7 +74,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
         <div className="w-full h-[80vh]">
           <iframe
             src={googleDocsViewerUrl}
-            className="w-full h-full"
+            className="w-full h-full rounded-lg"
             title={document.name}
             frameBorder="0"
           />
@@ -72,7 +82,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       );
     }
 
-    // Für andere Dateitypen zeigen wir die Download-Option
+    // Fallback für andere Dateitypen
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
         {getFileIcon()}
