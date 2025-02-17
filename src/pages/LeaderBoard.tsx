@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { 
   Trophy, Star, UserPlus, MessageCircle, Edit, 
   MessageSquare, Badge, Calendar, Video, 
-  GraduationCap, Crown, ChevronRight 
+  GraduationCap, Crown
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -15,7 +15,7 @@ import { useLevelRewards } from "@/hooks/leaderboard/useLevelRewards";
 import { useProfile } from "@/hooks/use-profile";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { TeamHeader } from "@/components/teams/posts/components/TeamHeader";
+import { LeaderboardHeader } from "@/components/teams/leaderboard/LeaderboardHeader";
 
 const levelThresholds = {
   0: { min: 0, max: 49, icon: UserPlus, label: "Vorstellung" },
@@ -49,7 +49,6 @@ const getNextLevelPoints = (currentPoints: number, currentLevel: number) => {
 const LeaderBoard = () => {
   const { teamSlug } = useParams<{ teamSlug: string }>();
   const [period, setPeriod] = useState<LeaderboardPeriod>("alltime");
-  const navigate = useNavigate();
 
   const { data: team } = useQuery({
     queryKey: ['team', teamSlug],
@@ -99,7 +98,7 @@ const LeaderBoard = () => {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <TeamHeader 
+      <LeaderboardHeader 
         teamName={team.name}
         teamSlug={team.slug}
       />
@@ -108,7 +107,6 @@ const LeaderBoard = () => {
         <LeaderboardTabs currentPeriod={period} onPeriodChange={setPeriod} />
 
         <div className="grid md:grid-cols-[1fr_2fr] gap-8">
-          {/* Profil-Bereich */}
           <Card className="p-6 flex flex-col items-center text-center">
             <div className="relative">
               <Avatar className="h-40 w-40 border-4 border-primary">
@@ -142,7 +140,6 @@ const LeaderBoard = () => {
             </div>
           </Card>
 
-          {/* Level-Karten */}
           <div className="grid grid-cols-3 gap-4">
             {Object.entries(levelThresholds).map(([level, info]) => (
               <LevelCard
@@ -161,7 +158,6 @@ const LeaderBoard = () => {
           </div>
         </div>
 
-        {/* Rangliste */}
         <div className="grid gap-3">
           {rankings.map((member, index) => (
             <Card key={member.user_id} className="p-4">
