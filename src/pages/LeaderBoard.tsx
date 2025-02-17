@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { 
   Trophy, Star, UserPlus, MessageCircle, Edit, 
   MessageSquare, Badge, Calendar, Video, 
-  GraduationCap, Crown 
+  GraduationCap, Crown, ChevronRight 
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -39,6 +39,12 @@ const calculateProgress = (points: number, level: number) => {
   const range = threshold.max - threshold.min;
   const progress = points - threshold.min;
   return Math.min(Math.max((progress / range) * 100, 0), 100);
+};
+
+const getNextLevelPoints = (currentPoints: number, currentLevel: number) => {
+  const threshold = levelThresholds[currentLevel as keyof typeof levelThresholds];
+  if (!threshold) return 0;
+  return threshold.max - currentPoints;
 };
 
 const LeaderBoard = () => {
@@ -82,6 +88,9 @@ const LeaderBoard = () => {
 
   const userRanking = rankings.findIndex(r => r.user_id === currentUser?.id) + 1;
   const currentUserData = rankings.find(r => r.user_id === currentUser?.id);
+  const currentLevel = currentUserData?.level || 0;
+  const currentPoints = currentUserData?.points || 0;
+  const pointsToNextLevel = getNextLevelPoints(currentPoints, currentLevel);
 
   if (!team) {
     return null;
@@ -94,33 +103,65 @@ const LeaderBoard = () => {
         teamSlug={team.slug}
       />
       
-      <div className="container py-8 space-y-6 mt-16">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Trophy className="h-8 w-8 text-red-500" />
-            <h1 className="text-3xl font-bold">Team Leaderboard</h1>
+      <div className="container py-8 space-y-8 mt-16">
+        <LeaderboardTabs currentPeriod={period} onPeriodChange={setPeriod} />
+
+        <div className="grid md:grid-cols-[1fr_2fr] gap-8">
+          {/* Profil-Bereich */}
+          <Card className="p-6 flex flex-col items-center text-center">
+            <div className="relative">
+              <Avatar className="h-40 w-40 border-4 border-primary">
+                <AvatarImage src={currentUser?.avatar_url || ""} />
+                <AvatarFallback className="text-4xl">
+                  {currentUser?.display_name?.substring(0, 2).toUpperCase() || "??"}
+                </AvatarFallback>
+              </Avatar>
+              <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1 rounded-full text-sm font-medium">
+                Level {currentLevel}
+              </div>
+            </div>
+
+            <h2 className="mt-6 text-2xl font-bold">
+              {currentUser?.display_name}
+            </h2>
+
+            <div className="mt-2 text-muted-foreground">
+              {userRanking}. Platz
+            </div>
+
+            <div className="w-full mt-6 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>{currentPoints} Punkte</span>
+                <span>{pointsToNextLevel} bis Level {currentLevel + 1}</span>
+              </div>
+              <Progress 
+                value={calculateProgress(currentPoints, currentLevel)}
+                className="h-2"
+              />
+            </div>
+          </Card>
+
+          {/* Level-Karten */}
+          <div className="grid grid-cols-2 gap-4">
+            {Object.entries(levelThresholds).map(([level, info]) => (
+              <LevelCard
+                key={level}
+                level={parseInt(level)}
+                membersCount={levelCounts[parseInt(level)] || 0}
+                totalMembers={rankings.length}
+                rewards={rewards.filter(r => r.level === parseInt(level))}
+                icon={info.icon}
+                label={info.label}
+                minPoints={info.min}
+                maxPoints={info.max}
+                isUnlocked={currentLevel >= parseInt(level)}
+              />
+            ))}
           </div>
         </div>
 
-        <LeaderboardTabs currentPeriod={period} onPeriodChange={setPeriod} />
-
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {Object.entries(levelThresholds).map(([level, info]) => (
-            <LevelCard
-              key={level}
-              level={parseInt(level)}
-              membersCount={levelCounts[parseInt(level)] || 0}
-              totalMembers={rankings.length}
-              rewards={rewards.filter(r => r.level === parseInt(level))}
-              icon={info.icon}
-              label={info.label}
-              minPoints={info.min}
-              maxPoints={info.max}
-            />
-          ))}
-        </div>
-
-        <div className="grid gap-4">
+        {/* Rangliste */}
+        <div className="grid gap-3">
           {rankings.map((member, index) => (
             <Card key={member.user_id} className="p-4">
               <div className="flex items-center gap-4">
@@ -169,33 +210,6 @@ const LeaderBoard = () => {
             </Card>
           ))}
         </div>
-
-        {currentUserData && (
-          <Card className="mt-4 bg-accent/5">
-            <div className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={currentUser?.avatar_url || ""} />
-                    <AvatarFallback>
-                      {currentUser?.display_name?.substring(0, 2).toUpperCase() || "??"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">Deine Position</div>
-                    <div className="text-sm text-muted-foreground">
-                      {userRanking}. Platz • {currentUserData.points || 0} Punkte
-                    </div>
-                  </div>
-                </div>
-                <Progress 
-                  value={calculateProgress(currentUserData.points || 0, currentUserData.level || 0)}
-                  className="w-32 h-2"
-                />
-              </div>
-            </div>
-          </Card>
-        )}
       </div>
     </div>
   );

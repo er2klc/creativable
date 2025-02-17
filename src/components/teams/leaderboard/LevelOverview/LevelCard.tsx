@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface LevelCardProps {
@@ -52,34 +52,33 @@ export function LevelCard({
   
   return (
     <Card className={cn(
-      "relative p-4 transition-all",
+      "relative p-3 transition-all",
       getLevelColor(level),
-      !isUnlocked && "opacity-50"
+      !isUnlocked && "opacity-75"
     )}>
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <div className="font-semibold">Level {level}</div>
-          <Icon className="h-6 w-6" />
+          <div className="flex items-center gap-2">
+            <Icon className="h-5 w-5" />
+            <div className="font-medium text-sm">Level {level}</div>
+          </div>
+          {!isUnlocked && (
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          )}
         </div>
         
-        <Progress value={percentage} className="h-2" />
+        <Progress value={percentage} className="h-1.5" />
         
-        <div className="text-sm text-muted-foreground">
-          {membersCount} Mitglieder ({Math.round(percentage)}%)
+        <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <span>{label}</span>
+          <span>{membersCount} ({Math.round(percentage)}%)</span>
         </div>
 
-        <div className="text-xs font-medium text-muted-foreground">
-          {label} ({minPoints} - {maxPoints} Punkte)
-        </div>
-        
         {rewards.length > 0 && (
-          <div className="mt-2 pt-2 border-t border-border/50">
-            <div className="text-xs font-medium mb-1">Belohnungen:</div>
-            {rewards.map((reward, index) => (
-              <div key={index} className="text-xs text-muted-foreground">
-                • {reward.reward_name}
-              </div>
-            ))}
+          <div className="mt-1 pt-1 border-t border-border/50">
+            <div className="text-xs text-muted-foreground line-clamp-1">
+              {rewards[0].reward_name}
+            </div>
           </div>
         )}
       </div>
