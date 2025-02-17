@@ -64,6 +64,11 @@ export const DocumentSection = ({ documents, isAdmin, onDelete, lerninhalteId }:
     }
   };
 
+  // Wenn keine Dokumente vorhanden sind und der User kein Admin ist, zeigen wir nichts an
+  if (!isAdmin && documents.length === 0) {
+    return null;
+  }
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between mb-4">
