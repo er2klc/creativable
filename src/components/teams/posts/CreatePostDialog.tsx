@@ -25,12 +25,37 @@ interface CreatePostDialogProps {
 
 export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) => {
   const [open, setOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(categoryId);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(categoryId);
   const user = useUser();
   const { teamSlug } = useParams();
 
   const { data: teamMembers } = useTeamMembers(teamId);
   
+  const { data: categories } = useQuery({
+    queryKey: ["team-categories", teamSlug],
+    queryFn: async () => {
+      if (!teamSlug) return [];
+      
+      const { data: team } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamSlug)
+        .single();
+
+      if (!team) return [];
+
+      const { data, error } = await supabase
+        .from('team_categories')
+        .select('*')
+        .eq('team_id', team.id)
+        .order('order_index');
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!teamSlug,
+  });
+
   const { data: teamMember } = useQuery({
     queryKey: ["team-member-role", teamId],
     queryFn: async () => {
@@ -52,7 +77,9 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
   const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
 
   const handleCategoryChange = (categorySlug?: string) => {
-    setSelectedCategory(categorySlug);
+    if (!categories) return;
+    const category = categories.find(cat => cat.slug === categorySlug);
+    setSelectedCategoryId(category?.id);
   };
 
   return (
@@ -73,7 +100,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
         
         <div className="max-h-[400px] overflow-auto">
           <CreatePostCategoriesScroll 
-            activeTab={selectedCategory || ""}
+            activeTab={categories?.find(cat => cat.id === selectedCategoryId)?.slug || ""}
             onCategoryClick={handleCategoryChange}
             isAdmin={isAdmin}
             teamSlug={teamSlug || ""}
@@ -82,7 +109,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
 
         <CreatePostForm
           teamId={teamId}
-          categoryId={selectedCategory}
+          categoryId={selectedCategoryId}
           onSuccess={() => setOpen(false)}
           teamMembers={teamMembers}
           isAdmin={isAdmin}
@@ -92,4 +119,3 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
     </Dialog>
   );
 };
-

@@ -74,11 +74,9 @@ export function TiptapEditor({
     },
   });
 
-  // Autosave every 30 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       if (editor?.getHTML()) {
-        // You can implement autosave logic here
         console.log('Autosaving...', editor.getHTML());
       }
     }, 30000);
@@ -173,9 +171,13 @@ function ToolbarButton({ onClick, active, children }: {
 }) {
   return (
     <Button
+      type="button" // Explizit type="button" setzen
       variant="ghost"
       size="sm"
-      onClick={onClick}
+      onClick={(e) => {
+        e.preventDefault(); // Prevent form submission
+        onClick();
+      }}
       className={`h-8 w-8 p-0 ${active ? 'bg-muted' : ''}`}
     >
       {children}
