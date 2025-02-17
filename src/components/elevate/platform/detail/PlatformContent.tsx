@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -139,7 +138,7 @@ export const PlatformContent = ({
   }
 
   return (
-    <div className="relative pt-[168px] md:pt-[132px]">
+    <>
       <PlatformHeader
         platform={platform}
         activeUnit={activeUnit}
@@ -181,6 +180,6 @@ export const PlatformContent = ({
         setIsEditDialogOpen={setIsEditDialogOpen}
         activeUnit={activeUnit}
       />
-    </div>
+    </>
   );
 };
