@@ -14,6 +14,7 @@ export const useLevelRewards = (teamId: string) => {
         .order("level", { ascending: true });
       
       return data;
-    }
+    },
+    enabled: !!teamId
   });
 };

@@ -94,7 +94,7 @@ const LeaderBoard = () => {
   const pointsToNextLevel = getNextLevelPoints(currentPoints, currentLevel);
 
   if (!team) {
-    return null;
+    return <div>Loading...</div>;
   }
 
   return (

@@ -41,7 +41,7 @@ export const useLeaderboardData = (teamId: string, period: LeaderboardPeriod) =>
             .from("team_member_points")
             .select(`
               *,
-              profiles:user_id (
+              profiles!team_member_points_user_id_fkey (
                 id,
                 display_name,
                 avatar_url
