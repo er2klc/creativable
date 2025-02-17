@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,6 +6,11 @@ import { PlatformHeader } from "./content/PlatformHeader";
 import { PlatformTabs } from "./content/PlatformTabs";
 import { DialogManager } from "./content/DialogManager";
 import { EmptyState } from "./EmptyState";
+import { GraduationCap, ChevronRight } from "lucide-react";
+import { SearchBar } from "@/components/dashboard/SearchBar";
+import { HeaderActions } from "@/components/layout/HeaderActions";
+import { useUser } from "@supabase/auth-helpers-react";
+import { Link } from "react-router-dom";
 
 interface PlatformContentProps {
   platform: any;
@@ -33,6 +39,7 @@ export const PlatformContent = ({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
   const [documentsCount, setDocumentsCount] = useState(0);
+  const user = useUser();
 
   const activeUnit = sortedSubmodules.find(unit => unit.id === activeUnitId);
   const completedCount = sortedSubmodules.filter(unit => isCompleted(unit.id)).length;
@@ -85,101 +92,126 @@ export const PlatformContent = ({
 
   if (sortedSubmodules.length === 0) {
     return (
-      <EmptyState 
-        isAdmin={isAdmin} 
-        onCreateUnit={async (data) => {
-          try {
-            const { data: lerninhalte, error: unitError } = await supabase
-              .from('elevate_lerninhalte')
-              .insert({
-                module_id: platform?.elevate_modules?.[0]?.id,
-                title: data.title,
-                description: data.description,
-                video_url: data.videoUrl,
-                created_by: platform.created_by,
-                submodule_order: sortedSubmodules.length
-              })
-              .select()
-              .single();
-
-            if (unitError) throw unitError;
-
-            for (const file of data.files) {
-              const filePath = `${lerninhalte.id}/${file.name}`;
-              const { error: uploadError } = await supabase.storage
-                .from('elevate-documents')
-                .upload(filePath, file);
-
-              if (uploadError) throw uploadError;
-
-              const { error: docError } = await supabase
-                .from('elevate_lerninhalte_documents')
+      <div className="pt-16">
+        <EmptyState 
+          isAdmin={isAdmin} 
+          onCreateUnit={async (data) => {
+            try {
+              const { data: lerninhalte, error: unitError } = await supabase
+                .from('elevate_lerninhalte')
                 .insert({
-                  lerninhalte_id: lerninhalte.id,
-                  file_name: file.name,
-                  file_path: filePath,
-                  file_type: file.type,
-                  created_by: platform.created_by
-                });
+                  module_id: platform?.elevate_modules?.[0]?.id,
+                  title: data.title,
+                  description: data.description,
+                  video_url: data.videoUrl,
+                  created_by: platform.created_by,
+                  submodule_order: sortedSubmodules.length
+                })
+                .select()
+                .single();
 
-              if (docError) throw docError;
+              if (unitError) throw unitError;
+
+              for (const file of data.files) {
+                const filePath = `${lerninhalte.id}/${file.name}`;
+                const { error: uploadError } = await supabase.storage
+                  .from('elevate-documents')
+                  .upload(filePath, file);
+
+                if (uploadError) throw uploadError;
+
+                const { error: docError } = await supabase
+                  .from('elevate_lerninhalte_documents')
+                  .insert({
+                    lerninhalte_id: lerninhalte.id,
+                    file_name: file.name,
+                    file_path: filePath,
+                    file_type: file.type,
+                    created_by: platform.created_by
+                  });
+
+                if (docError) throw docError;
+              }
+
+              toast.success("Neue Lerneinheit erfolgreich erstellt");
+              setIsDialogOpen(false);
+              await refetch();
+            } catch (error) {
+              console.error('Error creating learning unit:', error);
+              toast.error("Fehler beim Erstellen der Lerneinheit");
             }
-
-            toast.success("Neue Lerneinheit erfolgreich erstellt");
-            setIsDialogOpen(false);
-            await refetch();
-          } catch (error) {
-            console.error('Error creating learning unit:', error);
-            toast.error("Fehler beim Erstellen der Lerneinheit");
-          }
-        }}
-      />
+          }}
+        />
+      </div>
     );
   }
 
   return (
     <>
-      <PlatformHeader
-        platform={platform}
-        activeUnit={activeUnit}
-        isAdmin={isAdmin}
-        isCompleted={isCompleted}
-        markAsCompleted={markAsCompleted}
-        handleDeleteUnit={handleDeleteUnit}
-        setIsEditDialogOpen={setIsEditDialogOpen}
-        progress={progress}
-        videoDuration={videoDuration}
-        documentsCount={documentsCount}
-      />
-
-      <div className="bg-gray-50 rounded-lg">
-        <PlatformTabs
-          sortedSubmodules={sortedSubmodules}
-          activeUnitId={activeUnitId}
-          handleUnitChange={handleUnitChange}
-          isAdmin={isAdmin}
-          setIsDialogOpen={setIsDialogOpen}
-          isCompleted={isCompleted}
-          markAsCompleted={markAsCompleted}
-          handleVideoProgress={handleVideoProgress}
-          platform={platform}
-          handleDeleteUnit={handleDeleteUnit}
-          refetch={refetch}
-          setIsEditDialogOpen={setIsEditDialogOpen}
-          progress={progress}
-        />
+      {/* New Global Header */}
+      <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+        <div className="h-16 px-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <GraduationCap className="h-5 w-5" />
+            <Link to="/elevate" className="text-lg font-semibold hover:text-primary transition-colors">
+              Elevate
+            </Link>
+            <ChevronRight className="h-4 w-4 text-gray-400" />
+            <span className="text-gray-600">Modul</span>
+          </div>
+          
+          <div className="hidden md:block w-[300px]">
+            <SearchBar />
+          </div>
+          
+          <HeaderActions userEmail={user?.email} />
+        </div>
       </div>
 
-      <DialogManager
-        platform={platform}
-        sortedSubmodules={sortedSubmodules}
-        refetch={refetch}
-        isDialogOpen={isDialogOpen}
-        setIsDialogOpen={setIsDialogOpen}
-        isEditDialogOpen={isEditDialogOpen}
-        setIsEditDialogOpen={setIsEditDialogOpen}
-        activeUnit={activeUnit}
-      />
+      {/* Main Content with Original Header */}
+      <div className="pt-16">
+        <PlatformHeader
+          platform={platform}
+          activeUnit={activeUnit}
+          isAdmin={isAdmin}
+          isCompleted={isCompleted}
+          markAsCompleted={markAsCompleted}
+          handleDeleteUnit={handleDeleteUnit}
+          setIsEditDialogOpen={setIsEditDialogOpen}
+          progress={progress}
+          videoDuration={videoDuration}
+          documentsCount={documentsCount}
+        />
+
+        <div className="bg-gray-50 rounded-lg">
+          <PlatformTabs
+            sortedSubmodules={sortedSubmodules}
+            activeUnitId={activeUnitId}
+            handleUnitChange={handleUnitChange}
+            isAdmin={isAdmin}
+            setIsDialogOpen={setIsDialogOpen}
+            isCompleted={isCompleted}
+            markAsCompleted={markAsCompleted}
+            handleVideoProgress={handleVideoProgress}
+            platform={platform}
+            handleDeleteUnit={handleDeleteUnit}
+            refetch={refetch}
+            setIsEditDialogOpen={setIsEditDialogOpen}
+            progress={progress}
+          />
+        </div>
+
+        <DialogManager
+          platform={platform}
+          sortedSubmodules={sortedSubmodules}
+          refetch={refetch}
+          isDialogOpen={isDialogOpen}
+          setIsDialogOpen={setIsDialogOpen}
+          isEditDialogOpen={isEditDialogOpen}
+          setIsEditDialogOpen={setIsEditDialogOpen}
+          activeUnit={activeUnit}
+        />
+      </div>
     </>
   );
 };
