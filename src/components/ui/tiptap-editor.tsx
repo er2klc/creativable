@@ -69,7 +69,7 @@ export function TiptapEditor({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-sm sm:prose-base lg:prose-lg xl:prose-xl focus:outline-none min-h-[150px]',
+        class: 'prose-sm focus:outline-none min-h-[150px] max-w-none break-words w-full',
       },
     },
   });
@@ -91,7 +91,7 @@ export function TiptapEditor({
   }
 
   return (
-    <div className="border rounded-md">
+    <div className="border rounded-md w-full overflow-hidden">
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex flex-wrap gap-1 p-2">
           <ToolbarButton 
@@ -159,7 +159,7 @@ export function TiptapEditor({
           </ToolbarButton>
         </div>
       </div>
-      <div className="px-3 py-2">
+      <div className="px-3 py-2 overflow-x-hidden">
         <EditorContent editor={editor} />
       </div>
     </div>
