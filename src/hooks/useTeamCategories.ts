@@ -48,13 +48,13 @@ export const useTeamCategories = (teamSlug?: string) => {
 
       console.log("Found team ID:", team.id);
 
-      // Then get the categories with their settings and post counts
+      // Optimierte Abfrage mit LEFT JOIN, um NULL-Werte zu vermeiden
       const { data: categories, error: categoriesError } = await supabase
         .from('team_categories')
         .select(`
           *,
-          team_category_settings (size),
-          team_category_post_counts (post_count)
+          team_category_settings!left(size),
+          team_category_post_counts!left(post_count)
         `)
         .eq('team_id', team.id)
         .order('order_index');
@@ -66,16 +66,27 @@ export const useTeamCategories = (teamSlug?: string) => {
 
       console.log("Raw categories data:", categories);
 
-      const mappedCategories = categories.map(category => ({
-        ...category,
-        settings: {
-          size: category.team_category_settings?.[0]?.size || 'small'
-        },
-        post_count: category.team_category_post_counts?.[0]?.post_count || 0,
-        is_public: category.is_public ?? true,
-        icon: category.icon || 'MessageCircle',
-        color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
-      }));
+      // Verbesserte Mapping-Funktion mit Standardwerten
+      const mappedCategories = categories.map(category => {
+        // Extrahiere die Settings und Post-Counts aus den nested objects
+        const settings = category.team_category_settings?.[0];
+        const postCount = category.team_category_post_counts?.[0];
+
+        return {
+          ...category,
+          // Entferne die original nested arrays
+          team_category_settings: undefined,
+          team_category_post_counts: undefined,
+          // Setze die Werte mit vernünftigen Defaults
+          settings: {
+            size: settings?.size || 'small'
+          },
+          post_count: postCount?.post_count || 0,
+          is_public: category.is_public ?? true,
+          icon: category.icon || 'MessageCircle',
+          color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
+        };
+      });
 
       console.log("Mapped categories:", mappedCategories);
       return mappedCategories;
