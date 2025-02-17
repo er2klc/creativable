@@ -3,10 +3,10 @@ import { useCallback } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { PostCard } from "./PostCard";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
 import { CreatePostDialog } from "./CreatePostDialog";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface CategoryOverviewProps {
   teamId: string;
@@ -24,6 +24,7 @@ export const CategoryOverview = ({
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isIntroCategory, setIsIntroCategory] = useState(false);
   const [currentCategoryId, setCurrentCategoryId] = useState<string>();
+  const navigate = useNavigate();
 
   const fetchPosts = useCallback(async ({ pageParam = 0 }) => {
     try {
@@ -57,24 +58,26 @@ export const CategoryOverview = ({
           profiles:team_posts_created_by_fkey (
             id,
             display_name,
-            avatar_url
+            avatar_url,
+            email
           ),
-          team_categories:team_posts_category_id_fkey (
+          team_categories!inner (
             id,
             name,
-            slug
+            slug,
+            color
           )
         `)
-        .eq('team_id', teamId)
-        .order('pinned', { ascending: false })
-        .order('created_at', { ascending: false })
-        .range(pageParam * 10, (pageParam + 1) * 10 - 1);
+        .eq('team_id', teamId);
 
       if (categoryId) {
         query = query.eq('category_id', categoryId);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query
+        .order('pinned', { ascending: false })
+        .order('created_at', { ascending: false })
+        .range(pageParam * 10, (pageParam + 1) * 10 - 1);
 
       if (error) {
         console.error('Error fetching posts:', error);
@@ -107,24 +110,11 @@ export const CategoryOverview = ({
     initialPageParam: 0
   });
 
-  // Determine if user can post in current category
-  const canPostInCategory = useCallback(async () => {
-    if (!canPost) return false;
-
-    try {
-      const { data: memberPoints } = await supabase
-        .from('team_member_points')
-        .select('level')
-        .eq('team_id', teamId)
-        .single();
-
-      if (isIntroCategory) return true;
-      return (memberPoints?.level || 0) > 0;
-    } catch (error) {
-      console.error('Error checking post permissions:', error);
-      return false;
-    }
-  }, [canPost, teamId, isIntroCategory]);
+  const handlePostCreated = (postId: string, postSlug: string) => {
+    setShowCreateDialog(false);
+    toast.success("Beitrag erfolgreich erstellt");
+    navigate(`/unity/team/${teamSlug}/posts/${postSlug}`);
+  };
 
   if (status === "loading") {
     return <div>Lädt...</div>;
@@ -138,18 +128,12 @@ export const CategoryOverview = ({
 
   return (
     <div className="space-y-4">
-      {canPostInCategory() && (
-        <Button onClick={() => setShowCreateDialog(true)} className="mb-4">
-          <Plus className="h-4 w-4 mr-2" />
-          Neuer Beitrag
-        </Button>
-      )}
-
       {showCreateDialog && (
         <CreatePostDialog
           teamId={teamId}
           categoryId={currentCategoryId}
           onClose={() => setShowCreateDialog(false)}
+          onPostCreated={handlePostCreated}
         />
       )}
 
