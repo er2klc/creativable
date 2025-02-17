@@ -57,19 +57,25 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
   });
 
   const { data: teamMember } = useQuery({
-    queryKey: ["team-member-role", teamId],
+    queryKey: ["team-member-role", teamId, user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
 
-      const { data, error } = await supabase
+      const { data: memberData, error } = await supabase
         .from("team_members")
-        .select("role")
+        .select(`
+          role,
+          points:team_member_points(level)
+        `)
         .eq("team_id", teamId)
         .eq("user_id", user.id)
         .single();
 
       if (error) throw error;
-      return data;
+      return {
+        role: memberData.role,
+        level: memberData.points?.[0]?.level || 0
+      };
     },
     enabled: !!teamId && !!user?.id,
   });
