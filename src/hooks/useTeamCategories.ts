@@ -48,60 +48,47 @@ export const useTeamCategories = (teamSlug?: string) => {
 
       console.log("Found team ID:", team.id);
 
-      // Separate queries for better error handling
-      const { data: categories, error: categoriesError } = await supabase
+      // Get all data in one query with JOINs
+      const { data, error } = await supabase
         .from('team_categories')
-        .select('*')
+        .select(`
+          *,
+          team_category_settings (
+            size
+          ),
+          team_category_post_counts (
+            post_count
+          )
+        `)
         .eq('team_id', team.id)
         .order('order_index');
 
-      if (categoriesError) {
-        console.error("Error fetching categories:", categoriesError);
-        throw categoriesError;
+      if (error) {
+        console.error("Error fetching categories:", error);
+        throw error;
       }
 
-      // Get settings in a separate query
-      const { data: settings, error: settingsError } = await supabase
-        .from('team_category_settings')
-        .select('*')
-        .in('category_id', categories.map(c => c.id));
+      console.log("Raw data from joined query:", data);
 
-      if (settingsError) {
-        console.error("Error fetching settings:", settingsError);
-        throw settingsError;
-      }
-
-      // Get post counts in a separate query
-      const { data: postCounts, error: postCountsError } = await supabase
-        .from('team_category_post_counts')
-        .select('*')
-        .in('category_id', categories.map(c => c.id));
-
-      if (postCountsError) {
-        console.error("Error fetching post counts:", postCountsError);
-        throw postCountsError;
-      }
-
-      console.log("Raw data:", {
-        categories,
-        settings,
-        postCounts
-      });
-
-      // Map the data together
-      const mappedCategories = categories.map(category => {
-        const categorySettings = settings?.find(s => s.category_id === category.id);
-        const categoryPostCount = postCounts?.find(p => p.category_id === category.id);
+      // Map the joined data to our expected format
+      const mappedCategories = data.map(category => {
+        const settings = category.team_category_settings?.[0];
+        const postCount = category.team_category_post_counts?.[0];
 
         return {
-          ...category,
-          settings: {
-            size: categorySettings?.size || 'small'
-          },
-          post_count: categoryPostCount?.post_count || 0,
+          id: category.id,
+          team_id: category.team_id,
+          name: category.name,
+          description: category.description,
+          slug: category.slug,
+          order_index: category.order_index,
           is_public: category.is_public ?? true,
           icon: category.icon || 'MessageCircle',
-          color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]'
+          color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]',
+          settings: {
+            size: settings?.size || 'small'
+          },
+          post_count: postCount?.post_count || 0
         };
       });
 
