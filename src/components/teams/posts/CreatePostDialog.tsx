@@ -55,7 +55,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
           Neuer Beitrag
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-hidden p-0">
+      <DialogContent className="sm:max-w-[725px]">
         <DialogHeader className="px-6 pt-6 pb-4">
           <DialogTitle>Neuen Beitrag erstellen</DialogTitle>
         </DialogHeader>

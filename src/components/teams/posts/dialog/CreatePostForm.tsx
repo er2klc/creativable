@@ -88,8 +88,8 @@ export const CreatePostForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-[calc(100vh-200px)] max-h-[600px]">
-        <div className="bg-background border-b px-6 py-2">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="border-b">
           <CreatePostCategoriesScroll 
             activeTab={selectedCategory || ''}
             onCategoryClick={handleCategoryChange}
@@ -98,8 +98,8 @@ export const CreatePostForm = ({
           />
         </div>
         
-        <div className="flex-1 overflow-auto px-6">
-          <div className="py-4 space-y-4">
+        <ScrollArea className="max-h-[400px] overflow-auto px-6">
+          <div className="space-y-4">
             <TitleField form={form} />
             <ContentField 
               form={form} 
@@ -108,9 +108,9 @@ export const CreatePostForm = ({
             />
             <FileField form={form} />
           </div>
-        </div>
+        </ScrollArea>
 
-        <div className="bg-background px-6 py-4 border-t">
+        <div className="px-6 py-4 border-t">
           <div className="flex justify-end">
             <Button type="submit" disabled={isUploading}>
               {isUploading ? (
