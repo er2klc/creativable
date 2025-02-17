@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { PostCard } from "./PostCard";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { CreatePostDialog } from "../CreatePostDialog";
+import { CreatePostDialog } from "./CreatePostDialog";
 import { useState } from "react";
 
 interface CategoryOverviewProps {
@@ -23,6 +23,7 @@ export const CategoryOverview = ({
 }: CategoryOverviewProps) => {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isIntroCategory, setIsIntroCategory] = useState(false);
+  const [currentCategoryId, setCurrentCategoryId] = useState<string>();
 
   const fetchPosts = useCallback(async ({ pageParam = 0 }) => {
     try {
@@ -44,6 +45,7 @@ export const CategoryOverview = ({
 
         if (categories && categories.length > 0) {
           categoryId = categories[0].id;
+          setCurrentCategoryId(categoryId);
           setIsIntroCategory(categories[0].name === 'Vorstellung');
         }
       }
@@ -146,6 +148,7 @@ export const CategoryOverview = ({
       {showCreateDialog && (
         <CreatePostDialog
           teamId={teamId}
+          categoryId={currentCategoryId}
           onClose={() => setShowCreateDialog(false)}
         />
       )}
