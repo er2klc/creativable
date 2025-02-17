@@ -50,11 +50,11 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
   const getRoleIcon = (role: string) => {
     switch (role) {
       case 'owner':
-        return <Crown className="h-3.5 w-3.5 text-orange-500" />;
+        return <Crown className="h-4 w-4 text-orange-500" />;
       case 'admin':
-        return <Shield className="h-3.5 w-3.5 text-purple-500" />;
+        return <Shield className="h-4 w-4 text-purple-500" />;
       default:
-        return <User className="h-3.5 w-3.5 text-gray-500" />;
+        return <User className="h-4 w-4 text-gray-600" />;
     }
   };
 
@@ -104,16 +104,17 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
               <div className="flex items-center gap-2">
                 <Badge 
                   variant={getRoleBadgeVariant(member.role)} 
-                  className="px-2 py-0.5 flex items-center gap-1"
+                  className="px-3 py-1 flex items-center gap-2"
                   style={{
-                    backgroundColor: member.role === 'owner' ? '#F97316' : 
-                                  member.role === 'admin' ? '#7E69AB' : 
-                                  'transparent',
-                    color: member.role === 'member' ? 'inherit' : 'white'
+                    backgroundColor: member.role === 'owner' ? '#FDE1D3' : 
+                                  member.role === 'admin' ? '#E5DEFF' : 
+                                  '#F1F0FB',
+                    color: '#1F2937',
+                    border: 'none'
                   }}
                 >
                   {getRoleIcon(member.role)}
-                  {getRoleLabel(member.role)}
+                  <span className="font-medium">{getRoleLabel(member.role)}</span>
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Star className="h-3.5 w-3.5" />
