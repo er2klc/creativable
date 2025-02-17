@@ -256,6 +256,7 @@ export type Database = {
       }
       elevate_lerninhalte: {
         Row: {
+          content: string | null
           created_at: string | null
           created_by: string | null
           description: string | null
@@ -266,6 +267,7 @@ export type Database = {
           video_url: string | null
         }
         Insert: {
+          content?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
@@ -276,6 +278,7 @@ export type Database = {
           video_url?: string | null
         }
         Update: {
+          content?: string | null
           created_at?: string | null
           created_by?: string | null
           description?: string | null
