@@ -1,5 +1,7 @@
 
 import { DocumentSection } from "../DocumentSection";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface DocumentManagerProps {
   existingFiles?: Array<{
@@ -15,17 +17,28 @@ interface DocumentManagerProps {
 }
 
 export const DocumentManager = ({ 
-  existingFiles = [], 
   isAdmin = false,
-  onDocumentDeleted,
   lerninhalteId
 }: DocumentManagerProps) => {
+  const { data: documents = [], refetch } = useQuery({
+    queryKey: ['documents', lerninhalteId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('elevate_lerninhalte_documents')
+        .select('*')
+        .eq('lerninhalte_id', lerninhalteId);
+
+      if (error) throw error;
+      return data || [];
+    }
+  });
+
   return (
     <div className="col-span-4">
       <DocumentSection
-        documents={existingFiles}
+        documents={documents}
         isAdmin={isAdmin}
-        onDelete={onDocumentDeleted}
+        onDelete={() => refetch()}
         lerninhalteId={lerninhalteId}
       />
     </div>

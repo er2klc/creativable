@@ -1,11 +1,12 @@
 
 import { useState } from "react";
-import { FileText, File, FileSpreadsheet, Trash2, Plus } from "lucide-react";
+import { FileText, File, FileSpreadsheet, Trash2, Plus, Files } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DocumentPreview } from "./DocumentPreview";
 import { DocumentUploadDialog } from "./DocumentUploadDialog";
+import { Label } from "@/components/ui/label";
 
 interface Document {
   id: string;
@@ -64,11 +65,15 @@ export const DocumentSection = ({ documents, isAdmin, onDelete, lerninhalteId }:
   };
 
   return (
-    <div className="space-y-4">
-      {isAdmin && (
-        <div className="flex justify-end">
+    <div className="h-full flex flex-col">
+      <div className="flex items-center justify-between mb-4">
+        <Label className="flex items-center gap-2 text-lg font-semibold">
+          <Files className="h-5 w-5" />
+          Dateien
+        </Label>
+        {isAdmin && (
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => setShowUploadDialog(true)}
             className="flex items-center gap-2"
@@ -76,8 +81,8 @@ export const DocumentSection = ({ documents, isAdmin, onDelete, lerninhalteId }:
             <Plus className="h-4 w-4" />
             Dokument hinzufügen
           </Button>
-        </div>
-      )}
+        )}
+      </div>
       
       <div className="space-y-2">
         {documents.map((doc) => (
