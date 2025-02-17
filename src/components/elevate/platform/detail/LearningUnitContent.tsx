@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -40,13 +41,6 @@ export const LearningUnitContent = ({
   const [videoDuration, setVideoDuration] = useState(0);
   const [hasCompletedNotification, setHasCompletedNotification] = useState(false);
   const user = useUser();
-  const [documents, setDocuments] = useState<Array<{
-    id: string;
-    file_name: string;
-    file_path: string;
-    file_type: string;
-    preview_file_path: string;
-  }>>([]);
 
   const handleUpdate = async (data: { title: string; description: string; videoUrl: string }) => {
     try {
@@ -54,37 +48,11 @@ export const LearningUnitContent = ({
       setIsEditing(false);
       setFiles([]);
       toast.success('Lerneinheit erfolgreich aktualisiert');
-      fetchDocuments();
     } catch (error) {
       console.error('Error updating learning unit:', error);
       toast.error('Fehler beim Aktualisieren der Lerneinheit');
     }
   };
-
-  const fetchDocuments = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('elevate_lerninhalte_documents')
-        .select('*')
-        .eq('lerninhalte_id', id);
-
-      if (error) throw error;
-      
-      // Transform the data to include preview_file_path
-      const transformedData = data?.map(doc => ({
-        ...doc,
-        preview_file_path: doc.preview_file_path || doc.file_path // Use file_path as fallback if preview_file_path is null
-      })) || [];
-      
-      setDocuments(transformedData);
-    } catch (error) {
-      console.error('Error fetching documents:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchDocuments();
-  }, [id]);
 
   const handleVideoProgress = async (progress: number) => {
     try {
@@ -113,17 +81,13 @@ export const LearningUnitContent = ({
         <DescriptionSection
           title={title}
           description={description}
-          existingFiles={documents}
           isAdmin={isAdmin}
-          onDocumentDeleted={fetchDocuments}
           onEdit={() => setIsEditing(true)}
         />
         
         <DocumentManager 
-          existingFiles={documents}
           isAdmin={isAdmin}
-          onDocumentDeleted={fetchDocuments}
-          onAddDocument={() => setIsEditing(true)}
+          lerninhalteId={id}
         />
       </div>
 
@@ -134,36 +98,11 @@ export const LearningUnitContent = ({
         description={description}
         videoUrl={videoUrl}
         onUpdate={handleUpdate}
-        existingFiles={documents}
+        existingFiles={[]}
         onFileRemove={async (index) => {
-          if (documents && documents[index]) {
-            try {
-              const fileToDelete = documents[index];
-              
-              const { error: storageError } = await supabase.storage
-                .from('elevate-documents')
-                .remove([fileToDelete.file_path]);
-
-              if (storageError) throw storageError;
-
-              const { error: dbError } = await supabase
-                .from('elevate_lerninhalte_documents')
-                .delete()
-                .eq('id', fileToDelete.id);
-
-              if (dbError) throw dbError;
-
-              fetchDocuments();
-              toast.success('Datei erfolgreich gelöscht');
-            } catch (error) {
-              console.error('Error deleting file:', error);
-              toast.error('Fehler beim Löschen der Datei');
-            }
-          } else {
-            const newFiles = [...files];
-            newFiles.splice(index - (documents?.length || 0), 1);
-            setFiles(newFiles);
-          }
+          const newFiles = [...files];
+          newFiles.splice(index, 1);
+          setFiles(newFiles);
         }}
         onFilesSelected={setFiles}
         files={files}
