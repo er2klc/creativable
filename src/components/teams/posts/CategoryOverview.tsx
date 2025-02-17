@@ -55,13 +55,13 @@ export const CategoryOverview = ({
         .from('team_posts')
         .select(`
           *,
-          profiles:team_posts_created_by_fkey (
+          author:profiles!team_posts_created_by_fkey (
             id,
             display_name,
             avatar_url,
             email
           ),
-          team_categories!inner (
+          team_categories (
             id,
             name,
             slug,
@@ -84,8 +84,16 @@ export const CategoryOverview = ({
         throw error;
       }
 
-      console.log('Fetched posts:', data);
-      return data || [];
+      // Transform data to match expected format
+      const transformedData = data?.map(post => ({
+        ...post,
+        team_categories: post.team_categories,
+        author: post.author,
+        team_post_comments: 0 // This will be updated when we implement comments
+      })) || [];
+
+      console.log('Fetched and transformed posts:', transformedData);
+      return transformedData;
     } catch (error) {
       console.error('Error in fetchPosts:', error);
       throw error;
