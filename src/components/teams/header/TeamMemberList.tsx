@@ -61,7 +61,7 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
   return (
     <div className="mt-4 space-y-4">
       {members?.map((member) => (
-        <div key={member.id} className="flex items-center justify-between p-2 border rounded hover:bg-accent/5">
+        <div key={member.id} className="flex flex-col p-2 border rounded hover:bg-accent/5">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
               <AvatarImage src={member.profiles?.avatar_url} alt={member.profiles?.display_name || 'Avatar'} />
@@ -91,6 +91,7 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
               variant="outline"
               size="sm"
               onClick={() => handleRoleChange(member.id, member.role)}
+              className="mt-3 w-full"
             >
               {member.role === 'admin' ? 'Zum Mitglied machen' : 'Zum Admin machen'}
             </Button>
