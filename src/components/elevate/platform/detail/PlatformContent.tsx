@@ -157,7 +157,7 @@ export const PlatformContent = ({
               Elevate
             </Link>
             <ChevronRight className="h-4 w-4 text-gray-400" />
-            <span className="text-gray-600">Modul</span>
+            <span className="text-gray-600">{platform.name}</span>
           </div>
           
           <div className="hidden md:block w-[300px]">
