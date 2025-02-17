@@ -8,6 +8,7 @@ import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
 import { ICalButton } from "@/components/calendar/ICalButton";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const TeamCalendar = () => {
   const { teamSlug } = useParams();
@@ -68,12 +69,18 @@ const TeamCalendar = () => {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-2 text-muted-foreground">
-                  <span 
-                    className="cursor-pointer hover:text-foreground transition-colors"
+                  <div 
+                    className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors"
                     onClick={() => navigate(`/unity/team/${team.slug}`)}
                   >
-                    {team.name}
-                  </span>
+                    {team.logo_url ? (
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={team.logo_url} alt={team.name} />
+                        <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    ) : null}
+                    <span>{team.name}</span>
+                  </div>
                   <span className="text-muted-foreground">/</span>
                   <div className="flex items-center gap-2">
                     <Calendar className="h-5 w-5" />
@@ -106,4 +113,3 @@ const TeamCalendar = () => {
 };
 
 export default TeamCalendar;
-
