@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery } from "@tanstack/react-query";
@@ -10,12 +11,15 @@ import { TeamHeader } from "./components/TeamHeader";
 import { Team } from "./types/team";
 import { PostDetail } from "./components/PostDetail";
 import { LoadingState } from "./LoadingState";
+import { WelcomeDialog } from "./dialog/WelcomeDialog";
+import { toast } from "sonner";
 
 export function PostsAndDiscussions() {
   const navigate = useNavigate();
   const { teamSlug, categorySlug, postSlug } = useParams();
   const user = useUser();
   const [activeTab, setActiveTab] = useState(categorySlug || 'all');
+  const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
 
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
@@ -47,7 +51,7 @@ export function PostsAndDiscussions() {
 
       const { data, error } = await supabase
         .from('team_members')
-        .select('role')
+        .select('role, team_member_points!inner(level)')
         .eq('team_id', team.id)
         .eq('user_id', user.id)
         .single();
@@ -58,40 +62,56 @@ export function PostsAndDiscussions() {
     enabled: !!team?.id && !!user?.id,
   });
 
-  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
-
-  const { data: post } = useQuery({
-    queryKey: ['team-post', postSlug],
+  const { data: introCategory } = useQuery({
+    queryKey: ['intro-category', team?.id],
     queryFn: async () => {
-      if (!postSlug) return null;
-      const { data, error } = await supabase
-        .from('team_posts')
-        .select(`
-          *,
-          team_categories (
-            name,
-            slug
-          ),
-          author:profiles!team_posts_created_by_fkey (
-            display_name
-          ),
-          team_post_comments (
-            id,
-            content,
-            created_at,
-            author:profiles!team_post_comments_created_by_fkey (
-              display_name
-            )
-          )
-        `)
-        .eq('slug', postSlug)
-        .maybeSingle();
+      if (!team?.id) return null;
 
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from('team_categories')
+        .select('id')
+        .eq('team_id', team.id)
+        .eq('name', 'Vorstellung')
+        .single();
+
+      if (error) return null;
       return data;
     },
-    enabled: !!postSlug,
+    enabled: !!team?.id,
   });
+
+  useEffect(() => {
+    if (teamMember?.team_member_points?.level === 0 && introCategory) {
+      setShowWelcomeDialog(true);
+    }
+  }, [teamMember, introCategory]);
+
+  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
+  const canPost = isAdmin || (teamMember?.team_member_points?.level || 0) > 0;
+
+  const handleWelcomeSubmit = async (data: { name: string; introduction: string }) => {
+    if (!user?.id || !team?.id || !introCategory) return;
+
+    try {
+      const { error } = await supabase
+        .from('team_posts')
+        .insert({
+          team_id: team.id,
+          category_id: introCategory.id,
+          title: `Vorstellung: ${data.name}`,
+          content: data.introduction,
+          created_by: user.id
+        });
+
+      if (error) throw error;
+
+      toast.success("Vorstellung erfolgreich gepostet!");
+      setShowWelcomeDialog(false);
+    } catch (error) {
+      console.error('Error creating introduction post:', error);
+      toast.error("Fehler beim Erstellen der Vorstellung");
+    }
+  };
 
   const handleCategoryClick = (categorySlug?: string) => {
     if (!teamSlug) {
@@ -148,6 +168,13 @@ export function PostsAndDiscussions() {
         userEmail={user?.email}
       />
 
+      <WelcomeDialog 
+        isOpen={showWelcomeDialog}
+        onClose={() => setShowWelcomeDialog(false)}
+        onSubmit={handleWelcomeSubmit}
+        categoryId={introCategory?.id || ''}
+      />
+
       <div className="pt-16">
         <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
           <div className="flex items-center gap-4">
@@ -164,7 +191,12 @@ export function PostsAndDiscussions() {
               {postSlug ? (
                 <PostDetail post={post} teamSlug={teamSlug} />
               ) : (
-                <CategoryOverview teamId={team.id} teamSlug={teamSlug} categorySlug={categorySlug} />
+                <CategoryOverview 
+                  teamId={team.id} 
+                  teamSlug={teamSlug} 
+                  categorySlug={categorySlug}
+                  canPost={canPost} 
+                />
               )}
             </div>
           </div>
