@@ -20,11 +20,6 @@ export const DocumentManager = ({
   isAdmin = false,
   lerninhalteId
 }: DocumentManagerProps) => {
-  // Früher Rückgabe wenn keine lerninhalteId vorhanden
-  if (!lerninhalteId) {
-    return null;
-  }
-
   const { data: documents = [], refetch } = useQuery({
     queryKey: ['documents', lerninhalteId],
     queryFn: async () => {
@@ -50,3 +45,4 @@ export const DocumentManager = ({
     </div>
   );
 };
+
