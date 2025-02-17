@@ -2663,6 +2663,53 @@ export type Database = {
           },
         ]
       }
+      team_level_rewards: {
+        Row: {
+          created_at: string | null
+          icon_name: string | null
+          id: string
+          is_active: boolean | null
+          level: number
+          reward_description: string | null
+          reward_name: string
+          reward_type: string
+          team_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          level: number
+          reward_description?: string | null
+          reward_name: string
+          reward_type: string
+          team_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          icon_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          level?: number
+          reward_description?: string | null
+          reward_name?: string
+          reward_type?: string
+          team_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_level_rewards_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_member_badges: {
         Row: {
           awarded_at: string | null
@@ -2835,6 +2882,7 @@ export type Database = {
       team_point_events: {
         Row: {
           created_at: string | null
+          earned_at: string | null
           event_type: string
           id: string
           metadata: Json | null
@@ -2844,6 +2892,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          earned_at?: string | null
           event_type: string
           id?: string
           metadata?: Json | null
@@ -2853,6 +2902,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          earned_at?: string | null
           event_type?: string
           id?: string
           metadata?: Json | null
@@ -3549,6 +3599,58 @@ export type Database = {
           platform_id: string | null
         }
         Relationships: []
+      }
+      team_points_30_days: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          level: number | null
+          points: number | null
+          team_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_point_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_point_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_points_7_days: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          level: number | null
+          points: number | null
+          team_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_point_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_point_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_post_comments_count: {
         Row: {
