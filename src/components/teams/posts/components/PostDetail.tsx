@@ -89,9 +89,10 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
             </Badge>
           </div>
 
-          <div className="prose max-w-none">
-            {post.content}
-          </div>
+          <div 
+            className="prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
         </div>
       </Card>
 
