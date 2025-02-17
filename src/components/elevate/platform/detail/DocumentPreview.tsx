@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Download, FileSpreadsheet, FileText, Image, File } from "lucide-react";
@@ -71,7 +72,7 @@ export const DocumentPreview = ({ open, onOpenChange, document }: DocumentPrevie
       );
     }
 
-    // For other file types, show download option
+    // Für andere Dateitypen zeigen wir die Download-Option
     return (
       <div className="flex flex-col items-center justify-center h-[80vh] gap-4">
         {getFileIcon()}

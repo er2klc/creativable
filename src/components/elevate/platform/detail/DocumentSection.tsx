@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { FileText, File, FileSpreadsheet, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,6 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
     }
   };
 
-  // If no documents exist, don't render anything
   if (!documents || documents.length === 0) {
     return null;
   }
@@ -70,23 +70,23 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
         {documents.map((doc) => (
           <div
             key={doc.id}
-            className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50"
+            className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 border border-gray-100 transition-all duration-200"
           >
             <button
               onClick={() => setSelectedDocument(doc)}
-              className="flex items-center space-x-2 text-sm text-gray-700 hover:text-gray-900"
+              className="flex items-center space-x-3 text-sm text-gray-700 hover:text-gray-900 flex-1"
             >
               {getFileIcon(doc.file_type)}
-              <span>{doc.file_name}</span>
+              <span className="truncate">{doc.file_name}</span>
             </button>
             {isAdmin && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => handleDelete(doc.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
+                className="opacity-0 group-hover:opacity-100 transition-opacity ml-2"
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 className="h-4 w-4 text-red-500" />
               </Button>
             )}
           </div>
