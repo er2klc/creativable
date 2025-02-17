@@ -12,7 +12,6 @@ import { usePostSubmission } from "./hooks/usePostSubmission";
 import { CreatePostCategoriesScroll } from "../components/categories/CreatePostCategoriesScroll";
 import { toast } from "sonner";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface FormValues {
   title: string;
@@ -88,27 +87,27 @@ export const CreatePostForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)}>
-        <div className="max-h-[400px] overflow-auto">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="relative">
           <CreatePostCategoriesScroll 
             activeTab={selectedCategory || ''}
             onCategoryClick={handleCategoryChange}
             isAdmin={isAdmin}
             teamSlug={teamSlug}
           />
-          
-          <div className="px-6 space-y-4 py-4">
-            <TitleField form={form} />
-            <ContentField 
-              form={form} 
-              teamMembers={teamMembers}
-              preventSubmitOnEnter={true}
-            />
-            <FileField form={form} />
-          </div>
+        </div>
+        
+        <div className="px-6">
+          <TitleField form={form} />
+          <ContentField 
+            form={form} 
+            teamMembers={teamMembers}
+            preventSubmitOnEnter={true}
+          />
+          <FileField form={form} />
         </div>
 
-        <div className="flex justify-between gap-2 pt-4 px-6">
+        <div className="px-6 flex justify-between">
           <div className="flex gap-2">
             <Button type="submit" disabled={isUploading}>
               {isUploading ? (
