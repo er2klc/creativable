@@ -84,7 +84,7 @@ export const DocumentSection = ({ documents, isAdmin, onDelete }: DocumentSectio
                 variant="ghost"
                 size="sm"
                 onClick={() => handleDelete(doc.id)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity ml-2"
+                className="ml-2"
               >
                 <Trash2 className="h-4 w-4 text-red-500" />
               </Button>
