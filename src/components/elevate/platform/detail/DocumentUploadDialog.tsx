@@ -13,6 +13,10 @@ interface DocumentUploadDialogProps {
   onSuccess: () => void;
 }
 
+interface CustomFileName {
+  [key: number]: string;
+}
+
 export const DocumentUploadDialog = ({
   open,
   onOpenChange,
@@ -20,6 +24,7 @@ export const DocumentUploadDialog = ({
   onSuccess
 }: DocumentUploadDialogProps) => {
   const [files, setFiles] = useState<File[]>([]);
+  const [customFileNames, setCustomFileNames] = useState<CustomFileName>({});
   const [isUploading, setIsUploading] = useState(false);
 
   const handleUpload = async () => {
@@ -30,9 +35,11 @@ export const DocumentUploadDialog = ({
 
     setIsUploading(true);
     try {
-      for (const file of files) {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         const timestamp = new Date().getTime();
-        const sanitizedFileName = file.name.replace(/[^\x00-\x7F]/g, '');
+        const customFileName = customFileNames[i] || file.name;
+        const sanitizedFileName = customFileName.replace(/[^\x00-\x7F]/g, '');
         const fileExt = sanitizedFileName.split('.').pop();
         const filePath = `${lerninhalteId}/${timestamp}-${sanitizedFileName}`;
 
@@ -58,12 +65,20 @@ export const DocumentUploadDialog = ({
       onSuccess();
       onOpenChange(false);
       setFiles([]);
+      setCustomFileNames({});
     } catch (error) {
       console.error('Error uploading documents:', error);
       toast.error("Fehler beim Hochladen der Dokumente");
     } finally {
       setIsUploading(false);
     }
+  };
+
+  const handleFileNameChange = (index: number, newName: string) => {
+    setCustomFileNames(prev => ({
+      ...prev,
+      [index]: newName
+    }));
   };
 
   return (
@@ -76,10 +91,27 @@ export const DocumentUploadDialog = ({
           <FileUpload
             onFilesSelected={(newFiles) => setFiles([...files, ...newFiles])}
             files={files}
+            customFileNames={customFileNames}
+            onFileNameChange={handleFileNameChange}
             onFileRemove={(index) => {
               const newFiles = [...files];
               newFiles.splice(index, 1);
               setFiles(newFiles);
+              
+              // Bereinige auch die benutzerdefinierten Dateinamen
+              const newCustomFileNames = { ...customFileNames };
+              delete newCustomFileNames[index];
+              // Indizes neu zuordnen
+              const updatedCustomFileNames: CustomFileName = {};
+              Object.keys(newCustomFileNames).forEach((key) => {
+                const numKey = parseInt(key);
+                if (numKey > index) {
+                  updatedCustomFileNames[numKey - 1] = newCustomFileNames[numKey];
+                } else {
+                  updatedCustomFileNames[numKey] = newCustomFileNames[numKey];
+                }
+              });
+              setCustomFileNames(updatedCustomFileNames);
             }}
           />
           <div className="flex justify-end space-x-2 mt-4">
