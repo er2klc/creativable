@@ -9,9 +9,7 @@ import { ContentField } from "./form-fields/ContentField";
 import { FileField } from "./form-fields/FileField";
 import { useFileUpload } from "./hooks/useFileUpload";
 import { usePostSubmission } from "./hooks/usePostSubmission";
-import { CreatePostCategoriesScroll } from "../components/categories/CreatePostCategoriesScroll";
 import { toast } from "sonner";
-import { useTeamCategories } from "@/hooks/useTeamCategories";
 
 interface FormValues {
   title: string;
@@ -36,7 +34,7 @@ interface CreatePostFormProps {
 
 export const CreatePostForm = ({ 
   teamId, 
-  categoryId: defaultCategoryId, 
+  categoryId, 
   onSuccess, 
   teamMembers,
   initialValues,
@@ -47,17 +45,15 @@ export const CreatePostForm = ({
   const form = useForm<FormValues>({
     defaultValues: {
       ...initialValues,
-      categoryId: defaultCategoryId || ''
+      categoryId: categoryId || ''
     }
   });
   
   const { isUploading, setIsUploading, handleFileUpload } = useFileUpload(teamId);
-  const { handleSubmission } = usePostSubmission(teamId, form.watch('categoryId'), onSuccess, teamMembers);
-  const { data: categories } = useTeamCategories(teamSlug);
-  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(undefined);
+  const { handleSubmission } = usePostSubmission(teamId, categoryId, onSuccess, teamMembers);
 
   const onSubmit = async (values: FormValues) => {
-    if (!values.categoryId) {
+    if (!categoryId) {
       toast.error("Bitte wählen Sie eine Kategorie aus");
       return;
     }
@@ -77,49 +73,28 @@ export const CreatePostForm = ({
     }
   };
 
-  const handleCategoryChange = (categorySlug?: string) => {
-    setSelectedCategory(categorySlug);
-    const category = categories?.find(c => c.slug === categorySlug);
-    if (category) {
-      form.setValue('categoryId', category.id);
-    }
-  };
-
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="relative">
-          <CreatePostCategoriesScroll 
-            activeTab={selectedCategory || ''}
-            onCategoryClick={handleCategoryChange}
-            isAdmin={isAdmin}
-            teamSlug={teamSlug}
-          />
-        </div>
-        
-        <div className="px-6">
-          <TitleField form={form} />
-          <ContentField 
-            form={form} 
-            teamMembers={teamMembers}
-            preventSubmitOnEnter={true}
-          />
-          <FileField form={form} />
-        </div>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-6">
+        <TitleField form={form} />
+        <ContentField 
+          form={form} 
+          teamMembers={teamMembers}
+          preventSubmitOnEnter={true}
+        />
+        <FileField form={form} />
 
-        <div className="px-6 flex justify-between">
-          <div className="flex gap-2">
-            <Button type="submit" disabled={isUploading}>
-              {isUploading ? (
-                <>
-                  <Upload className="h-4 w-4 mr-2 animate-spin" />
-                  Wird hochgeladen...
-                </>
-              ) : (
-                editMode ? 'Aktualisieren' : 'Erstellen'
-              )}
-            </Button>
-          </div>
+        <div className="flex justify-between">
+          <Button type="submit" disabled={isUploading}>
+            {isUploading ? (
+              <>
+                <Upload className="h-4 w-4 mr-2 animate-spin" />
+                Wird hochgeladen...
+              </>
+            ) : (
+              editMode ? 'Aktualisieren' : 'Erstellen'
+            )}
+          </Button>
         </div>
       </form>
     </Form>

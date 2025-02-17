@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useUser } from "@supabase/auth-helpers-react";
-import { AdminCategoriesScroll } from "../categories/AdminCategoriesScroll";
+import { CreatePostCategoriesScroll } from "./components/categories/CreatePostCategoriesScroll";
 
 interface CreatePostDialogProps {
   teamId: string;
@@ -24,6 +25,7 @@ interface CreatePostDialogProps {
 
 export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) => {
   const [open, setOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | undefined>(categoryId);
   const user = useUser();
   const { teamSlug } = useParams();
 
@@ -49,6 +51,10 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
 
   const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
 
+  const handleCategoryChange = (categorySlug?: string) => {
+    setSelectedCategory(categorySlug);
+  };
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -66,12 +72,17 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
         </DialogHeader>
         
         <div className="max-h-[400px] overflow-auto">
-          <AdminCategoriesScroll activeTab={categoryId || "new"} teamSlug={teamSlug || ""} />
+          <CreatePostCategoriesScroll 
+            activeTab={selectedCategory || ""}
+            onCategoryClick={handleCategoryChange}
+            isAdmin={isAdmin}
+            teamSlug={teamSlug || ""}
+          />
         </div>
-        
+
         <CreatePostForm
           teamId={teamId}
-          categoryId={categoryId}
+          categoryId={selectedCategory}
           onSuccess={() => setOpen(false)}
           teamMembers={teamMembers}
           isAdmin={isAdmin}
@@ -81,3 +92,4 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
     </Dialog>
   );
 };
+
