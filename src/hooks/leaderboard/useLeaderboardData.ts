@@ -17,6 +17,8 @@ export const useLeaderboardData = (teamId: string, period: LeaderboardPeriod) =>
   return useQuery({
     queryKey: ["leaderboard", teamId, period],
     queryFn: async () => {
+      if (!teamId) return [];
+      
       let query;
       
       switch (period) {
@@ -26,7 +28,7 @@ export const useLeaderboardData = (teamId: string, period: LeaderboardPeriod) =>
             .select("*")
             .eq("team_id", teamId)
             .order("points", { ascending: false });
-          return weekData;
+          return weekData || [];
         
         case "30days":
           const { data: monthData } = await supabase
@@ -34,14 +36,14 @@ export const useLeaderboardData = (teamId: string, period: LeaderboardPeriod) =>
             .select("*")
             .eq("team_id", teamId)
             .order("points", { ascending: false });
-          return monthData;
+          return monthData || [];
         
         default:
           const { data: allTimeData } = await supabase
             .from("team_member_points")
             .select(`
               *,
-              profiles!team_member_points_user_id_fkey (
+              profiles:team_member_points_user_id_fkey (
                 id,
                 display_name,
                 avatar_url
@@ -49,9 +51,9 @@ export const useLeaderboardData = (teamId: string, period: LeaderboardPeriod) =>
             `)
             .eq("team_id", teamId)
             .order("points", { ascending: false });
-          return allTimeData;
+          return allTimeData || [];
       }
     },
-    enabled: !!teamId
+    enabled: !!teamId // Only run query if teamId exists
   });
 };

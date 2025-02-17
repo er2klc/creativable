@@ -51,9 +51,11 @@ const LeaderBoard = () => {
   const { teamSlug } = useParams<{ teamSlug: string }>();
   const [period, setPeriod] = useState<LeaderboardPeriod>("alltime");
 
-  const { data: team } = useQuery({
+  const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
+      if (!teamSlug) throw new Error("No team slug provided");
+      
       const { data: teamData, error: teamError } = await supabase
         .from('teams')
         .select('id, name, slug, logo_url, description')
@@ -61,6 +63,7 @@ const LeaderBoard = () => {
         .single();
 
       if (teamError) throw teamError;
+      if (!teamData) throw new Error("Team not found");
 
       const { count: memberCount, error: countError } = await supabase
         .from('team_members')
@@ -81,20 +84,21 @@ const LeaderBoard = () => {
   const { data: rewards = [] } = useLevelRewards(team?.id || '');
   const { data: currentUser } = useProfile();
 
-  const levelCounts = rankings.reduce((acc, member) => {
+  // Initialize levelCounts with empty object if rankings is null/undefined
+  const levelCounts = (rankings || []).reduce((acc, member) => {
     const level = member.level || 0;
     acc[level] = (acc[level] || 0) + 1;
     return acc;
   }, {} as Record<number, number>);
 
-  const userRanking = rankings.findIndex(r => r.user_id === currentUser?.id) + 1;
-  const currentUserData = rankings.find(r => r.user_id === currentUser?.id);
+  const userRanking = rankings ? rankings.findIndex(r => r.user_id === currentUser?.id) + 1 : 0;
+  const currentUserData = rankings ? rankings.find(r => r.user_id === currentUser?.id) : undefined;
   const currentLevel = currentUserData?.level || 0;
   const currentPoints = currentUserData?.points || 0;
   const pointsToNextLevel = getNextLevelPoints(currentPoints, currentLevel);
 
-  if (!team) {
-    return <div>Loading...</div>;
+  if (isTeamLoading || !team) {
+    return <div className="flex items-center justify-center min-h-screen">Lädt...</div>;
   }
 
   return (

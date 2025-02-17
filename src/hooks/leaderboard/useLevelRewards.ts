@@ -6,6 +6,8 @@ export const useLevelRewards = (teamId: string) => {
   return useQuery({
     queryKey: ["level-rewards", teamId],
     queryFn: async () => {
+      if (!teamId) return [];
+      
       const { data } = await supabase
         .from("team_level_rewards")
         .select("*")
@@ -13,8 +15,9 @@ export const useLevelRewards = (teamId: string) => {
         .eq("is_active", true)
         .order("level", { ascending: true });
       
-      return data;
+      return data || [];
     },
-    enabled: !!teamId
+    enabled: !!teamId, // Only run query if teamId exists
+    initialData: [] // Provide empty array as initial data
   });
 };
