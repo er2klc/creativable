@@ -48,12 +48,12 @@ export const useTeamCategories = (teamSlug?: string) => {
 
       console.log("Found team ID:", team.id);
 
-      // Get all data in one efficient query with JOINs
+      // Get all data in one query with LEFT JOINs
       const { data, error } = await supabase
         .from('team_categories')
         .select(`
           *,
-          team_category_settings!inner (
+          team_category_settings (
             size
           ),
           team_category_post_counts (
@@ -70,24 +70,27 @@ export const useTeamCategories = (teamSlug?: string) => {
 
       console.log("Raw data from joined query:", data);
 
-      // Map the joined data to our expected format, ensuring all fields are correctly mapped
-      const mappedCategories = data.map(category => ({
-        id: category.id,
-        team_id: category.team_id,
-        name: category.name,
-        description: category.description,
-        slug: category.slug,
-        order_index: category.order_index,
-        is_public: category.is_public ?? true,  // Verwende true als Standardwert
-        icon: category.icon || 'MessageCircle',
-        color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]',
-        settings: {
-          // Stelle sicher, dass wir die Size aus den Settings bekommen
-          size: category.team_category_settings?.[0]?.size || 'small'
-        },
-        // Stelle sicher, dass wir den Post Count korrekt mappen
-        post_count: category.team_category_post_counts?.[0]?.post_count || 0
-      }));
+      // Map the joined data to our expected format
+      const mappedCategories = data.map(category => {
+        const settings = category.team_category_settings?.[0];
+        const postCount = category.team_category_post_counts?.[0];
+
+        return {
+          id: category.id,
+          team_id: category.team_id,
+          name: category.name,
+          description: category.description,
+          slug: category.slug,
+          order_index: category.order_index,
+          is_public: category.is_public ?? true,
+          icon: category.icon || 'MessageCircle',
+          color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]',
+          settings: {
+            size: settings?.size || 'small'
+          },
+          post_count: postCount?.post_count || 0
+        };
+      });
 
       console.log("Mapped categories:", mappedCategories);
       return mappedCategories;
