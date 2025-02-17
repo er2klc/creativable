@@ -15,18 +15,29 @@ export const PostsAndDiscussions = () => {
   const [showIntroDialog, setShowIntroDialog] = useState(false);
   const { data: profile } = useProfile();
 
-  const { data: memberPoints } = useQuery({
-    queryKey: ["team-member-points", teamSlug],
+  const { data: team } = useQuery({
+    queryKey: ["team", teamSlug],
     queryFn: async () => {
-      if (!profile?.id || !teamSlug) return null;
-
-      const { data: team } = await supabase
+      if (!teamSlug) return null;
+      const { data, error } = await supabase
         .from("teams")
         .select("id")
         .eq("slug", teamSlug)
         .single();
 
-      if (!team) return null;
+      if (error) {
+        console.error("Error fetching team:", error);
+        return null;
+      }
+      return data;
+    },
+    enabled: !!teamSlug,
+  });
+
+  const { data: memberPoints } = useQuery({
+    queryKey: ["team-member-points", team?.id],
+    queryFn: async () => {
+      if (!profile?.id || !team?.id) return null;
 
       const { data, error } = await supabase
         .from("team_member_points")
@@ -38,11 +49,10 @@ export const PostsAndDiscussions = () => {
       if (error) return null;
       return data;
     },
-    enabled: !!profile?.id && !!teamSlug,
+    enabled: !!profile?.id && !!team?.id,
   });
 
   useEffect(() => {
-    // Zeige den Intro-Dialog nur für Level 0 Mitglieder
     if (memberPoints?.level === 0) {
       const hasSeenIntro = localStorage.getItem(`intro_shown_${teamSlug}`);
       if (!hasSeenIntro) {
@@ -64,8 +74,13 @@ export const PostsAndDiscussions = () => {
 
   return (
     <div className="space-y-8">
-      <CategoryOverview onCreatePost={() => setShowCreatePost(true)} />
-      <PostList />
+      <CategoryOverview 
+        teamId={team?.id} 
+        teamSlug={teamSlug || ""}
+        onCreatePost={() => setShowCreatePost(true)} 
+      />
+      
+      {team?.id && <PostList teamId={team.id} categoryId={undefined} />}
       
       <CreatePostDialog
         open={showCreatePost}
