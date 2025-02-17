@@ -24,14 +24,26 @@ const LeaderBoard = () => {
   const { data: team } = useQuery({
     queryKey: ['team', teamId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Separate queries for team and member count
+      const { data: teamData, error: teamError } = await supabase
         .from('teams')
-        .select('*, team_members!team_members(user_id)')
+        .select('*')
         .eq('id', teamId)
         .single();
 
-      if (error) throw error;
-      return data;
+      if (teamError) throw teamError;
+
+      const { count: memberCount, error: countError } = await supabase
+        .from('team_members')
+        .select('*', { count: 'exact', head: true })
+        .eq('team_id', teamId);
+
+      if (countError) throw countError;
+
+      return {
+        ...teamData,
+        member_count: memberCount
+      };
     },
     enabled: !!teamId,
   });
