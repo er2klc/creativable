@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery } from "@tanstack/react-query";
@@ -225,19 +224,21 @@ export function PostsAndDiscussions() {
         categoryId={introCategory?.id || ''}
       />
 
-      <div className="pt-16">
+      <div className="pt-8">
         <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
-          <div className="flex items-center gap-4">
-            <PostCategoriesScroll
-              activeTab={activeTab}
-              onCategoryClick={handleCategoryClick}
-              isAdmin={isAdmin}
-              teamSlug={teamSlug}
-            />
-          </div>
+          {!postSlug && (
+            <div className="flex items-center gap-4">
+              <PostCategoriesScroll
+                activeTab={activeTab}
+                onCategoryClick={handleCategoryClick}
+                isAdmin={isAdmin}
+                teamSlug={teamSlug}
+              />
+            </div>
+          )}
 
           <div className="w-full overflow-hidden">
-            <div className="max-h-[calc(100vh-240px)] overflow-y-auto pr-4 -mr-4">
+            <div className="max-h-[calc(100vh-180px)] overflow-y-auto pr-4 -mr-4">
               {postSlug ? (
                 <PostDetail post={currentPost} teamSlug={teamSlug} />
               ) : (

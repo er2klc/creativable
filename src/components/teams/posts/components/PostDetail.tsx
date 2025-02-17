@@ -4,9 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { Post } from "../types/post";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, ArrowLeft } from "lucide-react";
 import { EditPostDialog } from "../dialog/EditPostDialog";
 import { useUser } from "@supabase/auth-helpers-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface PostDetailProps {
   post: Post | null;
@@ -15,7 +18,8 @@ interface PostDetailProps {
 
 export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   const user = useUser();
-
+  const navigate = useNavigate();
+  
   if (!post) {
     return (
       <Card className="p-6">
@@ -30,12 +34,31 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
 
   return (
     <div className="space-y-6">
+      <Button 
+        variant="ghost" 
+        onClick={() => navigate(`/unity/team/${teamSlug}/posts`)}
+        className="mb-4"
+      >
+        <ArrowLeft className="w-4 h-4 mr-2" />
+        Zurück zur Übersicht
+      </Button>
+
       <Card className="p-6">
         <div className="space-y-6">
           <div className="flex items-start justify-between">
             <div className="space-y-1">
               <h1 className="text-2xl font-bold">{post.title}</h1>
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={post.author.avatar_url || ""} />
+                    <AvatarFallback>
+                      {post.author.display_name?.substring(0, 2).toUpperCase() || "??"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium">{post.author.display_name}</span>
+                </div>
+                <span>•</span>
                 <span>
                   {formatDistanceToNow(new Date(post.created_at), {
                     addSuffix: true,
@@ -64,9 +87,6 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
             <Badge variant="outline">
               {post.team_categories.name}
             </Badge>
-            <span className="text-sm text-muted-foreground">
-              von {post.author.display_name}
-            </span>
           </div>
 
           <div className="prose max-w-none">
@@ -87,9 +107,17 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
           <Card key={comment.id} className="p-4">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <span className="font-medium">
-                  {comment.author.display_name}
-                </span>
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={comment.author.avatar_url || ""} />
+                    <AvatarFallback>
+                      {comment.author.display_name?.substring(0, 2).toUpperCase() || "??"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium">
+                    {comment.author.display_name}
+                  </span>
+                </div>
                 <span className="text-sm text-muted-foreground">
                   {formatDistanceToNow(new Date(comment.created_at), {
                     addSuffix: true,
