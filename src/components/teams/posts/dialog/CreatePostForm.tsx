@@ -88,29 +88,29 @@ export const CreatePostForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="border-b">
-          <CreatePostCategoriesScroll 
-            activeTab={selectedCategory || ''}
-            onCategoryClick={handleCategoryChange}
-            isAdmin={isAdmin}
-            teamSlug={teamSlug}
-          />
-        </div>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col">
+        <CreatePostCategoriesScroll 
+          activeTab={selectedCategory || ''}
+          onCategoryClick={handleCategoryChange}
+          isAdmin={isAdmin}
+          teamSlug={teamSlug}
+        />
         
-        <ScrollArea className="max-h-[400px] overflow-auto px-6">
-          <div className="space-y-4">
-            <TitleField form={form} />
-            <ContentField 
-              form={form} 
-              teamMembers={teamMembers}
-              preventSubmitOnEnter={true}
-            />
-            <FileField form={form} />
-          </div>
-        </ScrollArea>
+        <div className="flex-1 py-4">
+          <ScrollArea className="h-[350px]">
+            <div className="px-6 space-y-4">
+              <TitleField form={form} />
+              <ContentField 
+                form={form} 
+                teamMembers={teamMembers}
+                preventSubmitOnEnter={true}
+              />
+              <FileField form={form} />
+            </div>
+          </ScrollArea>
+        </div>
 
-        <div className="px-6 py-4 border-t">
+        <div className="px-6 py-4 border-t mt-auto">
           <div className="flex justify-end">
             <Button type="submit" disabled={isUploading}>
               {isUploading ? (
