@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useQuery, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useState } from "react";
 import { useLearningProgress } from "@/hooks/use-learning-progress";
 import { PlatformContent } from "@/components/elevate/platform/detail/PlatformContent";
-import { PlatformDetailHeader } from "@/components/elevate/platform/detail/PlatformDetailHeader";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -120,8 +118,7 @@ const PlatformDetailContent = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <PlatformDetailHeader platform={platform} />
-      <div className="container mx-auto py-8 pt-24">
+      <div className="container mx-auto py-8">
         <PlatformContent
           platform={platform}
           sortedSubmodules={sortedSubmodules}
