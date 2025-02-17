@@ -22,12 +22,12 @@ export const CategoryOverview = ({
       .from('team_posts')
       .select(`
         *,
-        profiles:user_id (
+        profiles!team_posts_created_by_fkey (
           id,
           display_name,
           avatar_url
         ),
-        categories:category_id (
+        team_categories!team_posts_category_id_fkey (
           id,
           name,
           slug
@@ -51,7 +51,10 @@ export const CategoryOverview = ({
 
     const { data, error } = await query;
 
-    if (error) throw error;
+    if (error) {
+      console.error('Error fetching posts:', error);
+      throw error;
+    }
     return data || []; // Ensure we always return an array
   }, [teamId, categorySlug]);
 
