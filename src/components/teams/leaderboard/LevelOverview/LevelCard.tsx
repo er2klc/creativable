@@ -30,9 +30,9 @@ const getLevelColor = (level: number) => {
     5: "bg-[#FFDEE2] border-[#EBD0D4]",
     6: "bg-[#FFE4C4] border-[#EDC9A3]",
     7: "bg-[#E6E6FA] border-[#D8D8F0]",
-    8: "bg-[#98FB98] border-[#90EE90]",
-    9: "bg-[#DDA0DD] border-[#D8BFD8]",
-    10: "bg-[#FFD700] border-[#DAA520]"
+    8: "bg-[#F2FCE2] border-[#E2ECD2]", // Neues, sanfteres Grün
+    9: "bg-[#FEF7CD] border-[#EEE7BD]", // Neues, sanfteres Gelb
+    10: "bg-[#FEC6A1] border-[#EEB691]"  // Neues, sanfteres Gold
   };
   return colors[level as keyof typeof colors] || colors[0];
 };
