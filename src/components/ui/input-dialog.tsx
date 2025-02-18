@@ -46,14 +46,16 @@ export function InputDialog({
     }
   };
 
-  // Prevent event bubbling
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleDialogChange}>
-      <DialogContent onClick={handleClick}>
+      <DialogContent 
+        onClick={handleClick}
+        className="z-[99999] relative"
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>

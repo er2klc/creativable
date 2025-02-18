@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useRef } from 'react';
 import { EditorContent, useEditor, ReactRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
@@ -95,14 +96,15 @@ export function TiptapEditor({
                   editor: props.editor,
                 });
 
-                popup = tippy("body", {
+                popup = tippy('body', {
                   getReferenceClientRect: props.clientRect,
                   appendTo: () => document.body,
                   content: component.element,
                   showOnCreate: true,
                   interactive: true,
-                  trigger: "manual",
-                  placement: "bottom-start",
+                  trigger: 'manual',
+                  placement: 'bottom-start',
+                  zIndex: 99999,
                 });
               },
               onUpdate: (props: any) => {
@@ -113,7 +115,7 @@ export function TiptapEditor({
                 });
               },
               onKeyDown: (props: any) => {
-                if (props.event.key === "Escape") {
+                if (props.event.key === 'Escape') {
                   popup?.[0].hide();
                   return true;
                 }
@@ -214,7 +216,7 @@ export function TiptapEditor({
         onConfirm={handleSetLink}
         title="Link einfügen"
         placeholder="https://example.com"
-        defaultValue={editor.getAttributes('link').href}
+        defaultValue={editor?.getAttributes('link').href}
       />
 
       <InputDialog

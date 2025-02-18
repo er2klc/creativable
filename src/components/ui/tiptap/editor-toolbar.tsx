@@ -158,7 +158,7 @@ export function EditorToolbar({
   const allEmojis = Object.values(emojiCategories).flat();
 
   return (
-    <div className="sticky top-0 z-[60] bg-background border-b">
+    <div className="sticky top-0 z-[50] bg-background border-b">
       <div className="flex flex-wrap gap-1 p-2">
         <ToolbarButton 
           onClick={() => editor.chain().focus().toggleBold().run()}
