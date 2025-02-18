@@ -58,7 +58,7 @@ export const PostCard = ({
   return (
     <Card 
       className={cn(
-        "hover:shadow-lg transition-all duration-200 overflow-hidden",
+        "hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col",
         sizeToGridClass[effectiveSize],
         post.pinned && "shadow-md"
       )}
@@ -74,7 +74,7 @@ export const PostCard = ({
         </div>
       )}
 
-      <div className="p-4">
+      <div className="p-4 flex-1">
         <div className="flex items-center gap-3 mb-4 cursor-pointer" onClick={handleCardClick}>
           <Avatar className="h-10 w-10 border-2 border-primary/10">
             <AvatarImage 
@@ -151,8 +151,8 @@ export const PostCard = ({
         </div>
       </div>
 
-      <div className="px-4 pb-4 border-t" style={{ borderColor: post.team_categories.color }}>
-        <div className="flex items-center justify-between pt-3">
+      <div className="px-4 py-2 border-t" style={{ borderColor: post.team_categories.color }}>
+        <div className="flex items-center justify-between">
           <PostReactions postId={post.id} teamId={teamSlug} />
           <PostActions 
             postId={post.id} 
