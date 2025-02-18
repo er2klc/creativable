@@ -47,9 +47,7 @@ export function EditorToolbar({
   onHashtagClick,
   onEmojiSelect
 }: EditorToolbarProps) {
-  const handleEmojiClick = (e: React.MouseEvent, emoji: string) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleEmojiClick = (emoji: string) => {
     onEmojiSelect(emoji);
   };
 
@@ -129,7 +127,11 @@ export function EditorToolbar({
                   key={emoji.id}
                   variant="ghost"
                   className="h-8 w-8 p-0 hover:bg-muted"
-                  onClick={(e) => handleEmojiClick(e, emoji.native)}
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleEmojiClick(emoji.native);
+                  }}
                 >
                   <span className="text-lg">{emoji.native}</span>
                 </Button>
