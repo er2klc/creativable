@@ -51,6 +51,11 @@ export const CreatePostForm = ({
   
   const { isUploading, setIsUploading, handleFileUpload } = useFileUpload(teamId);
   const { handleSubmission } = usePostSubmission(teamId, categoryId, onSuccess, teamMembers);
+  const [existingFiles, setExistingFiles] = useState<string[]>(editMode?.originalFiles || []);
+
+  const handleDeleteFile = (fileUrl: string) => {
+    setExistingFiles(prev => prev.filter(url => url !== fileUrl));
+  };
 
   const onSubmit = async (values: FormValues) => {
     if (!categoryId) {
@@ -61,10 +66,7 @@ export const CreatePostForm = ({
     setIsUploading(true);
     try {
       const fileUrls = values.files ? await handleFileUpload(values.files) : [];
-      
-      const finalFileUrls = editMode?.originalFiles 
-        ? [...editMode.originalFiles, ...fileUrls]
-        : fileUrls;
+      const finalFileUrls = [...existingFiles, ...fileUrls];
 
       await handleSubmission(values, finalFileUrls, editMode?.postId);
       form.reset();
@@ -75,27 +77,33 @@ export const CreatePostForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-[calc(100vh-200px)]">
-        <div className="flex-1 overflow-y-auto space-y-4 px-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4 h-[calc(100vh-280px)] overflow-y-auto px-6">
           <TitleField form={form} />
           <ContentField 
             form={form} 
             teamMembers={teamMembers}
             preventSubmitOnEnter={true}
           />
-          <FileField form={form} />
+          <FileField 
+            form={form} 
+            existingFiles={existingFiles}
+            onDeleteFile={handleDeleteFile}
+          />
         </div>
-        <div className="sticky bottom-0 p-4 bg-background border-t flex justify-end">
-          <Button type="submit" disabled={isUploading}>
-            {isUploading ? (
-              <>
-                <Upload className="h-4 w-4 mr-2 animate-spin" />
-                Wird hochgeladen...
-              </>
-            ) : (
-              editMode ? 'Aktualisieren' : 'Erstellen'
-            )}
-          </Button>
+        <div className="border-t bg-background pt-4 px-6 mt-4">
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isUploading}>
+              {isUploading ? (
+                <>
+                  <Upload className="h-4 w-4 mr-2 animate-spin" />
+                  Wird hochgeladen...
+                </>
+              ) : (
+                editMode ? 'Aktualisieren' : 'Erstellen'
+              )}
+            </Button>
+          </div>
         </div>
       </form>
     </Form>
