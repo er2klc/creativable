@@ -103,12 +103,18 @@ export function EditorToolbar({
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-full p-0" align="end">
-            <Picker 
-              data={data} 
-              onEmojiSelect={onEmojiSelect}
-              theme="light"
-              skinTonePosition="none"
-            />
+            <div className="emoji-mart">
+              <Picker 
+                data={data} 
+                onEmojiSelect={onEmojiSelect}
+                previewPosition="none"
+                skinTonePosition="none"
+                maxFrequentRows={0}
+                emojiSize={20}
+                emojiButtonSize={28}
+                perLine={8}
+              />
+            </div>
           </PopoverContent>
         </Popover>
       </div>
