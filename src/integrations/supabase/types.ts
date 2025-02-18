@@ -2989,6 +2989,7 @@ export type Database = {
           created_at: string | null
           created_by: string
           id: string
+          parent_id: string | null
           post_id: string
           updated_at: string | null
         }
@@ -2997,6 +2998,7 @@ export type Database = {
           created_at?: string | null
           created_by: string
           id?: string
+          parent_id?: string | null
           post_id: string
           updated_at?: string | null
         }
@@ -3005,6 +3007,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string
           id?: string
+          parent_id?: string | null
           post_id?: string
           updated_at?: string | null
         }
@@ -3021,6 +3024,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_post_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "team_post_comments"
             referencedColumns: ["id"]
           },
           {

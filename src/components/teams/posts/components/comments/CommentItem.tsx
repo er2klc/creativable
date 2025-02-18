@@ -70,7 +70,18 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
           parent_id: comment.id,
           created_by: user?.id
         })
-        .select()
+        .select(`
+          id,
+          content,
+          created_at,
+          created_by,
+          post_id,
+          parent_id,
+          author:profiles!team_post_comments_created_by_fkey (
+            display_name,
+            avatar_url
+          )
+        `)
         .single();
 
       if (error) throw error;
@@ -83,12 +94,14 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
     }
   };
 
+  const hasReplies = replies && replies.length > 0;
+
   return (
     <div className={cn(
       "space-y-4",
       level > 0 && "ml-8 pt-4"
     )}>
-      <div className="flex gap-4 p-4 border rounded-lg">
+      <div className="flex gap-4 p-4 border rounded-lg bg-background">
         <Avatar className="h-8 w-8 flex-shrink-0">
           <AvatarImage src={comment.author.avatar_url || ""} />
           <AvatarFallback>
@@ -164,6 +177,16 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
                 dangerouslySetInnerHTML={{ __html: comment.content }} 
               />
               <CommentReactions commentId={comment.id} />
+              {hasReplies && !isReplying && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowReplies(!showReplies)}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  {showReplies ? "Antworten ausblenden" : `${replies.length} Antwort${replies.length !== 1 ? 'en' : ''} anzeigen`}
+                </Button>
+              )}
             </>
           )}
         </div>
@@ -179,7 +202,7 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
         </div>
       )}
 
-      {replies.length > 0 && (
+      {hasReplies && showReplies && (
         <div className="space-y-4">
           {replies.map((reply) => (
             <CommentItem
