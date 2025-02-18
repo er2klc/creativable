@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -55,21 +56,30 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   const [showVideoPreview, setShowVideoPreview] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
 
-  // Fetch subscription status
-  const { data: subscriptionData } = useQuery({
+  // Fetch subscription status with proper error handling
+  const { data: subscriptionData, isError: isSubscriptionError } = useQuery({
     queryKey: ['post-subscription', post?.id, user?.id],
     queryFn: async () => {
       if (!post?.id || !user?.id) return null;
       
-      const { data, error } = await supabase
-        .from('team_post_subscriptions')
-        .select('subscribed')
-        .eq('post_id', post.id)
-        .eq('user_id', user.id)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('team_post_subscriptions')
+          .select('subscribed')
+          .eq('post_id', post.id)
+          .eq('user_id', user.id)
+          .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+        if (error) {
+          console.error('Subscription fetch error:', error);
+          return null;
+        }
+
+        return data;
+      } catch (error) {
+        console.error('Subscription query error:', error);
+        return null;
+      }
     },
     enabled: !!post?.id && !!user?.id
   });
@@ -178,7 +188,6 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
       </Button>
 
       <Card className="p-6">
-        {/* Header */}
         <div className="w-full mb-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -221,7 +230,6 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
           </div>
         </div>
 
-        {/* Content Section */}
         <div className="space-y-6">
           <div className="space-y-4">
             <h1 className="text-2xl font-bold">{post.title}</h1>
@@ -267,9 +275,16 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
           </div>
         </div>
 
-        {/* Footer with Reactions */}
         <div className="border-t mt-6 pt-4">
-          <PostReactions postId={post.id} teamId={teamSlug} />
+          <div className="flex items-center justify-between">
+            <PostReactions postId={post.id} teamId={teamSlug} />
+            <PostActions 
+              postId={post.id} 
+              teamId={post.team_id}
+              isSubscribed={isSubscribed}
+              postTitle={post.title}
+            />
+          </div>
         </div>
       </Card>
 
