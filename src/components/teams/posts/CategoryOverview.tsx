@@ -91,7 +91,7 @@ export const CategoryOverview = ({
                 key={post.id}
                 post={post}
                 teamSlug={teamSlug}
-                size="large" // Pinned posts immer in voller Breite
+                size="large"
                 isAdmin={isAdmin}
               />
             ))}
@@ -105,13 +105,13 @@ export const CategoryOverview = ({
             Alle Beiträge
           </h2>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 auto-rows-min">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {regularPosts.map((post) => (
             <PostCard
               key={post.id}
               post={post}
               teamSlug={teamSlug}
-              size={categorySlug ? size : post.team_categories?.settings?.size || 'medium'}
+              size={post.team_categories?.settings?.size || size}
               isAdmin={isAdmin}
             />
           ))}

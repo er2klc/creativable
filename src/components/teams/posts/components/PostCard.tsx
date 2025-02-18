@@ -47,16 +47,15 @@ export const PostCard = ({
   };
 
   // Effektive Größe basierend auf Pin-Status und Kategorie-Einstellungen
-  const effectiveSize = post.pinned ? 'large' : size;
-  
-  // Maximale Anzahl der Vorschaubilder basierend auf der Größe
-  const maxPreviewImages = effectiveSize === 'small' ? 1 : 
-                          effectiveSize === 'medium' ? 2 : 3;
+  const effectiveSize = post.pinned ? 'large' : 
+                       post.team_categories?.settings?.size || size;
+
+  const hasMedia = post.file_urls && post.file_urls.length > 0;
 
   return (
     <Card 
       className={cn(
-        "hover:shadow-lg transition-all duration-200 overflow-hidden h-full",
+        "hover:shadow-lg transition-all duration-200 overflow-hidden",
         sizeToGridClass[effectiveSize],
         post.pinned && "shadow-md"
       )}
@@ -68,8 +67,8 @@ export const PostCard = ({
         </div>
       )}
 
-      <div className="p-4 space-y-4 cursor-pointer" onClick={handleCardClick}>
-        <div className="flex items-center gap-3">
+      <div className="p-4 cursor-pointer" onClick={handleCardClick}>
+        <div className="flex items-center gap-3 mb-4">
           <Avatar className="h-10 w-10 border-2 border-primary/10">
             <AvatarImage 
               src={avatarUrl}
@@ -103,32 +102,37 @@ export const PostCard = ({
           </div>
         </div>
           
-        <div>
-          <h3 className="text-lg font-semibold mb-2">
-            {post.title}
-          </h3>
-          
-          {/* Media Gallery für Vorschaubilder */}
-          {post.file_urls && post.file_urls.length > 0 && (
-            <div className="mb-4">
-              <MediaGallery 
-                files={post.file_urls.slice(0, maxPreviewImages)} 
+        <div className="flex gap-4">
+          <div className={cn(
+            "flex-1 space-y-2",
+            hasMedia && "max-w-[70%]"
+          )}>
+            <h3 className="text-lg font-semibold">
+              {post.title}
+            </h3>
+            
+            {post.content && (
+              <div 
+                className="text-muted-foreground line-clamp-2 text-sm"
+                dangerouslySetInnerHTML={{ 
+                  __html: post.content.substring(0, 150) + (post.content.length > 150 ? '...' : '') 
+                }}
               />
-              {post.file_urls.length > maxPreviewImages && (
-                <div className="mt-2 text-sm text-muted-foreground">
-                  +{post.file_urls.length - maxPreviewImages} weitere Medien
+            )}
+          </div>
+
+          {/* Kompakte Media Gallery auf der rechten Seite */}
+          {hasMedia && (
+            <div className="w-[30%] h-[120px]">
+              <MediaGallery 
+                files={[post.file_urls[0]]}
+              />
+              {post.file_urls.length > 1 && (
+                <div className="mt-1 text-xs text-center text-muted-foreground">
+                  +{post.file_urls.length - 1} weitere
                 </div>
               )}
             </div>
-          )}
-
-          {post.content && (
-            <div 
-              className="text-muted-foreground line-clamp-2 text-sm"
-              dangerouslySetInnerHTML={{ 
-                __html: post.content.substring(0, 150) + (post.content.length > 150 ? '...' : '') 
-              }}
-            />
           )}
         </div>
       </div>
