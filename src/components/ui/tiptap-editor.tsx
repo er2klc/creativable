@@ -115,26 +115,29 @@ export function TiptapEditor({
   const handleSetLink = (url: string) => {
     if (url === '') {
       editor.chain().focus().unsetLink().run();
-      return;
+    } else {
+      editor.chain().focus().setLink({ href: url }).run();
     }
-    editor.chain().focus().setLink({ href: url }).run();
+    setShowLinkDialog(false);
   };
 
   const handleSetImage = (url: string) => {
     if (url) {
       editor.chain().focus().setImage({ src: url }).run();
     }
+    setShowImageDialog(false);
   };
 
   const handleSetHashtag = (tag: string) => {
     if (tag) {
       editor.chain().focus().insertContent(`#${tag} `).run();
-      setShowHashtagDialog(false);
     }
+    setShowHashtagDialog(false);
   };
 
   const handleEmojiSelect = (emoji: any) => {
-    editor.chain().focus().insertContent(emoji.native).run();
+    const emojiChar = typeof emoji === 'string' ? emoji : emoji.native;
+    editor.chain().focus().insertContent(emojiChar).run();
   };
 
   return (

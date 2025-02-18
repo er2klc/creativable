@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "./dialog";
 import { Button } from "./button";
 import { Input } from "./input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface InputDialogProps {
   isOpen: boolean;
@@ -25,19 +25,21 @@ export function InputDialog({
 }: InputDialogProps) {
   const [value, setValue] = useState(defaultValue);
 
+  useEffect(() => {
+    if (isOpen) {
+      setValue(defaultValue);
+    }
+  }, [isOpen, defaultValue]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    e.stopPropagation(); // Verhindert Bubble-up des Submit-Events
     onConfirm(value);
-  };
-
-  const handleClose = () => {
-    setValue(""); // Nur beim tatsächlichen Schließen zurücksetzen
+    setValue("");
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -50,7 +52,7 @@ export function InputDialog({
             autoFocus
           />
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={onClose}>
               Abbrechen
             </Button>
             <Button type="submit">Bestätigen</Button>
