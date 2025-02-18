@@ -27,13 +27,17 @@ export function InputDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation(); // Verhindert Bubble-up des Submit-Events
     onConfirm(value);
-    setValue("");
+  };
+
+  const handleClose = () => {
+    setValue(""); // Nur beim tatsächlichen Schließen zurücksetzen
     onClose();
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -46,7 +50,7 @@ export function InputDialog({
             autoFocus
           />
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               Abbrechen
             </Button>
             <Button type="submit">Bestätigen</Button>

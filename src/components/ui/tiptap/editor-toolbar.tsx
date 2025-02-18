@@ -3,8 +3,6 @@ import { Editor } from '@tiptap/react';
 import { ToolbarButton } from './toolbar-button';
 import { Button } from '../button';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
 import { 
   Bold, 
   Italic, 
@@ -26,6 +24,22 @@ interface EditorToolbarProps {
   onHashtagClick: () => void;
   onEmojiSelect: (emoji: any) => void;
 }
+
+// Häufig verwendete Emojis
+const commonEmojis = [
+  { native: "😊", id: "smile" },
+  { native: "👍", id: "thumbsup" },
+  { native: "🎉", id: "party" },
+  { native: "❤️", id: "heart" },
+  { native: "🔥", id: "fire" },
+  { native: "✨", id: "sparkles" },
+  { native: "🙌", id: "raised_hands" },
+  { native: "👏", id: "clap" },
+  { native: "🤝", id: "handshake" },
+  { native: "💡", id: "bulb" },
+  { native: "⭐", id: "star" },
+  { native: "💪", id: "muscle" },
+];
 
 export function EditorToolbar({ 
   editor, 
@@ -102,18 +116,18 @@ export function EditorToolbar({
               <Smile className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-full p-0" align="end">
-            <div className="emoji-mart">
-              <Picker 
-                data={data} 
-                onEmojiSelect={onEmojiSelect}
-                previewPosition="none"
-                skinTonePosition="none"
-                maxFrequentRows={0}
-                emojiSize={20}
-                emojiButtonSize={28}
-                perLine={8}
-              />
+          <PopoverContent className="w-fit p-2" align="end">
+            <div className="grid grid-cols-6 gap-1">
+              {commonEmojis.map((emoji) => (
+                <Button
+                  key={emoji.id}
+                  variant="ghost"
+                  className="h-8 w-8 p-0 hover:bg-muted"
+                  onClick={() => onEmojiSelect(emoji)}
+                >
+                  <span className="text-lg">{emoji.native}</span>
+                </Button>
+              ))}
             </div>
           </PopoverContent>
         </Popover>
