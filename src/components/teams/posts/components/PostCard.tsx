@@ -139,10 +139,10 @@ export const PostCard = ({
                 <span>•</span>
                 <Badge 
                   style={{
-                    backgroundColor: `${categoryColor}FF`, // FF = 100% Opacity
+                    backgroundColor: categoryColor,
                     color: 'white'
                   }}
-                  className="hover:opacity-90"
+                  className="transition-opacity hover:opacity-90"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
