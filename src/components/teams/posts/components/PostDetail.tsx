@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { Post } from "../types/post";
-import { MessageSquare, ArrowLeft } from "lucide-react";
+import { MessageSquare, ArrowLeft, Play } from "lucide-react";
 import { EditPostDialog } from "../dialog/EditPostDialog";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -16,6 +16,8 @@ import { PostReactions } from "./reactions/PostReactions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { LinkPreview } from "@/components/links/components/LinkPreview";
+import { useState } from "react";
 
 interface PostDetailProps {
   post: Post | null;
@@ -47,6 +49,7 @@ const getYouTubeVideoId = (content: string) => {
 export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   const user = useUser();
   const navigate = useNavigate();
+  const [showVideoPreview, setShowVideoPreview] = useState(false);
   
   const { data: isSubscribed = false } = useQuery({
     queryKey: ['post-subscription', post?.id],
@@ -78,8 +81,6 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   const isAuthor = user?.id === post.created_by;
   const hasMedia = post.file_urls && post.file_urls.length > 0;
   const videoId = post.content ? getYouTubeVideoId(post.content) : null;
-  
-  console.log('Found video ID:', videoId); // Debug-Log
 
   return (
     <div className="space-y-6">
@@ -145,30 +146,41 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
             </Badge>
           </div>
 
-          {videoId && (
-            <div className="aspect-video w-full rounded-lg overflow-hidden">
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${videoId}`}
-                title="YouTube video player"
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
+          <div className="flex gap-4">
+            <div className={cn(
+              "flex-1 space-y-4",
+              (hasMedia || videoId) && "max-w-[70%]"
+            )}>
+              <div 
+                className="prose max-w-none"
+                dangerouslySetInnerHTML={{ __html: post.content }}
               />
             </div>
-          )}
 
-          {!videoId && hasMedia && (
-            <div className="rounded-lg overflow-hidden">
-              <MediaGallery files={post.file_urls} />
-            </div>
-          )}
-
-          <div 
-            className="prose max-w-none"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
+            {videoId ? (
+              <div className="w-[30%]">
+                <div 
+                  className="relative rounded-lg overflow-hidden aspect-video cursor-pointer group"
+                  onClick={() => setShowVideoPreview(true)}
+                >
+                  <img 
+                    src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+                    alt="Video thumbnail"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/60 transition-colors">
+                    <Play className="w-10 h-10 text-white fill-white" />
+                  </div>
+                </div>
+              </div>
+            ) : hasMedia && (
+              <div className="w-[30%]">
+                <div className="rounded-lg overflow-hidden">
+                  <MediaGallery files={post.file_urls} />
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Footer with Reactions */}
@@ -212,6 +224,15 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
           </Card>
         ))}
       </div>
+
+      {videoId && (
+        <LinkPreview
+          isOpen={showVideoPreview}
+          onOpenChange={setShowVideoPreview}
+          title={post.title}
+          videoId={videoId}
+        />
+      )}
     </div>
   );
 };
