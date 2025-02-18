@@ -22,6 +22,21 @@ interface PostDetailProps {
   teamSlug: string;
 }
 
+const getYouTubeVideoId = (content: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urls = content.match(urlRegex);
+  if (!urls) return null;
+
+  for (const url of urls) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      return match[2];
+    }
+  }
+  return null;
+};
+
 export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   const user = useUser();
   const navigate = useNavigate();
@@ -55,6 +70,7 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
 
   const isAuthor = user?.id === post.created_by;
   const hasMedia = post.file_urls && post.file_urls.length > 0;
+  const videoId = post.content ? getYouTubeVideoId(post.content) : null;
 
   return (
     <div className="space-y-6">
@@ -112,31 +128,38 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
         </div>
 
         {/* Content Section */}
-        <div className={cn(
-          "grid gap-6",
-          hasMedia ? "lg:grid-cols-2" : "grid-cols-1"
-        )}>
-          {/* Left Column - Text Content */}
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <h1 className="text-2xl font-bold">{post.title}</h1>
-              <Badge variant="outline">
-                {post.team_categories.name}
-              </Badge>
-            </div>
-
-            <div 
-              className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: post.content }}
-            />
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <h1 className="text-2xl font-bold">{post.title}</h1>
+            <Badge variant="outline">
+              {post.team_categories.name}
+            </Badge>
           </div>
 
-          {/* Right Column - Media Gallery */}
-          {hasMedia && (
-            <div className="lg:pl-6">
+          {videoId && (
+            <div className="aspect-video w-full rounded-lg overflow-hidden">
+              <iframe
+                width="100%"
+                height="100%"
+                src={`https://www.youtube.com/embed/${videoId}`}
+                title="YouTube video player"
+                frameBorder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          )}
+
+          {!videoId && hasMedia && (
+            <div className="rounded-lg overflow-hidden">
               <MediaGallery files={post.file_urls} />
             </div>
           )}
+
+          <div 
+            className="prose max-w-none"
+            dangerouslySetInnerHTML={{ __html: post.content }}
+          />
         </div>
 
         {/* Footer with Reactions */}
