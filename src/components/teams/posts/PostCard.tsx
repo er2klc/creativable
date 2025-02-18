@@ -1,12 +1,24 @@
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, ThumbsUp } from "lucide-react";
+import { Bell, Copy, Flag, MoreHorizontal } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { Post } from "../types/post";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl, getCategoryStyle } from "@/lib/supabase-utils";
+import { PostReactions } from "./components/reactions/PostReactions";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface PostCardProps {
   post: Post;
@@ -15,6 +27,7 @@ interface PostCardProps {
 
 export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   if (!post?.team_categories || !post?.author) {
     return null;
@@ -24,13 +37,113 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   const displayName = post.author.display_name || 'Unbekannt';
   const avatarUrl = getAvatarUrl(post.author.avatar_url, post.author.email);
 
+  const handleCopyUrl = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/unity/team/${teamSlug}/posts/${post.slug}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link kopiert!");
+  };
+
+  const handleSubscription = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { data: existingSubscription } = await supabase
+        .from('team_post_subscriptions')
+        .select('subscribed')
+        .eq('post_id', post.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      const newSubscriptionState = !existingSubscription?.subscribed;
+
+      await supabase
+        .from('team_post_subscriptions')
+        .upsert({
+          post_id: post.id,
+          user_id: user.id,
+          subscribed: newSubscriptionState
+        });
+
+      queryClient.invalidateQueries({ queryKey: ['post-subscription', post.id] });
+      
+      toast.success(newSubscriptionState 
+        ? "Benachrichtigungen aktiviert" 
+        : "Benachrichtigungen deaktiviert"
+      );
+    } catch (error) {
+      console.error('Error toggling subscription:', error);
+      toast.error("Fehler beim Ändern der Benachrichtigungen");
+    }
+  };
+
+  const handleReport = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from('team_post_reports')
+        .insert({
+          post_id: post.id,
+          reported_by: user.id,
+          reason: "Unangemessener Inhalt"
+        });
+
+      if (error) throw error;
+      toast.success("Beitrag wurde gemeldet");
+    } catch (error) {
+      console.error('Error reporting post:', error);
+      toast.error("Fehler beim Melden des Beitrags");
+    }
+  };
+
   return (
     <Card 
       key={post.id} 
       className="hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden"
       onClick={() => navigate(`/unity/team/${teamSlug}/posts/${post.slug}`)}
     >
-      <div className="space-y-4">
+      <div className="relative">
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSubscription}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <Bell className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopyUrl}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-primary"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleReport}>
+                <Flag className="h-4 w-4 mr-2" />
+                Beitrag melden
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
         <div className="p-4 space-y-4">
           <div className="flex items-center gap-3">
             <Avatar className="h-10 w-10 border-2 border-primary/10">
@@ -82,11 +195,7 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
         </div>
         
         <div className="px-4 pb-4">
-          <PostActions
-            postId={post.id}
-            teamId={teamSlug}
-            isSubscribed={false}
-          />
+          <PostReactions postId={post.id} teamId={teamSlug} />
         </div>
       </div>
     </Card>
