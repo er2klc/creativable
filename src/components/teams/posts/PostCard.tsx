@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, ThumbsUp } from "lucide-react";
@@ -82,15 +81,12 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
           </div>
         </div>
         
-        <div className="px-4 pb-4 flex items-center gap-4 text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <ThumbsUp className="h-4 w-4" />
-            <span className="text-sm">0</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <MessageSquare className="h-4 w-4" />
-            <span className="text-sm">{post.team_post_comments || 0}</span>
-          </div>
+        <div className="px-4 pb-4">
+          <PostActions
+            postId={post.id}
+            teamId={teamSlug}
+            isSubscribed={false}
+          />
         </div>
       </div>
     </Card>
