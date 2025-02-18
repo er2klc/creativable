@@ -57,10 +57,16 @@ export const usePostSubmission = (
       };
 
       if (postId) {
-        // Update existing post
+        // Update existing post with edit tracking
+        const updateData = {
+          ...postData,
+          edited: true,
+          last_edited_at: new Date().toISOString()
+        };
+
         const { error: postError } = await supabase
           .from('team_posts')
-          .update(postData)
+          .update(updateData)
           .eq('id', postId);
 
         if (postError) throw postError;

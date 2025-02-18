@@ -39,6 +39,12 @@ export const FileField = ({ form, existingFiles, onDeleteFile }: FileFieldProps)
     return url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
   };
 
+  const getPublicUrl = (url: string) => {
+    if (url.startsWith('http')) return url;
+    const baseUrl = `${window.location.protocol}//${window.location.host}`;
+    return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   return (
     <FormField
       control={form.control}
@@ -54,7 +60,7 @@ export const FileField = ({ form, existingFiles, onDeleteFile }: FileFieldProps)
                     <div key={index} className="relative group">
                       {isImage(url) ? (
                         <img
-                          src={url}
+                          src={getPublicUrl(url)}
                           alt={`Uploaded file ${index + 1}`}
                           className="w-full h-32 object-cover rounded-lg border"
                         />
