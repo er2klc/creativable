@@ -121,6 +121,12 @@ export const TeamSnaps = ({
     },
   ] : [];
 
+  // Define the variables needed for filtering visible and hidden snaps
+  const allSnaps = [...regularSnaps, ...adminSnaps];
+  const visibleRegularSnaps = regularSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
+  const visibleAdminSnaps = adminSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
+  const hiddenSnapsList = allSnaps.filter(snap => hiddenSnaps.includes(snap.id));
+
   if (!currentTeamSlug) {
     return (
       <div className="p-4 text-center text-red-500">
