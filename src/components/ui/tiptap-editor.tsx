@@ -8,6 +8,8 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import { Button } from './button';
 import { InputDialog } from './input-dialog';
+import data from '@emoji-mart/data';
+import Picker from '@emoji-mart/react';
 import { 
   Bold, 
   Italic, 
@@ -18,8 +20,10 @@ import {
   Hash,
   Image as ImageIcon,
   Heading2,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Smile
 } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from './popover';
 
 interface TiptapEditorProps {
   content: string;
@@ -28,6 +32,8 @@ interface TiptapEditorProps {
   teamMembers?: any[];
   onMention?: (userId: string) => void;
   onHashtag?: (tag: string) => void;
+  preventSubmitOnEnter?: boolean;
+  editorProps?: any;
 }
 
 export function TiptapEditor({ 
@@ -36,7 +42,9 @@ export function TiptapEditor({
   placeholder,
   teamMembers = [],
   onMention,
-  onHashtag 
+  onHashtag,
+  preventSubmitOnEnter = false,
+  editorProps
 }: TiptapEditorProps) {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
@@ -45,9 +53,17 @@ export function TiptapEditor({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        hardBreak: true,
+        hardBreak: {
+          keepMarks: true,
+          HTMLAttributes: {
+            class: 'my-2'
+          }
+        },
         paragraph: {
           keepMarks: true,
+          HTMLAttributes: {
+            class: 'mb-4'
+          }
         },
         heading: {
           levels: [2],
@@ -92,8 +108,9 @@ export function TiptapEditor({
     },
     editorProps: {
       attributes: {
-        class: 'prose-sm focus:outline-none min-h-[150px] max-w-none break-words w-full overflow-y-auto max-h-[500px] p-4',
+        class: 'prose-sm focus:outline-none min-h-[150px] max-w-none break-words w-full overflow-y-auto max-h-[500px] p-4 whitespace-pre-wrap',
       },
+      ...editorProps
     },
   });
 
@@ -126,10 +143,14 @@ export function TiptapEditor({
   };
 
   const handleSetHashtag = (tag: string) => {
-    if (tag && onHashtag) {
-      onHashtag(tag);
+    if (tag) {
       editor.chain().focus().insertContent(`#${tag} `).run();
+      setShowHashtagDialog(false);
     }
+  };
+
+  const handleEmojiSelect = (emoji: any) => {
+    editor.chain().focus().insertContent(emoji.native).run();
   };
 
   return (
@@ -194,6 +215,26 @@ export function TiptapEditor({
           >
             <Hash className="h-4 w-4" />
           </ToolbarButton>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+              >
+                <Smile className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" align="end">
+              <Picker 
+                data={data} 
+                onEmojiSelect={handleEmojiSelect}
+                theme="light"
+                skinTonePosition="none"
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
