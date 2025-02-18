@@ -1767,6 +1767,13 @@ export type Database = {
             foreignKeyName: "fk_presentation_pages_user"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "fk_presentation_pages_user"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1886,32 +1893,44 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string | null
           display_name: string | null
           email: string | null
           id: string
           is_admin: boolean | null
           is_super_admin: boolean | null
+          last_seen: string | null
+          slug: string | null
+          status: string | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           display_name?: string | null
           email?: string | null
           id: string
           is_admin?: boolean | null
           is_super_admin?: boolean | null
+          last_seen?: string | null
+          slug?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           display_name?: string | null
           email?: string | null
           id?: string
           is_admin?: boolean | null
           is_super_admin?: boolean | null
+          last_seen?: string | null
+          slug?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -2804,6 +2823,13 @@ export type Database = {
             foreignKeyName: "fk_team_member_points_user"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "fk_team_member_points_user"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -2813,6 +2839,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_member_points_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "team_member_points_user_id_fkey"
@@ -2852,6 +2885,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "team_members_user_id_fkey"
@@ -2946,6 +2986,13 @@ export type Database = {
             foreignKeyName: "team_point_events_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "team_point_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -3016,8 +3063,22 @@ export type Database = {
             foreignKeyName: "fk_team_post_comments_created_by"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "fk_team_post_comments_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_post_comments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "team_post_comments_created_by_fkey"
@@ -3111,6 +3172,13 @@ export type Database = {
             foreignKeyName: "fk_team_post_mentions_mentioned_user_id"
             columns: ["mentioned_user_id"]
             isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "fk_team_post_mentions_mentioned_user_id"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -3120,6 +3188,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "team_post_comments"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_post_mentions_mentioned_user_id_fkey"
+            columns: ["mentioned_user_id"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "team_post_mentions_mentioned_user_id_fkey"
@@ -3164,6 +3239,13 @@ export type Database = {
             foreignKeyName: "fk_team_post_reactions_created_by"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "fk_team_post_reactions_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -3173,6 +3255,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "team_posts"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_post_reactions_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "team_post_reactions_created_by_fkey"
@@ -3338,6 +3427,13 @@ export type Database = {
             foreignKeyName: "fk_team_posts_created_by"
             columns: ["created_by"]
             isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "fk_team_posts_created_by"
+            columns: ["created_by"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -3347,6 +3443,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "team_categories"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_posts_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "team_posts_created_by_fkey"
@@ -3790,6 +3893,19 @@ export type Database = {
         }
         Relationships: []
       }
+      member_activities: {
+        Row: {
+          avatar_url: string | null
+          comments_count: number | null
+          display_name: string | null
+          last_activity: string | null
+          posts_count: number | null
+          profile_id: string | null
+          reactions_count: number | null
+          slug: string | null
+        }
+        Relationships: []
+      }
       team_points_30_days: {
         Row: {
           avatar_url: string | null
@@ -3806,6 +3922,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_point_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "team_point_events_user_id_fkey"
@@ -3832,6 +3955,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "teams"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_point_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
           },
           {
             foreignKeyName: "team_point_events_user_id_fkey"
@@ -3955,6 +4085,13 @@ export type Database = {
         Args: {
           title: string
           video_id: string
+        }
+        Returns: string
+      }
+      generate_profile_slug: {
+        Args: {
+          display_name: string
+          email: string
         }
         Returns: string
       }
