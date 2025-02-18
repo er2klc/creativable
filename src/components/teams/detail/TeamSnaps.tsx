@@ -1,4 +1,3 @@
-
 import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy, BarChart3 } from "lucide-react";
 import { SnapList } from "./snap-lists/SnapList";
 import { AdminSnapList } from "./snap-lists/AdminSnapList";
@@ -7,6 +6,7 @@ import { PostSnapsList } from "./snap-lists/PostSnapsList";
 import { useSnapManagement } from "./hooks/useSnapManagement";
 import { useNavigate, useParams } from "react-router-dom";
 import { Snap } from "./types";
+import { MembersCard } from "./snap-cards/MembersCard";
 
 interface TeamSnapsProps {
   isAdmin: boolean;
@@ -67,12 +67,13 @@ export const TeamSnaps = ({
       onClick: () => handleSnapClick("calendar"),
     },
     {
-      id: "posts",
-      icon: <MessageSquare className="h-8 w-8" />,
-      label: "Community",
-      description: "Für den Herzschlag der Community",
-      gradient: "from-blue-500 to-blue-600",
-      onClick: () => handleSnapClick("posts"),
+      id: "members",
+      icon: <Users className="h-8 w-8" />,
+      label: "Mitglieder",
+      description: "Alle Team-Mitglieder im Überblick",
+      gradient: "from-orange-500 to-orange-600",
+      component: MembersCard,
+      onClick: () => handleSnapClick("members"),
     },
     {
       id: "news",
@@ -101,14 +102,6 @@ export const TeamSnaps = ({
   ];
 
   const adminSnaps: Snap[] = isAdmin ? [
-    {
-      id: "members",
-      icon: <Users className="h-8 w-8" />,
-      label: "Mitglieder",
-      description: "Verwalte Team-Mitglieder",
-      gradient: "from-orange-500 to-orange-600",
-      onClick: () => handleSnapClick("members"),
-    },
     {
       id: "settings",
       icon: <Settings className="h-8 w-8" />,
@@ -142,6 +135,10 @@ export const TeamSnaps = ({
 
   if (activeSnapView === "posts") {
     return <PostSnapsList teamId={teamId} isAdmin={isAdmin} />;
+  }
+
+  if (activeSnapView === "members") {
+    return <MembersCard teamId={teamId} teamSlug={currentTeamSlug} />;
   }
 
   return (
