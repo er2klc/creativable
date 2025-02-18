@@ -130,6 +130,10 @@ export function EditorToolbar({
                   onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
+                  }}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     handleEmojiClick(emoji.native);
                   }}
                 >
@@ -143,3 +147,4 @@ export function EditorToolbar({
     </div>
   );
 }
+
