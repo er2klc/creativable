@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { useTeamPosts } from "./hooks/useTeamPosts";
 import { PostCard } from "./components/PostCard";
-import { CreatePostDialog } from "./CreatePostDialog";
+import { CreatePostDialog } from "./dialog/CreatePostDialog";
 import { useTeamMemberRole } from "@/hooks/useTeamMemberRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
