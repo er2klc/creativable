@@ -27,9 +27,9 @@ export const PostReactions = ({ postId, teamId }: PostReactionsProps) => {
   const existingReactions = reactions.filter(r => r.count > 0);
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center">
       {existingReactions.length > 0 ? (
-        <div className="flex gap-2">
+        <div className="flex -space-x-1">
           {existingReactions.map((reaction) => {
             const reactionConfig = REACTION_ICONS[reaction.emoji as keyof typeof REACTION_ICONS];
             
@@ -41,14 +41,14 @@ export const PostReactions = ({ postId, teamId }: PostReactionsProps) => {
                 disabled={isLoading}
                 onClick={() => toggleReaction(reaction.emoji)}
                 className={cn(
-                  "relative flex items-center justify-center w-8 h-8 p-0 transition-all hover:bg-transparent group",
+                  "relative flex items-center justify-center w-6 h-6 p-0 rounded-full border-2 border-background transition-transform hover:scale-110 hover:bg-transparent",
                   reaction.hasReacted && "text-primary",
                   reactionConfig.animation
                 )}
               >
-                <span className="text-lg">{reaction.emoji}</span>
+                <span className="text-sm">{reaction.emoji}</span>
                 {reaction.count > 0 && (
-                  <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] text-xs font-medium bg-background text-foreground border border-border rounded-full flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-[16px] h-[16px] text-xs font-medium bg-background text-foreground border border-border rounded-full flex items-center justify-center px-1">
                     {reaction.count}
                   </span>
                 )}
@@ -63,7 +63,7 @@ export const PostReactions = ({ postId, teamId }: PostReactionsProps) => {
           <Button
             variant="ghost"
             size="sm"
-            className="flex items-center gap-1 text-muted-foreground hover:text-primary hover:bg-transparent w-8 h-8 p-0"
+            className="flex items-center text-muted-foreground hover:text-primary hover:bg-transparent w-6 h-6 p-0 ml-1"
           >
             <SmilePlus className="h-4 w-4" />
           </Button>

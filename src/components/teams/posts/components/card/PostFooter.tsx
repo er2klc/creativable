@@ -50,19 +50,22 @@ export const PostFooter = ({
 
   return (
     <div 
-      className="px-4 py-2 border-t grid grid-cols-3 items-center"
+      className="px-4 py-2 border-t flex items-center justify-between"
       style={{ borderColor }}
     >
-      {/* Linke Seite - Kommentare */}
-      <div className="flex items-center">
+      {/* Linke Seite - Kommentare und Reaktionen */}
+      <div className="flex items-center gap-3">
         <div className="flex items-center gap-1 text-muted-foreground">
           <MessageCircle className="w-4 h-4" />
           <span className="text-sm font-medium">{commentCount}</span>
         </div>
+        <div className="flex items-center">
+          <PostReactions postId={postId} teamId={teamId} />
+        </div>
       </div>
 
       {/* Mitte - Avatare */}
-      <div className="flex justify-center">
+      <div className="flex-1 flex justify-center">
         {firstCommenters && firstCommenters.length > 0 && (
           <div className="flex -space-x-3">
             {firstCommenters.map((commenter) => (
@@ -88,20 +91,15 @@ export const PostFooter = ({
         )}
       </div>
 
-      {/* Rechte Seite - Reaktionen und Aktionen */}
-      <div className="flex items-center justify-end gap-2">
-        <div className="flex items-center">
-          <PostReactions postId={postId} teamId={teamId} />
-        </div>
-        <PostActions 
-          postId={postId} 
-          teamId={teamId}
-          isSubscribed={false}
-          postTitle={postTitle}
-          isAdmin={isAdmin}
-          isPinned={isPinned}
-        />
-      </div>
+      {/* Rechte Seite - Nur Actions */}
+      <PostActions 
+        postId={postId} 
+        teamId={teamId}
+        isSubscribed={false}
+        postTitle={postTitle}
+        isAdmin={isAdmin}
+        isPinned={isPinned}
+      />
     </div>
   );
 };
