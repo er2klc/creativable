@@ -23,11 +23,18 @@ interface PostDetailProps {
 }
 
 const getYouTubeVideoId = (content: string) => {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const urls = content.match(urlRegex);
-  if (!urls) return null;
+  // Erst nach href-Attributen suchen
+  const hrefRegex = /href="(https?:\/\/[^\s"]+)"/g;
+  const hrefs = [...content.matchAll(hrefRegex)].map(match => match[1]);
+  
+  // Dann nach normalen URLs im Text suchen
+  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  const plainUrls = content.match(urlRegex) || [];
+  
+  // Alle gefundenen URLs kombinieren
+  const allUrls = [...hrefs, ...plainUrls];
 
-  for (const url of urls) {
+  for (const url of allUrls) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     if (match && match[2].length === 11) {
@@ -71,6 +78,8 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   const isAuthor = user?.id === post.created_by;
   const hasMedia = post.file_urls && post.file_urls.length > 0;
   const videoId = post.content ? getYouTubeVideoId(post.content) : null;
+  
+  console.log('Found video ID:', videoId); // Debug-Log
 
   return (
     <div className="space-y-6">
