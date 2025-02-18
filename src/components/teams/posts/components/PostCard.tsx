@@ -91,9 +91,8 @@ export const PostCard = ({
   const imageHeight = post.pinned ? "h-[200px]" : "h-[120px]";
   const lineClamp = post.pinned ? "line-clamp-4" : "line-clamp-2";
 
-  // Background mit 50% Opacity, Border mit 80% Opacity
-  const backgroundColor = `${categoryColor}80`; // 80 = 50% Opacity
-  const borderColor = `${categoryColor}CC`; // CC = 80% Opacity
+  const backgroundColor = `${categoryColor}`;
+  const borderColor = `${categoryColor}CC`;
 
   return (
     <>
@@ -140,11 +139,12 @@ export const PostCard = ({
                 <Badge 
                   style={{
                     backgroundColor: categoryColor,
-                    color: 'white',
-                    opacity: 1,
-                    '--tw-bg-opacity': '1'
+                    color: '#2A4A2A', // Dunkelgrüner Text wie in den Tabs
+                    opacity: '1 !important',
+                    '--tw-bg-opacity': '1',
+                    '--tw-text-opacity': '1'
                   } as React.CSSProperties}
-                  className="transition-colors"
+                  className="transition-colors font-medium"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
