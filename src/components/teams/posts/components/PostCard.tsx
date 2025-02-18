@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -26,6 +25,12 @@ const sizeToGridClass = {
   small: 'col-span-1',
   medium: 'col-span-2',
   large: 'col-span-3'
+};
+
+const extractColorFromClass = (colorClass: string) => {
+  if (!colorClass) return '#e5e7eb'; // Default color
+  const match = colorClass.match(/#[0-9A-Fa-f]{6}/);
+  return match ? match[0] : colorClass.startsWith('bg-[') ? colorClass.slice(4, -1) : '#e5e7eb';
 };
 
 const getYouTubeVideoId = (content: string) => {
@@ -63,7 +68,7 @@ export const PostCard = ({
     return null;
   }
 
-  const categoryStyle = getCategoryStyle(post.team_categories.color);
+  const categoryColor = extractColorFromClass(post.team_categories.color);
   const displayName = post.author.display_name || 'Unbekannt';
   const avatarUrl = getAvatarUrl(post.author.avatar_url, post.author.email);
   const videoId = post.content ? getYouTubeVideoId(post.content) : null;
@@ -87,7 +92,7 @@ export const PostCard = ({
   const lineClamp = post.pinned ? "line-clamp-4" : "line-clamp-2";
 
   // Erstelle einen sehr hellen Hintergrund basierend auf der Kategoriefarbe
-  const backgroundColor = post.team_categories.color + '0D'; // 0D = 5% Opacity in Hex
+  const backgroundColor = `${categoryColor}0D`; // 0D = 5% Opacity in Hex
 
   return (
     <>
@@ -98,7 +103,7 @@ export const PostCard = ({
           post.pinned && "shadow-md"
         )}
         style={{
-          borderColor: post.team_categories.color,
+          borderColor: categoryColor,
           borderWidth: '2px',
           backgroundColor: backgroundColor
         }}
@@ -133,7 +138,7 @@ export const PostCard = ({
                 <span>•</span>
                 <Badge 
                   style={{
-                    backgroundColor: post.team_categories.color,
+                    backgroundColor: categoryColor,
                     color: 'white'
                   }}
                   className="hover:opacity-90"
@@ -208,7 +213,7 @@ export const PostCard = ({
 
         <div 
           className="px-4 py-2 border-t" 
-          style={{ borderColor: post.team_categories.color }}
+          style={{ borderColor: categoryColor }}
         >
           <div className="flex items-center justify-between">
             <PostReactions postId={post.id} teamId={teamSlug} />
@@ -235,4 +240,3 @@ export const PostCard = ({
     </>
   );
 };
-
