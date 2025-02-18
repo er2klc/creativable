@@ -1,4 +1,3 @@
-
 import { Editor } from '@tiptap/react';
 import { ToolbarButton } from './toolbar-button';
 import { Button } from '../button';
@@ -156,6 +155,8 @@ export function EditorToolbar({
     editor.chain().focus().insertContent(eventContent).run();
   };
 
+  const allEmojis = Object.values(emojiCategories).flat();
+
   return (
     <div className="sticky top-0 z-[60] bg-background border-b">
       <div className="flex flex-wrap gap-1 p-2">
@@ -225,56 +226,23 @@ export function EditorToolbar({
             <Smile className="h-4 w-4" />
           </Button>
           {isEmojiOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-background border rounded-lg shadow-lg z-[100] min-w-[600px]">
-              <div className="grid grid-cols-2 gap-6 p-6">
-                <div className="space-y-6">
-                  {Object.entries(emojiCategories).slice(0, Math.ceil(Object.keys(emojiCategories).length / 2)).map(([category, emojis]) => (
-                    <div key={category}>
-                      <h3 className="text-xs font-medium text-muted-foreground mb-3">{category}</h3>
-                      <div className="grid grid-cols-4 gap-3">
-                        {emojis.map((emoji) => (
-                          <Button
-                            key={emoji.id}
-                            variant="ghost"
-                            className="h-12 w-12 p-0 hover:bg-muted"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleEmojiClick(emoji.native);
-                            }}
-                            title={emoji.id}
-                          >
-                            <span className="text-2xl">{emoji.native}</span>
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="space-y-6">
-                  {Object.entries(emojiCategories).slice(Math.ceil(Object.keys(emojiCategories).length / 2)).map(([category, emojis]) => (
-                    <div key={category}>
-                      <h3 className="text-xs font-medium text-muted-foreground mb-3">{category}</h3>
-                      <div className="grid grid-cols-4 gap-3">
-                        {emojis.map((emoji) => (
-                          <Button
-                            key={emoji.id}
-                            variant="ghost"
-                            className="h-12 w-12 p-0 hover:bg-muted"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleEmojiClick(emoji.native);
-                            }}
-                            title={emoji.id}
-                          >
-                            <span className="text-2xl">{emoji.native}</span>
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-background border rounded-lg shadow-lg z-[9999] w-[900px] max-h-[400px] overflow-y-auto">
+              <div className="flex flex-wrap gap-1 p-2">
+                {allEmojis.map((emoji) => (
+                  <Button
+                    key={emoji.id}
+                    variant="ghost"
+                    className="h-10 w-10 p-0 hover:bg-muted"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleEmojiClick(emoji.native);
+                    }}
+                    title={emoji.id}
+                  >
+                    <span className="text-2xl">{emoji.native}</span>
+                  </Button>
+                ))}
               </div>
             </div>
           )}
