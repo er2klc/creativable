@@ -157,7 +157,7 @@ export function EditorToolbar({
   };
 
   return (
-    <div className="sticky top-0 z-10 bg-background border-b">
+    <div className="sticky top-0 z-[60] bg-background border-b">
       <div className="flex flex-wrap gap-1 p-2">
         <ToolbarButton 
           onClick={() => editor.chain().focus().toggleBold().run()}
@@ -225,7 +225,7 @@ export function EditorToolbar({
             <Smile className="h-4 w-4" />
           </Button>
           {isEmojiOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-background border rounded-lg shadow-lg z-50 min-w-[600px]">
+            <div className="absolute top-full left-0 mt-1 bg-background border rounded-lg shadow-lg z-[100] min-w-[600px]">
               <div className="grid grid-cols-2 gap-4 p-4">
                 <div className="space-y-4">
                   {Object.entries(emojiCategories).slice(0, Math.ceil(Object.keys(emojiCategories).length / 2)).map(([category, emojis]) => (
