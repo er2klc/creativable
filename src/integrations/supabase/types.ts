@@ -2951,6 +2951,38 @@ export type Database = {
           },
         ]
       }
+      team_post_comment_reactions: {
+        Row: {
+          comment_id: string
+          created_at: string | null
+          created_by: string
+          id: string
+          reaction_type: Database["public"]["Enums"]["team_post_comment_reaction_type"]
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          reaction_type: Database["public"]["Enums"]["team_post_comment_reaction_type"]
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          reaction_type?: Database["public"]["Enums"]["team_post_comment_reaction_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_post_comment_reactions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "team_post_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_post_comments: {
         Row: {
           content: string
@@ -4340,6 +4372,7 @@ export type Database = {
         | "create_contact"
         | "learning_platform"
         | "todo_list"
+      team_post_comment_reaction_type: "👍" | "❤️" | "😂" | "🎉" | "😮"
     }
     CompositeTypes: {
       [_ in never]: never

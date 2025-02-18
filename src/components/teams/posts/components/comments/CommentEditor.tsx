@@ -22,29 +22,41 @@ export const CommentEditor = ({
   const [content, setContent] = useState(initialContent);
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-background border-t shadow-lg p-4">
-      <div className="max-w-[1200px] mx-auto flex items-end gap-2">
-        <div className="flex-1">
-          <TiptapEditor
-            content={content}
-            onChange={setContent}
-            placeholder="Schreibe einen Kommentar... (@mention für Erwähnungen)"
-            teamMembers={teamMembers}
-            editorProps={{
-              attributes: {
-                class: 'prose-sm focus:outline-none min-h-[50px] max-h-[150px] p-3 whitespace-pre-wrap rounded-lg bg-muted/30',
-              }
-            }}
-          />
+    <div className="border rounded-lg p-4 bg-muted/5">
+      <div className="space-y-4">
+        <TiptapEditor
+          content={content}
+          onChange={setContent}
+          placeholder="Schreibe einen Kommentar... (@mention für Erwähnungen)"
+          teamMembers={teamMembers}
+          editorProps={{
+            attributes: {
+              class: 'prose-sm focus:outline-none min-h-[50px] max-h-[150px] p-3 whitespace-pre-wrap rounded-lg bg-background',
+            }
+          }}
+        />
+        <div className="flex items-center justify-between">
+          {onCancel && (
+            <Button
+              variant="ghost"
+              onClick={onCancel}
+              size="sm"
+            >
+              Abbrechen
+            </Button>
+          )}
+          <div className="ml-auto">
+            <Button
+              onClick={() => onSave(content)}
+              disabled={!content.trim()}
+              size="sm"
+              className="gap-2"
+            >
+              <Send className="h-4 w-4" />
+              Senden
+            </Button>
+          </div>
         </div>
-        <Button
-          onClick={() => onSave(content)}
-          disabled={!content.trim()}
-          size="icon"
-          className="mb-1"
-        >
-          <Send className="h-4 w-4" />
-        </Button>
       </div>
     </div>
   );

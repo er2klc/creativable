@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Edit2, Trash2 } from "lucide-react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { CommentEditor } from "./CommentEditor";
+import { CommentReactions } from "./CommentReactions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -55,15 +56,15 @@ export const CommentItem = ({ comment, onDelete }: CommentItemProps) => {
 
   return (
     <div className="flex gap-4 p-4 border rounded-lg">
-      <Avatar className="h-8 w-8">
+      <Avatar className="h-8 w-8 flex-shrink-0">
         <AvatarImage src={comment.author.avatar_url || ""} />
         <AvatarFallback>
           {comment.author.display_name?.substring(0, 2).toUpperCase() || "??"}
         </AvatarFallback>
       </Avatar>
       
-      <div className="flex-1">
-        <div className="flex items-center justify-between mb-1">
+      <div className="flex-1 space-y-1">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="font-medium">{comment.author.display_name}</span>
             <span className="text-sm text-muted-foreground">
@@ -86,7 +87,7 @@ export const CommentItem = ({ comment, onDelete }: CommentItemProps) => {
           </div>
           
           {isAuthor && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
                 size="sm"
@@ -114,10 +115,13 @@ export const CommentItem = ({ comment, onDelete }: CommentItemProps) => {
             onCancel={() => setIsEditing(false)}
           />
         ) : (
-          <div 
-            className="prose max-w-none" 
-            dangerouslySetInnerHTML={{ __html: comment.content }} 
-          />
+          <>
+            <div 
+              className="prose prose-sm max-w-none" 
+              dangerouslySetInnerHTML={{ __html: comment.content }} 
+            />
+            <CommentReactions commentId={comment.id} />
+          </>
         )}
       </div>
     </div>
