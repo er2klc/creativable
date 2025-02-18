@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -91,8 +92,8 @@ export const PostCard = ({
   const imageHeight = post.pinned ? "h-[200px]" : "h-[120px]";
   const lineClamp = post.pinned ? "line-clamp-4" : "line-clamp-2";
 
-  // Erstelle einen sehr hellen Hintergrund basierend auf der Kategoriefarbe
-  const backgroundColor = `${categoryColor}0D`; // 0D = 5% Opacity in Hex
+  // Erstelle einen hellen Hintergrund basierend auf der Kategoriefarbe
+  const backgroundColor = `${categoryColor}26`; // 26 = 15% Opacity in Hex
 
   return (
     <>
