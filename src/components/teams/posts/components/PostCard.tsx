@@ -11,6 +11,7 @@ import { PostReactions } from "./reactions/PostReactions";
 import { PostActions } from "./actions/PostActions";
 import { Pin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { MediaGallery } from "../components/media-gallery/MediaGallery";
 
 interface PostCardProps {
   post: Post;
@@ -45,7 +46,12 @@ export const PostCard = ({
     navigate(`/unity/team/${teamSlug}/posts/${post.slug}`);
   };
 
+  // Effektive Größe basierend auf Pin-Status und Kategorie-Einstellungen
   const effectiveSize = post.pinned ? 'large' : size;
+  
+  // Maximale Anzahl der Vorschaubilder basierend auf der Größe
+  const maxPreviewImages = effectiveSize === 'small' ? 1 : 
+                          effectiveSize === 'medium' ? 2 : 3;
 
   return (
     <Card 
@@ -101,6 +107,21 @@ export const PostCard = ({
           <h3 className="text-lg font-semibold mb-2">
             {post.title}
           </h3>
+          
+          {/* Media Gallery für Vorschaubilder */}
+          {post.file_urls && post.file_urls.length > 0 && (
+            <div className="mb-4">
+              <MediaGallery 
+                files={post.file_urls.slice(0, maxPreviewImages)} 
+              />
+              {post.file_urls.length > maxPreviewImages && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  +{post.file_urls.length - maxPreviewImages} weitere Medien
+                </div>
+              )}
+            </div>
+          )}
+
           {post.content && (
             <div 
               className="text-muted-foreground line-clamp-2 text-sm"

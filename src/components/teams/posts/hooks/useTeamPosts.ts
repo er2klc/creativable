@@ -15,9 +15,11 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           .select(`
             *,
             team_categories!inner (
+              id,
               name,
               slug,
-              color
+              color,
+              settings:team_category_settings!team_categories_id_fkey(size)
             ),
             author:profiles!team_posts_created_by_fkey (
               id,
@@ -50,11 +52,12 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           return [];
         }
 
-        // Log für Debugging
-        console.log("Raw posts data:", JSON.stringify(data, null, 2));
-        
         const transformedData = data.map(post => ({
           ...post,
+          team_categories: {
+            ...post.team_categories,
+            settings: post.team_categories.settings?.[0] || { size: 'medium' }
+          },
           team_post_comments: post.team_post_comments?.length || 0,
           author: {
             ...post.author,
