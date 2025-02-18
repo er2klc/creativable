@@ -14,7 +14,15 @@ export const MediaGallery = ({ files }: MediaGalleryProps) => {
     return url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
   };
 
-  // We don't need to modify URLs from Supabase Storage anymore
+  const getPublicUrl = (url: string) => {
+    if (url.startsWith('http')) return url;
+    if (url.startsWith('/storage/')) {
+      return `${import.meta.env.VITE_SUPABASE_URL}${url}`;
+    }
+    // Handle relative URLs
+    return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   const mediaFiles = files.filter(isImage);
 
   if (mediaFiles.length === 0) return null;
@@ -34,7 +42,7 @@ export const MediaGallery = ({ files }: MediaGalleryProps) => {
             onClick={() => setSelectedImage(url)}
           >
             <img
-              src={url}
+              src={getPublicUrl(url)}
               alt={`Media ${index + 1}`}
               className="object-cover w-full h-full transition-transform group-hover:scale-105"
             />
@@ -46,7 +54,7 @@ export const MediaGallery = ({ files }: MediaGalleryProps) => {
         <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
           {selectedImage && (
             <img
-              src={selectedImage}
+              src={getPublicUrl(selectedImage)}
               alt="Preview"
               className="w-full h-full object-contain rounded-lg"
             />
