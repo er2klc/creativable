@@ -5,6 +5,7 @@ import { PostActions } from "../actions/PostActions";
 import { MessageCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PostFooterProps {
   postId: string;
@@ -25,21 +26,22 @@ export const PostFooter = ({
   borderColor,
   commentCount
 }: PostFooterProps) => {
-  const { data: lastCommenters } = useQuery({
+  const { data: firstCommenters } = useQuery({
     queryKey: ['post-commenters', postId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('team_post_comments')
         .select(`
           created_by,
+          created_at,
           author:profiles!team_post_comments_created_by_fkey (
             display_name,
             avatar_url
           )
         `)
         .eq('post_id', postId)
-        .order('created_at', { ascending: false })
-        .limit(3);
+        .order('created_at', { ascending: true })
+        .limit(5);
 
       if (error) throw error;
       return data;
@@ -48,35 +50,49 @@ export const PostFooter = ({
 
   return (
     <div 
-      className="px-4 py-2 border-t flex items-center justify-between"
+      className="px-4 py-2 border-t grid grid-cols-3 items-center"
       style={{ borderColor }}
     >
-      <div className="flex items-center gap-4">
-        <PostReactions postId={postId} teamId={teamId} />
-        
-        <div className="flex items-center gap-2 text-muted-foreground">
+      {/* Linke Seite - Kommentare */}
+      <div className="flex items-center">
+        <div className="flex items-center gap-1 text-muted-foreground">
           <MessageCircle className="w-4 h-4" />
-          <span className="text-sm">{commentCount}</span>
+          <span className="text-sm font-medium">{commentCount}</span>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
-        {lastCommenters && lastCommenters.length > 0 && (
-          <div className="flex -space-x-2">
-            {lastCommenters.map((commenter, index) => (
-              <Avatar 
-                key={commenter.created_by} 
-                className="w-6 h-6 border-2 border-background"
-              >
-                <AvatarImage src={commenter.author?.avatar_url || ""} />
-                <AvatarFallback>
-                  {commenter.author?.display_name?.substring(0, 2).toUpperCase() || "??"}
-                </AvatarFallback>
-              </Avatar>
+      {/* Mitte - Avatare */}
+      <div className="flex justify-center">
+        {firstCommenters && firstCommenters.length > 0 && (
+          <div className="flex -space-x-3">
+            {firstCommenters.map((commenter) => (
+              <TooltipProvider key={commenter.created_by}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Avatar 
+                      className="w-6 h-6 border-2 border-background transition-transform hover:scale-110"
+                    >
+                      <AvatarImage src={commenter.author?.avatar_url || ""} />
+                      <AvatarFallback className="text-xs">
+                        {commenter.author?.display_name?.substring(0, 2).toUpperCase() || "??"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-sm">{commenter.author?.display_name}</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             ))}
           </div>
         )}
+      </div>
 
+      {/* Rechte Seite - Reaktionen und Aktionen */}
+      <div className="flex items-center justify-end gap-2">
+        <div className="flex items-center">
+          <PostReactions postId={postId} teamId={teamId} />
+        </div>
         <PostActions 
           postId={postId} 
           teamId={teamId}
