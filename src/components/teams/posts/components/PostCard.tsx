@@ -121,12 +121,13 @@ export const PostCard = ({
             )}
           </div>
 
-          {/* Kompakte Media Gallery auf der rechten Seite */}
           {hasMedia && (
-            <div className="w-[30%] h-[120px]">
-              <MediaGallery 
-                files={[post.file_urls[0]]}
-              />
+            <div className="relative w-[30%]">
+              <div className="h-[120px]">
+                <MediaGallery 
+                  files={[post.file_urls[0]]}
+                />
+              </div>
               {post.file_urls.length > 1 && (
                 <div className="mt-1 text-xs text-center text-muted-foreground">
                   +{post.file_urls.length - 1} weitere
@@ -137,16 +138,24 @@ export const PostCard = ({
         </div>
       </div>
         
-      <div className="px-4 pb-4 flex items-center justify-between">
-        <PostReactions postId={post.id} teamId={teamSlug} />
-        <PostActions 
-          postId={post.id} 
-          teamId={teamSlug}
-          isSubscribed={false}
-          postTitle={post.title}
-          isAdmin={isAdmin}
-          isPinned={post.pinned}
-        />
+      <div className={cn(
+        "px-4 pb-4",
+        hasMedia && "relative mt-[-20px]"
+      )}>
+        <div className={cn(
+          "flex items-center justify-between",
+          hasMedia && "bg-gradient-to-t from-background via-background/95 to-background/0 px-4 py-3 rounded-t-xl"
+        )}>
+          <PostReactions postId={post.id} teamId={teamSlug} />
+          <PostActions 
+            postId={post.id} 
+            teamId={teamSlug}
+            isSubscribed={false}
+            postTitle={post.title}
+            isAdmin={isAdmin}
+            isPinned={post.pinned}
+          />
+        </div>
       </div>
     </Card>
   );
