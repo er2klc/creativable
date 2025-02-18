@@ -3062,21 +3062,21 @@ export type Database = {
           created_by: string
           id: string
           post_id: string
-          reaction_type: string
+          reaction_type: Database["public"]["Enums"]["reaction_type"]
         }
         Insert: {
           created_at?: string | null
           created_by: string
           id?: string
           post_id: string
-          reaction_type: string
+          reaction_type: Database["public"]["Enums"]["reaction_type"]
         }
         Update: {
           created_at?: string | null
           created_by?: string
           id?: string
           post_id?: string
-          reaction_type?: string
+          reaction_type?: Database["public"]["Enums"]["reaction_type"]
         }
         Relationships: [
           {
@@ -4292,6 +4292,7 @@ export type Database = {
         | "igtv"
         | "Image"
         | "Sidecar"
+      reaction_type: "👍" | "❤️" | "😂" | "🎉" | "😮"
       recurring_pattern: "none" | "daily" | "weekly" | "monthly" | "yearly"
       shortcut_type:
         | "team"
