@@ -93,16 +93,25 @@ export function EditorToolbar({
         >
           <Quote className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={onImageClick}>
+        <ToolbarButton onClick={(e) => {
+          e.stopPropagation();
+          onImageClick();
+        }}>
           <ImageIcon className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton 
-          onClick={onLinkClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            onLinkClick();
+          }}
           active={editor.isActive('link')}
         >
           <LinkIcon className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={onHashtagClick}>
+        <ToolbarButton onClick={(e) => {
+          e.stopPropagation();
+          onHashtagClick();
+        }}>
           <Hash className="h-4 w-4" />
         </ToolbarButton>
         <Popover>
@@ -112,6 +121,7 @@ export function EditorToolbar({
               variant="ghost"
               size="sm"
               className="h-8 w-8 p-0"
+              onClick={(e) => e.stopPropagation()}
             >
               <Smile className="h-4 w-4" />
             </Button>
@@ -123,7 +133,10 @@ export function EditorToolbar({
                   key={emoji.id}
                   variant="ghost"
                   className="h-8 w-8 p-0 hover:bg-muted"
-                  onClick={() => onEmojiSelect(emoji)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEmojiSelect(emoji.native);
+                  }}
                 >
                   <span className="text-lg">{emoji.native}</span>
                 </Button>

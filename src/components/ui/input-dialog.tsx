@@ -33,14 +33,27 @@ export function InputDialog({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     onConfirm(value);
     setValue("");
     onClose();
   };
 
+  const handleDialogChange = (open: boolean) => {
+    if (!open) {
+      setValue("");
+      onClose();
+    }
+  };
+
+  // Prevent event bubbling
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent>
+    <Dialog open={isOpen} onOpenChange={handleDialogChange}>
+      <DialogContent onClick={handleClick}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -52,7 +65,14 @@ export function InputDialog({
             autoFocus
           />
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={(e) => {
+                e.stopPropagation();
+                onClose();
+              }}
+            >
               Abbrechen
             </Button>
             <Button type="submit">Bestätigen</Button>

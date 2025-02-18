@@ -135,13 +135,14 @@ export function TiptapEditor({
     setShowHashtagDialog(false);
   };
 
-  const handleEmojiSelect = (emoji: any) => {
-    const emojiChar = typeof emoji === 'string' ? emoji : emoji.native;
-    editor.chain().focus().insertContent(emojiChar).run();
+  const handleEmojiSelect = (emoji: string) => {
+    if (emoji) {
+      editor.chain().focus().insertContent(emoji).run();
+    }
   };
 
   return (
-    <div className="border rounded-md w-full overflow-hidden flex flex-col">
+    <div className="border rounded-md w-full overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
       <EditorToolbar 
         editor={editor}
         onImageClick={() => setShowImageDialog(true)}
