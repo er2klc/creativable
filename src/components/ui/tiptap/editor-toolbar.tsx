@@ -124,7 +124,14 @@ export function EditorToolbar({
               <Smile className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-fit p-2" align="end" onClick={(e) => e.stopPropagation()}>
+          <PopoverContent 
+            className="w-fit p-2" 
+            align="end" 
+            side="bottom" 
+            sideOffset={8} 
+            modal={true}
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="grid grid-cols-6 gap-1">
               {commonEmojis.map((emoji) => (
                 <Button
