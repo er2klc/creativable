@@ -68,6 +68,14 @@ export const TeamSnaps = ({
       onClick: () => handleSnapClick("calendar"),
     },
     {
+      id: "posts",
+      icon: <MessageSquare className="h-8 w-8" />,
+      label: "Community",
+      description: "Diskutiere und tausche dich aus",
+      gradient: "from-blue-500 to-blue-600",
+      onClick: () => handleSnapClick("posts"),
+    },
+    {
       id: "members",
       icon: <Users className="h-8 w-8" />,
       label: "Mitglieder",
