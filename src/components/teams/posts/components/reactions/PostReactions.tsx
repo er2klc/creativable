@@ -16,11 +16,11 @@ export const PostReactions = ({ postId, teamId }: PostReactionsProps) => {
   const { reactions, toggleReaction, isLoading } = useReactions(postId);
 
   const REACTION_ICONS = {
-    '👍': { color: '#4287f5', animation: 'bounce-blue' },
-    '❤️': { color: '#f54242', animation: 'pulse-red' },
-    '😂': { color: '#f5d442', animation: 'bounce-yellow' },
-    '🎉': { color: '#42f54e', animation: 'explode-green' },
-    '😮': { color: '#f542f2', animation: 'pulse-purple' }
+    '👍': { animation: 'bounce-blue' },
+    '❤️': { animation: 'pulse-red' },
+    '😂': { animation: 'bounce-yellow' },
+    '🎉': { animation: 'explode-green' },
+    '😮': { animation: 'pulse-purple' }
   } as const;
 
   // Gruppiere existierende Reaktionen
@@ -45,13 +45,10 @@ export const PostReactions = ({ postId, teamId }: PostReactionsProps) => {
                   reaction.hasReacted && "text-primary",
                   reactionConfig.animation
                 )}
-                style={{
-                  color: reaction.hasReacted ? reactionConfig.color : undefined
-                }}
               >
                 <span className="text-lg">{reaction.emoji}</span>
                 {reaction.count > 0 && (
-                  <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] text-xs font-medium bg-background border border-border rounded-full flex items-center justify-center px-1">
+                  <span className="absolute -top-2 -right-2 min-w-[18px] h-[18px] text-xs font-medium bg-background text-foreground border border-border rounded-full flex items-center justify-center px-1">
                     {reaction.count}
                   </span>
                 )}
@@ -73,7 +70,7 @@ export const PostReactions = ({ postId, teamId }: PostReactionsProps) => {
         </PopoverTrigger>
         <PopoverContent className="w-auto p-2" align="start">
           <div className="flex gap-1">
-            {Object.entries(REACTION_ICONS).map(([emoji, { color }]) => {
+            {Object.entries(REACTION_ICONS).map(([emoji]) => {
               const reaction = reactions.find((r) => r.emoji === emoji);
               const hasReacted = reaction?.hasReacted || false;
 
@@ -91,9 +88,6 @@ export const PostReactions = ({ postId, teamId }: PostReactionsProps) => {
                     "flex items-center justify-center w-8 h-8 p-0 hover:scale-125 transition-all hover:bg-transparent",
                     hasReacted && "text-primary"
                   )}
-                  style={{
-                    color: hasReacted ? color : undefined
-                  }}
                 >
                   <span className="text-lg">{emoji}</span>
                 </Button>

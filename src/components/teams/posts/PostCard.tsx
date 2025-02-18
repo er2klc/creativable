@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Bell, Copy, Flag, MoreHorizontal } from "lucide-react";
+import { Bell, Link2, Flag, MoreHorizontal } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +30,23 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
+  const { data: subscription } = useQuery({
+    queryKey: ['post-subscription', post.id],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data } = await supabase
+        .from('team_post_subscriptions')
+        .select('subscribed')
+        .eq('post_id', post.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      return data;
+    }
+  });
+
   if (!post?.team_categories || !post?.author) {
     return null;
   }
@@ -36,6 +54,7 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   const categoryStyle = getCategoryStyle(post.team_categories.color);
   const displayName = post.author.display_name || 'Unbekannt';
   const avatarUrl = getAvatarUrl(post.author.avatar_url, post.author.email);
+  const isSubscribed = subscription?.subscribed || false;
 
   const handleCopyUrl = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -50,26 +69,17 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { data: existingSubscription } = await supabase
-        .from('team_post_subscriptions')
-        .select('subscribed')
-        .eq('post_id', post.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const newSubscriptionState = !existingSubscription?.subscribed;
-
       await supabase
         .from('team_post_subscriptions')
         .upsert({
           post_id: post.id,
           user_id: user.id,
-          subscribed: newSubscriptionState
+          subscribed: !isSubscribed
         });
 
       queryClient.invalidateQueries({ queryKey: ['post-subscription', post.id] });
       
-      toast.success(newSubscriptionState 
+      toast.success(!isSubscribed
         ? "Benachrichtigungen aktiviert" 
         : "Benachrichtigungen deaktiviert"
       );
@@ -113,7 +123,10 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
             variant="ghost"
             size="sm"
             onClick={handleSubscription}
-            className="text-muted-foreground hover:text-primary"
+            className={cn(
+              "text-muted-foreground hover:text-primary",
+              isSubscribed && "text-primary"
+            )}
           >
             <Bell className="h-4 w-4" />
           </Button>
@@ -123,7 +136,7 @@ export const PostCard = ({ post, teamSlug }: PostCardProps) => {
             onClick={handleCopyUrl}
             className="text-muted-foreground hover:text-primary"
           >
-            <Copy className="h-4 w-4" />
+            <Link2 className="h-4 w-4" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
