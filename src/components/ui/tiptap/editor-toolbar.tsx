@@ -226,17 +226,17 @@ export function EditorToolbar({
           </Button>
           {isEmojiOpen && (
             <div className="absolute top-full left-0 mt-1 bg-background border rounded-lg shadow-lg z-[100] min-w-[600px]">
-              <div className="grid grid-cols-2 gap-4 p-4">
-                <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-6 p-6">
+                <div className="space-y-6">
                   {Object.entries(emojiCategories).slice(0, Math.ceil(Object.keys(emojiCategories).length / 2)).map(([category, emojis]) => (
                     <div key={category}>
-                      <h3 className="text-xs font-medium text-muted-foreground mb-2">{category}</h3>
-                      <div className="grid grid-cols-4 gap-2">
+                      <h3 className="text-xs font-medium text-muted-foreground mb-3">{category}</h3>
+                      <div className="grid grid-cols-4 gap-3">
                         {emojis.map((emoji) => (
                           <Button
                             key={emoji.id}
                             variant="ghost"
-                            className="h-10 w-10 p-0 hover:bg-muted"
+                            className="h-12 w-12 p-0 hover:bg-muted"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -244,23 +244,23 @@ export function EditorToolbar({
                             }}
                             title={emoji.id}
                           >
-                            <span className="text-xl">{emoji.native}</span>
+                            <span className="text-2xl">{emoji.native}</span>
                           </Button>
                         ))}
                       </div>
                     </div>
                   ))}
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   {Object.entries(emojiCategories).slice(Math.ceil(Object.keys(emojiCategories).length / 2)).map(([category, emojis]) => (
                     <div key={category}>
-                      <h3 className="text-xs font-medium text-muted-foreground mb-2">{category}</h3>
-                      <div className="grid grid-cols-4 gap-2">
+                      <h3 className="text-xs font-medium text-muted-foreground mb-3">{category}</h3>
+                      <div className="grid grid-cols-4 gap-3">
                         {emojis.map((emoji) => (
                           <Button
                             key={emoji.id}
                             variant="ghost"
-                            className="h-10 w-10 p-0 hover:bg-muted"
+                            className="h-12 w-12 p-0 hover:bg-muted"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -268,7 +268,7 @@ export function EditorToolbar({
                             }}
                             title={emoji.id}
                           >
-                            <span className="text-xl">{emoji.native}</span>
+                            <span className="text-2xl">{emoji.native}</span>
                           </Button>
                         ))}
                       </div>
