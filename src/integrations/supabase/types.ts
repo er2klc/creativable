@@ -3271,6 +3271,7 @@ export type Database = {
       }
       team_posts: {
         Row: {
+          activity_score: number | null
           category_id: string | null
           content: string
           created_at: string | null
@@ -3279,6 +3280,7 @@ export type Database = {
           file_urls: string[] | null
           hashtags: string[] | null
           id: string
+          last_activity_at: string | null
           last_autosave_at: string | null
           last_edited_at: string | null
           mentioned_users: string[] | null
@@ -3290,6 +3292,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          activity_score?: number | null
           category_id?: string | null
           content: string
           created_at?: string | null
@@ -3298,6 +3301,7 @@ export type Database = {
           file_urls?: string[] | null
           hashtags?: string[] | null
           id?: string
+          last_activity_at?: string | null
           last_autosave_at?: string | null
           last_edited_at?: string | null
           mentioned_users?: string[] | null
@@ -3309,6 +3313,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          activity_score?: number | null
           category_id?: string | null
           content?: string
           created_at?: string | null
@@ -3317,6 +3322,7 @@ export type Database = {
           file_urls?: string[] | null
           hashtags?: string[] | null
           id?: string
+          last_activity_at?: string | null
           last_autosave_at?: string | null
           last_edited_at?: string | null
           mentioned_users?: string[] | null

@@ -35,12 +35,12 @@ export const useTeamPosts = (teamId: string, categoryId?: string, page: number =
           `, { count: 'exact' })
           .eq('team_id', teamId)
           .order('pinned', { ascending: false })
-          .order('created_at', { ascending: false });
+          .order('activity_score', { ascending: false }) // Neue Sortierung nach Activity Score
+          .order('last_activity_at', { ascending: false }); // Fallback auf letzter Aktivität
 
         if (categoryId) {
           query = query.eq('category_id', categoryId);
         } else {
-          // Nur Paginierung anwenden, wenn wir auf der Hauptseite sind
           query = query.range(page * 100, (page + 1) * 100 - 1);
         }
 

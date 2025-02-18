@@ -136,6 +136,7 @@ export const PostCard = ({
           isAdmin={isAdmin}
           isPinned={post.pinned}
           borderColor={borderColor}
+          commentCount={post.team_post_comments}
         />
       </Card>
 
