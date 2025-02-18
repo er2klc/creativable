@@ -5,6 +5,7 @@ import { PostCard } from "./components/PostCard";
 import { useTeamMemberRole } from "@/hooks/useTeamMemberRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface CategoryOverviewProps {
   teamId: string;
@@ -105,13 +106,18 @@ export const CategoryOverview = ({
             Alle Beiträge
           </h2>
         )}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className={cn(
+          "grid gap-4",
+          categorySlug 
+            ? "grid-cols-1" // Volle Breite in Kategorien
+            : "grid-cols-1 md:grid-cols-3" // 3-Spalten Layout nur auf der Hauptseite
+        )}>
           {regularPosts.map((post) => (
             <PostCard
               key={post.id}
               post={post}
               teamSlug={teamSlug}
-              size={categorySlug ? 'small' : (post.team_categories?.settings?.size || defaultSize)}
+              size={categorySlug ? 'large' : (post.team_categories?.settings?.size || defaultSize)}
               isAdmin={isAdmin}
             />
           ))}
