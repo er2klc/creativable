@@ -1,3 +1,4 @@
+
 import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy, BarChart3 } from "lucide-react";
 import { SnapList } from "./snap-lists/SnapList";
 import { AdminSnapList } from "./snap-lists/AdminSnapList";
@@ -119,11 +120,6 @@ export const TeamSnaps = ({
       onClick: () => handleSnapClick("analytics"),
     },
   ] : [];
-
-  const allSnaps = [...regularSnaps, ...adminSnaps];
-  const visibleRegularSnaps = regularSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
-  const visibleAdminSnaps = adminSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
-  const hiddenSnapsList = allSnaps.filter(snap => hiddenSnaps.includes(snap.id));
 
   if (!currentTeamSlug) {
     return (
