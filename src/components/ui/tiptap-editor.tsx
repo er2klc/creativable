@@ -7,6 +7,7 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import { InputDialog } from './input-dialog';
 import { EditorToolbar } from './tiptap/editor-toolbar';
+import { MentionList } from "@/components/teams/posts/components/comments/MentionList";
 
 interface TiptapEditorProps {
   content: string;
@@ -69,22 +70,60 @@ export function TiptapEditor({
         }
       }),
       Mention.configure({
-        HTMLAttributes: { class: 'mention' },
+        HTMLAttributes: { 
+          class: 'text-primary underline cursor-pointer hover:text-primary/80'
+        },
         suggestion: {
-          items: ({ query }) => 
-            teamMembers
-              .filter(member => 
-                member.profiles?.display_name?.toLowerCase().includes((query || '').toLowerCase())
+          items: ({ query }) => {
+            return teamMembers
+              ?.filter(member => 
+                member.profiles?.display_name
+                  ?.toLowerCase()
+                  .includes(query.toLowerCase())
               )
-              .slice(0, 5),
+              .slice(0, 5) || [];
+          },
           render: () => {
+            let component: any;
+            let popup: any;
+
             return {
-              onStart: () => {},
-              onUpdate: () => {},
-              onKeyDown: () => false,
-              onExit: () => {},
-            }
-          }
+              onStart: (props: any) => {
+                component = new ReactRenderer(MentionList, {
+                  props,
+                  editor: props.editor,
+                });
+
+                popup = tippy("body", {
+                  getReferenceClientRect: props.clientRect,
+                  appendTo: () => document.body,
+                  content: component.element,
+                  showOnCreate: true,
+                  interactive: true,
+                  trigger: "manual",
+                  placement: "bottom-start",
+                });
+              },
+              onUpdate: (props: any) => {
+                component?.updateProps(props);
+
+                popup?.[0].setProps({
+                  getReferenceClientRect: props.clientRect,
+                });
+              },
+              onKeyDown: (props: any) => {
+                if (props.event.key === "Escape") {
+                  popup?.[0].hide();
+                  return true;
+                }
+                return component?.ref?.onKeyDown(props);
+              },
+              onExit: () => {
+                popup?.[0].destroy();
+                component?.destroy();
+              },
+            };
+          },
         },
       }),
       Image.configure({

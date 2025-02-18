@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -17,7 +16,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { LinkPreview } from "@/components/links/components/LinkPreview";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface PostDetailProps {
   post: Post | null;
@@ -55,23 +54,83 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   const user = useUser();
   const navigate = useNavigate();
   const [showVideoPreview, setShowVideoPreview] = useState(false);
+  const [comments, setComments] = useState<any[]>([]);
   
-  const { data: isSubscribed = false } = useQuery({
-    queryKey: ['post-subscription', post?.id],
+  const { data: commentsData, isLoading: isLoadingComments } = useQuery({
+    queryKey: ['post-comments', post?.id],
     queryFn: async () => {
-      if (!post?.id || !user?.id) return false;
+      if (!post?.id) return [];
       
-      const { data } = await supabase
-        .from('team_post_subscriptions')
-        .select('subscribed')
+      const { data, error } = await supabase
+        .from('team_post_comments')
+        .select(`
+          *,
+          author:profiles!team_post_comments_created_by_fkey (
+            display_name,
+            avatar_url
+          )
+        `)
         .eq('post_id', post.id)
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      return data?.subscribed ?? false;
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+      return data;
     },
-    enabled: !!post?.id && !!user?.id,
+    enabled: !!post?.id
   });
+
+  const handleDeleteComment = async (commentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('team_post_comments')
+        .delete()
+        .eq('id', commentId);
+
+      if (error) throw error;
+      
+      setComments(prev => prev.filter(c => c.id !== commentId));
+      toast.success("Kommentar wurde gelöscht");
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      toast.error("Fehler beim Löschen des Kommentars");
+    }
+  };
+
+  const handleAddComment = async (content: string) => {
+    if (!user?.id || !post?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('team_post_comments')
+        .insert({
+          post_id: post.id,
+          content,
+          created_by: user.id
+        })
+        .select(`
+          *,
+          author:profiles!team_post_comments_created_by_fkey (
+            display_name,
+            avatar_url
+          )
+        `)
+        .single();
+
+      if (error) throw error;
+      
+      setComments(prev => [...prev, data]);
+      toast.success("Kommentar wurde hinzugefügt");
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      toast.error("Fehler beim Hinzufügen des Kommentars");
+    }
+  };
+
+  useEffect(() => {
+    if (commentsData) {
+      setComments(commentsData);
+    }
+  }, [commentsData]);
 
   if (!post) {
     return (
@@ -198,36 +257,27 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5" />
           <h2 className="text-lg font-semibold">
-            Kommentare ({post.team_post_comments.length})
+            Kommentare ({comments.length})
           </h2>
         </div>
 
-        {post.team_post_comments.map((comment) => (
-          <Card key={comment.id} className="p-4">
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-6 w-6">
-                    <AvatarImage src={comment.author.avatar_url || ""} />
-                    <AvatarFallback>
-                      {comment.author.display_name?.substring(0, 2).toUpperCase() || "??"}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium">
-                    {comment.author.display_name}
-                  </span>
-                </div>
-                <span className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(comment.created_at), {
-                    addSuffix: true,
-                    locale: de,
-                  })}
-                </span>
-              </div>
-              <p className="text-sm">{comment.content}</p>
-            </div>
-          </Card>
-        ))}
+        <CommentEditor onSave={handleAddComment} />
+
+        {isLoadingComments ? (
+          <div className="flex items-center justify-center p-4">
+            <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {comments.map((comment) => (
+              <CommentItem
+                key={comment.id}
+                comment={comment}
+                onDelete={handleDeleteComment}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {videoId && (
