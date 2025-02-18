@@ -67,8 +67,8 @@ export const PostCard = ({
         </div>
       )}
 
-      <div className="p-4 cursor-pointer" onClick={handleCardClick}>
-        <div className="flex items-center gap-3 mb-4">
+      <div className="p-4">
+        <div className="flex items-center gap-3 mb-4 cursor-pointer" onClick={handleCardClick}>
           <Avatar className="h-10 w-10 border-2 border-primary/10">
             <AvatarImage 
               src={avatarUrl}
@@ -102,7 +102,7 @@ export const PostCard = ({
           </div>
         </div>
           
-        <div className="flex gap-4">
+        <div className="flex gap-4 cursor-pointer" onClick={handleCardClick}>
           <div className={cn(
             "flex-1 space-y-2",
             hasMedia && "max-w-[70%]"
@@ -122,8 +122,8 @@ export const PostCard = ({
           </div>
 
           {hasMedia && (
-            <div className="relative w-[30%]">
-              <div className="h-[120px]">
+            <div className="w-[30%]">
+              <div className="h-[120px] rounded-lg overflow-hidden">
                 <MediaGallery 
                   files={[post.file_urls[0]]}
                 />
@@ -137,15 +137,9 @@ export const PostCard = ({
           )}
         </div>
       </div>
-        
-      <div className={cn(
-        "px-4 pb-4",
-        hasMedia && "relative mt-[-20px]"
-      )}>
-        <div className={cn(
-          "flex items-center justify-between",
-          hasMedia && "bg-gradient-to-t from-background via-background/95 to-background/0 px-4 py-3 rounded-t-xl"
-        )}>
+
+      <div className="px-4 pb-4 border-t">
+        <div className="flex items-center justify-between pt-3">
           <PostReactions postId={post.id} teamId={teamSlug} />
           <PostActions 
             postId={post.id} 
