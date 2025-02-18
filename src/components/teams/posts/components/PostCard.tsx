@@ -93,7 +93,7 @@ export const PostCard = ({
   const lineClamp = post.pinned ? "line-clamp-4" : "line-clamp-2";
 
   // Erstelle einen deutlicheren Hintergrund basierend auf der Kategoriefarbe
-  const backgroundColor = `${categoryColor}4D`; // 4D = 30% Opacity in Hex
+  const backgroundColor = `${categoryColor}80`; // 80 = 50% Opacity in Hex
 
   return (
     <>
