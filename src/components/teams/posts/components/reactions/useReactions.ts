@@ -11,6 +11,14 @@ interface Reaction {
   hasReacted: boolean;
 }
 
+const POINTS_CONFIG = {
+  '👍': { give: 2, receive: 1 },
+  '❤️': { give: 3, receive: 2 },
+  '😂': { give: 2, receive: 1 },
+  '🎉': { give: 4, receive: 3 },
+  '😮': { give: 2, receive: 1 }
+} as const;
+
 export const useReactions = (postId: string) => {
   const user = useUser();
   const queryClient = useQueryClient();
@@ -79,7 +87,6 @@ export const useReactions = (postId: string) => {
         .select('id')
         .eq('post_id', postId)
         .eq('created_by', user.id)
-        .eq('reaction_type', emoji)
         .maybeSingle();
 
       if (existingReaction) {
@@ -88,6 +95,22 @@ export const useReactions = (postId: string) => {
           .delete()
           .eq('id', existingReaction.id);
       } else {
+        // Prüfe zuerst, ob der User bereits eine andere Reaktion hat
+        const { data: userReactions } = await supabase
+          .from('team_post_reactions')
+          .select('id')
+          .eq('post_id', postId)
+          .eq('created_by', user.id);
+
+        // Wenn bereits eine Reaktion existiert, diese zuerst löschen
+        if (userReactions && userReactions.length > 0) {
+          await supabase
+            .from('team_post_reactions')
+            .delete()
+            .eq('id', userReactions[0].id);
+        }
+
+        // Neue Reaktion hinzufügen
         await supabase
           .from('team_post_reactions')
           .insert({

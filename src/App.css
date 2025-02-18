@@ -52,3 +52,41 @@ padding-right: 0px !important;
   -webkit-background-clip: text;
   color: transparent;
 }
+
+/* Animation classes for reactions */
+.bounce-blue {
+  animation: bounce 0.3s ease-in-out;
+}
+
+.pulse-red {
+  animation: pulse 0.3s ease-in-out;
+}
+
+.bounce-yellow {
+  animation: bounce 0.3s ease-in-out;
+}
+
+.explode-green {
+  animation: explode 0.4s ease-out;
+}
+
+.pulse-purple {
+  animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+@keyframes explode {
+  0% { transform: scale(0.5); opacity: 0; }
+  50% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
