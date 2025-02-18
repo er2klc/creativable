@@ -19,7 +19,6 @@ export const MediaGallery = ({ files }: MediaGalleryProps) => {
     if (url.startsWith('/storage/')) {
       return `${import.meta.env.VITE_SUPABASE_URL}${url}`;
     }
-    // Handle relative URLs
     return `${window.location.origin}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
@@ -30,7 +29,7 @@ export const MediaGallery = ({ files }: MediaGalleryProps) => {
   return (
     <>
       <div className={cn(
-        "grid gap-2 mt-4",
+        "grid gap-2",
         mediaFiles.length === 1 ? "grid-cols-1" : 
         mediaFiles.length === 2 ? "grid-cols-2" :
         "grid-cols-2 sm:grid-cols-3"
@@ -51,16 +50,19 @@ export const MediaGallery = ({ files }: MediaGalleryProps) => {
       </div>
 
       <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
-        <DialogContent className="max-w-4xl p-0 bg-transparent border-none">
-          {selectedImage && (
-            <img
-              src={getPublicUrl(selectedImage)}
-              alt="Preview"
-              className="w-full h-full object-contain rounded-lg"
-            />
-          )}
+        <DialogContent className="max-w-2xl max-h-[90vh] p-2 bg-transparent border-none">
+          <div className="relative w-full h-full overflow-auto">
+            {selectedImage && (
+              <img
+                src={getPublicUrl(selectedImage)}
+                alt="Preview"
+                className="w-full h-auto max-h-[80vh] object-contain rounded-lg mx-auto"
+              />
+            )}
+          </div>
         </DialogContent>
       </Dialog>
     </>
   );
 };
+

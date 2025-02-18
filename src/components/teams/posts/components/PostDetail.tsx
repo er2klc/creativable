@@ -52,6 +52,7 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   }
 
   const isAuthor = user?.id === post.created_by;
+  const hasMedia = post.file_urls && post.file_urls.length > 0;
 
   return (
     <div className="space-y-6">
@@ -65,63 +66,72 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
       </Button>
 
       <Card className="p-6">
-        <div className="space-y-6">
-          {/* Header */}
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <Avatar className="h-10 w-10">
-                <AvatarImage src={post.author.avatar_url || ""} />
-                <AvatarFallback>
-                  {post.author.display_name?.substring(0, 2).toUpperCase() || "??"}
-                </AvatarFallback>
-              </Avatar>
-              <div className="space-y-1">
-                <div className="font-medium">{post.author.display_name}</div>
-                <div className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(post.created_at), {
-                    addSuffix: true,
-                    locale: de,
-                  })}
-                  {post.edited && (
-                    <>
-                      <span className="mx-1">•</span>
-                      <span>
-                        Bearbeitet {formatDistanceToNow(new Date(post.last_edited_at!), {
-                          addSuffix: true,
-                          locale: de,
-                        })}
-                      </span>
-                    </>
-                  )}
+        <div className={cn(
+          "grid gap-6",
+          hasMedia ? "lg:grid-cols-2" : "grid-cols-1"
+        )}>
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={post.author.avatar_url || ""} />
+                  <AvatarFallback>
+                    {post.author.display_name?.substring(0, 2).toUpperCase() || "??"}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="space-y-1">
+                  <div className="font-medium">{post.author.display_name}</div>
+                  <div className="text-sm text-muted-foreground">
+                    {formatDistanceToNow(new Date(post.created_at), {
+                      addSuffix: true,
+                      locale: de,
+                    })}
+                    {post.edited && (
+                      <>
+                        <span className="mx-1">•</span>
+                        <span>
+                          Bearbeitet {formatDistanceToNow(new Date(post.last_edited_at!), {
+                            addSuffix: true,
+                            locale: de,
+                          })}
+                        </span>
+                      </>
+                    )}
+                  </div>
                 </div>
               </div>
+              <div className="flex items-center gap-2">
+                <PostActions 
+                  postId={post.id} 
+                  teamId={post.team_id}
+                  isSubscribed={isSubscribed}
+                />
+                {isAuthor && <EditPostDialog post={post} teamId={post.team_id} />}
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <PostActions 
-                postId={post.id} 
-                teamId={post.team_id}
-                isSubscribed={isSubscribed}
-              />
-              {isAuthor && <EditPostDialog post={post} teamId={post.team_id} />}
+            
+            {/* Title & Category */}
+            <div className="space-y-4">
+              <h1 className="text-2xl font-bold">{post.title}</h1>
+              <Badge variant="outline">
+                {post.team_categories.name}
+              </Badge>
             </div>
-          </div>
-          
-          {/* Title & Category */}
-          <div className="space-y-4">
-            <h1 className="text-2xl font-bold">{post.title}</h1>
-            <Badge variant="outline">
-              {post.team_categories.name}
-            </Badge>
-          </div>
 
-          {/* Content */}
-          <div 
-            className="prose max-w-none"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
+            {/* Content */}
+            <div 
+              className="prose max-w-none"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+          </div>
 
           {/* Media Gallery */}
-          {post.file_urls && <MediaGallery files={post.file_urls} />}
+          {hasMedia && (
+            <div className="lg:pl-6">
+              <MediaGallery files={post.file_urls} />
+            </div>
+          )}
         </div>
       </Card>
 
@@ -163,3 +173,4 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
     </div>
   );
 };
+
