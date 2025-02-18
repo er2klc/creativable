@@ -110,7 +110,7 @@ export const CategoryOverview = ({
           "grid gap-4 auto-rows-auto",
           categorySlug 
             ? "grid-cols-1" // Kategorie-Ansicht: Eine Spalte
-            : "grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))" // Hauptseite: Auto-fill Grid
+            : "grid-cols-[repeat(auto-fill,minmax(300px,1fr))]" // Korrekte Tailwind-Syntax für auto-fill Grid
         )}>
           {regularPosts.map((post) => (
             <PostCard
