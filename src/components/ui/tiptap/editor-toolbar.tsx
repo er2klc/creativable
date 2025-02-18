@@ -18,6 +18,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { EventSelector } from '../../teams/posts/dialog/EventSelector';
+import { cn } from '@/lib/utils';
 
 interface EditorToolbarProps {
   editor: Editor;
@@ -29,20 +30,41 @@ interface EditorToolbarProps {
   teamId?: string;
 }
 
-const commonEmojis = [
-  { native: "😊", id: "smile" },
-  { native: "👍", id: "thumbsup" },
-  { native: "🎉", id: "party" },
-  { native: "❤️", id: "heart" },
-  { native: "🔥", id: "fire" },
-  { native: "✨", id: "sparkles" },
-  { native: "🙌", id: "raised_hands" },
-  { native: "👏", id: "clap" },
-  { native: "🤝", id: "handshake" },
-  { native: "💡", id: "bulb" },
-  { native: "⭐", id: "star" },
-  { native: "💪", id: "muscle" },
-];
+// Erweiterte Emoji-Liste mit Kategorien
+const emojiCategories = {
+  "Smileys": [
+    { native: "😊", id: "smile" },
+    { native: "😄", id: "smile_big" },
+    { native: "🥰", id: "love" },
+    { native: "😎", id: "cool" },
+    { native: "🤩", id: "star_eyes" },
+    { native: "😇", id: "innocent" }
+  ],
+  "Gesten": [
+    { native: "👍", id: "thumbsup" },
+    { native: "🙌", id: "raised_hands" },
+    { native: "👏", id: "clap" },
+    { native: "🤝", id: "handshake" },
+    { native: "✌️", id: "peace" },
+    { native: "💪", id: "muscle" }
+  ],
+  "Symbole": [
+    { native: "❤️", id: "heart" },
+    { native: "✨", id: "sparkles" },
+    { native: "🔥", id: "fire" },
+    { native: "⭐", id: "star" },
+    { native: "💡", id: "bulb" },
+    { native: "💯", id: "hundred" }
+  ],
+  "Business": [
+    { native: "💼", id: "briefcase" },
+    { native: "📈", id: "chart" },
+    { native: "🎯", id: "target" },
+    { native: "🚀", id: "rocket" },
+    { native: "💰", id: "money" },
+    { native: "🤔", id: "thinking" }
+  ]
+};
 
 export function EditorToolbar({ 
   editor, 
@@ -75,16 +97,22 @@ export function EditorToolbar({
 
   const handleEventSelect = (events: any[]) => {
     const eventContent = events.map(event => `
-      <div class="p-4 my-2 border rounded-lg" style="border-left: 4px solid ${event.color}">
-        <h4 class="font-medium">${event.title}</h4>
-        <p class="text-sm text-gray-500">${new Date(event.start_time).toLocaleString('de-DE', {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        })}</p>
+      <div class="p-4 my-2 border rounded-lg transition-colors hover:bg-accent/50" 
+           style="border-left: 4px solid ${event.color}">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="font-medium">${event.title}</h4>
+            <p class="text-sm text-muted-foreground">${new Date(event.start_time).toLocaleString('de-DE', {
+              weekday: 'long',
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</p>
+          </div>
+          ${event.is_team_event ? '<span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">Team Event</span>' : ''}
+        </div>
       </div>
     `).join('');
 
@@ -160,21 +188,29 @@ export function EditorToolbar({
             <Smile className="h-4 w-4" />
           </Button>
           {isEmojiOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-background border rounded-md shadow-md z-50">
-              <div className="grid grid-cols-6 gap-1 p-2">
-                {commonEmojis.map((emoji) => (
-                  <Button
-                    key={emoji.id}
-                    variant="ghost"
-                    className="h-8 w-8 p-0 hover:bg-muted"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleEmojiClick(emoji.native);
-                    }}
-                  >
-                    <span className="text-lg">{emoji.native}</span>
-                  </Button>
+            <div className="absolute top-full left-0 mt-1 bg-background border rounded-lg shadow-lg z-50 min-w-[320px]">
+              <div className="p-2 space-y-3">
+                {Object.entries(emojiCategories).map(([category, emojis]) => (
+                  <div key={category}>
+                    <h3 className="text-xs font-medium text-muted-foreground mb-1 px-2">{category}</h3>
+                    <div className="grid grid-cols-8 gap-1">
+                      {emojis.map((emoji) => (
+                        <Button
+                          key={emoji.id}
+                          variant="ghost"
+                          className="h-8 w-8 p-0 hover:bg-muted"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleEmojiClick(emoji.native);
+                          }}
+                          title={emoji.id}
+                        >
+                          <span className="text-lg">{emoji.native}</span>
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>
