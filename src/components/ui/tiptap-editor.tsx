@@ -5,6 +5,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
 import Image from '@tiptap/extension-image';
 import Underline from '@tiptap/extension-underline';
+import Link from '@tiptap/extension-link';
 import { Button } from './button';
 import { 
   Bold, 
@@ -15,7 +16,8 @@ import {
   Quote, 
   Hash,
   Image as ImageIcon,
-  Heading2
+  Heading2,
+  Link as LinkIcon
 } from 'lucide-react';
 
 interface TiptapEditorProps {
@@ -37,8 +39,21 @@ export function TiptapEditor({
 }: TiptapEditorProps) {
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        hardBreak: true,
+        paragraph: {
+          keepMarks: true,
+        }
+      }),
       Underline,
+      Link.configure({
+        openOnClick: true,
+        linkOnPaste: true,
+        autolink: true,
+        HTMLAttributes: {
+          class: 'text-primary underline hover:text-primary/80 transition-colors'
+        }
+      }),
       Mention.configure({
         HTMLAttributes: { class: 'mention' },
         suggestion: {
@@ -87,6 +102,22 @@ export function TiptapEditor({
   if (!editor) {
     return null;
   }
+
+  const setLink = () => {
+    const previousUrl = editor.getAttributes('link').href;
+    const url = window.prompt('URL eingeben:', previousUrl);
+
+    if (url === null) {
+      return;
+    }
+
+    if (url === '') {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+
+    editor.chain().focus().setLink({ href: url }).run();
+  };
 
   return (
     <div className="border rounded-md w-full overflow-hidden">
@@ -145,6 +176,12 @@ export function TiptapEditor({
             <ImageIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton 
+            onClick={setLink}
+            active={editor.isActive('link')}
+          >
+            <LinkIcon className="h-4 w-4" />
+          </ToolbarButton>
+          <ToolbarButton 
             onClick={() => {
               const tag = window.prompt('Enter hashtag:');
               if (tag && onHashtag) {
@@ -171,11 +208,11 @@ function ToolbarButton({ onClick, active, children }: {
 }) {
   return (
     <Button
-      type="button" // Explizit type="button" setzen
+      type="button"
       variant="ghost"
       size="sm"
       onClick={(e) => {
-        e.preventDefault(); // Prevent form submission
+        e.preventDefault();
         onClick();
       }}
       className={`h-8 w-8 p-0 ${active ? 'bg-muted' : ''}`}
