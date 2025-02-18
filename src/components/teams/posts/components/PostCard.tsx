@@ -41,14 +41,19 @@ export const PostCard = ({
   const displayName = post.author.display_name || 'Unbekannt';
   const avatarUrl = getAvatarUrl(post.author.avatar_url, post.author.email);
 
+  const handleCardClick = () => {
+    navigate(`/unity/team/${teamSlug}/posts/${post.slug}`);
+  };
+
+  const effectiveSize = post.pinned ? 'large' : size;
+
   return (
     <Card 
       className={cn(
-        "hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden",
-        sizeToGridClass[size],
+        "hover:shadow-lg transition-all duration-200 overflow-hidden h-full",
+        sizeToGridClass[effectiveSize],
         post.pinned && "shadow-md"
       )}
-      onClick={() => navigate(`/unity/team/${teamSlug}/posts/${post.slug}`)}
     >
       {post.pinned && (
         <div className="bg-[#FFF8E7] px-4 py-2 flex items-center gap-2 text-yellow-800 border-b border-yellow-200">
@@ -57,7 +62,7 @@ export const PostCard = ({
         </div>
       )}
 
-      <div className="p-4 space-y-4">
+      <div className="p-4 space-y-4 cursor-pointer" onClick={handleCardClick}>
         <div className="flex items-center gap-3">
           <Avatar className="h-10 w-10 border-2 border-primary/10">
             <AvatarImage 
