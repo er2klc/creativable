@@ -140,9 +140,11 @@ export const PostCard = ({
                 <Badge 
                   style={{
                     backgroundColor: categoryColor,
-                    color: 'white'
-                  }}
-                  className="transition-opacity hover:opacity-90"
+                    color: 'white',
+                    opacity: 1,
+                    '--tw-bg-opacity': '1'
+                  } as React.CSSProperties}
+                  className="transition-colors"
                   onClick={(e) => {
                     e.stopPropagation();
                     navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
