@@ -29,6 +29,9 @@ export const CommentEditor = ({
           onChange={setContent}
           placeholder="Schreibe einen Kommentar... (@mention für Erwähnungen)"
           teamMembers={teamMembers}
+          onMention={(userId) => {
+            console.log('Mentioned user:', userId);
+          }}
           editorProps={{
             attributes: {
               class: 'prose-sm focus:outline-none min-h-[50px] max-h-[150px] p-3 whitespace-pre-wrap rounded-lg bg-background',

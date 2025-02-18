@@ -28,13 +28,20 @@ export const useTeamMembers = (teamId: string) => {
           user_id,
           profiles:user_id (
             id,
-            display_name
+            display_name,
+            avatar_url
           )
         `)
         .eq('team_id', team.id);
 
       if (error) throw error;
-      return data;
+
+      // Transform the data structure to match what TipTap expects
+      return data.map(member => ({
+        id: member.profiles.id,
+        display_name: member.profiles.display_name,
+        avatar_url: member.profiles.avatar_url
+      }));
     },
     enabled: !!team?.id, // Only run this query once we have the team ID
   });
