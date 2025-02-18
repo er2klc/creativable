@@ -6,24 +6,8 @@ import Mention from '@tiptap/extension-mention';
 import Image from '@tiptap/extension-image';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
-import { Button } from './button';
 import { InputDialog } from './input-dialog';
-import data from '@emoji-mart/data';
-import Picker from '@emoji-mart/react';
-import { 
-  Bold, 
-  Italic, 
-  Underline as UnderlineIcon, 
-  List, 
-  ListOrdered, 
-  Quote, 
-  Hash,
-  Image as ImageIcon,
-  Heading2,
-  Link as LinkIcon,
-  Smile
-} from 'lucide-react';
-import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { EditorToolbar } from './tiptap/editor-toolbar';
 
 interface TiptapEditorProps {
   content: string;
@@ -155,88 +139,13 @@ export function TiptapEditor({
 
   return (
     <div className="border rounded-md w-full overflow-hidden flex flex-col">
-      <div className="sticky top-0 z-10 bg-background border-b">
-        <div className="flex flex-wrap gap-1 p-2">
-          <ToolbarButton 
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            active={editor.isActive('bold')}
-          >
-            <Bold className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton 
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            active={editor.isActive('italic')}
-          >
-            <Italic className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton 
-            onClick={() => editor.chain().focus().toggleUnderline().run()}
-            active={editor.isActive('underline')}
-          >
-            <UnderlineIcon className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton 
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-            active={editor.isActive('heading', { level: 2 })}
-          >
-            <Heading2 className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton 
-            onClick={() => editor.chain().focus().toggleBulletList().run()}
-            active={editor.isActive('bulletList')}
-          >
-            <List className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton 
-            onClick={() => editor.chain().focus().toggleOrderedList().run()}
-            active={editor.isActive('orderedList')}
-          >
-            <ListOrdered className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton 
-            onClick={() => editor.chain().focus().toggleBlockquote().run()}
-            active={editor.isActive('blockquote')}
-          >
-            <Quote className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton 
-            onClick={() => setShowImageDialog(true)}
-          >
-            <ImageIcon className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton 
-            onClick={() => setShowLinkDialog(true)}
-            active={editor.isActive('link')}
-          >
-            <LinkIcon className="h-4 w-4" />
-          </ToolbarButton>
-          <ToolbarButton 
-            onClick={() => setShowHashtagDialog(true)}
-          >
-            <Hash className="h-4 w-4" />
-          </ToolbarButton>
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-              >
-                <Smile className="h-4 w-4" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="end">
-              <Picker 
-                data={data} 
-                onEmojiSelect={handleEmojiSelect}
-                theme="light"
-                skinTonePosition="none"
-              />
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+      <EditorToolbar 
+        editor={editor}
+        onImageClick={() => setShowImageDialog(true)}
+        onLinkClick={() => setShowLinkDialog(true)}
+        onHashtagClick={() => setShowHashtagDialog(true)}
+        onEmojiSelect={handleEmojiSelect}
+      />
 
       <div className="flex-1 overflow-y-auto">
         <div className="px-3 py-2">
@@ -269,26 +178,5 @@ export function TiptapEditor({
         placeholder="hashtag"
       />
     </div>
-  );
-}
-
-function ToolbarButton({ onClick, active, children }: { 
-  onClick: () => void; 
-  active?: boolean; 
-  children: React.ReactNode 
-}) {
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="sm"
-      onClick={(e) => {
-        e.preventDefault();
-        onClick();
-      }}
-      className={`h-8 w-8 p-0 ${active ? 'bg-muted' : ''}`}
-    >
-      {children}
-    </Button>
   );
 }
