@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
@@ -14,6 +13,7 @@ import { MediaGallery } from "./media-gallery/MediaGallery";
 import { PostActions } from "./actions/PostActions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface PostDetailProps {
   post: Post | null;
@@ -173,4 +173,3 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
     </div>
   );
 };
-
