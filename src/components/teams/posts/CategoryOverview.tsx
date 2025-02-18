@@ -110,14 +110,14 @@ export const CategoryOverview = ({
           "grid gap-4 auto-rows-auto",
           categorySlug 
             ? "grid-cols-1" // Kategorie-Ansicht: Eine Spalte
-            : "grid-cols-[repeat(auto-fill,minmax(300px,1fr))]" // Korrekte Tailwind-Syntax für auto-fill Grid
+            : "grid-cols-[repeat(auto-fill,minmax(300px,1fr))] grid-auto-flow-dense" // Grid mit dense packing
         )}>
           {regularPosts.map((post) => (
             <PostCard
               key={post.id}
               post={post}
               teamSlug={teamSlug}
-              size={categorySlug ? 'large' : 'medium'} // Einheitliche Größe für bessere Verteilung
+              size={categorySlug ? 'large' : defaultSize}
               isAdmin={isAdmin}
             />
           ))}
