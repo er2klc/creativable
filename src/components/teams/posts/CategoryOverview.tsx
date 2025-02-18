@@ -1,12 +1,11 @@
 
-import { useCallback } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { Card } from "@/components/ui/card";
+import { useTeamPosts } from "./hooks/useTeamPosts";
+import { PostCard } from "./components/PostCard";
+import { CreatePostDialog } from "./dialog/CreatePostDialog";
+import { useTeamMemberRole } from "@/hooks/useTeamMemberRole";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PostCard } from "./PostCard";
-import { CreatePostDialog } from "./CreatePostDialog";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 interface CategoryOverviewProps {
   teamId: string;
@@ -17,157 +16,125 @@ interface CategoryOverviewProps {
 
 export const CategoryOverview = ({ 
   teamId, 
-  teamSlug,
+  teamSlug, 
   categorySlug,
   canPost 
 }: CategoryOverviewProps) => {
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [isIntroCategory, setIsIntroCategory] = useState(false);
-  const [currentCategoryId, setCurrentCategoryId] = useState<string>();
-  const navigate = useNavigate();
-
-  const fetchPosts = useCallback(async ({ pageParam = 0 }) => {
-    try {
-      console.log('Fetching posts for team:', teamId, 'category:', categorySlug);
-      
-      let categoryId: string | undefined;
-      
-      if (categorySlug && categorySlug !== 'all') {
-        const { data: categories, error: categoryError } = await supabase
-          .from('team_categories')
-          .select('*')
-          .eq('slug', categorySlug)
-          .eq('team_id', teamId);
-
-        if (categoryError) {
-          console.error('Error fetching category:', categoryError);
-          throw categoryError;
-        }
-
-        if (categories && categories.length > 0) {
-          categoryId = categories[0].id;
-          setCurrentCategoryId(categoryId);
-          setIsIntroCategory(categories[0].name === 'Vorstellung');
-        }
-      }
-
-      let query = supabase
-        .from('team_posts')
-        .select(`
-          *,
-          author:profiles!team_posts_created_by_fkey (
-            id,
-            display_name,
-            avatar_url,
-            email
-          ),
-          team_categories (
-            id,
-            name,
-            slug,
-            color
-          )
-        `)
-        .eq('team_id', teamId);
-
-      if (categoryId) {
-        query = query.eq('category_id', categoryId);
-      }
-
-      const { data, error } = await query
-        .order('pinned', { ascending: false })
-        .order('created_at', { ascending: false })
-        .range(pageParam * 10, (pageParam + 1) * 10 - 1);
-
-      if (error) {
-        console.error('Error fetching posts:', error);
-        throw error;
-      }
-
-      // Transform data to match expected format
-      const transformedData = data?.map(post => ({
-        ...post,
-        team_categories: post.team_categories,
-        author: post.author,
-        team_post_comments: 0 // This will be updated when we implement comments
-      })) || [];
-
-      console.log('Fetched and transformed posts:', transformedData);
-      return transformedData;
-    } catch (error) {
-      console.error('Error in fetchPosts:', error);
-      throw error;
-    }
-  }, [teamId, categorySlug]);
-
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    status,
-  } = useInfiniteQuery({
-    queryKey: ['team-posts', teamId, categorySlug],
-    queryFn: fetchPosts,
-    getNextPageParam: (lastPage) => {
-      if (!lastPage || !Array.isArray(lastPage) || lastPage.length < 10) {
-        return undefined;
-      }
-      return lastPage.length;
+  const { data: categoryId } = useQuery({
+    queryKey: ['category-id', categorySlug],
+    queryFn: async () => {
+      if (!categorySlug) return null;
+      const { data } = await supabase
+        .from('team_categories')
+        .select('id')
+        .eq('team_id', teamId)
+        .eq('slug', categorySlug)
+        .single();
+      return data?.id;
     },
-    initialPageParam: 0
+    enabled: !!categorySlug
   });
 
-  const handlePostCreated = (postId: string, postSlug: string) => {
-    setShowCreateDialog(false);
-    toast.success("Beitrag erfolgreich erstellt");
-    navigate(`/unity/team/${teamSlug}/posts/${postSlug}`);
-  };
+  const { data: categorySettings } = useQuery({
+    queryKey: ['category-settings', categoryId],
+    queryFn: async () => {
+      if (!categoryId) return null;
+      const { data } = await supabase
+        .from('team_category_settings')
+        .select('size')
+        .eq('category_id', categoryId)
+        .single();
+      return data;
+    },
+    enabled: !!categoryId
+  });
 
-  if (status === "loading") {
-    return <div>Lädt...</div>;
+  const { role } = useTeamMemberRole(teamId);
+  const isAdmin = role === 'admin' || role === 'owner';
+  
+  const { data: posts, isLoading } = useTeamPosts(teamId, categoryId);
+
+  if (isLoading) {
+    return (
+      <Card className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-primary/10 rounded w-1/4"></div>
+          <div className="h-4 bg-primary/10 rounded w-3/4"></div>
+        </div>
+      </Card>
+    );
   }
 
-  if (status === "error") {
-    return <div>Error loading posts</div>;
+  if (!posts?.length) {
+    return (
+      <Card className="p-6">
+        <div className="text-center space-y-4">
+          <p className="text-lg font-medium text-muted-foreground">
+            Keine Beiträge gefunden
+          </p>
+          {canPost && (
+            <CreatePostDialog 
+              teamId={teamId} 
+              categoryId={categoryId || ''} 
+            />
+          )}
+        </div>
+      </Card>
+    );
   }
 
-  const posts = data?.pages.flat() || [];
+  const pinnedPosts = posts.filter(post => post.pinned);
+  const regularPosts = posts.filter(post => !post.pinned);
+  const size = categorySettings?.size || 'medium';
 
   return (
-    <div className="space-y-4">
-      {showCreateDialog && (
-        <CreatePostDialog
-          teamId={teamId}
-          categoryId={currentCategoryId}
-          onClose={() => setShowCreateDialog(false)}
-          onPostCreated={handlePostCreated}
-        />
-      )}
-
-      {posts.map((post) => (
-        <PostCard
-          key={post.id}
-          post={post}
-          teamSlug={teamSlug}
-        />
-      ))}
-      
-      {hasNextPage && (
-        <button
-          onClick={() => fetchNextPage()}
-          disabled={isFetchingNextPage}
-          className="w-full p-4 text-center text-sm text-muted-foreground hover:text-foreground transition-colors"
-        >
-          {isFetchingNextPage ? 'Lädt mehr...' : 'Mehr laden'}
-        </button>
-      )}
-
-      {posts.length === 0 && (
-        <div className="text-center p-8 text-muted-foreground">
-          Keine Beiträge gefunden
+    <div className="space-y-8">
+      {canPost && (
+        <div className="flex justify-end">
+          <CreatePostDialog 
+            teamId={teamId} 
+            categoryId={categoryId || ''} 
+          />
         </div>
       )}
+
+      {pinnedPosts.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-lg font-semibold">
+            Angepinnte Beiträge
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {pinnedPosts.map((post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                teamSlug={teamSlug}
+                size={size}
+                isAdmin={isAdmin}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="space-y-4">
+        {pinnedPosts.length > 0 && (
+          <h2 className="text-lg font-semibold">
+            Alle Beiträge
+          </h2>
+        )}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {regularPosts.map((post) => (
+            <PostCard
+              key={post.id}
+              post={post}
+              teamSlug={teamSlug}
+              size={size}
+              isAdmin={isAdmin}
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

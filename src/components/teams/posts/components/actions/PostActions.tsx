@@ -1,5 +1,5 @@
 
-import { Bell, Link2, Flag } from "lucide-react";
+import { Bell, BellOff, Link2, Flag, Pin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -13,13 +13,17 @@ interface PostActionsProps {
   teamId: string;
   isSubscribed: boolean;
   postTitle: string;
+  isAdmin?: boolean;
+  isPinned?: boolean;
 }
 
 export const PostActions = ({ 
   postId, 
   teamId,
   isSubscribed,
-  postTitle
+  postTitle,
+  isAdmin = false,
+  isPinned = false
 }: PostActionsProps) => {
   const queryClient = useQueryClient();
   const [isReportDialogOpen, setIsReportDialogOpen] = useState(false);
@@ -51,6 +55,23 @@ export const PostActions = ({
     }
   };
 
+  const handlePinToggle = async () => {
+    try {
+      const { error } = await supabase
+        .from('team_posts')
+        .update({ pinned: !isPinned })
+        .eq('id', postId);
+
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['team-posts'] });
+      toast.success(isPinned ? "Beitrag nicht mehr angepinnt" : "Beitrag angepinnt");
+    } catch (error) {
+      console.error('Error toggling pin:', error);
+      toast.error("Fehler beim Ändern des Pin-Status");
+    }
+  };
+
   const handleCopyUrl = () => {
     navigator.clipboard.writeText(window.location.href);
     toast.success("Link kopiert!");
@@ -58,6 +79,20 @@ export const PostActions = ({
 
   return (
     <div className="flex items-center gap-2">
+      {isAdmin && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handlePinToggle}
+          className={cn(
+            "text-muted-foreground hover:text-primary",
+            isPinned && "text-primary"
+          )}
+        >
+          <Pin className={cn("h-4 w-4", isPinned && "fill-current")} />
+        </Button>
+      )}
+
       <Button
         variant="ghost"
         size="sm"
@@ -67,7 +102,11 @@ export const PostActions = ({
           isSubscribed && "text-primary"
         )}
       >
-        <Bell className="h-4 w-4" />
+        {isSubscribed ? (
+          <Bell className="h-4 w-4" />
+        ) : (
+          <BellOff className="h-4 w-4" />
+        )}
       </Button>
 
       <Button
