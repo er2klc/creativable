@@ -3,6 +3,7 @@ import { Editor } from '@tiptap/react';
 import { ToolbarButton } from './toolbar-button';
 import { Button } from '../button';
 import { Popover, PopoverContent, PopoverTrigger } from '../popover';
+import { useState } from 'react';
 import { 
   Bold, 
   Italic, 
@@ -47,8 +48,11 @@ export function EditorToolbar({
   onHashtagClick,
   onEmojiSelect
 }: EditorToolbarProps) {
+  const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+
   const handleEmojiClick = (emoji: string) => {
     onEmojiSelect(emoji);
+    setIsEmojiOpen(false); // Manuell schließen nach der Auswahl
   };
 
   return (
@@ -108,7 +112,7 @@ export function EditorToolbar({
         <ToolbarButton onClick={() => onHashtagClick()}>
           <Hash className="h-4 w-4" />
         </ToolbarButton>
-        <Popover>
+        <Popover open={isEmojiOpen} onOpenChange={setIsEmojiOpen}>
           <PopoverTrigger asChild>
             <Button
               type="button"
@@ -127,10 +131,6 @@ export function EditorToolbar({
                   key={emoji.id}
                   variant="ghost"
                   className="h-8 w-8 p-0 hover:bg-muted"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
