@@ -1,3 +1,4 @@
+
 import { Editor } from '@tiptap/react';
 import { ToolbarButton } from './toolbar-button';
 import { Button } from '../button';
@@ -224,30 +225,56 @@ export function EditorToolbar({
             <Smile className="h-4 w-4" />
           </Button>
           {isEmojiOpen && (
-            <div className="absolute top-full left-0 mt-1 bg-background border rounded-lg shadow-lg z-50 min-w-[320px]">
-              <div className="p-2 space-y-3">
-                {Object.entries(emojiCategories).map(([category, emojis]) => (
-                  <div key={category}>
-                    <h3 className="text-xs font-medium text-muted-foreground mb-1 px-2">{category}</h3>
-                    <div className="grid grid-cols-8 gap-1">
-                      {emojis.map((emoji) => (
-                        <Button
-                          key={emoji.id}
-                          variant="ghost"
-                          className="h-8 w-8 p-0 hover:bg-muted"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleEmojiClick(emoji.native);
-                          }}
-                          title={emoji.id}
-                        >
-                          <span className="text-lg">{emoji.native}</span>
-                        </Button>
-                      ))}
+            <div className="absolute top-full left-0 mt-1 bg-background border rounded-lg shadow-lg z-50 min-w-[600px]">
+              <div className="grid grid-cols-2 gap-4 p-4">
+                <div className="space-y-4">
+                  {Object.entries(emojiCategories).slice(0, Math.ceil(Object.keys(emojiCategories).length / 2)).map(([category, emojis]) => (
+                    <div key={category}>
+                      <h3 className="text-xs font-medium text-muted-foreground mb-2">{category}</h3>
+                      <div className="grid grid-cols-4 gap-2">
+                        {emojis.map((emoji) => (
+                          <Button
+                            key={emoji.id}
+                            variant="ghost"
+                            className="h-10 w-10 p-0 hover:bg-muted"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEmojiClick(emoji.native);
+                            }}
+                            title={emoji.id}
+                          >
+                            <span className="text-xl">{emoji.native}</span>
+                          </Button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <div className="space-y-4">
+                  {Object.entries(emojiCategories).slice(Math.ceil(Object.keys(emojiCategories).length / 2)).map(([category, emojis]) => (
+                    <div key={category}>
+                      <h3 className="text-xs font-medium text-muted-foreground mb-2">{category}</h3>
+                      <div className="grid grid-cols-4 gap-2">
+                        {emojis.map((emoji) => (
+                          <Button
+                            key={emoji.id}
+                            variant="ghost"
+                            className="h-10 w-10 p-0 hover:bg-muted"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEmojiClick(emoji.native);
+                            }}
+                            title={emoji.id}
+                          >
+                            <span className="text-xl">{emoji.native}</span>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
