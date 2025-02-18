@@ -7,9 +7,11 @@ interface ContentFieldProps {
   form: UseFormReturn<any>;
   teamMembers?: any[];
   preventSubmitOnEnter?: boolean;
+  isAdmin?: boolean;
+  teamId?: string;
 }
 
-export const ContentField = ({ form, teamMembers, preventSubmitOnEnter = false }: ContentFieldProps) => {
+export const ContentField = ({ form, teamMembers, preventSubmitOnEnter = false, isAdmin = false, teamId }: ContentFieldProps) => {
   return (
     <FormField
       control={form.control}
@@ -39,6 +41,8 @@ export const ContentField = ({ form, teamMembers, preventSubmitOnEnter = false }
                   }
                 }
               }}
+              isAdmin={isAdmin}
+              teamId={teamId}
             />
           </FormControl>
           <FormMessage />

@@ -84,6 +84,8 @@ export const CreatePostForm = ({
             form={form} 
             teamMembers={teamMembers}
             preventSubmitOnEnter={true}
+            isAdmin={isAdmin}
+            teamId={teamId}
           />
           <FileField 
             form={form} 
