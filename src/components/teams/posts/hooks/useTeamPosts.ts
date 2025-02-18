@@ -19,7 +19,9 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
               name,
               slug,
               color,
-              settings:team_category_settings!team_categories_id_fkey(size)
+              team_category_settings!inner (
+                size
+              )
             ),
             author:profiles!team_posts_created_by_fkey (
               id,
@@ -56,7 +58,9 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           ...post,
           team_categories: {
             ...post.team_categories,
-            settings: post.team_categories.settings?.[0] || { size: 'medium' }
+            settings: {
+              size: post.team_categories.team_category_settings?.[0]?.size || 'medium'
+            }
           },
           team_post_comments: post.team_post_comments?.length || 0,
           author: {
