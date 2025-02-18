@@ -1,4 +1,3 @@
-
 import { Editor } from '@tiptap/react';
 import { ToolbarButton } from './toolbar-button';
 import { Button } from '../button';
@@ -30,7 +29,6 @@ interface EditorToolbarProps {
   teamId?: string;
 }
 
-// Erweiterte Emoji-Liste mit Kategorien
 const emojiCategories = {
   "Smileys": [
     { native: "😊", id: "smile" },
@@ -38,7 +36,9 @@ const emojiCategories = {
     { native: "🥰", id: "love" },
     { native: "😎", id: "cool" },
     { native: "🤩", id: "star_eyes" },
-    { native: "😇", id: "innocent" }
+    { native: "😇", id: "innocent" },
+    { native: "😂", id: "joy" },
+    { native: "🤣", id: "rofl" }
   ],
   "Gesten": [
     { native: "👍", id: "thumbsup" },
@@ -46,7 +46,9 @@ const emojiCategories = {
     { native: "👏", id: "clap" },
     { native: "🤝", id: "handshake" },
     { native: "✌️", id: "peace" },
-    { native: "💪", id: "muscle" }
+    { native: "💪", id: "muscle" },
+    { native: "🙏", id: "pray" },
+    { native: "👋", id: "wave" }
   ],
   "Symbole": [
     { native: "❤️", id: "heart" },
@@ -54,7 +56,9 @@ const emojiCategories = {
     { native: "🔥", id: "fire" },
     { native: "⭐", id: "star" },
     { native: "💡", id: "bulb" },
-    { native: "💯", id: "hundred" }
+    { native: "💯", id: "hundred" },
+    { native: "🎯", id: "dart" },
+    { native: "✅", id: "check" }
   ],
   "Business": [
     { native: "💼", id: "briefcase" },
@@ -62,7 +66,39 @@ const emojiCategories = {
     { native: "🎯", id: "target" },
     { native: "🚀", id: "rocket" },
     { native: "💰", id: "money" },
-    { native: "🤔", id: "thinking" }
+    { native: "🤔", id: "thinking" },
+    { native: "📊", id: "stats" },
+    { native: "💡", id: "idea" }
+  ],
+  "Natur": [
+    { native: "🌸", id: "blossom" },
+    { native: "🌺", id: "hibiscus" },
+    { native: "☀️", id: "sun" },
+    { native: "🌈", id: "rainbow" },
+    { native: "⭐", id: "star_nature" },
+    { native: "🌙", id: "moon" },
+    { native: "🌲", id: "tree" },
+    { native: "🌺", id: "flower" }
+  ],
+  "Essen & Trinken": [
+    { native: "☕️", id: "coffee" },
+    { native: "🍕", id: "pizza" },
+    { native: "🍜", id: "noodles" },
+    { native: "🍱", id: "bento" },
+    { native: "🍔", id: "burger" },
+    { native: "🥗", id: "salad" },
+    { native: "🍷", id: "wine" },
+    { native: "🍰", id: "cake" }
+  ],
+  "Technologie": [
+    { native: "💻", id: "laptop" },
+    { native: "📱", id: "phone" },
+    { native: "⌚️", id: "watch" },
+    { native: "🖥️", id: "desktop" },
+    { native: "📸", id: "camera" },
+    { native: "🎮", id: "gaming" },
+    { native: "🎯", id: "target_tech" },
+    { native: "📱", id: "mobile" }
   ]
 };
 

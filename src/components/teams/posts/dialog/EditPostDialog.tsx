@@ -10,9 +10,10 @@ import { useTeamMembers } from "./useTeamMembers";
 interface EditPostDialogProps {
   post: Post;
   teamId: string;
+  isAdmin?: boolean;
 }
 
-export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
+export const EditPostDialog = ({ post, teamId, isAdmin = false }: EditPostDialogProps) => {
   const [open, setOpen] = useState(false);
   const { data: teamMembers } = useTeamMembers(teamId);
 
@@ -41,8 +42,9 @@ export const EditPostDialog = ({ post, teamId }: EditPostDialogProps) => {
           }}
           onSuccess={() => setOpen(false)}
           teamMembers={teamMembers}
+          isAdmin={isAdmin}
         />
       </DialogContent>
     </Dialog>
   );
-};
+}

@@ -40,20 +40,23 @@ export function TiptapEditor({
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        hardBreak: {
+        bulletList: {
           keepMarks: true,
           HTMLAttributes: {
-            class: 'my-2'
+            class: 'list-disc ml-4 space-y-2 mb-4'
           }
         },
-        paragraph: {
+        orderedList: {
           keepMarks: true,
           HTMLAttributes: {
-            class: 'mb-4'
+            class: 'list-decimal ml-4 space-y-2 mb-4'
           }
         },
         heading: {
           levels: [2],
+          HTMLAttributes: {
+            class: 'text-2xl font-bold mt-6 mb-4'
+          }
         }
       }),
       Underline,
