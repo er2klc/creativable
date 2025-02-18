@@ -86,6 +86,9 @@ export const PostCard = ({
   const imageHeight = post.pinned ? "h-[200px]" : "h-[120px]";
   const lineClamp = post.pinned ? "line-clamp-4" : "line-clamp-2";
 
+  // Erstelle einen sehr hellen Hintergrund basierend auf der Kategoriefarbe
+  const backgroundColor = post.team_categories.color + '0D'; // 0D = 5% Opacity in Hex
+
   return (
     <>
       <Card 
@@ -96,7 +99,8 @@ export const PostCard = ({
         )}
         style={{
           borderColor: post.team_categories.color,
-          borderWidth: '1px'
+          borderWidth: '2px',
+          backgroundColor: backgroundColor
         }}
       >
         {post.pinned && (
@@ -202,7 +206,10 @@ export const PostCard = ({
           </div>
         </div>
 
-        <div className="px-4 py-2 border-t" style={{ borderColor: post.team_categories.color }}>
+        <div 
+          className="px-4 py-2 border-t" 
+          style={{ borderColor: post.team_categories.color }}
+        >
           <div className="flex items-center justify-between">
             <PostReactions postId={post.id} teamId={teamSlug} />
             <PostActions 
@@ -228,3 +235,4 @@ export const PostCard = ({
     </>
   );
 };
+
