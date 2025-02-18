@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 interface PostActionsProps {
   postId: string;
@@ -24,6 +26,7 @@ export const PostActions = ({ postId, teamId, isSubscribed }: PostActionsProps) 
   const [reportReason, setReportReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
+  const queryClient = useQueryClient();
 
   const handleCopyLink = () => {
     const url = window.location.href;
@@ -63,15 +66,21 @@ export const PostActions = ({ postId, teamId, isSubscribed }: PostActionsProps) 
   const toggleSubscription = async () => {
     setSubscriptionLoading(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { error } = await supabase
         .from('team_post_subscriptions')
         .upsert({
           post_id: postId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user.id,
           subscribed: !isSubscribed
         });
 
       if (error) throw error;
+      
+      // Invalidate the subscription query to trigger UI update
+      await queryClient.invalidateQueries({ queryKey: ['post-subscription', postId] });
       
       toast.success(isSubscribed 
         ? "Benachrichtigungen deaktiviert" 
@@ -95,7 +104,7 @@ export const PostActions = ({ postId, teamId, isSubscribed }: PostActionsProps) 
           disabled={subscriptionLoading}
         >
           {isSubscribed ? (
-            <Bell className="h-4 w-4" />
+            <Bell className={cn("h-4 w-4", isSubscribed && "text-primary fill-primary")} />
           ) : (
             <BellOff className="h-4 w-4" />
           )}
