@@ -14,12 +14,12 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           .from('team_posts')
           .select(`
             *,
-            team_categories!inner (
+            team_categories (
               id,
               name,
               slug,
               color,
-              team_category_settings!inner (
+              team_category_settings (
                 size
               )
             ),
@@ -59,7 +59,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           team_categories: {
             ...post.team_categories,
             settings: {
-              size: post.team_categories.team_category_settings?.[0]?.size || 'medium'
+              size: post.team_categories?.team_category_settings?.[0]?.size || 'medium'
             }
           },
           team_post_comments: post.team_post_comments?.length || 0,
