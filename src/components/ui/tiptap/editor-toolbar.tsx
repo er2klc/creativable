@@ -22,10 +22,9 @@ interface EditorToolbarProps {
   onImageClick: () => void;
   onLinkClick: () => void;
   onHashtagClick: () => void;
-  onEmojiSelect: (emoji: any) => void;
+  onEmojiSelect: (emoji: string) => void;
 }
 
-// Häufig verwendete Emojis
 const commonEmojis = [
   { native: "😊", id: "smile" },
   { native: "👍", id: "thumbsup" },
@@ -48,6 +47,12 @@ export function EditorToolbar({
   onHashtagClick,
   onEmojiSelect
 }: EditorToolbarProps) {
+  const handleEmojiClick = (emoji: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onEmojiSelect(emoji);
+  };
+
   return (
     <div className="sticky top-0 z-10 bg-background border-b">
       <div className="flex flex-wrap gap-1 p-2">
@@ -93,25 +98,16 @@ export function EditorToolbar({
         >
           <Quote className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={(e) => {
-          e.stopPropagation();
-          onImageClick();
-        }}>
+        <ToolbarButton onClick={() => onImageClick()}>
           <ImageIcon className="h-4 w-4" />
         </ToolbarButton>
         <ToolbarButton 
-          onClick={(e) => {
-            e.stopPropagation();
-            onLinkClick();
-          }}
+          onClick={() => onLinkClick()}
           active={editor.isActive('link')}
         >
           <LinkIcon className="h-4 w-4" />
         </ToolbarButton>
-        <ToolbarButton onClick={(e) => {
-          e.stopPropagation();
-          onHashtagClick();
-        }}>
+        <ToolbarButton onClick={() => onHashtagClick()}>
           <Hash className="h-4 w-4" />
         </ToolbarButton>
         <Popover>
@@ -126,17 +122,14 @@ export function EditorToolbar({
               <Smile className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-fit p-2" align="end">
+          <PopoverContent className="w-fit p-2" align="end" onClick={(e) => e.stopPropagation()}>
             <div className="grid grid-cols-6 gap-1">
               {commonEmojis.map((emoji) => (
                 <Button
                   key={emoji.id}
                   variant="ghost"
                   className="h-8 w-8 p-0 hover:bg-muted"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEmojiSelect(emoji.native);
-                  }}
+                  onClick={handleEmojiClick(emoji.native)}
                 >
                   <span className="text-lg">{emoji.native}</span>
                 </Button>

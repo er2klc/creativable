@@ -3,7 +3,7 @@ import { Button } from "../button";
 import React from "react";
 
 interface ToolbarButtonProps {
-  onClick: () => void;
+  onClick: (e: React.MouseEvent) => void;
   active?: boolean;
   children: React.ReactNode;
 }
@@ -16,7 +16,8 @@ export function ToolbarButton({ onClick, active, children }: ToolbarButtonProps)
       size="sm"
       onClick={(e) => {
         e.preventDefault();
-        onClick();
+        e.stopPropagation();
+        onClick(e);
       }}
       className={`h-8 w-8 p-0 ${active ? 'bg-muted' : ''}`}
     >

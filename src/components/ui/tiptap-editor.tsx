@@ -142,7 +142,10 @@ export function TiptapEditor({
   };
 
   return (
-    <div className="border rounded-md w-full overflow-hidden flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div 
+      className="border rounded-md w-full overflow-hidden flex flex-col" 
+      onClick={(e) => e.stopPropagation()}
+    >
       <EditorToolbar 
         editor={editor}
         onImageClick={() => setShowImageDialog(true)}
