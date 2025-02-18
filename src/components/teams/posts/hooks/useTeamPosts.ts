@@ -3,9 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const useTeamPosts = (teamId: string, categoryId?: string) => {
+export const useTeamPosts = (teamId: string, categoryId?: string, page: number = 0) => {
   return useQuery({
-    queryKey: ['team-posts', teamId, categoryId],
+    queryKey: ['team-posts', teamId, categoryId, page],
     queryFn: async () => {
       console.log("Starting to fetch posts for teamId:", teamId, "categoryId:", categoryId);
       
@@ -32,16 +32,19 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
             team_post_comments (
               id
             )
-          `)
+          `, { count: 'exact' })
           .eq('team_id', teamId)
           .order('pinned', { ascending: false })
           .order('created_at', { ascending: false });
 
         if (categoryId) {
           query = query.eq('category_id', categoryId);
+        } else {
+          // Nur Paginierung anwenden, wenn wir auf der Hauptseite sind
+          query = query.range(page * 100, (page + 1) * 100 - 1);
         }
 
-        const { data, error } = await query;
+        const { data, error, count } = await query;
 
         if (error) {
           console.error("Error fetching posts:", error);
@@ -51,7 +54,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
         
         if (!data || data.length === 0) {
           console.log("No posts found for teamId:", teamId, "categoryId:", categoryId);
-          return [];
+          return { posts: [], totalCount: 0 };
         }
 
         const transformedData = data.map(post => ({
@@ -69,7 +72,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string) => {
           }
         }));
         
-        return transformedData;
+        return { posts: transformedData, totalCount: count || 0 };
       } catch (error) {
         console.error("Unexpected error in useTeamPosts:", error);
         toast.error("Unerwarteter Fehler beim Laden der Beiträge");

@@ -2,7 +2,6 @@
 import { Card } from "@/components/ui/card";
 import { useTeamPosts } from "./hooks/useTeamPosts";
 import { PostCard } from "./components/PostCard";
-import { CreatePostDialog } from "./dialog/CreatePostDialog";
 import { useTeamMemberRole } from "@/hooks/useTeamMemberRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,7 +51,8 @@ export const CategoryOverview = ({
   const { role } = useTeamMemberRole(teamId);
   const isAdmin = role === 'admin' || role === 'owner';
   
-  const { data: posts, isLoading } = useTeamPosts(teamId, categoryId);
+  const { data, isLoading } = useTeamPosts(teamId, categoryId);
+  const posts = data?.posts || [];
 
   if (isLoading) {
     return (
@@ -79,7 +79,7 @@ export const CategoryOverview = ({
 
   const pinnedPosts = posts.filter(post => post.pinned);
   const regularPosts = posts.filter(post => !post.pinned);
-  const size = categorySettings?.size || 'medium';
+  const defaultSize = categorySettings?.size || 'medium';
 
   return (
     <div className="space-y-8">
@@ -111,7 +111,7 @@ export const CategoryOverview = ({
               key={post.id}
               post={post}
               teamSlug={teamSlug}
-              size={post.team_categories?.settings?.size || size}
+              size={categorySlug ? 'small' : (post.team_categories?.settings?.size || defaultSize)}
               isAdmin={isAdmin}
             />
           ))}
