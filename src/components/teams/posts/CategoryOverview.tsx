@@ -6,8 +6,6 @@ import { CreatePostDialog } from "./dialog/CreatePostDialog";
 import { useTeamMemberRole } from "@/hooks/useTeamMemberRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Pin, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 interface CategoryOverviewProps {
   teamId: string;
@@ -87,15 +85,6 @@ export const CategoryOverview = ({
     <div className="space-y-8">
       {pinnedPosts.length > 0 && (
         <div className="space-y-4">
-          <div className="bg-[#FFF8E7] px-4 py-2 flex justify-between items-center rounded-t-lg border border-yellow-200">
-            <div className="flex items-center gap-2 text-yellow-800">
-              <Pin className="h-4 w-4" />
-              <span className="font-medium">Angepinnte Beiträge</span>
-            </div>
-            <Button variant="ghost" size="sm" className="text-yellow-800 hover:text-yellow-900">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {pinnedPosts.map((post) => (
               <PostCard

@@ -20,9 +20,9 @@ interface PostCardProps {
 }
 
 const sizeToGridClass = {
-  small: 'col-span-1 md:col-span-1',
-  medium: 'col-span-2 md:col-span-2',
-  large: 'col-span-3 md:col-span-3'
+  small: 'col-span-1',
+  medium: 'col-span-2',
+  large: 'col-span-3'
 };
 
 export const PostCard = ({ 
