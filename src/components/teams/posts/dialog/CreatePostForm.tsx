@@ -75,16 +75,17 @@ export const CreatePostForm = ({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-6">
-        <TitleField form={form} />
-        <ContentField 
-          form={form} 
-          teamMembers={teamMembers}
-          preventSubmitOnEnter={true}
-        />
-        <FileField form={form} />
-
-        <div className="flex justify-between">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-[calc(100vh-200px)]">
+        <div className="flex-1 overflow-y-auto space-y-4 px-6">
+          <TitleField form={form} />
+          <ContentField 
+            form={form} 
+            teamMembers={teamMembers}
+            preventSubmitOnEnter={true}
+          />
+          <FileField form={form} />
+        </div>
+        <div className="sticky bottom-0 p-4 bg-background border-t flex justify-end">
           <Button type="submit" disabled={isUploading}>
             {isUploading ? (
               <>

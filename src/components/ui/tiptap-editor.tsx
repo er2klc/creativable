@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
@@ -7,6 +7,7 @@ import Image from '@tiptap/extension-image';
 import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import { Button } from './button';
+import { InputDialog } from './input-dialog';
 import { 
   Bold, 
   Italic, 
@@ -37,12 +38,19 @@ export function TiptapEditor({
   onMention,
   onHashtag 
 }: TiptapEditorProps) {
+  const [showLinkDialog, setShowLinkDialog] = useState(false);
+  const [showImageDialog, setShowImageDialog] = useState(false);
+  const [showHashtagDialog, setShowHashtagDialog] = useState(false);
+
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
         hardBreak: true,
         paragraph: {
           keepMarks: true,
+        },
+        heading: {
+          levels: [2],
         }
       }),
       Underline,
@@ -84,7 +92,7 @@ export function TiptapEditor({
     },
     editorProps: {
       attributes: {
-        class: 'prose-sm focus:outline-none min-h-[150px] max-w-none break-words w-full',
+        class: 'prose-sm focus:outline-none min-h-[150px] max-w-none break-words w-full overflow-y-auto max-h-[500px] p-4',
       },
     },
   });
@@ -103,24 +111,29 @@ export function TiptapEditor({
     return null;
   }
 
-  const setLink = () => {
-    const previousUrl = editor.getAttributes('link').href;
-    const url = window.prompt('URL eingeben:', previousUrl);
-
-    if (url === null) {
-      return;
-    }
-
+  const handleSetLink = (url: string) => {
     if (url === '') {
       editor.chain().focus().unsetLink().run();
       return;
     }
-
     editor.chain().focus().setLink({ href: url }).run();
   };
 
+  const handleSetImage = (url: string) => {
+    if (url) {
+      editor.chain().focus().setImage({ src: url }).run();
+    }
+  };
+
+  const handleSetHashtag = (tag: string) => {
+    if (tag && onHashtag) {
+      onHashtag(tag);
+      editor.chain().focus().insertContent(`#${tag} `).run();
+    }
+  };
+
   return (
-    <div className="border rounded-md w-full overflow-hidden">
+    <div className="border rounded-md w-full overflow-hidden flex flex-col">
       <div className="sticky top-0 z-10 bg-background border-b">
         <div className="flex flex-wrap gap-1 p-2">
           <ToolbarButton 
@@ -166,37 +179,54 @@ export function TiptapEditor({
             <Quote className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton 
-            onClick={() => {
-              const url = window.prompt('Enter image URL:');
-              if (url) {
-                editor.chain().focus().setImage({ src: url }).run();
-              }
-            }}
+            onClick={() => setShowImageDialog(true)}
           >
             <ImageIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton 
-            onClick={setLink}
+            onClick={() => setShowLinkDialog(true)}
             active={editor.isActive('link')}
           >
             <LinkIcon className="h-4 w-4" />
           </ToolbarButton>
           <ToolbarButton 
-            onClick={() => {
-              const tag = window.prompt('Enter hashtag:');
-              if (tag && onHashtag) {
-                onHashtag(tag);
-                editor.chain().focus().insertContent(`#${tag} `).run();
-              }
-            }}
+            onClick={() => setShowHashtagDialog(true)}
           >
             <Hash className="h-4 w-4" />
           </ToolbarButton>
         </div>
       </div>
-      <div className="px-3 py-2 overflow-x-hidden">
-        <EditorContent editor={editor} />
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="px-3 py-2">
+          <EditorContent editor={editor} />
+        </div>
       </div>
+
+      <InputDialog
+        isOpen={showLinkDialog}
+        onClose={() => setShowLinkDialog(false)}
+        onConfirm={handleSetLink}
+        title="Link einfügen"
+        placeholder="https://example.com"
+        defaultValue={editor.getAttributes('link').href}
+      />
+
+      <InputDialog
+        isOpen={showImageDialog}
+        onClose={() => setShowImageDialog(false)}
+        onConfirm={handleSetImage}
+        title="Bild einfügen"
+        placeholder="https://example.com/image.jpg"
+      />
+
+      <InputDialog
+        isOpen={showHashtagDialog}
+        onClose={() => setShowHashtagDialog(false)}
+        onConfirm={handleSetHashtag}
+        title="Hashtag einfügen"
+        placeholder="hashtag"
+      />
     </div>
   );
 }
