@@ -53,7 +53,7 @@
     "@tiptap/extension-mention": "^2.2.3",
     "@tiptap/extension-underline": "^2.2.3",
     "@tiptap/pm": "^2.11.0",
-    "@tiptap/react": "^2.11.5",
+    "@tiptap/react": "^2.2.3",
     "@tiptap/starter-kit": "^2.11.5",
     "@types/canvas-confetti": "^1.9.0",
     "@types/draft-js": "^0.11.18",
@@ -87,6 +87,7 @@
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
+    "tippy.js": "^6.3.7",
     "vaul": "^0.9.3",
     "xlsx": "^0.18.5",
     "zod": "^3.23.8"

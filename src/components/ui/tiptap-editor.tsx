@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { EditorContent, useEditor } from '@tiptap/react';
+import { EditorContent, useEditor, ReactRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
 import Image from '@tiptap/extension-image';
@@ -8,6 +8,7 @@ import Link from '@tiptap/extension-link';
 import { InputDialog } from './input-dialog';
 import { EditorToolbar } from './tiptap/editor-toolbar';
 import { MentionList } from "@/components/teams/posts/components/comments/MentionList";
+import tippy from 'tippy.js';
 
 interface TiptapEditorProps {
   content: string;
