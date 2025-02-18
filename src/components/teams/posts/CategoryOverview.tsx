@@ -107,17 +107,17 @@ export const CategoryOverview = ({
           </h2>
         )}
         <div className={cn(
-          "grid gap-4",
+          "grid gap-4 auto-rows-auto",
           categorySlug 
-            ? "grid-cols-1" // Volle Breite in Kategorien
-            : "grid-cols-1 md:grid-cols-3" // 3-Spalten Layout nur auf der Hauptseite
+            ? "grid-cols-1" // Kategorie-Ansicht: Eine Spalte
+            : "grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))" // Hauptseite: Auto-fill Grid
         )}>
           {regularPosts.map((post) => (
             <PostCard
               key={post.id}
               post={post}
               teamSlug={teamSlug}
-              size={categorySlug ? 'large' : (post.team_categories?.settings?.size || defaultSize)}
+              size={categorySlug ? 'large' : 'medium'} // Einheitliche Größe für bessere Verteilung
               isAdmin={isAdmin}
             />
           ))}
