@@ -83,7 +83,6 @@ export const PostCard = ({
     setShowVideoPreview(true);
   };
 
-  // Effektive Größe basierend auf Pin-Status und Kategorie-Einstellungen
   const effectiveSize = post.pinned ? 'large' : 
                        post.team_categories?.settings?.size || size;
 
@@ -92,8 +91,9 @@ export const PostCard = ({
   const imageHeight = post.pinned ? "h-[200px]" : "h-[120px]";
   const lineClamp = post.pinned ? "line-clamp-4" : "line-clamp-2";
 
-  // Erstelle einen deutlicheren Hintergrund basierend auf der Kategoriefarbe
-  const backgroundColor = `${categoryColor}80`; // 80 = 50% Opacity in Hex
+  // Background mit 50% Opacity, Border mit 80% Opacity
+  const backgroundColor = `${categoryColor}80`; // 80 = 50% Opacity
+  const borderColor = `${categoryColor}CC`; // CC = 80% Opacity
 
   return (
     <>
@@ -104,7 +104,7 @@ export const PostCard = ({
           post.pinned && "shadow-md"
         )}
         style={{
-          borderColor: categoryColor,
+          borderColor: borderColor,
           borderWidth: '2px',
           backgroundColor: backgroundColor
         }}
@@ -139,7 +139,7 @@ export const PostCard = ({
                 <span>•</span>
                 <Badge 
                   style={{
-                    backgroundColor: categoryColor,
+                    backgroundColor: `${categoryColor}FF`, // FF = 100% Opacity
                     color: 'white'
                   }}
                   className="hover:opacity-90"
@@ -214,7 +214,7 @@ export const PostCard = ({
 
         <div 
           className="px-4 py-2 border-t" 
-          style={{ borderColor: categoryColor }}
+          style={{ borderColor: borderColor }}
         >
           <div className="flex items-center justify-between">
             <PostReactions postId={post.id} teamId={teamSlug} />
