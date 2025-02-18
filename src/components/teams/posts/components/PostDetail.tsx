@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { Post } from "../types/post";
-import { MessageSquare, ArrowLeft, Play } from "lucide-react";
+import { MessageSquare, ArrowLeft, Play, Loader2 } from "lucide-react";
 import { EditPostDialog } from "../dialog/EditPostDialog";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -17,6 +17,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { LinkPreview } from "@/components/links/components/LinkPreview";
 import { useState, useEffect } from "react";
+import { CommentEditor } from "./comments/CommentEditor";
+import { CommentItem } from "./comments/CommentItem";
+import { toast } from "sonner";
 
 interface PostDetailProps {
   post: Post | null;
@@ -24,19 +27,15 @@ interface PostDetailProps {
 }
 
 const getYouTubeVideoId = (content: string) => {
-  // Erst nach YouTube-spezifischen href-Attributen suchen
   const hrefRegex = /href="((?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s"]+)"/g;
   const hrefs = [...content.matchAll(hrefRegex)].map(match => match[1]);
   
-  // Dann nach YouTube-URLs im Text suchen
   const urlRegex = /((?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s<]+)/g;
   const plainUrls = content.match(urlRegex) || [];
   
-  // Alle gefundenen URLs kombinieren
   const allUrls = [...hrefs, ...plainUrls];
 
   for (const url of allUrls) {
-    // Prüfen ob es überhaupt eine YouTube-URL ist
     if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
       continue;
     }
@@ -55,6 +54,27 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   const navigate = useNavigate();
   const [showVideoPreview, setShowVideoPreview] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
+
+  // Fetch subscription status
+  const { data: subscriptionData } = useQuery({
+    queryKey: ['post-subscription', post?.id, user?.id],
+    queryFn: async () => {
+      if (!post?.id || !user?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('team_post_subscriptions')
+        .select('subscribed')
+        .eq('post_id', post.id)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!post?.id && !!user?.id
+  });
+
+  const isSubscribed = subscriptionData?.subscribed ?? false;
   
   const { data: commentsData, isLoading: isLoadingComments } = useQuery({
     queryKey: ['post-comments', post?.id],
