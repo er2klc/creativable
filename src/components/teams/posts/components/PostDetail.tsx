@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { MediaGallery } from "./media-gallery/MediaGallery";
 import { PostActions } from "./actions/PostActions";
+import { PostReactions } from "./reactions/PostReactions";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -67,7 +68,7 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
       </Button>
 
       <Card className="p-6">
-        {/* Header - Full Width */}
+        {/* Header */}
         <div className="w-full mb-6">
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
@@ -109,7 +110,7 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
           </div>
         </div>
 
-        {/* Content Section - Two Columns if Media exists */}
+        {/* Content Section */}
         <div className={cn(
           "grid gap-6",
           hasMedia ? "lg:grid-cols-2" : "grid-cols-1"
@@ -135,6 +136,11 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
               <MediaGallery files={post.file_urls} />
             </div>
           )}
+        </div>
+
+        {/* Footer with Reactions */}
+        <div className="border-t mt-6 pt-4">
+          <PostReactions postId={post.id} teamId={teamSlug} />
         </div>
       </Card>
 

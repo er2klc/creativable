@@ -1,17 +1,10 @@
 
-import { Copy, Flag, MoreHorizontal } from "lucide-react";
+import { Bell, Link2, Flag } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
-import { PostReactions } from "../reactions/PostReactions";
 import { Button } from "@/components/ui/button";
-import { 
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu";
-import { useLocation } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface PostActionsProps {
   postId: string;
@@ -25,7 +18,6 @@ export const PostActions = ({
   isSubscribed 
 }: PostActionsProps) => {
   const queryClient = useQueryClient();
-  const location = useLocation();
 
   const handleSubscription = async () => {
     try {
@@ -81,37 +73,36 @@ export const PostActions = ({
   };
 
   return (
-    <div className="flex items-center justify-between w-full">
-      <PostReactions postId={postId} teamId={teamId} />
-      
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleCopyUrl}
-          className="text-muted-foreground hover:text-primary"
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
+    <div className="flex items-center gap-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleSubscription}
+        className={cn(
+          "text-muted-foreground hover:text-primary",
+          isSubscribed && "text-primary"
+        )}
+      >
+        <Bell className="h-4 w-4" />
+      </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-primary"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleReport}>
-              <Flag className="h-4 w-4 mr-2" />
-              Beitrag melden
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleCopyUrl}
+        className="text-muted-foreground hover:text-primary"
+      >
+        <Link2 className="h-4 w-4" />
+      </Button>
+
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={handleReport}
+        className="text-muted-foreground hover:text-primary"
+      >
+        <Flag className="h-4 w-4" />
+      </Button>
     </div>
   );
 };
