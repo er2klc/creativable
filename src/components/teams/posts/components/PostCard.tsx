@@ -30,15 +30,23 @@ const extractColorFromClass = (colorClass: string) => {
 };
 
 const getYouTubeVideoId = (content: string) => {
-  const hrefRegex = /href="(https?:\/\/[^\s"]+)"/g;
+  // Erst nach YouTube-spezifischen href-Attributen suchen
+  const hrefRegex = /href="((?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s"]+)"/g;
   const hrefs = [...content.matchAll(hrefRegex)].map(match => match[1]);
   
-  const urlRegex = /(https?:\/\/[^\s<]+)/g;
+  // Dann nach YouTube-URLs im Text suchen
+  const urlRegex = /((?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s<]+)/g;
   const plainUrls = content.match(urlRegex) || [];
   
+  // Alle gefundenen URLs kombinieren
   const allUrls = [...hrefs, ...plainUrls];
 
   for (const url of allUrls) {
+    // Prüfen ob es überhaupt eine YouTube-URL ist
+    if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
+      continue;
+    }
+    
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     if (match && match[2].length === 11) {
