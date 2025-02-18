@@ -11,17 +11,17 @@ export const MentionList = ({ items, command }: MentionListProps) => {
     <div className="overflow-hidden rounded-md border bg-popover p-1 shadow-md">
       {items.map((item) => (
         <button
-          key={item.profiles?.id}
+          key={item.id}
           className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
           onClick={() => command(item)}
         >
           <Avatar className="h-6 w-6 mr-2">
-            <AvatarImage src={item.profiles?.avatar_url} />
+            <AvatarImage src={item.avatar_url} />
             <AvatarFallback>
-              {item.profiles?.display_name?.substring(0, 2).toUpperCase() || "??"}
+              {item.display_name?.substring(0, 2).toUpperCase() || "??"}
             </AvatarFallback>
           </Avatar>
-          <span>{item.profiles?.display_name}</span>
+          <span>{item.display_name}</span>
         </button>
       ))}
     </div>

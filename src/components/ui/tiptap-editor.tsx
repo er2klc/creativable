@@ -78,7 +78,7 @@ export function TiptapEditor({
           items: ({ query }) => {
             return teamMembers
               ?.filter(member => 
-                member.profiles?.display_name
+                member.display_name
                   ?.toLowerCase()
                   .includes(query.toLowerCase())
               )
