@@ -34,7 +34,7 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
         .select('subscribed')
         .eq('post_id', post.id)
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
       
       return data?.subscribed ?? false;
     },
