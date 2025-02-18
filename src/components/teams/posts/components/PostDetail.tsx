@@ -177,7 +177,7 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
   const videoId = post.content ? getYouTubeVideoId(post.content) : null;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-32">
       <Button 
         variant="ghost" 
         onClick={() => navigate(`/unity/team/${teamSlug}/posts`)}
@@ -296,8 +296,6 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
           </h2>
         </div>
 
-        <CommentEditor onSave={handleAddComment} />
-
         {isLoadingComments ? (
           <div className="flex items-center justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin text-primary/50" />
@@ -323,6 +321,8 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
           videoId={videoId}
         />
       )}
+
+      <CommentEditor onSave={handleAddComment} />
     </div>
   );
 };
