@@ -51,6 +51,9 @@ export const PostCard = ({
                        post.team_categories?.settings?.size || size;
 
   const hasMedia = post.file_urls && post.file_urls.length > 0;
+  const contentLength = post.pinned ? 400 : 200;
+  const imageHeight = post.pinned ? "h-[200px]" : "h-[120px]";
+  const lineClamp = post.pinned ? "line-clamp-4" : "line-clamp-2";
 
   return (
     <Card 
@@ -59,6 +62,10 @@ export const PostCard = ({
         sizeToGridClass[effectiveSize],
         post.pinned && "shadow-md"
       )}
+      style={{
+        borderColor: post.team_categories.color,
+        borderWidth: '1px'
+      }}
     >
       {post.pinned && (
         <div className="bg-[#FFF8E7] px-4 py-2 flex items-center gap-2 text-yellow-800 border-b border-yellow-200">
@@ -89,7 +96,10 @@ export const PostCard = ({
               })}</span>
               <span>•</span>
               <Badge 
-                style={categoryStyle}
+                style={{
+                  backgroundColor: post.team_categories.color,
+                  color: 'white'
+                }}
                 className="hover:opacity-90"
                 onClick={(e) => {
                   e.stopPropagation();
@@ -113,9 +123,12 @@ export const PostCard = ({
             
             {post.content && (
               <div 
-                className="text-muted-foreground line-clamp-2 text-sm"
+                className={cn(
+                  "text-muted-foreground text-sm",
+                  lineClamp
+                )}
                 dangerouslySetInnerHTML={{ 
-                  __html: post.content.substring(0, 150) + (post.content.length > 150 ? '...' : '') 
+                  __html: post.content.substring(0, contentLength) + (post.content.length > contentLength ? '...' : '') 
                 }}
               />
             )}
@@ -123,7 +136,7 @@ export const PostCard = ({
 
           {hasMedia && (
             <div className="w-[30%]">
-              <div className="h-[120px] rounded-lg overflow-hidden">
+              <div className={cn("rounded-lg overflow-hidden", imageHeight)}>
                 <MediaGallery 
                   files={[post.file_urls[0]]}
                 />
@@ -138,7 +151,7 @@ export const PostCard = ({
         </div>
       </div>
 
-      <div className="px-4 pb-4 border-t">
+      <div className="px-4 pb-4 border-t" style={{ borderColor: post.team_categories.color }}>
         <div className="flex items-center justify-between pt-3">
           <PostReactions postId={post.id} teamId={teamSlug} />
           <PostActions 
