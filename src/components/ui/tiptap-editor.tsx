@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -18,6 +17,8 @@ interface TiptapEditorProps {
   onHashtag?: (tag: string) => void;
   preventSubmitOnEnter?: boolean;
   editorProps?: any;
+  isAdmin?: boolean;
+  teamId?: string;
 }
 
 export function TiptapEditor({ 
@@ -28,7 +29,9 @@ export function TiptapEditor({
   onMention,
   onHashtag,
   preventSubmitOnEnter = false,
-  editorProps
+  editorProps,
+  isAdmin = false,
+  teamId
 }: TiptapEditorProps) {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
@@ -152,6 +155,8 @@ export function TiptapEditor({
         onLinkClick={() => setShowLinkDialog(true)}
         onHashtagClick={() => setShowHashtagDialog(true)}
         onEmojiSelect={handleEmojiSelect}
+        isAdmin={isAdmin}
+        teamId={teamId}
       />
 
       <div className="flex-1 overflow-y-auto">

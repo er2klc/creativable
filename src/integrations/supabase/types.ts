@@ -3000,6 +3000,45 @@ export type Database = {
           },
         ]
       }
+      team_post_events: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          event_id: string
+          id: string
+          post_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          event_id: string
+          id?: string
+          post_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          event_id?: string
+          id?: string
+          post_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_post_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "team_calendar_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_post_events_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_post_mentions: {
         Row: {
           comment_id: string | null

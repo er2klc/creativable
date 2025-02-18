@@ -2,8 +2,7 @@
 import { Editor } from '@tiptap/react';
 import { ToolbarButton } from './toolbar-button';
 import { Button } from '../button';
-import { Popover, PopoverContent, PopoverTrigger } from '../popover';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { 
   Bold, 
   Italic, 
@@ -15,8 +14,10 @@ import {
   Image as ImageIcon,
   Heading2,
   Link as LinkIcon,
-  Smile
+  Smile,
+  Calendar
 } from 'lucide-react';
+import { EventSelector } from '../../teams/posts/dialog/EventSelector';
 
 interface EditorToolbarProps {
   editor: Editor;
@@ -24,6 +25,8 @@ interface EditorToolbarProps {
   onLinkClick: () => void;
   onHashtagClick: () => void;
   onEmojiSelect: (emoji: string) => void;
+  isAdmin?: boolean;
+  teamId?: string;
 }
 
 const commonEmojis = [
@@ -46,13 +49,46 @@ export function EditorToolbar({
   onImageClick, 
   onLinkClick, 
   onHashtagClick,
-  onEmojiSelect
+  onEmojiSelect,
+  isAdmin = false,
+  teamId
 }: EditorToolbarProps) {
   const [isEmojiOpen, setIsEmojiOpen] = useState(false);
+  const [isEventSelectorOpen, setIsEventSelectorOpen] = useState(false);
+  const emojiContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiContainerRef.current && !emojiContainerRef.current.contains(event.target as Node)) {
+        setIsEmojiOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleEmojiClick = (emoji: string) => {
     onEmojiSelect(emoji);
-    setIsEmojiOpen(false); // Manuell schließen nach der Auswahl
+    setIsEmojiOpen(false);
+  };
+
+  const handleEventSelect = (events: any[]) => {
+    const eventContent = events.map(event => `
+      <div class="p-4 my-2 border rounded-lg" style="border-left: 4px solid ${event.color}">
+        <h4 class="font-medium">${event.title}</h4>
+        <p class="text-sm text-gray-500">${new Date(event.start_time).toLocaleString('de-DE', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        })}</p>
+      </div>
+    `).join('');
+
+    editor.chain().focus().insertContent(eventContent).run();
   };
 
   return (
@@ -112,46 +148,53 @@ export function EditorToolbar({
         <ToolbarButton onClick={() => onHashtagClick()}>
           <Hash className="h-4 w-4" />
         </ToolbarButton>
-        <Popover open={isEmojiOpen} onOpenChange={setIsEmojiOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-8 w-8 p-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <Smile className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent 
-            className="w-fit p-2" 
-            align="end" 
-            side="bottom" 
-            sideOffset={8} 
-            modal={true}
-            onClick={(e) => e.stopPropagation()}
+
+        <div className="relative" ref={emojiContainerRef}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={() => setIsEmojiOpen(!isEmojiOpen)}
           >
-            <div className="grid grid-cols-6 gap-1">
-              {commonEmojis.map((emoji) => (
-                <Button
-                  key={emoji.id}
-                  variant="ghost"
-                  className="h-8 w-8 p-0 hover:bg-muted"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleEmojiClick(emoji.native);
-                  }}
-                >
-                  <span className="text-lg">{emoji.native}</span>
-                </Button>
-              ))}
+            <Smile className="h-4 w-4" />
+          </Button>
+          {isEmojiOpen && (
+            <div className="absolute top-full left-0 mt-1 bg-background border rounded-md shadow-md z-50">
+              <div className="grid grid-cols-6 gap-1 p-2">
+                {commonEmojis.map((emoji) => (
+                  <Button
+                    key={emoji.id}
+                    variant="ghost"
+                    className="h-8 w-8 p-0 hover:bg-muted"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleEmojiClick(emoji.native);
+                    }}
+                  >
+                    <span className="text-lg">{emoji.native}</span>
+                  </Button>
+                ))}
+              </div>
             </div>
-          </PopoverContent>
-        </Popover>
+          )}
+        </div>
+
+        {isAdmin && teamId && (
+          <>
+            <ToolbarButton onClick={() => setIsEventSelectorOpen(true)}>
+              <Calendar className="h-4 w-4" />
+            </ToolbarButton>
+            <EventSelector
+              teamId={teamId}
+              open={isEventSelectorOpen}
+              onOpenChange={setIsEventSelectorOpen}
+              onSelect={handleEventSelect}
+            />
+          </>
+        )}
       </div>
     </div>
   );
 }
-
