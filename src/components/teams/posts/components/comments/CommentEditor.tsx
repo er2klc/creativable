@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useTeamMembers } from "../../dialog/useTeamMembers";
 import { useParams } from "react-router-dom";
 import { Send } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CommentEditorProps {
   initialContent?: string;
@@ -21,6 +23,33 @@ export const CommentEditor = ({
   const { data: teamMembers } = useTeamMembers(teamSlug || "");
   const [content, setContent] = useState(initialContent);
 
+  const { data: enrichedTeamMembers } = useQuery({
+    queryKey: ['team-members-with-levels', teamSlug],
+    queryFn: async () => {
+      if (!teamMembers?.length) return [];
+      
+      const { data: team } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamSlug)
+        .single();
+
+      if (!team) return teamMembers;
+
+      const { data: memberPoints } = await supabase
+        .from('team_member_points')
+        .select('user_id, level')
+        .eq('team_id', team.id)
+        .in('user_id', teamMembers.map(m => m.id));
+
+      return teamMembers.map(member => ({
+        ...member,
+        level: memberPoints?.find(mp => mp.user_id === member.id)?.level || 1
+      }));
+    },
+    enabled: !!teamMembers?.length && !!teamSlug
+  });
+
   return (
     <div className="border rounded-lg p-4 bg-muted/5">
       <div className="space-y-4">
@@ -28,7 +57,7 @@ export const CommentEditor = ({
           content={content}
           onChange={setContent}
           placeholder="Schreibe einen Kommentar... (@mention für Erwähnungen)"
-          teamMembers={teamMembers}
+          teamMembers={enrichedTeamMembers}
           onMention={(userId) => {
             console.log('Mentioned user:', userId);
           }}

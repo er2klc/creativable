@@ -2,6 +2,8 @@
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { UseFormReturn } from "react-hook-form";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ContentFieldProps {
   form: UseFormReturn<any>;
@@ -11,7 +13,32 @@ interface ContentFieldProps {
   teamId?: string;
 }
 
-export const ContentField = ({ form, teamMembers, preventSubmitOnEnter = false, isAdmin = false, teamId }: ContentFieldProps) => {
+export const ContentField = ({ 
+  form, 
+  teamMembers, 
+  preventSubmitOnEnter = false, 
+  isAdmin = false,
+  teamId 
+}: ContentFieldProps) => {
+  const { data: enrichedTeamMembers } = useQuery({
+    queryKey: ['team-members-with-levels', teamId],
+    queryFn: async () => {
+      if (!teamMembers?.length) return [];
+      
+      const { data: memberPoints } = await supabase
+        .from('team_member_points')
+        .select('user_id, level')
+        .eq('team_id', teamId)
+        .in('user_id', teamMembers.map(m => m.id));
+
+      return teamMembers.map(member => ({
+        ...member,
+        level: memberPoints?.find(mp => mp.user_id === member.id)?.level || 1
+      }));
+    },
+    enabled: !!teamId && !!teamMembers?.length
+  });
+
   return (
     <FormField
       control={form.control}
@@ -25,7 +52,7 @@ export const ContentField = ({ form, teamMembers, preventSubmitOnEnter = false, 
               content={field.value}
               onChange={field.onChange}
               placeholder="Beschreibe deinen Beitrag... (@mention für Erwähnungen)"
-              teamMembers={teamMembers}
+              teamMembers={enrichedTeamMembers}
               onMention={(userId) => {
                 console.log('Mentioned user:', userId);
               }}
@@ -35,7 +62,6 @@ export const ContentField = ({ form, teamMembers, preventSubmitOnEnter = false, 
               preventSubmitOnEnter={preventSubmitOnEnter}
               editorProps={{
                 handleKeyDown: (view, event) => {
-                  // Prevent form submission on formatting shortcuts
                   if (event.ctrlKey || event.metaKey) {
                     event.stopPropagation();
                   }

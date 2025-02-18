@@ -21,7 +21,12 @@ export const MentionList = ({ items, command }: MentionListProps) => {
               {item.display_name?.substring(0, 2).toUpperCase() || "??"}
             </AvatarFallback>
           </Avatar>
-          <span>{item.display_name}</span>
+          <div className="flex flex-col">
+            <span className="font-medium">{item.display_name}</span>
+            <span className="text-xs text-muted-foreground">
+              Level {item.level || 1}
+            </span>
+          </div>
         </button>
       ))}
     </div>
