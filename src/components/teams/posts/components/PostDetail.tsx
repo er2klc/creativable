@@ -104,6 +104,7 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
                 postId={post.id} 
                 teamId={post.team_id}
                 isSubscribed={isSubscribed}
+                postTitle={post.title}
               />
               {isAuthor && <EditPostDialog post={post} teamId={post.team_id} />}
             </div>
