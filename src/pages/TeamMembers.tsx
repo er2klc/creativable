@@ -9,6 +9,7 @@ import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceCon
 import { Users } from "lucide-react";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
+import { SearchBar } from "@/components/dashboard/SearchBar";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
@@ -117,6 +118,9 @@ const TeamMembers = () => {
                 <h1 className="text-lg md:text-xl font-semibold text-foreground">
                   Members
                 </h1>
+              </div>
+              <div className="w-[300px]">
+                <SearchBar />
               </div>
               <HeaderActions profile={null} userEmail={user?.email} />
             </div>

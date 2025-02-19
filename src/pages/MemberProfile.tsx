@@ -4,13 +4,17 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { User, Activity, MessageSquare, Award, Calendar, TrendingUp, ChevronLeft } from "lucide-react";
+import { User, Activity, MessageSquare, Award, Calendar, TrendingUp, ChevronLeft, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { HeaderActions } from "@/components/layout/HeaderActions";
+import { useUser } from "@supabase/auth-helpers-react";
+import { SearchBar } from "@/components/dashboard/SearchBar";
 
 const MemberProfile = () => {
   const { teamSlug, memberSlug } = useParams();
   const navigate = useNavigate();
+  const user = useUser();
 
   const { data: memberData, isLoading } = useQuery({
     queryKey: ['member-profile', teamSlug, memberSlug],
@@ -83,99 +87,118 @@ const MemberProfile = () => {
   }
 
   return (
-    <div className="container py-8 space-y-6">
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => navigate(`/unity/team/${teamSlug}`)}
-        className="mb-4"
-      >
-        <ChevronLeft className="h-4 w-4 mr-2" />
-        Zurück zum Team
-      </Button>
-
-      <Card>
-        <CardHeader className="relative overflow-hidden p-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 z-0" />
-          <div className="relative z-10 p-6 flex items-center gap-6">
-            <Avatar className="h-24 w-24 border-4 border-background">
-              <AvatarImage src={memberData.avatar_url} />
-              <AvatarFallback className="text-2xl">
-                {memberData.display_name?.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold">{memberData.display_name}</h1>
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="font-medium">
-                    Level {memberData.level}
-                  </Badge>
-                  <Badge 
-                    variant="outline" 
-                    className={cn(
-                      "font-medium",
-                      memberData.status === 'online' ? "border-green-500 text-green-500" : "border-muted-foreground text-muted-foreground"
-                    )}
-                  >
-                    {memberData.status === 'online' ? 'Online' : 'Offline'}
-                  </Badge>
-                </div>
-              </div>
-              {memberData.bio && (
-                <p className="mt-2 text-muted-foreground">{memberData.bio}</p>
-              )}
+    <div>
+      <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+        <div className="h-16 px-4 flex items-center">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                Member Details
+              </h1>
             </div>
+            <div className="w-[300px]">
+              <SearchBar />
+            </div>
+            <HeaderActions profile={null} userEmail={user?.email} />
           </div>
-        </CardHeader>
+        </div>
+      </div>
 
-        <CardContent className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-primary/10">
-                    <MessageSquare className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{memberData.activity?.posts_count || 0}</div>
-                    <div className="text-sm text-muted-foreground">Beiträge</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-primary/10">
-                    <Activity className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{memberData.activity?.comments_count || 0}</div>
-                    <div className="text-sm text-muted-foreground">Kommentare</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+      <div className="container py-8 mt-16 space-y-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(`/unity/team/${teamSlug}/members`)}
+          className="mb-4"
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Zurück zur Übersicht
+        </Button>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-full bg-primary/10">
-                    <Award className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold">{memberData.points}</div>
-                    <div className="text-sm text-muted-foreground">Punkte</div>
+        <Card>
+          <CardHeader className="relative overflow-hidden p-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 z-0" />
+            <div className="relative z-10 p-6 flex items-center gap-6">
+              <Avatar className="h-24 w-24 border-4 border-background">
+                <AvatarImage src={memberData.avatar_url} />
+                <AvatarFallback className="text-2xl">
+                  {memberData.display_name?.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1">
+                <div className="flex items-center gap-3">
+                  <h1 className="text-2xl font-bold">{memberData.display_name}</h1>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="font-medium">
+                      Level {memberData.level}
+                    </Badge>
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "font-medium",
+                        memberData.status === 'online' ? "border-green-500 text-green-500" : "border-muted-foreground text-muted-foreground"
+                      )}
+                    >
+                      {memberData.status === 'online' ? 'Online' : 'Offline'}
+                    </Badge>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
+                {memberData.bio && (
+                  <p className="mt-2 text-muted-foreground">{memberData.bio}</p>
+                )}
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <MessageSquare className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{memberData.activity?.posts_count || 0}</div>
+                      <div className="text-sm text-muted-foreground">Beiträge</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <Activity className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{memberData.activity?.comments_count || 0}</div>
+                      <div className="text-sm text-muted-foreground">Kommentare</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-full bg-primary/10">
+                      <Award className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <div className="text-2xl font-bold">{memberData.points}</div>
+                      <div className="text-sm text-muted-foreground">Punkte</div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 };
