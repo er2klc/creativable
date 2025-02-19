@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -205,10 +204,12 @@ const MemberProfile = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             <ActivityCalendar activities={memberData.activity} />
-            <ActivityFeed 
-              activities={memberData.activities} 
-              teamSlug={teamSlug!}
-            />
+            {memberData && (
+              <ActivityFeed 
+                activities={memberData.activities || []} 
+                teamSlug={teamSlug!}
+              />
+            )}
             <MembershipCard 
               teamData={teamData}
               followersCount={memberData.stats.followers_count}

@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MessageSquare, ThumbsUp, Edit } from "lucide-react";
+import { MessageSquare, ThumbsUp } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { MediaGallery } from "@/components/teams/posts/components/media-gallery/MediaGallery";
@@ -13,12 +13,27 @@ interface ActivityFeedProps {
   teamSlug: string;
 }
 
-export const ActivityFeed = ({ activities, teamSlug }: ActivityFeedProps) => {
+export const ActivityFeed = ({ activities = [], teamSlug }: ActivityFeedProps) => {
   const navigate = useNavigate();
 
   const handlePostClick = (slug: string) => {
     navigate(`/unity/team/${teamSlug}/posts/${slug}`);
   };
+
+  if (!activities || activities.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <h3 className="text-lg font-semibold">Aktivitäten</h3>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center text-muted-foreground">
+            Keine Aktivitäten vorhanden
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
