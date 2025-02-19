@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,12 @@ import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
 import { CreateInstagramContactDialog } from "@/components/leads/instagram/CreateInstagramContactDialog";
 import { CreateLinkedInContactDialog } from "@/components/leads/linkedin/CreateLinkedInContactDialog";
 
+interface Team {
+  id: string;
+  name: string;
+  slug: string;
+}
+
 export const QuickActions = () => {
   const navigate = useNavigate();
   const { settings } = useSettings();
@@ -30,22 +37,32 @@ export const QuickActions = () => {
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
   const [showTeamDialog, setShowTeamDialog] = useState(false);
 
-  const { data: teams } = useQuery({
+  const { data: teams = [] } = useQuery({
     queryKey: ['user-teams'],
     queryFn: async () => {
-      const { data: teamMembers } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
+      const { data: teamMembers, error } = await supabase
         .from('team_members')
         .select(`
           team_id,
-          teams (
+          teams:team_id (
             id,
             name,
             slug
           )
         `)
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
-      
-      return teamMembers?.map(tm => tm.teams) || [];
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching teams:', error);
+        return [];
+      }
+
+      return teamMembers
+        .map(tm => tm.teams)
+        .filter((team): team is Team => team !== null);
     }
   });
 

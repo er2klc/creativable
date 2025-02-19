@@ -17,19 +17,23 @@ export const DashboardSidebar = () => {
   const personalItems = usePersonalItems();
   const unreadCount = useUnreadCount();
 
-  // Fetch latest version from changelog_entries
   const { data: versionData } = useQuery({
     queryKey: ['latest-version'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('changelog_entries')
-        .select('version')
-        .order('version', { ascending: false })
-        .limit(1)
-        .single();
+      try {
+        const { data, error } = await supabase
+          .from('changelog_entries')
+          .select('version')
+          .order('version', { ascending: false })
+          .limit(1)
+          .single();
 
-      if (error) throw error;
-      return data?.version || '0.1';
+        if (error) throw error;
+        return data?.version || '0.1';
+      } catch (error) {
+        console.error('Error fetching version:', error);
+        return '0.1';
+      }
     }
   });
 
@@ -116,4 +120,3 @@ export const DashboardSidebar = () => {
     </Sidebar>
   );
 };
-
