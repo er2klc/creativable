@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MemberCard } from "@/components/teams/members/MemberCard";
 import { useProfile } from "@/hooks/use-profile";
@@ -12,14 +12,12 @@ import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { useEffect } from "react";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
   const { data: profile } = useProfile();
   const user = useUser();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
 
   const { data: teamData, isLoading: isLoadingTeam } = useQuery({
     queryKey: ['team', teamSlug],
@@ -37,9 +35,7 @@ const TeamMembers = () => {
 
       return data;
     },
-    enabled: !!teamSlug,
-    staleTime: 0,
-    cacheTime: 0
+    enabled: !!teamSlug
   });
 
   const { data: memberPoints, isLoading: isLoadingPoints } = useQuery({
@@ -89,13 +85,8 @@ const TeamMembers = () => {
       }));
     },
     enabled: !!teamData?.id,
+    staleTime: 30000 // 30 seconds
   });
-
-  useEffect(() => {
-    if (teamData?.id) {
-      queryClient.prefetchQuery(['team-members', teamData.id]);
-    }
-  }, [teamData?.id, queryClient]);
 
   if (isLoadingTeam || isLoadingMembers) {
     return (
