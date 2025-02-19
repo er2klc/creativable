@@ -39,17 +39,27 @@ const MemberProfile = () => {
     queryFn: async () => {
       if (!teamData?.id || !memberSlug) return null;
 
-      // Get profile data
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('slug', memberSlug)
-        .maybeSingle();
+      const [profileResponse, memberCountResponse, settingsResponse] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('*')
+          .eq('slug', memberSlug)
+          .maybeSingle(),
+        supabase
+          .from('team_members')
+          .select('id', { count: 'exact' })
+          .eq('team_id', teamData.id),
+        supabase
+          .from('settings')
+          .select('about_me')
+          .eq('user_id', profileResponse.data.id)
+          .maybeSingle()
+      ]);
 
+      const { data: profile, error: profileError } = profileResponse;
       if (profileError) throw profileError;
       if (!profile) return null;
 
-      // Get team membership
       const { data: teamMember, error: teamMemberError } = await supabase
         .from('team_members')
         .select('*')
@@ -60,7 +70,6 @@ const MemberProfile = () => {
       if (teamMemberError) throw teamMemberError;
       if (!teamMember) return null;
 
-      // Get points and activity data
       const [pointsResponse, activityResponse, postsResponse, commentsResponse] = await Promise.all([
         supabase
           .from('team_member_points')
@@ -110,7 +119,6 @@ const MemberProfile = () => {
           .order('created_at', { ascending: false })
       ]);
 
-      // Transform posts and comments into activities
       const activities: Activity[] = [
         ...(postsResponse.data?.map(post => ({
           id: post.id,
@@ -154,7 +162,9 @@ const MemberProfile = () => {
           following_count: 0
         },
         activity: activityResponse.data ?? [],
-        activities
+        activities,
+        membersCount: memberCountResponse.count ?? 0,
+        aboutMe: settingsResponse.data?.about_me
       };
     },
     enabled: !!teamData?.id && !!teamSlug && !!memberSlug
@@ -204,16 +214,16 @@ const MemberProfile = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             <ActivityCalendar activities={memberData.activity} />
+            <MembershipCard 
+              teamData={teamData}
+              membersCount={memberData.membersCount}
+            />
             {memberData && (
               <ActivityFeed 
                 activities={memberData.activities || []} 
                 teamSlug={teamSlug!}
               />
             )}
-            <MembershipCard 
-              teamData={teamData}
-              followersCount={memberData.stats.followers_count}
-            />
           </div>
 
           <div className="space-y-6">
@@ -223,6 +233,7 @@ const MemberProfile = () => {
               currentLevel={currentLevel}
               currentPoints={currentPoints}
               pointsToNextLevel={pointsToNextLevel}
+              aboutMe={memberData.aboutMe}
             />
           </div>
         </div>

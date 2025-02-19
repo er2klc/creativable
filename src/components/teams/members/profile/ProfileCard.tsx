@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -31,6 +30,7 @@ interface ProfileCardProps {
   currentLevel: number;
   currentPoints: number;
   pointsToNextLevel: number;
+  aboutMe?: string;
 }
 
 export const ProfileCard = ({ 
@@ -38,7 +38,8 @@ export const ProfileCard = ({
   memberSlug, 
   currentLevel, 
   currentPoints, 
-  pointsToNextLevel 
+  pointsToNextLevel,
+  aboutMe
 }: ProfileCardProps) => {
   return (
     <Card>
@@ -118,6 +119,15 @@ export const ProfileCard = ({
               {memberData.social_links.linkedin && (
                 <Linkedin className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
               )}
+            </div>
+          )}
+
+          {(aboutMe || memberData.bio) && (
+            <div className="mt-6 pt-6 border-t">
+              <h3 className="text-lg font-semibold mb-3">Über mich</h3>
+              <p className="text-sm text-muted-foreground">
+                {aboutMe || memberData.bio}
+              </p>
             </div>
           )}
         </div>

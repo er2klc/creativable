@@ -7,10 +7,10 @@ interface MembershipCardProps {
     logo_url?: string;
     name: string;
   };
-  followersCount: number;
+  membersCount: number;
 }
 
-export const MembershipCard = ({ teamData, followersCount }: MembershipCardProps) => {
+export const MembershipCard = ({ teamData, membersCount }: MembershipCardProps) => {
   return (
     <Card>
       <CardHeader className="pb-2">
@@ -24,7 +24,9 @@ export const MembershipCard = ({ teamData, followersCount }: MembershipCardProps
           </Avatar>
           <div>
             <h4 className="font-medium">{teamData.name}</h4>
-            <p className="text-sm text-muted-foreground">Private • {followersCount} Members</p>
+            <p className="text-sm text-muted-foreground">
+              Private • {membersCount} {membersCount === 1 ? 'Member' : 'Members'}
+            </p>
           </div>
         </div>
       </CardContent>
