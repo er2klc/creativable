@@ -6,7 +6,6 @@ import { useTeamMemberRole } from "@/hooks/useTeamMemberRole";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { CreatePostDialog } from "./CreatePostDialog";
 
 interface CategoryOverviewProps {
   teamId: string;
@@ -67,7 +66,7 @@ export const CategoryOverview = ({
     );
   }
 
-  if (!posts?.length && !canPost) {
+  if (!posts?.length) {
     return (
       <Card className="p-6">
         <div className="text-center space-y-4">
@@ -85,15 +84,6 @@ export const CategoryOverview = ({
 
   return (
     <div className="space-y-8">
-      {canPost && (
-        <div className="flex justify-end">
-          <CreatePostDialog 
-            teamId={teamId}
-            categoryId={categoryId}
-          />
-        </div>
-      )}
-
       {pinnedPosts.length > 0 && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -119,8 +109,8 @@ export const CategoryOverview = ({
         <div className={cn(
           "grid gap-4 auto-rows-auto",
           categorySlug 
-            ? "grid-cols-1" 
-            : "grid-cols-[repeat(auto-fill,minmax(300px,1fr))] grid-auto-flow-dense"
+            ? "grid-cols-1" // Kategorie-Ansicht: Eine Spalte
+            : "grid-cols-[repeat(auto-fill,minmax(300px,1fr))] grid-auto-flow-dense" // Grid mit dense packing
         )}>
           {regularPosts.map((post) => (
             <PostCard
