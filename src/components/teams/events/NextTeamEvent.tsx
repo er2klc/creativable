@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { format, isWithinInterval } from "date-fns";
+import { format, isWithinInterval, formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 
 interface NextTeamEventProps {
@@ -17,9 +17,18 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [now, setNow] = useState(new Date());
 
-  const { data: nextEvent } = useQuery({
-    queryKey: ["next-team-event", teamId],
+  // Update current time every minute
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const { data: nextEvents = [] } = useQuery({
+    queryKey: ["next-team-events", teamId],
     queryFn: async () => {
       const now = new Date();
       const { data, error } = await supabase
@@ -28,12 +37,11 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
         .eq("team_id", teamId)
         .gte("start_time", now.toISOString())
         .order("start_time")
-        .limit(1)
-        .single();
+        .limit(3);
 
       if (error) {
-        console.error("Error fetching next event:", error);
-        return null;
+        console.error("Error fetching next events:", error);
+        return [];
       }
 
       return data;
@@ -43,11 +51,14 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
 
   const isEventLive = (event: any) => {
     if (!event) return false;
-    const now = new Date();
     const startTime = new Date(event.start_time);
     const endTime = event.end_time ? new Date(event.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
     
     return isWithinInterval(now, { start: startTime, end: endTime });
+  };
+
+  const formatTimeDistance = (date: Date) => {
+    return formatDistanceToNow(date, { locale: de, addSuffix: true });
   };
 
   const handleEventClick = (event: any) => {
@@ -59,38 +70,54 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
     navigate(`/unity/team/${teamSlug}/calendar`);
   };
 
-  if (!nextEvent) return null;
-
-  const startTime = new Date(nextEvent.start_time);
-  const endTime = nextEvent.end_time ? new Date(nextEvent.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
-  const isLive = isEventLive(nextEvent);
+  if (nextEvents.length === 0) return null;
 
   return (
     <>
       <div className="bg-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h3 className="text-white/90 font-medium">Nächster Termin</h3>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-300/90">
-                {format(startTime, "d. MMMM yyyy, HH:mm", { locale: de })} - {format(endTime, "HH:mm", { locale: de })} Uhr
-              </span>
-              {isLive && (
-                <span className="flex items-center gap-1 text-sm text-red-400">
-                  <span className="animate-pulse w-2 h-2 rounded-full bg-red-500" />
-                  LIVE
-                </span>
-              )}
-            </div>
-            <div className="text-lg text-white/90">{nextEvent.title}</div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={() => handleEventClick(nextEvent)}>
-              Details
-            </Button>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-white/90 font-medium">Nächste Termine</h3>
             <Button variant="ghost" onClick={handleCalendarClick}>
               Kalender
             </Button>
+          </div>
+
+          <div className="space-y-3">
+            {nextEvents.map((event) => {
+              const startTime = new Date(event.start_time);
+              const endTime = event.end_time ? new Date(event.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
+              const isLive = isEventLive(event);
+
+              return (
+                <div 
+                  key={event.id} 
+                  className="flex items-center justify-between p-3 rounded-md bg-black/10 hover:bg-black/20 transition-colors cursor-pointer"
+                  onClick={() => handleEventClick(event)}
+                >
+                  <div className="space-y-1">
+                    <div className="text-lg text-white/90">{event.title}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-300/90">
+                        {format(startTime, "d. MMMM yyyy, HH:mm", { locale: de })} - {format(endTime, "HH:mm", { locale: de })} Uhr
+                      </span>
+                      <span className="text-sm text-gray-400/90">
+                        ({formatTimeDistance(startTime)})
+                      </span>
+                      {isLive && (
+                        <span className="flex items-center gap-1 text-sm text-red-400">
+                          <span className="animate-pulse w-2 h-2 rounded-full bg-red-500" />
+                          LIVE
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Button variant="ghost" size="sm">
+                    Details
+                  </Button>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -106,6 +133,9 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
                 <h4 className="font-medium">Zeit</h4>
                 <p>
                   {format(new Date(selectedEvent.start_time), "d. MMMM yyyy, HH:mm", { locale: de })} - {format(new Date(selectedEvent.end_time || new Date(selectedEvent.start_time).getTime() + 60 * 60 * 1000), "HH:mm", { locale: de })} Uhr
+                </p>
+                <p className="text-sm text-gray-500">
+                  {formatTimeDistance(new Date(selectedEvent.start_time))}
                 </p>
               </div>
               {selectedEvent.description && (
