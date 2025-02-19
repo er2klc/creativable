@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, isWithinInterval, formatDistanceToNow, addWeeks, parseISO, isBefore, isAfter, addMonths, addDays, addHours, differenceInDays, startOfDay, endOfDay, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
+import { Calendar } from "lucide-react";
 
 interface TeamEvent {
   id: string;
@@ -31,7 +31,6 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
   const [selectedEvent, setSelectedEvent] = useState<TeamEvent | null>(null);
   const [now, setNow] = useState(new Date());
 
-  // Update current time every minute
   useEffect(() => {
     const interval = setInterval(() => {
       setNow(new Date());
@@ -54,7 +53,7 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
       }
 
       const processedEvents: TeamEvent[] = [];
-      const cutoffDate = addMonths(now, 3); // Look ahead 3 months maximum
+      const cutoffDate = addMonths(now, 3);
       const today = startOfDay(now);
 
       events.forEach((event) => {
@@ -63,7 +62,6 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
         const hours = originalStartTime.getHours();
         const minutes = originalStartTime.getMinutes();
         
-        // For non-recurring events
         if (!event.recurring_pattern || event.recurring_pattern === 'none') {
           if (isAfter(originalStartTime, now)) {
             processedEvents.push(event);
@@ -71,21 +69,17 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
           return;
         }
 
-        // For recurring events, find the next occurrence
         let nextDate = today;
         
-        // If today's event hasn't happened yet, consider today
         if (isSameDay(today, originalStartTime) && isAfter(originalStartTime, now)) {
           nextDate = originalStartTime;
         } else {
-          // Find the next occurrence based on pattern
           while (isBefore(nextDate, cutoffDate)) {
             switch (event.recurring_pattern) {
               case 'daily':
                 nextDate = addDays(nextDate, 1);
                 break;
               case 'weekly':
-                // If we're before the original day of week, move to next week
                 if (nextDate.getDay() !== originalStartTime.getDay()) {
                   const daysUntilNext = (originalStartTime.getDay() - nextDate.getDay() + 7) % 7;
                   nextDate = addDays(nextDate, daysUntilNext);
@@ -98,7 +92,6 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
                 break;
             }
 
-            // Set the correct time of day
             nextDate = new Date(nextDate.setHours(hours, minutes, 0, 0));
 
             if (isAfter(nextDate, now)) {
@@ -124,12 +117,11 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
         }
       });
 
-      // Sort by start time and return next 3 events
       return processedEvents
         .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
         .slice(0, 3);
     },
-    refetchInterval: 60000, // Refetch every minute
+    refetchInterval: 60000,
   });
 
   const isEventLive = (event: TeamEvent) => {
@@ -155,103 +147,85 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
 
   return (
     <>
-      <div className="bg-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-white/90 font-medium">Nächste Termine</h3>
-            <Button variant="ghost" onClick={handleCalendarClick}>
-              Kalender
-            </Button>
-          </div>
-
-          <div className="space-y-3">
-            {nextEvents.map((event) => {
-              const startTime = parseISO(event.start_time);
-              const endTime = event.end_time ? parseISO(event.end_time) : addHours(startTime, 1);
-              const isLive = isEventLive(event);
-
-              return (
+      <div className="flex items-center gap-4 mt-2 text-muted-foreground">
+        <div className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer group relative"
+             onClick={() => handleEventClick(nextEvents[0])}>
+          <Calendar className="h-4 w-4" />
+          <span className="text-sm">
+            {nextEvents[0].title}
+            <span className="ml-1 text-xs opacity-75">
+              ({formatTimeDistance(parseISO(nextEvents[0].start_time))})
+            </span>
+          </span>
+          
+          {nextEvents.length > 1 && (
+            <div className="absolute left-0 top-full mt-2 bg-background/95 backdrop-blur-sm border rounded-md p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-64">
+              {nextEvents.slice(1).map((event) => (
                 <div 
-                  key={event.id} 
-                  className="flex items-center justify-between p-3 rounded-md bg-black/10 hover:bg-black/20 transition-colors cursor-pointer"
-                  onClick={() => handleEventClick(event)}
-                  style={{
-                    borderLeft: `4px solid ${event.color || '#FEF7CD'}`
+                  key={event.id}
+                  className="flex items-center gap-2 py-1 px-2 hover:bg-accent rounded-sm cursor-pointer text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEventClick(event);
                   }}
                 >
-                  <div className="space-y-1">
-                    <div className="text-lg text-white/90">
-                      {event.title}
-                      {event.recurring_pattern !== 'none' && (
-                        <span className="ml-2 text-xs text-gray-400">
-                          (Wiederkehrend: {
-                            event.recurring_pattern === 'daily' ? 'Täglich' :
-                            event.recurring_pattern === 'weekly' ? 'Wöchentlich' :
-                            'Monatlich'
-                          })
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-300/90">
-                        {format(startTime, "d. MMMM yyyy, HH:mm", { locale: de })} - {format(endTime, "HH:mm", { locale: de })} Uhr
-                      </span>
-                      <span className="text-sm text-gray-400/90">
-                        ({formatTimeDistance(startTime)})
-                      </span>
-                      {isLive && (
-                        <span className="flex items-center gap-1 text-sm text-red-400">
-                          <span className="animate-pulse w-2 h-2 rounded-full bg-red-500" />
-                          LIVE
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <Button variant="ghost" size="sm">
-                    Details
-                  </Button>
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: event.color || '#FEF7CD' }} />
+                  <span>{event.title}</span>
+                  <span className="ml-auto opacity-75">
+                    {formatTimeDistance(parseISO(event.start_time))}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={handleCalendarClick}
+          className="text-xs h-7 px-2 hover:text-foreground"
+        >
+          Kalender
+        </Button>
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Termin Details</DialogTitle>
           </DialogHeader>
           {selectedEvent && (
             <div className="space-y-4">
               <div className="space-y-2">
-                <h4 className="font-medium">Zeit</h4>
-                <p>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedEvent.color || '#FEF7CD' }} />
+                  <h4 className="font-medium">{selectedEvent.title}</h4>
+                </div>
+                <p className="text-sm text-muted-foreground">
                   {format(parseISO(selectedEvent.start_time), "d. MMMM yyyy, HH:mm", { locale: de })} - 
                   {format(selectedEvent.end_time ? parseISO(selectedEvent.end_time) : addHours(parseISO(selectedEvent.start_time), 1), "HH:mm", { locale: de })} Uhr
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-xs text-muted-foreground">
                   {formatTimeDistance(parseISO(selectedEvent.start_time))}
                 </p>
               </div>
               {selectedEvent.description && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Beschreibung</h4>
-                  <p>{selectedEvent.description}</p>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium">Beschreibung</h4>
+                  <p className="text-sm text-muted-foreground">{selectedEvent.description}</p>
                 </div>
               )}
               {selectedEvent.meeting_link && (
-                <div className="space-y-2">
-                  <h4 className="font-medium">Meeting Link</h4>
-                  <div className="bg-gray-100 p-3 rounded-md">
-                    <Button 
-                      variant="link" 
-                      onClick={() => window.open(selectedEvent.meeting_link)}
-                      className="p-0"
-                    >
-                      Zum Meeting beitreten
-                    </Button>
-                  </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium">Meeting Link</h4>
+                  <Button 
+                    variant="link" 
+                    onClick={() => window.open(selectedEvent.meeting_link)}
+                    className="h-8 px-0 text-sm"
+                  >
+                    Zum Meeting beitreten
+                  </Button>
                 </div>
               )}
             </div>
