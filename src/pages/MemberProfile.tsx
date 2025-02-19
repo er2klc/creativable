@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -39,11 +40,23 @@ const MemberProfile = () => {
     queryFn: async () => {
       if (!teamData?.id || !memberSlug) return null;
 
-      const [profileResponse, memberCountResponse, settingsResponse] = await Promise.all([
+      // Erste Abfrage: Profildaten
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('slug', memberSlug)
+        .maybeSingle();
+
+      if (profileError) throw profileError;
+      if (!profile) return null;
+
+      // Zweite Abfrage: Team-Mitglied Daten und Mitgliederzahl
+      const [memberResponse, countResponse, settingsResponse] = await Promise.all([
         supabase
-          .from('profiles')
+          .from('team_members')
           .select('*')
-          .eq('slug', memberSlug)
+          .eq('team_id', teamData.id)
+          .eq('user_id', profile.id)
           .maybeSingle(),
         supabase
           .from('team_members')
@@ -52,24 +65,14 @@ const MemberProfile = () => {
         supabase
           .from('settings')
           .select('about_me')
-          .eq('user_id', profileResponse.data.id)
+          .eq('user_id', profile.id)
           .maybeSingle()
       ]);
 
-      const { data: profile, error: profileError } = profileResponse;
-      if (profileError) throw profileError;
-      if (!profile) return null;
+      if (memberResponse.error) throw memberResponse.error;
+      if (!memberResponse.data) return null;
 
-      const { data: teamMember, error: teamMemberError } = await supabase
-        .from('team_members')
-        .select('*')
-        .eq('team_id', teamData.id)
-        .eq('user_id', profile.id)
-        .maybeSingle();
-
-      if (teamMemberError) throw teamMemberError;
-      if (!teamMember) return null;
-
+      // Restliche Abfragen für Aktivitäten und Punkte
       const [pointsResponse, activityResponse, postsResponse, commentsResponse] = await Promise.all([
         supabase
           .from('team_member_points')
@@ -153,7 +156,7 @@ const MemberProfile = () => {
 
       return {
         ...profile,
-        teamMember,
+        teamMember: memberResponse.data,
         points: pointsResponse.data?.points ?? 0,
         level: pointsResponse.data?.level ?? 1,
         stats: {
@@ -163,7 +166,7 @@ const MemberProfile = () => {
         },
         activity: activityResponse.data ?? [],
         activities,
-        membersCount: memberCountResponse.count ?? 0,
+        membersCount: countResponse.count ?? 0,
         aboutMe: settingsResponse.data?.about_me
       };
     },
