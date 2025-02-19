@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { format, isWithinInterval, formatDistanceToNow, addWeeks, parseISO, isBefore, isAfter, addMonths, addDays } from "date-fns";
+import { format, isWithinInterval, formatDistanceToNow, addWeeks, parseISO, isBefore, isAfter, addMonths, addDays, addHours, differenceInDays, startOfDay, endOfDay, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
 
 interface TeamEvent {
@@ -53,50 +53,74 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
         return [];
       }
 
-      // Process events and handle recurring patterns
       const processedEvents: TeamEvent[] = [];
       const cutoffDate = addMonths(now, 3); // Look ahead 3 months maximum
+      const today = startOfDay(now);
 
       events.forEach((event) => {
-        const startTime = parseISO(event.start_time);
+        const originalStartTime = parseISO(event.start_time);
+        const startTimeOfDay = new Date(originalStartTime);
+        const hours = originalStartTime.getHours();
+        const minutes = originalStartTime.getMinutes();
         
-        // If it's a non-recurring event in the future, add it directly
+        // For non-recurring events
         if (!event.recurring_pattern || event.recurring_pattern === 'none') {
-          if (isAfter(startTime, now)) {
+          if (isAfter(originalStartTime, now)) {
             processedEvents.push(event);
           }
           return;
         }
 
-        // Handle recurring events
-        let currentDate = startTime;
-        while (isBefore(currentDate, cutoffDate)) {
-          if (isAfter(currentDate, now)) {
-            const recurringEvent = {
-              ...event,
-              id: `${event.id}-${format(currentDate, 'yyyy-MM-dd')}`,
-              start_time: format(currentDate, "yyyy-MM-dd'T'HH:mm:ssxxx"),
-              end_time: event.end_time ? 
-                format(
-                  addDays(currentDate, differenceInDays(parseISO(event.end_time), startTime)),
-                  "yyyy-MM-dd'T'HH:mm:ssxxx"
-                ) : undefined
-            };
-            processedEvents.push(recurringEvent);
-          }
+        // For recurring events, find the next occurrence
+        let nextDate = today;
+        
+        // If today's event hasn't happened yet, consider today
+        if (isSameDay(today, originalStartTime) && isAfter(originalStartTime, now)) {
+          nextDate = originalStartTime;
+        } else {
+          // Find the next occurrence based on pattern
+          while (isBefore(nextDate, cutoffDate)) {
+            switch (event.recurring_pattern) {
+              case 'daily':
+                nextDate = addDays(nextDate, 1);
+                break;
+              case 'weekly':
+                // If we're before the original day of week, move to next week
+                if (nextDate.getDay() !== originalStartTime.getDay()) {
+                  const daysUntilNext = (originalStartTime.getDay() - nextDate.getDay() + 7) % 7;
+                  nextDate = addDays(nextDate, daysUntilNext);
+                } else {
+                  nextDate = addWeeks(nextDate, 1);
+                }
+                break;
+              case 'monthly':
+                nextDate = addMonths(nextDate, 1);
+                break;
+            }
 
-          // Calculate next occurrence based on pattern
-          switch (event.recurring_pattern) {
-            case 'daily':
-              currentDate = addDays(currentDate, 1);
+            // Set the correct time of day
+            nextDate = new Date(nextDate.setHours(hours, minutes, 0, 0));
+
+            if (isAfter(nextDate, now)) {
               break;
-            case 'weekly':
-              currentDate = addWeeks(currentDate, 1);
-              break;
-            case 'monthly':
-              currentDate = addMonths(currentDate, 1);
-              break;
+            }
           }
+        }
+
+        if (isBefore(nextDate, cutoffDate)) {
+          const duration = event.end_time 
+            ? differenceInDays(parseISO(event.end_time), originalStartTime)
+            : 0;
+
+          const recurringEvent = {
+            ...event,
+            id: `${event.id}-${format(nextDate, 'yyyy-MM-dd')}`,
+            start_time: format(nextDate, "yyyy-MM-dd'T'HH:mm:ssxxx"),
+            end_time: duration > 0 
+              ? format(addDays(nextDate, duration), "yyyy-MM-dd'T'HH:mm:ssxxx")
+              : format(addHours(nextDate, 1), "yyyy-MM-dd'T'HH:mm:ssxxx")
+          };
+          processedEvents.push(recurringEvent);
         }
       });
 
