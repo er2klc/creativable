@@ -1,3 +1,4 @@
+
 import { ReactNode } from "react";
 
 export interface Snap {
@@ -19,14 +20,4 @@ export interface TeamSnapsProps {
   onSnapClick: (snapId: string) => void;
   onBack: () => void;
   activeSnapView: string | null;
-}
-
-export interface MemberStats {
-  profile_id: string;
-  display_name: string | null;
-  avatar_url: string | null;
-  posts_count: number;
-  comments_count: number;
-  reactions_count: number;
-  slug: string | null;
 }
