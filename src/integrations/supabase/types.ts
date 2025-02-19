@@ -2732,6 +2732,88 @@ export type Database = {
           },
         ]
       }
+      team_member_activity_log: {
+        Row: {
+          activity_date: string | null
+          activity_type: string
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          points_earned: number | null
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          activity_date?: string | null
+          activity_type: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          points_earned?: number | null
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          activity_date?: string | null
+          activity_type?: string
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          points_earned?: number | null
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_activity_log_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_member_activity_summary: {
+        Row: {
+          activity_breakdown: Json | null
+          activity_count: number | null
+          created_at: string | null
+          date: string
+          id: string
+          points_earned: number | null
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          activity_breakdown?: Json | null
+          activity_count?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          points_earned?: number | null
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          activity_breakdown?: Json | null
+          activity_count?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          points_earned?: number | null
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_activity_summary_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_member_badges: {
         Row: {
           awarded_at: string | null
