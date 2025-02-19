@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -12,6 +13,7 @@ import { PostDetail } from "./components/PostDetail";
 import { LoadingState } from "./LoadingState";
 import { WelcomeDialog } from "./dialog/WelcomeDialog";
 import { toast } from "sonner";
+import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceContext";
 
 export function PostsAndDiscussions() {
   const navigate = useNavigate();
