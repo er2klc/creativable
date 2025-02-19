@@ -14,65 +14,72 @@ import { TeamSnaps } from "@/components/teams/detail/TeamSnaps";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
+
 const TeamDetail = () => {
-  const {
-    teamSlug
-  } = useParams();
+  const { teamSlug } = useParams();
   const navigate = useNavigate();
   const user = useUser();
   const [isManaging, setIsManaging] = useState(false);
   const [activeSnapView, setActiveSnapView] = useState<string | null>(null);
-  const {
-    data: team,
-    isLoading: isTeamLoading
-  } = useQuery({
+
+  const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ["team", teamSlug],
     queryFn: async () => {
       if (!user?.id || !teamSlug) return null;
-      const {
-        data: userTeams,
-        error: userTeamsError
-      } = await supabase.rpc("get_user_teams", {
-        uid: user.id
-      });
+
+      const { data: userTeams, error: userTeamsError } = await supabase.rpc("get_user_teams", { uid: user.id });
+
       if (userTeamsError) {
         console.error("Error fetching user teams:", userTeamsError);
         return null;
       }
-      const team = userTeams?.find(t => t.slug === teamSlug);
+
+      const team = userTeams?.find((t) => t.slug === teamSlug);
       return team || null;
     },
-    enabled: !!teamSlug && !!user?.id
+    enabled: !!teamSlug && !!user?.id,
   });
-  const {
-    data: teamMember
-  } = useQuery({
+
+  const { data: teamMember } = useQuery({
     queryKey: ["team-member", team?.id],
     queryFn: async () => {
       if (!user?.id || !team?.id) return null;
-      const {
-        data,
-        error
-      } = await supabase.from("team_members").select("role").eq("team_id", team.id).eq("user_id", user.id).maybeSingle();
+
+      const { data, error } = await supabase
+        .from("team_members")
+        .select("role")
+        .eq("team_id", team.id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
       if (error) return null;
       return data;
     },
-    enabled: !!user?.id && !!team?.id
+    enabled: !!user?.id && !!team?.id,
   });
+
   const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
+
   if (isTeamLoading) {
-    return <div className="flex items-center justify-center min-h-screen">
+    return (
+      <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>;
+      </div>
+    );
   }
+
   if (!team) {
-    return <Card>
+    return (
+      <Card>
         <CardContent className="p-6">
           <div className="text-center">Team nicht gefunden</div>
         </CardContent>
-      </Card>;
+      </Card>
+    );
   }
-  return <div className="space-y-">
+
+  return (
+    <div className="space-y-6">
       <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
         <div className="w-full">
           <div className="h-16 px-4 flex items-center">
@@ -84,10 +91,17 @@ const TeamDetail = () => {
                     {team.name}
                   </h1>
                 </div>
-                {isAdmin && <Button variant={isManaging ? "default" : "outline"} size="sm" onClick={() => setIsManaging(!isManaging)} className="ml-4">
+                {isAdmin && (
+                  <Button
+                    variant={isManaging ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setIsManaging(!isManaging)}
+                    className="ml-4"
+                  >
                     <Grid className="h-4 w-4 mr-2" />
                     {isManaging ? "Bearbeitung beenden" : "Snaps verwalten"}
-                  </Button>}
+                  </Button>
+                )}
               </div>
               <div className="w-[300px]">
                 <SearchBar />
@@ -98,21 +112,35 @@ const TeamDetail = () => {
         </div>
       </div>
 
-      <div className={cn("bg-background border-b transition-all duration-300", activeSnapView ? "h-0 overflow-hidden" : "h-auto")}>
-        <div className="container py-">
+      <div className={cn(
+        "bg-background border-b transition-all duration-300",
+        activeSnapView ? "h-0 overflow-hidden" : "h-auto"
+      )}>
+        <div className="container py-4">
           <TeamHeader team={team} isInSnapView={!!activeSnapView} />
         </div>
       </div>
 
       <div className="container pt-4">
         <Tabs defaultValue="posts">
-          <TeamSnaps isAdmin={isAdmin} isManaging={isManaging} teamId={team.id} teamSlug={team.slug} onCalendarClick={() => navigate(`/unity/team/${team.slug}/calendar`)} onSnapClick={snapId => setActiveSnapView(snapId)} onBack={() => setActiveSnapView(null)} activeSnapView={activeSnapView} />
+          <TeamSnaps 
+            isAdmin={isAdmin}
+            isManaging={isManaging}
+            teamId={team.id}
+            teamSlug={team.slug}
+            onCalendarClick={() => navigate(`/unity/team/${team.slug}/calendar`)}
+            onSnapClick={(snapId) => setActiveSnapView(snapId)}
+            onBack={() => setActiveSnapView(null)}
+            activeSnapView={activeSnapView}
+          />
 
           <TabsContent value="news" className="mt-6">
             <div className="space-y-6">
-              {isAdmin && <div className="flex justify-end">
+              {isAdmin && (
+                <div className="flex justify-end">
                   <CreateNewsDialog teamId={team.id} />
-                </div>}
+                </div>
+              )}
               <NewsList teamId={team.id} />
             </div>
           </TabsContent>
@@ -128,6 +156,8 @@ const TeamDetail = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default TeamDetail;
