@@ -63,10 +63,6 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     return undefined;
   };
 
-  const isFirstDayOfMonth = (date: Date) => date.getDate() === 1;
-  const shouldShowMonth = (weekDays: Date[]) => 
-    weekDays.some(day => isFirstDayOfMonth(day));
-
   return (
     <div className="bg-white rounded-lg p-2 border border-gray-200 w-full">
       <h3 className="text-lg font-semibold mb-2 text-gray-900">Activity</h3>
@@ -74,15 +70,21 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
         <div className="relative overflow-x-auto">
           <div className="flex flex-col">
             <div className="flex gap-1 mb-6">
-              {weeks[0] && weeks[0].map((day, index) => (
-                <div key={index} className="w-[12px] text-[9px] text-gray-500">
-                  {format(day, 'MMM', { locale: de })}
-                </div>
-              ))}
+              {weeks.map((week, weekIndex) => {
+                const firstDayOfWeek = week[0];
+                if (firstDayOfWeek.getDate() <= 7) {
+                  return (
+                    <div key={weekIndex} className="w-[12px] text-[9px] text-gray-500">
+                      {format(firstDayOfWeek, 'MMM', { locale: de })}
+                    </div>
+                  );
+                }
+                return <div key={weekIndex} className="w-[12px]" />;
+              })}
             </div>
             <div className="flex gap-1">
               <div className="grid grid-rows-7 text-[9px] text-gray-500 gap-[2px] pr-2">
-                {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day, index) => (
+                {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
                   <div key={day} className="h-[12px] flex items-center">
                     {day}
                   </div>

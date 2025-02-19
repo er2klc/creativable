@@ -237,10 +237,7 @@ const MemberProfile = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             <ActivityCalendar activities={memberData.activities} />
-            <MembershipCard 
-              teamData={teamData}
-              membersCount={memberData.membersCount}
-            />
+            <MembershipCard userId={memberData.id} />
             {memberData && (
               <ActivityFeed 
                 activities={memberData.activities || []} 

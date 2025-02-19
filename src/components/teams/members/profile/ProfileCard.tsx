@@ -1,3 +1,6 @@
+
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -5,6 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Brain, Calendar, Clock, MapPin, Link, Instagram, Linkedin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
+import { useUser } from "@supabase/auth-helpers-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface ProfileCardProps {
   memberData: {
@@ -13,6 +19,7 @@ interface ProfileCardProps {
     bio?: string;
     last_seen: string;
     created_at: string;
+    id: string;
     personality_type?: string;
     location?: string;
     social_links?: {
@@ -41,6 +48,37 @@ export const ProfileCard = ({
   pointsToNextLevel,
   aboutMe
 }: ProfileCardProps) => {
+  const user = useUser();
+  const [isFollowing, setIsFollowing] = useState(false);
+  const isOwnProfile = user?.id === memberData.id;
+
+  const { data: settings } = useQuery({
+    queryKey: ['user-settings', memberData.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('settings')
+        .select('about_me')
+        .eq('user_id', memberData.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const handleFollow = async () => {
+    try {
+      // Implementierung des Follow-Systems kommt später
+      setIsFollowing(!isFollowing);
+      toast.success(isFollowing ? 'Unfollowed successfully' : 'Followed successfully');
+    } catch (error) {
+      toast.error('Failed to update follow status');
+    }
+  };
+
+  const bioText = settings?.about_me || memberData.bio || "Dieser Nutzer hat noch keine Bio hinzugefügt.";
+  const joinedDate = new Date(memberData.created_at);
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -51,47 +89,27 @@ export const ProfileCard = ({
           </Avatar>
 
           <h1 className="text-2xl font-bold mb-1">{memberData.display_name}</h1>
-          <p className="text-muted-foreground mb-4">@{memberSlug}</p>
+          <p className="text-muted-foreground mb-2">@{memberSlug}</p>
+          
+          <p className="text-sm text-gray-600 mb-4">{bioText}</p>
 
-          <div className="mb-6">
-            <div className="flex justify-between text-sm mb-2">
-              <span>Level {currentLevel}</span>
-              <span>{pointsToNextLevel} points to next level</span>
-            </div>
-            <Progress value={currentPoints % 100} className="h-2" />
-          </div>
+          <p className="text-sm text-muted-foreground mb-4">
+            Mitglied seit {formatDistanceToNow(joinedDate, { addSuffix: true, locale: de })}
+          </p>
 
-          <div className="text-left space-y-3 mb-6">
-            {memberData.bio && (
-              <p className="text-sm">{memberData.bio}</p>
-            )}
-            
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Clock className="h-4 w-4" />
-              <span>Active {formatDistanceToNow(new Date(memberData.last_seen), { addSuffix: true, locale: de })}</span>
-            </div>
+          {isOwnProfile ? (
+            <Button className="w-full">Edit Profile</Button>
+          ) : (
+            <Button 
+              className="w-full" 
+              variant={isFollowing ? "outline" : "default"}
+              onClick={handleFollow}
+            >
+              {isFollowing ? 'Following' : 'Follow'}
+            </Button>
+          )}
 
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="h-4 w-4" />
-              <span>Joined {new Date(memberData.created_at).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</span>
-            </div>
-
-            {memberData.personality_type && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Brain className="h-4 w-4" />
-                <span>{memberData.personality_type}</span>
-              </div>
-            )}
-
-            {memberData.location && (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <MapPin className="h-4 w-4" />
-                <span>{memberData.location}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-3 gap-4 py-4 border-y">
+          <div className="grid grid-cols-3 gap-4 py-4 border-y mt-6">
             <div className="text-center">
               <div className="text-2xl font-bold">{memberData.stats.posts_count}</div>
               <div className="text-xs text-muted-foreground">Posts</div>
@@ -106,10 +124,16 @@ export const ProfileCard = ({
             </div>
           </div>
 
-          <Button className="w-full mt-4">Edit Profile</Button>
+          <div className="mb-6 mt-4">
+            <div className="flex justify-between text-sm mb-2">
+              <span>Level {currentLevel}</span>
+              <span>{pointsToNextLevel} points to next level</span>
+            </div>
+            <Progress value={currentPoints % 100} className="h-2" />
+          </div>
 
           {memberData.social_links && (
-            <div className="flex justify-center gap-4 mt-4">
+            <div className="flex justify-center gap-4">
               {memberData.social_links.website && (
                 <Link className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
               )}
@@ -122,12 +146,17 @@ export const ProfileCard = ({
             </div>
           )}
 
-          {(aboutMe || memberData.bio) && (
-            <div className="mt-6 pt-6 border-t">
-              <h3 className="text-lg font-semibold mb-3">Über mich</h3>
-              <p className="text-sm text-muted-foreground">
-                {aboutMe || memberData.bio}
-              </p>
+          {memberData.personality_type && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
+              <Brain className="h-4 w-4" />
+              <span>{memberData.personality_type}</span>
+            </div>
+          )}
+
+          {memberData.location && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+              <MapPin className="h-4 w-4" />
+              <span>{memberData.location}</span>
             </div>
           )}
         </div>
