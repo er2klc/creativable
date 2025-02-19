@@ -29,6 +29,17 @@ export const TeamPresenceProvider = ({
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
 
   useEffect(() => {
+    // Funktion zum Aktualisieren des Online-Status
+    const updateOnlineStatus = async (userId: string, isOnline: boolean) => {
+      await supabase
+        .from('profiles')
+        .update({ 
+          status: isOnline ? 'online' : 'offline',
+          last_seen: new Date().toISOString()
+        })
+        .eq('id', userId);
+    };
+
     const channel = supabase.channel(`team_${teamId}`)
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
@@ -42,19 +53,33 @@ export const TeamPresenceProvider = ({
         
         setOnlineMembers(online);
       })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            await channel.track({
-              user_id: session.user.id,
-              online_at: new Date().toISOString(),
-            });
-          }
-        }
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        newPresences.forEach(presence => {
+          updateOnlineStatus(presence.user_id, true);
+        });
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        leftPresences.forEach(presence => {
+          updateOnlineStatus(presence.user_id, false);
+        });
       });
 
+    // Subscribe zum Channel
+    channel.subscribe(async (status) => {
+      if (status === 'SUBSCRIBED') {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          await channel.track({
+            user_id: session.user.id,
+            online_at: new Date().toISOString(),
+          });
+        }
+      }
+    });
+
+    // Cleanup wenn die Komponente unmounted
     return () => {
+      channel.unsubscribe();
       supabase.removeChannel(channel);
     };
   }, [teamId]);

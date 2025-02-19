@@ -7,6 +7,7 @@ import { useProfile } from "@/hooks/use-profile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceContext";
+import { Users } from "lucide-react";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
@@ -105,15 +106,27 @@ const TeamMembers = () => {
 
   return (
     <TeamPresenceProvider teamId={teamData.id}>
-      <div className="container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {members.map((member) => (
-            <MemberCard 
-              key={member.id} 
-              member={member}
-              currentUserLevel={memberPoints?.level || 0}
-            />
-          ))}
+      <div>
+        <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+          <div className="h-16 px-4 flex items-center">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                Members
+              </h1>
+            </div>
+          </div>
+        </div>
+        <div className="container py-8 mt-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {members.map((member) => (
+              <MemberCard 
+                key={member.id} 
+                member={member}
+                currentUserLevel={memberPoints?.level || 0}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </TeamPresenceProvider>

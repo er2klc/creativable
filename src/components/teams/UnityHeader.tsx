@@ -3,7 +3,7 @@ import { useState } from "react";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { JoinTeamDialog } from "./JoinTeamDialog";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Users } from "lucide-react";
+import { UserPlus, Infinity } from "lucide-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -23,7 +23,7 @@ export const UnityHeader = ({ onTeamCreated, onTeamJoined }: UnityHeaderProps) =
         <div className="h-16 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
+              <Infinity className="h-5 w-5" />
               <h1 className="text-lg md:text-xl font-semibold text-foreground">
                 Unity
               </h1>
