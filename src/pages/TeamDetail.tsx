@@ -99,7 +99,7 @@ const TeamDetail = () => {
       </div>
 
       <div className={cn("bg-background border-b transition-all duration-300", activeSnapView ? "h-0 overflow-hidden" : "h-auto")}>
-        <div className="container py-4">
+        <div className="container py-">
           <TeamHeader team={team} isInSnapView={!!activeSnapView} />
         </div>
       </div>
