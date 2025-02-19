@@ -1,5 +1,5 @@
 
-import { eachDayOfInterval, format, isSameDay, startOfYear, endOfYear } from "date-fns";
+import { eachDayOfInterval, format, isSameDay, startOfYear, endOfYear, isToday } from "date-fns";
 import { de } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -47,13 +47,25 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     return activityByDay.filter(day => day.date.getMonth() === monthIndex);
   });
 
+  const getSpecialMessage = (day: DayActivity): string | undefined => {
+    if (day.total === 0) return undefined;
+    
+    // Check if it's the first activity of the year
+    const isFirstActivity = activityByDay
+      .filter(d => d.total > 0)
+      .sort((a, b) => a.date.getTime() - b.date.getTime())[0]?.date.getTime() === day.date.getTime();
+
+    if (isFirstActivity) return "First day 🎉";
+    return undefined;
+  };
+
   return (
-    <div className="bg-white rounded-lg p-4">
-      <h3 className="text-lg font-semibold mb-4">Activity</h3>
+    <div className="bg-[#1A1F2C] rounded-lg p-4">
+      <h3 className="text-lg font-semibold mb-4 text-white">Activity</h3>
       <TooltipProvider>
-        <div className="space-y-1">
+        <div>
           {/* Month Labels */}
-          <div className="grid grid-cols-[auto_repeat(12,1fr)] text-xs text-muted-foreground">
+          <div className="grid grid-cols-[auto_repeat(12,1fr)] text-xs text-gray-400 mb-1">
             <div />
             {monthGroups.map((_, i) => (
               <div key={i} className="text-center text-[10px]">
@@ -65,7 +77,7 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
           {/* Calendar Grid */}
           <div className="grid grid-cols-[auto_repeat(12,1fr)]">
             {/* Day Labels */}
-            <div className="grid grid-rows-7 text-xs text-muted-foreground pr-2">
+            <div className="grid grid-rows-7 text-xs text-gray-400 pr-2">
               <div>Mon</div>
               <div>Wed</div>
               <div>Fri</div>
@@ -75,60 +87,59 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
             {/* Activity Squares */}
             {monthGroups.map((month, monthIndex) => (
               <div key={monthIndex} className="grid grid-rows-7">
-                {month.map((day, dayIndex) => (
-                  <Tooltip key={dayIndex}>
-                    <TooltipTrigger asChild>
-                      <div
-                        className={cn(
-                          "w-3 h-3 border-[0.5px] border-white",
-                          getIntensity(day.total) === 0 && "bg-gray-100",
-                          getIntensity(day.total) === 1 && "bg-green-100",
-                          getIntensity(day.total) === 2 && "bg-green-200",
-                          getIntensity(day.total) === 3 && "bg-green-300",
-                          getIntensity(day.total) === 4 && "bg-green-400"
-                        )}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <div className="text-xs p-1.5 space-y-1">
-                        <div className="text-muted-foreground">
-                          {day.total} {day.total === 1 ? 'Aktivität' : 'Aktivitäten'}
-                        </div>
-                        <div className="font-medium">
-                          {format(day.date, 'EEEE, d. MMMM yyyy', { locale: de })}
-                        </div>
-                        {day.total > 0 && (
-                          <div className="space-y-0.5 text-muted-foreground text-[10px]">
-                            {day.posts > 0 && (
-                              <div>{day.posts} {day.posts === 1 ? 'Post' : 'Posts'}</div>
-                            )}
-                            {day.comments > 0 && (
-                              <div>{day.comments} {day.comments === 1 ? 'Kommentar' : 'Kommentare'}</div>
-                            )}
-                            {day.likes > 0 && (
-                              <div>{day.likes} {day.likes === 1 ? 'Like' : 'Likes'}</div>
-                            )}
+                {month.map((day, dayIndex) => {
+                  const specialMessage = getSpecialMessage(day);
+                  return (
+                    <Tooltip key={dayIndex}>
+                      <TooltipTrigger asChild>
+                        <div
+                          className={cn(
+                            "w-[10px] h-[10px]",
+                            isToday(day.date) && "ring-1 ring-white ring-offset-1",
+                            getIntensity(day.total) === 0 && "bg-[#222]",
+                            getIntensity(day.total) === 1 && "bg-green-900",
+                            getIntensity(day.total) === 2 && "bg-green-700",
+                            getIntensity(day.total) === 3 && "bg-green-500",
+                            getIntensity(day.total) === 4 && "bg-green-300"
+                          )}
+                        />
+                      </TooltipTrigger>
+                      <TooltipContent 
+                        className="bg-[#1A1F2C] border border-gray-700 text-white p-2 rounded-md shadow-lg"
+                      >
+                        <div className="text-xs space-y-1">
+                          <div>
+                            {day.total} {day.total === 1 ? 'activity' : 'activities'}
                           </div>
-                        )}
-                      </div>
-                    </TooltipContent>
-                  </Tooltip>
-                ))}
+                          <div className="font-medium">
+                            {format(day.date, 'EEEE, MMMM d, yyyy', { locale: de })}
+                          </div>
+                          {specialMessage && (
+                            <div className="text-gray-400">{specialMessage}</div>
+                          )}
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
+                  );
+                })}
               </div>
             ))}
           </div>
 
           {/* Legend */}
-          <div className="flex items-center justify-between text-xs text-muted-foreground pt-2">
-            <span>Weniger</span>
-            <div className="flex">
-              <div className="w-3 h-3 border-[0.5px] border-white bg-gray-100" />
-              <div className="w-3 h-3 border-[0.5px] border-white bg-green-100" />
-              <div className="w-3 h-3 border-[0.5px] border-white bg-green-200" />
-              <div className="w-3 h-3 border-[0.5px] border-white bg-green-300" />
-              <div className="w-3 h-3 border-[0.5px] border-white bg-green-400" />
+          <div className="flex items-center justify-between text-xs text-gray-400 mt-2">
+            <a href="#" className="hover:text-white transition-colors">What is this?</a>
+            <div className="flex items-center gap-2">
+              <span>Less</span>
+              <div className="flex">
+                <div className="w-[10px] h-[10px] bg-[#222]" />
+                <div className="w-[10px] h-[10px] bg-green-900" />
+                <div className="w-[10px] h-[10px] bg-green-700" />
+                <div className="w-[10px] h-[10px] bg-green-500" />
+                <div className="w-[10px] h-[10px] bg-green-300" />
+              </div>
+              <span>More</span>
             </div>
-            <span>Mehr</span>
           </div>
         </div>
       </TooltipProvider>
