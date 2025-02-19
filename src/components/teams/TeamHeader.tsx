@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { NextTeamEvent } from "./events/NextTeamEvent";
 
 interface TeamHeaderProps {
   team: {
@@ -15,6 +16,7 @@ interface TeamHeaderProps {
     name: string;
     logo_url?: string;
     created_by: string;
+    slug: string;
   };
   isInSnapView?: boolean;
 }
@@ -92,8 +94,8 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
 
   return (
     <div className={cn(
-      "bg-background border-b transition-all duration-300 ease-in-out",
-      isCollapsed ? "h-16" : "h-auto"
+      "bg-background border-b transition-all duration-300",
+      isCollapsed ? "h-0 overflow-hidden" : "h-auto"
     )}>
       <div className={cn(
         "container py-4 relative",
@@ -118,27 +120,19 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
             members={members}
           />
         </div>
-        {isInSnapView && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsCollapsed(!isCollapsed)}
-            className={cn(
-              "absolute right-4 transition-all duration-300 pointer-events-auto",
-              isCollapsed ? "bottom-2" : "-bottom-4"
-            )}
-          >
-            {isCollapsed ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronUp className="h-4 w-4" />
-            )}
-          </Button>
-        )}
+        
         <Separator className={cn(
           "my-4 transition-opacity duration-300",
           isCollapsed ? "opacity-0" : "opacity-100"
         )} />
+
+        {/* Add NextTeamEvent component */}
+        <div className={cn(
+          "transition-all duration-300",
+          isCollapsed ? "opacity-0" : "opacity-100"
+        )}>
+          <NextTeamEvent teamId={team.id} teamSlug={team.slug} />
+        </div>
       </div>
     </div>
   );
