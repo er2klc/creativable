@@ -44,16 +44,24 @@ export const TeamSnaps = ({
 
     console.log("handleSnapClick called with:", { snapId, currentTeamSlug });
     
-    if (snapId === "posts") {
-      console.log("Navigating to posts with teamSlug:", currentTeamSlug);
-      navigate(`/unity/team/${currentTeamSlug}/posts`);
-    } else if (snapId === "calendar") {
-      onCalendarClick();
-    } else if (snapId === "leaderboard") {
-      console.log("Navigating to leaderboard with teamSlug:", currentTeamSlug);
-      navigate(`/unity/team/${currentTeamSlug}/leaderboard`);
-    } else {
-      navigate(`/unity/team/${currentTeamSlug}/${snapId}`);
+    switch (snapId) {
+      case "posts":
+        console.log("Navigating to posts with teamSlug:", currentTeamSlug);
+        navigate(`/unity/team/${currentTeamSlug}/posts`);
+        break;
+      case "calendar":
+        onCalendarClick();
+        break;
+      case "leaderboard":
+        console.log("Navigating to leaderboard with teamSlug:", currentTeamSlug);
+        navigate(`/unity/team/${currentTeamSlug}/leaderboard`);
+        break;
+      case "members":
+        console.log("Navigating to members with teamSlug:", currentTeamSlug);
+        navigate(`/unity/team/${currentTeamSlug}/members`);
+        break;
+      default:
+        navigate(`/unity/team/${currentTeamSlug}/${snapId}`);
     }
     onSnapClick(snapId);
   };
@@ -188,3 +196,4 @@ export const TeamSnaps = ({
     </div>
   );
 };
+

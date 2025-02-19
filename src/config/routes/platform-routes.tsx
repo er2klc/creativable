@@ -8,6 +8,7 @@ import TeamPulse from "@/pages/TeamPulse";
 import { PostsAndDiscussions } from "@/components/teams/posts/PostsAndDiscussions";
 import TeamCalendar from "@/pages/TeamCalendar";
 import MemberProfile from "@/pages/MemberProfile";
+import { MembersCard } from "@/components/teams/detail/snap-cards/MembersCard";
 
 export const platformRoutes = [
   {
@@ -19,6 +20,11 @@ export const platformRoutes = [
     path: "/unity/team/:teamSlug",
     element: <TeamDetail />,
     label: "Team Detail",
+  },
+  {
+    path: "/unity/team/:teamSlug/members",
+    element: <MembersCard />,
+    label: "Team Members",
   },
   {
     path: "/unity/team/:teamSlug/members/:memberSlug",
@@ -66,3 +72,4 @@ export const platformRoutes = [
     label: "Platform Detail",
   }
 ];
+
