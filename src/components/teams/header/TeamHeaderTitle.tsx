@@ -1,3 +1,4 @@
+
 import { Crown, Image, Users, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
@@ -73,7 +74,7 @@ export function TeamHeaderTitle({
   }, [team.id]);
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex items-center gap-6 justify-center w-full">
       <Sheet>
         <SheetTrigger asChild>
           <button className="relative group">
