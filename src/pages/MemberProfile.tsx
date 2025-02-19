@@ -1,15 +1,50 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { User, Activity, MessageSquare, Award, Calendar, TrendingUp, ChevronLeft, Users } from "lucide-react";
+import { User, Activity, MessageSquare, Award, Calendar, Clock, MapPin, Brain, ChevronLeft, Users, Link, Instagram, Linkedin } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
+import { Progress } from "@/components/ui/progress";
+import { formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
+
+const ActivityCalendar = ({ activities }) => {
+  // Simplified calendar component
+  return (
+    <div className="bg-white rounded-lg p-4">
+      <h3 className="text-lg font-semibold mb-4">Activity</h3>
+      <div className="grid grid-cols-7 gap-1">
+        {[...Array(28)].map((_, i) => (
+          <div
+            key={i}
+            className={cn(
+              "w-4 h-4 rounded-sm",
+              activities?.[i] ? "bg-green-200" : "bg-gray-100"
+            )}
+          />
+        ))}
+      </div>
+      <div className="mt-2 flex items-center justify-between text-sm text-muted-foreground">
+        <span>Less</span>
+        <div className="flex gap-1">
+          <div className="w-4 h-4 rounded-sm bg-gray-100" />
+          <div className="w-4 h-4 rounded-sm bg-green-100" />
+          <div className="w-4 h-4 rounded-sm bg-green-200" />
+          <div className="w-4 h-4 rounded-sm bg-green-300" />
+          <div className="w-4 h-4 rounded-sm bg-green-400" />
+        </div>
+        <span>More</span>
+      </div>
+    </div>
+  );
+};
 
 const MemberProfile = () => {
   const { teamSlug, memberSlug } = useParams();
@@ -42,7 +77,11 @@ const MemberProfile = () => {
           avatar_url,
           bio,
           status,
-          last_seen
+          last_seen,
+          personality_type,
+          location,
+          created_at,
+          social_links
         `)
         .eq('slug', memberSlug)
         .single();
@@ -56,17 +95,26 @@ const MemberProfile = () => {
         .eq('user_id', profile.id)
         .single();
 
-      const { data: activity } = await supabase
-        .from('member_activities')
-        .select('*')
-        .eq('profile_id', profile.id)
+      const { data: stats } = await supabase
+        .from('team_member_stats')
+        .select('posts_count, followers_count, following_count')
+        .eq('team_id', teamData.id)
+        .eq('user_id', profile.id)
         .single();
+
+      const { data: activity } = await supabase
+        .from('team_member_activity')
+        .select('*')
+        .eq('user_id', profile.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
 
       return {
         ...profile,
         points: points?.points || 0,
         level: points?.level || 1,
-        activity: activity || null
+        stats: stats || { posts_count: 0, followers_count: 0, following_count: 0 },
+        activity: activity || []
       };
     }
   });
@@ -88,6 +136,9 @@ const MemberProfile = () => {
       </Card>
     );
   }
+
+  // Calculate points needed for next level
+  const pointsToNextLevel = (memberData.level * 100) - memberData.points;
 
   return (
     <div>
@@ -123,7 +174,7 @@ const MemberProfile = () => {
         </div>
       </div>
 
-      <div className="container py-8 mt-16 space-y-6">
+      <div className="container py-8 mt-16">
         <Button
           variant="ghost"
           size="sm"
@@ -134,88 +185,118 @@ const MemberProfile = () => {
           Zurück zur Übersicht
         </Button>
 
-        <Card>
-          <CardHeader className="relative overflow-hidden p-0">
-            <div className="absolute inset-0 bg-gradient-to-r from-primary/10 to-primary/5 z-0" />
-            <div className="relative z-10 p-6 flex items-center gap-6">
-              <Avatar className="h-24 w-24 border-4 border-background">
-                <AvatarImage src={memberData.avatar_url} />
-                <AvatarFallback className="text-2xl">
-                  {memberData.display_name?.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                  <h1 className="text-2xl font-bold">{memberData.display_name}</h1>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="font-medium">
-                      Level {memberData.level}
-                    </Badge>
-                    <Badge 
-                      variant="outline" 
-                      className={cn(
-                        "font-medium",
-                        memberData.status === 'online' ? "border-green-500 text-green-500" : "border-muted-foreground text-muted-foreground"
-                      )}
-                    >
-                      {memberData.status === 'online' ? 'Online' : 'Offline'}
-                    </Badge>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Main Content - Left Column */}
+          <div className="md:col-span-2 space-y-6">
+            <ActivityCalendar activities={memberData.activity} />
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <h3 className="text-lg font-semibold">Memberships</h3>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <Avatar className="h-12 w-12">
+                    <AvatarImage src={teamData.logo_url} alt={teamData.name} />
+                    <AvatarFallback>{teamData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <h4 className="font-medium">{teamData.name}</h4>
+                    <p className="text-sm text-muted-foreground">Private • {memberData.stats.followers_count} Members</p>
                   </div>
                 </div>
-                {memberData.bio && (
-                  <p className="mt-2 text-muted-foreground">{memberData.bio}</p>
-                )}
-              </div>
-            </div>
-          </CardHeader>
+              </CardContent>
+            </Card>
 
-          <CardContent className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <MessageSquare className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{memberData.activity?.posts_count || 0}</div>
-                      <div className="text-sm text-muted-foreground">Beiträge</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Activity className="h-6 w-6 text-primary" />
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold">{memberData.activity?.comments_count || 0}</div>
-                      <div className="text-sm text-muted-foreground">Kommentare</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+            {/* Activity Feed would go here */}
+          </div>
 
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-full bg-primary/10">
-                      <Award className="h-6 w-6 text-primary" />
+          {/* Profile Info - Right Column */}
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <Avatar className="h-24 w-24 mx-auto mb-4">
+                    <AvatarImage src={memberData.avatar_url} />
+                    <AvatarFallback>{memberData.display_name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+
+                  <h1 className="text-2xl font-bold mb-1">{memberData.display_name}</h1>
+                  <p className="text-muted-foreground mb-4">@{memberSlug}</p>
+
+                  <div className="mb-6">
+                    <div className="flex justify-between text-sm mb-2">
+                      <span>Level {memberData.level}</span>
+                      <span>{pointsToNextLevel} points to next level</span>
                     </div>
-                    <div>
-                      <div className="text-2xl font-bold">{memberData.points}</div>
-                      <div className="text-sm text-muted-foreground">Punkte</div>
+                    <Progress value={memberData.points % 100} className="h-2" />
+                  </div>
+
+                  <div className="text-left space-y-3 mb-6">
+                    {memberData.bio && (
+                      <p className="text-sm">{memberData.bio}</p>
+                    )}
+                    
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      <span>Active {formatDistanceToNow(new Date(memberData.last_seen), { addSuffix: true, locale: de })}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span>Joined {new Date(memberData.created_at).toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })}</span>
+                    </div>
+
+                    {memberData.personality_type && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Brain className="h-4 w-4" />
+                        <span>{memberData.personality_type}</span>
+                      </div>
+                    )}
+
+                    {memberData.location && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="h-4 w-4" />
+                        <span>{memberData.location}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4 py-4 border-y">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{memberData.stats.posts_count}</div>
+                      <div className="text-xs text-muted-foreground">Posts</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{memberData.stats.followers_count}</div>
+                      <div className="text-xs text-muted-foreground">Followers</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">{memberData.stats.following_count}</div>
+                      <div className="text-xs text-muted-foreground">Following</div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
-          </CardContent>
-        </Card>
+
+                  <Button className="w-full mt-4">Edit Profile</Button>
+
+                  {memberData.social_links && (
+                    <div className="flex justify-center gap-4 mt-4">
+                      {memberData.social_links.website && (
+                        <Link className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+                      )}
+                      {memberData.social_links.instagram && (
+                        <Instagram className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+                      )}
+                      {memberData.social_links.linkedin && (
+                        <Linkedin className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+                      )}
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
