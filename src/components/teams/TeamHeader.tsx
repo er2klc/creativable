@@ -1,4 +1,3 @@
-
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,8 +8,6 @@ import { useState, useEffect } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Progress } from "@/components/ui/progress";
 
 interface TeamHeaderProps {
   team: {
@@ -92,100 +89,35 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
 
   const membersCount = members.length;
   const adminsCount = adminMembers.length;
-  const maxMembers = 100; // TODO: Get from team settings
-  const memberProgress = (membersCount / maxMembers) * 100;
 
   return (
-    <div 
-      className={cn(
-        "relative overflow-hidden transition-all duration-300 ease-in-out bg-[#222]",
-        isCollapsed ? "h-16" : "h-auto"
-      )}
-    >
-      {/* Background with gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-t from-[#222]/95 to-transparent" />
-
-      {/* Content */}
+    <div className={cn(
+      "bg-background border-b transition-all duration-300 ease-in-out",
+      isCollapsed ? "h-16" : "h-auto"
+    )}>
       <div className={cn(
-        "container relative z-10 py-6",
+        "container py-4 relative",
         isCollapsed ? "pointer-events-none" : ""
       )}>
         <div className={cn(
-          "transition-all duration-300",
+          "flex items-center justify-between transition-all duration-300",
           isCollapsed ? "opacity-0" : "opacity-100"
         )}>
-          {/* Header Content */}
-          <div className="flex items-start justify-between gap-6">
-            {/* Team Info */}
-            <div className="flex items-center gap-6">
-              <Avatar className="h-24 w-24 border-2 border-white/10">
-                {team.logo_url ? (
-                  <AvatarImage src={team.logo_url} alt={team.name} className="object-cover" />
-                ) : (
-                  <AvatarFallback className="text-2xl bg-[#333]">
-                    {team.name.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                )}
-              </Avatar>
-              
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold text-white/90">{team.name}</h1>
-                <div className="flex items-center gap-4 text-sm text-gray-300/90">
-                  <TeamHeaderTitle 
-                    team={team}
-                    isAdmin={isAdmin}
-                    membersCount={membersCount}
-                    adminsCount={adminsCount}
-                    members={members}
-                    adminMembers={adminMembers}
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Actions */}
-            <div className="flex items-start gap-4">
-              <TeamActions 
-                teamId={team.id}
-                isAdmin={isAdmin}
-                isOwner={isOwner}
-                members={members}
-              />
-            </div>
-          </div>
-
-          {/* Stats Bar */}
-          <div className="mt-6 bg-black/20 backdrop-blur-sm rounded-lg p-4 border border-white/10">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Members Progress */}
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm text-gray-300/90">
-                  <span>Mitglieder</span>
-                  <span>{membersCount}/{maxMembers}</span>
-                </div>
-                <Progress value={memberProgress} className="h-2 bg-gray-700/50" />
-              </div>
-
-              {/* Admin Stats */}
-              <div className="flex items-center gap-4 text-sm text-gray-300/90">
-                <span>{adminsCount} Admins</span>
-                <span>•</span>
-                <span>{membersCount - adminsCount} Members</span>
-              </div>
-
-              {/* Additional Stats or Info */}
-              <div className="flex justify-end">
-                {isOwner && (
-                  <span className="bg-yellow-900/30 text-yellow-200/90 px-3 py-1 rounded-full text-sm font-medium">
-                    Team Owner
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+          <TeamHeaderTitle 
+            team={team}
+            isAdmin={isAdmin}
+            membersCount={membersCount}
+            adminsCount={adminsCount}
+            members={members}
+            adminMembers={adminMembers}
+          />
+          <TeamActions 
+            teamId={team.id}
+            isAdmin={isAdmin}
+            isOwner={isOwner}
+            members={members}
+          />
         </div>
-
-        {/* Collapse Toggle Button */}
         {isInSnapView && (
           <Button
             variant="ghost"
@@ -203,7 +135,6 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
             )}
           </Button>
         )}
-
         <Separator className={cn(
           "my-4 transition-opacity duration-300",
           isCollapsed ? "opacity-0" : "opacity-100"
