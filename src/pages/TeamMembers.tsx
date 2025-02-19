@@ -86,7 +86,7 @@ const TeamMembers = () => {
               last_seen,
               slug
             ),
-            points:team_member_points!inner (
+            points:team_member_points (
               level,
               points
             )
@@ -98,7 +98,7 @@ const TeamMembers = () => {
 
         return data.map(member => ({
           ...member,
-          points: member.points[0] || { level: 1, points: 0 }
+          points: member.points[0] || { level: 0, points: 0 }
         }));
       } catch (err) {
         console.error('Error fetching members:', err);
