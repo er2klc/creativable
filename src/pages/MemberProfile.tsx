@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,11 +68,22 @@ const MemberProfile = () => {
         return null;
       }
 
+      // Fetch points data with proper error handling
+      const { data: pointsData, error: pointsError } = await supabase
+        .from('team_member_points')
+        .select('points, level')
+        .eq('team_id', teamData.id)
+        .eq('user_id', profileData.id)
+        .single();
+
+      if (pointsError) {
+        console.error('Error fetching points:', pointsError);
+      }
+
       // 3. Fetch remaining data in parallel
       const [
         { count: membersCount },
         { data: settingsData },
-        { data: pointsData },
         { data: activityData },
         { data: postsData },
         { data: commentsData }
@@ -83,12 +95,6 @@ const MemberProfile = () => {
         supabase
           .from('settings')
           .select('about_me')
-          .eq('user_id', profileData.id)
-          .maybeSingle(),
-        supabase
-          .from('team_member_points')
-          .select('points, level')
-          .eq('team_id', teamData.id)
           .eq('user_id', profileData.id)
           .maybeSingle(),
         supabase
@@ -161,12 +167,12 @@ const MemberProfile = () => {
         })) || []),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // 5. Return combined member data
+      // 5. Return combined member data with proper level and points handling
       return {
         ...profileData,
         teamMember: membershipData,
         points: pointsData?.points ?? 0,
-        level: pointsData?.level ?? 1,
+        level: pointsData?.level ?? 0,
         stats: {
           posts_count: postsData?.length ?? 0,
           followers_count: 0,
@@ -213,7 +219,7 @@ const MemberProfile = () => {
 
   const currentPoints = memberData.points;
   const currentLevel = memberData.level;
-  const pointsToNextLevel = (currentLevel * 100) - currentPoints;
+  const pointsToNextLevel = ((currentLevel + 1) * 100) - currentPoints;
 
   return (
     <div>
