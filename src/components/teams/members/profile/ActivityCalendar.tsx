@@ -86,7 +86,7 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
 
             {/* Activity Squares */}
             {monthGroups.map((month, monthIndex) => (
-              <div key={monthIndex} className="grid grid-rows-7 gap-[1px]">
+              <div key={monthIndex} className="grid grid-cols-53 grid-rows-7 gap-[1px] p-[1px]">
                 {month.map((day, dayIndex) => {
                   const specialMessage = getSpecialMessage(day);
                   return (
