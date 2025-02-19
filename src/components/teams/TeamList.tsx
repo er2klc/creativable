@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { type Tables } from "@/integrations/supabase/types";
 import { TeamCard } from "./card/TeamCard";
@@ -97,7 +96,7 @@ export const TeamList = ({
   }
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-8">
       {teams.map((team) => (
         <TeamCard
           key={team.id}

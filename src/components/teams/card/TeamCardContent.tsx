@@ -17,25 +17,25 @@ export const TeamCardContent = ({ team }: TeamCardContentProps) => {
   const isTeamOwner = user?.id === team.created_by;
 
   return (
-    <div className="space-y-3 h-full flex flex-col">
+    <div className="space-y-4 h-full flex flex-col">
       <div>
-        <div className="flex items-center gap-2 mb-1.5">
-          <h3 className="text-lg font-medium leading-none">{team.name}</h3>
+        <div className="flex items-center gap-3 mb-2">
+          <h3 className="text-2xl font-semibold">{team.name}</h3>
           {isTeamOwner && (
-            <span className="bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full text-xs font-medium flex items-center gap-1 whitespace-nowrap">
-              <Crown className="h-3 w-3" />
+            <span className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-sm font-medium flex items-center gap-1.5 whitespace-nowrap">
+              <Crown className="h-4 w-4" />
               Team Owner
             </span>
           )}
         </div>
-        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1.5">
-            <Users className="h-4 w-4" />
+        <div className="flex items-center gap-6 text-base text-muted-foreground">
+          <span className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
             <span>{team.stats?.totalMembers || 0}</span>
           </span>
           <span>•</span>
-          <div className="flex items-center gap-1.5">
-            <Shield className="h-4 w-4" />
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5" />
             <span>{team.stats?.admins || 0}</span>
           </div>
         </div>
@@ -43,7 +43,7 @@ export const TeamCardContent = ({ team }: TeamCardContentProps) => {
       
       {team.description && (
         <div 
-          className="text-sm text-muted-foreground/90 prose max-w-none flex-grow line-clamp-3"
+          className="text-base text-muted-foreground prose max-w-none flex-grow"
           dangerouslySetInnerHTML={{ __html: team.description }}
         />
       )}
