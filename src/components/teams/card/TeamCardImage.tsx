@@ -24,7 +24,7 @@ export const TeamCardImage = ({ team }: TeamCardImageProps) => {
   };
 
   return (
-    <AspectRatio ratio={16/9} className="bg-muted/50">
+    <AspectRatio ratio={1} className="bg-muted/50">
       <div className="relative w-full h-full" onClick={handleClick}>
         {showVideo && team.video_url ? (
           <iframe
@@ -42,15 +42,15 @@ export const TeamCardImage = ({ team }: TeamCardImageProps) => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                <span className="text-2xl font-semibold text-muted-foreground/70">
+              <div className="w-full h-full flex items-center justify-center bg-muted">
+                <span className="text-3xl font-semibold text-muted-foreground/70">
                   {team.name.substring(0, 2).toUpperCase()}
                 </span>
               </div>
             )}
             {team.video_url && !showVideo && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors hover:bg-black/30">
-                <Play className="w-10 h-10 text-white/90" />
+                <Play className="w-8 h-8 text-white/90" />
               </div>
             )}
           </>
