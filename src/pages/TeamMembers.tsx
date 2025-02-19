@@ -12,6 +12,7 @@ import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useEffect } from "react";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
