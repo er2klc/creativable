@@ -5,8 +5,20 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { format, isWithinInterval, formatDistanceToNow } from "date-fns";
+import { format, isWithinInterval, formatDistanceToNow, addWeeks, parseISO, isBefore, isAfter, addMonths, addDays } from "date-fns";
 import { de } from "date-fns/locale";
+
+interface TeamEvent {
+  id: string;
+  title: string;
+  description?: string;
+  start_time: string;
+  end_time?: string;
+  recurring_pattern?: 'none' | 'daily' | 'weekly' | 'monthly';
+  is_admin_only: boolean;
+  meeting_link?: string;
+  color: string;
+}
 
 interface NextTeamEventProps {
   teamId: string;
@@ -16,7 +28,7 @@ interface NextTeamEventProps {
 export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
   const navigate = useNavigate();
   const [showDetails, setShowDetails] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<TeamEvent | null>(null);
   const [now, setNow] = useState(new Date());
 
   // Update current time every minute
@@ -30,30 +42,75 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
   const { data: nextEvents = [] } = useQuery({
     queryKey: ["next-team-events", teamId],
     queryFn: async () => {
-      const now = new Date();
-      const { data, error } = await supabase
+      const { data: events = [], error } = await supabase
         .from("team_calendar_events")
         .select("*")
         .eq("team_id", teamId)
-        .gte("start_time", now.toISOString())
-        .order("start_time")
-        .limit(3);
+        .order("start_time");
 
       if (error) {
-        console.error("Error fetching next events:", error);
+        console.error("Error fetching events:", error);
         return [];
       }
 
-      return data;
+      // Process events and handle recurring patterns
+      const processedEvents: TeamEvent[] = [];
+      const cutoffDate = addMonths(now, 3); // Look ahead 3 months maximum
+
+      events.forEach((event) => {
+        const startTime = parseISO(event.start_time);
+        
+        // If it's a non-recurring event in the future, add it directly
+        if (!event.recurring_pattern || event.recurring_pattern === 'none') {
+          if (isAfter(startTime, now)) {
+            processedEvents.push(event);
+          }
+          return;
+        }
+
+        // Handle recurring events
+        let currentDate = startTime;
+        while (isBefore(currentDate, cutoffDate)) {
+          if (isAfter(currentDate, now)) {
+            const recurringEvent = {
+              ...event,
+              id: `${event.id}-${format(currentDate, 'yyyy-MM-dd')}`,
+              start_time: format(currentDate, "yyyy-MM-dd'T'HH:mm:ssxxx"),
+              end_time: event.end_time ? 
+                format(
+                  addDays(currentDate, differenceInDays(parseISO(event.end_time), startTime)),
+                  "yyyy-MM-dd'T'HH:mm:ssxxx"
+                ) : undefined
+            };
+            processedEvents.push(recurringEvent);
+          }
+
+          // Calculate next occurrence based on pattern
+          switch (event.recurring_pattern) {
+            case 'daily':
+              currentDate = addDays(currentDate, 1);
+              break;
+            case 'weekly':
+              currentDate = addWeeks(currentDate, 1);
+              break;
+            case 'monthly':
+              currentDate = addMonths(currentDate, 1);
+              break;
+          }
+        }
+      });
+
+      // Sort by start time and return next 3 events
+      return processedEvents
+        .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
+        .slice(0, 3);
     },
-    refetchInterval: 60000, // Refetch every minute to keep live status updated
+    refetchInterval: 60000, // Refetch every minute
   });
 
-  const isEventLive = (event: any) => {
-    if (!event) return false;
-    const startTime = new Date(event.start_time);
-    const endTime = event.end_time ? new Date(event.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
-    
+  const isEventLive = (event: TeamEvent) => {
+    const startTime = parseISO(event.start_time);
+    const endTime = event.end_time ? parseISO(event.end_time) : addHours(startTime, 1);
     return isWithinInterval(now, { start: startTime, end: endTime });
   };
 
@@ -61,7 +118,7 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
     return formatDistanceToNow(date, { locale: de, addSuffix: true });
   };
 
-  const handleEventClick = (event: any) => {
+  const handleEventClick = (event: TeamEvent) => {
     setSelectedEvent(event);
     setShowDetails(true);
   };
@@ -85,8 +142,8 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
 
           <div className="space-y-3">
             {nextEvents.map((event) => {
-              const startTime = new Date(event.start_time);
-              const endTime = event.end_time ? new Date(event.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
+              const startTime = parseISO(event.start_time);
+              const endTime = event.end_time ? parseISO(event.end_time) : addHours(startTime, 1);
               const isLive = isEventLive(event);
 
               return (
@@ -94,9 +151,23 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
                   key={event.id} 
                   className="flex items-center justify-between p-3 rounded-md bg-black/10 hover:bg-black/20 transition-colors cursor-pointer"
                   onClick={() => handleEventClick(event)}
+                  style={{
+                    borderLeft: `4px solid ${event.color || '#FEF7CD'}`
+                  }}
                 >
                   <div className="space-y-1">
-                    <div className="text-lg text-white/90">{event.title}</div>
+                    <div className="text-lg text-white/90">
+                      {event.title}
+                      {event.recurring_pattern !== 'none' && (
+                        <span className="ml-2 text-xs text-gray-400">
+                          (Wiederkehrend: {
+                            event.recurring_pattern === 'daily' ? 'Täglich' :
+                            event.recurring_pattern === 'weekly' ? 'Wöchentlich' :
+                            'Monatlich'
+                          })
+                        </span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm text-gray-300/90">
                         {format(startTime, "d. MMMM yyyy, HH:mm", { locale: de })} - {format(endTime, "HH:mm", { locale: de })} Uhr
@@ -132,10 +203,11 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
               <div className="space-y-2">
                 <h4 className="font-medium">Zeit</h4>
                 <p>
-                  {format(new Date(selectedEvent.start_time), "d. MMMM yyyy, HH:mm", { locale: de })} - {format(new Date(selectedEvent.end_time || new Date(selectedEvent.start_time).getTime() + 60 * 60 * 1000), "HH:mm", { locale: de })} Uhr
+                  {format(parseISO(selectedEvent.start_time), "d. MMMM yyyy, HH:mm", { locale: de })} - 
+                  {format(selectedEvent.end_time ? parseISO(selectedEvent.end_time) : addHours(parseISO(selectedEvent.start_time), 1), "HH:mm", { locale: de })} Uhr
                 </p>
                 <p className="text-sm text-gray-500">
-                  {formatTimeDistance(new Date(selectedEvent.start_time))}
+                  {formatTimeDistance(parseISO(selectedEvent.start_time))}
                 </p>
               </div>
               {selectedEvent.description && (
