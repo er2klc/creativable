@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -28,13 +29,11 @@ const MemberProfile = () => {
         .eq('slug', teamSlug)
         .maybeSingle();
 
-      if (error) throw error;
-      return data ? {
-        id: data.id,
-        name: data.name,
-        slug: data.slug,
-        logo_url: data.logo_url
-      } : null;
+      if (error) {
+        console.error('Error fetching team:', error);
+        return null;
+      }
+      return data;
     },
     enabled: !!teamSlug
   });
@@ -44,18 +43,40 @@ const MemberProfile = () => {
     queryFn: async () => {
       if (!teamData?.id || !memberSlug) return null;
 
-      const [profileResponse, memberResponse, countResponse, settingsResponse] = await Promise.all([
-        supabase
-          .from('profiles')
-          .select('id, display_name, email, avatar_url, slug, status, last_seen')
-          .eq('slug', memberSlug)
-          .maybeSingle(),
-        supabase
-          .from('team_members')
-          .select('role')
-          .eq('team_id', teamData.id)
-          .eq('user_id', profileResponse.data?.id)
-          .maybeSingle(),
+      // 1. Fetch profile data
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id, display_name, email, avatar_url, slug, status, last_seen')
+        .eq('slug', memberSlug)
+        .maybeSingle();
+
+      if (profileError || !profileData) {
+        console.error('Error fetching profile:', profileError);
+        return null;
+      }
+
+      // 2. Verify team membership
+      const { data: membershipData, error: membershipError } = await supabase
+        .from('team_members')
+        .select('role')
+        .eq('team_id', teamData.id)
+        .eq('user_id', profileData.id)
+        .maybeSingle();
+
+      if (membershipError || !membershipData) {
+        console.error('Error fetching team membership:', membershipError);
+        return null;
+      }
+
+      // 3. Fetch remaining data in parallel
+      const [
+        { count: membersCount },
+        { data: settingsData },
+        { data: pointsData },
+        { data: activityData },
+        { data: postsData },
+        { data: commentsData }
+      ] = await Promise.all([
         supabase
           .from('team_members')
           .select('id', { count: 'exact' })
@@ -63,27 +84,19 @@ const MemberProfile = () => {
         supabase
           .from('settings')
           .select('about_me')
-          .eq('user_id', profileResponse.data?.id)
-          .maybeSingle()
-      ]);
-
-      if (profileResponse.error || !profileResponse.data) return null;
-      if (memberResponse.error || !memberResponse.data) return null;
-
-      const profile = profileResponse.data;
-      
-      const [pointsResponse, activityResponse, postsResponse, commentsResponse] = await Promise.all([
+          .eq('user_id', profileData.id)
+          .maybeSingle(),
         supabase
           .from('team_member_points')
           .select('points, level')
           .eq('team_id', teamData.id)
-          .eq('user_id', profile.id)
+          .eq('user_id', profileData.id)
           .maybeSingle(),
         supabase
           .from('team_member_activity_log')
           .select('activity_date, activity_type, points_earned')
           .eq('team_id', teamData.id)
-          .eq('user_id', profile.id)
+          .eq('user_id', profileData.id)
           .order('activity_date', { ascending: false })
           .limit(50),
         supabase
@@ -99,7 +112,7 @@ const MemberProfile = () => {
             slug
           `)
           .eq('team_id', teamData.id)
-          .eq('created_by', profile.id)
+          .eq('created_by', profileData.id)
           .order('created_at', { ascending: false }),
         supabase
           .from('team_post_comments')
@@ -113,12 +126,13 @@ const MemberProfile = () => {
               team_categories (name, color)
             )
           `)
-          .eq('created_by', profile.id)
+          .eq('created_by', profileData.id)
           .order('created_at', { ascending: false })
       ]);
 
+      // 4. Transform and combine activity data
       const activities = [
-        ...(postsResponse.data?.map(post => ({
+        ...(postsData?.map(post => ({
           id: post.id,
           type: 'post' as const,
           title: post.title,
@@ -132,7 +146,7 @@ const MemberProfile = () => {
           comments_count: post.team_post_comments.length,
           slug: post.slug,
         })) || []),
-        ...(commentsResponse.data?.map(comment => ({
+        ...(commentsData?.map(comment => ({
           id: comment.id,
           type: 'comment' as const,
           content: comment.content,
@@ -148,20 +162,21 @@ const MemberProfile = () => {
         })) || []),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
+      // 5. Return combined member data
       return {
-        ...profile,
-        teamMember: memberResponse.data,
-        points: pointsResponse.data?.points ?? 0,
-        level: pointsResponse.data?.level ?? 1,
+        ...profileData,
+        teamMember: membershipData,
+        points: pointsData?.points ?? 0,
+        level: pointsData?.level ?? 1,
         stats: {
-          posts_count: postsResponse.data?.length ?? 0,
+          posts_count: postsData?.length ?? 0,
           followers_count: 0,
           following_count: 0
         },
-        activity: activityResponse.data ?? [],
+        activity: activityData ?? [],
         activities,
-        membersCount: countResponse.count ?? 0,
-        aboutMe: settingsResponse.data?.about_me
+        membersCount: membersCount ?? 0,
+        aboutMe: settingsData?.about_me
       };
     },
     enabled: !!teamData?.id && !!teamSlug && !!memberSlug
@@ -179,7 +194,19 @@ const MemberProfile = () => {
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="text-center">Mitglied nicht gefunden</div>
+          <div className="text-center">
+            <p className="text-lg text-muted-foreground mb-4">
+              Das Mitglied konnte nicht gefunden werden oder hat keine Berechtigung für dieses Team.
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate(`/unity/team/${teamSlug}/members`)}
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Zurück zur Übersicht
+            </Button>
+          </div>
         </CardContent>
       </Card>
     );
