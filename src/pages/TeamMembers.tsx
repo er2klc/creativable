@@ -1,5 +1,4 @@
-
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MemberCard } from "@/components/teams/members/MemberCard";
@@ -8,10 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
 import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceContext";
 import { Users } from "lucide-react";
+import { HeaderActions } from "@/components/layout/HeaderActions";
+import { useUser } from "@supabase/auth-helpers-react";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
   const { data: profile } = useProfile();
+  const user = useUser();
 
   const { data: teamData, isLoading: isLoadingTeam } = useQuery({
     queryKey: ['team', teamSlug],
@@ -109,11 +111,14 @@ const TeamMembers = () => {
       <div>
         <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
           <div className="h-16 px-4 flex items-center">
-            <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              <h1 className="text-lg md:text-xl font-semibold text-foreground">
-                Members
-              </h1>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                  Members
+                </h1>
+              </div>
+              <HeaderActions profile={null} userEmail={user?.email} />
             </div>
           </div>
         </div>

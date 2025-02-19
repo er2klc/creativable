@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type Tables } from "@/integrations/supabase/types";
 import { useTeamPresence } from "../context/TeamPresenceContext";
+import { useNavigate, useParams } from "react-router-dom";
 
 interface MemberCardProps {
   member: Tables<"team_members"> & {
@@ -27,9 +28,20 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
   const memberIsOnline = isOnline(member.user_id);
   const canChat = currentUserLevel >= 3 && member.points?.level >= 3;
   const lastSeen = member.profile?.last_seen;
+  const navigate = useNavigate();
+  const { teamSlug } = useParams();
+
+  const handleCardClick = () => {
+    if (member.profile?.slug) {
+      navigate(`/unity/team/${teamSlug}/members/${member.profile.slug}`);
+    }
+  };
 
   return (
-    <Card className="overflow-hidden">
+    <Card 
+      className="overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md" 
+      onClick={handleCardClick}
+    >
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="relative">
@@ -94,6 +106,9 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
             className="w-full mt-3"
             size="sm"
             variant="secondary"
+            onClick={(e) => {
+              e.stopPropagation(); // Verhindert, dass der Card-Click ausgelöst wird
+            }}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
             Nachricht senden
@@ -108,6 +123,7 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
                   size="sm"
                   variant="secondary"
                   disabled
+                  onClick={(e) => e.stopPropagation()}
                 >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Nachricht senden
