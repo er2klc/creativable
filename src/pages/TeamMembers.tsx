@@ -28,7 +28,13 @@ const TeamMembers = () => {
       
       const { data, error } = await supabase
         .from('teams')
-        .select('id, name, slug, logo_url')
+        .select(`
+          id, 
+          name, 
+          slug, 
+          logo_url,
+          created_by
+        `)
         .eq('slug', teamSlug)
         .maybeSingle();
 
@@ -45,13 +51,14 @@ const TeamMembers = () => {
   const { data: memberPoints, isLoading: isLoadingPoints } = useQuery({
     queryKey: ['member-points', teamData?.id],
     queryFn: async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('team_member_points')
         .select('level, points')
         .eq('team_id', teamData.id)
         .eq('user_id', profile.id)
         .maybeSingle();
 
+      if (error) throw error;
       return data;
     },
     enabled: !!teamData?.id && !!profile?.id
@@ -64,7 +71,7 @@ const TeamMembers = () => {
         .from('team_members')
         .select(`
           *,
-          profile:profiles(
+          profile:profiles!team_members_user_id_fkey(
             id,
             display_name,
             avatar_url,
@@ -73,7 +80,7 @@ const TeamMembers = () => {
             last_seen,
             slug
           ),
-          points:team_member_points(
+          points:team_member_points!inner(
             level,
             points
           )
