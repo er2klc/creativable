@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +24,7 @@ const MemberProfile = () => {
       
       const { data, error } = await supabase
         .from('teams')
-        .select('*')
+        .select('id, name, slug, logo_url')
         .eq('slug', teamSlug)
         .maybeSingle();
 
@@ -40,21 +39,21 @@ const MemberProfile = () => {
     queryFn: async () => {
       if (!teamData?.id || !memberSlug) return null;
 
-      // Erste Abfrage: Profildaten
+      // Profile data query
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, display_name, email, avatar_url, slug, status, last_seen')
         .eq('slug', memberSlug)
         .maybeSingle();
 
       if (profileError) throw profileError;
       if (!profile) return null;
 
-      // Zweite Abfrage: Team-Mitglied Daten und Mitgliederzahl
+      // Team member data and member count queries
       const [memberResponse, countResponse, settingsResponse] = await Promise.all([
         supabase
           .from('team_members')
-          .select('*')
+          .select('role')
           .eq('team_id', teamData.id)
           .eq('user_id', profile.id)
           .maybeSingle(),
@@ -72,64 +71,41 @@ const MemberProfile = () => {
       if (memberResponse.error) throw memberResponse.error;
       if (!memberResponse.data) return null;
 
-      // Restliche Abfragen für Aktivitäten und Punkte
+      // Activity queries
       const [pointsResponse, activityResponse, postsResponse, commentsResponse] = await Promise.all([
         supabase
           .from('team_member_points')
-          .select('*')
+          .select('points, level')
           .eq('team_id', teamData.id)
           .eq('user_id', profile.id)
           .maybeSingle(),
         supabase
           .from('team_member_activity_log')
-          .select('*')
+          .select('activity_date, activity_type, points_earned')
           .eq('team_id', teamData.id)
           .eq('user_id', profile.id)
           .order('activity_date', { ascending: false })
           .limit(50),
         supabase
           .from('team_posts')
-          .select(`
-            *,
-            team_categories (
-              name,
-              color
-            ),
-            team_post_comments (
-              id
-            ),
-            team_post_reactions (
-              id
-            )
-          `)
+          .select('id, title, content, created_at, team_categories (name, color), team_post_comments (id), team_post_reactions (id), slug')
           .eq('team_id', teamData.id)
           .eq('created_by', profile.id)
           .order('created_at', { ascending: false }),
         supabase
           .from('team_post_comments')
-          .select(`
-            *,
-            team_posts (
-              title,
-              slug,
-              team_categories (
-                name,
-                color
-              )
-            )
-          `)
+          .select('id, content, created_at, team_posts (title, slug, team_categories (name, color))')
           .eq('created_by', profile.id)
           .order('created_at', { ascending: false })
       ]);
 
-      const activities: Activity[] = [
+      const activities = [
         ...(postsResponse.data?.map(post => ({
           id: post.id,
           type: 'post' as const,
           title: post.title,
           content: post.content,
           created_at: post.created_at,
-          file_urls: post.file_urls,
           category: {
             name: post.team_categories.name,
             color: post.team_categories.color,

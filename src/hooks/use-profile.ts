@@ -14,7 +14,7 @@ export const useProfile = () => {
       
       const { data: profile, error } = await supabase
         .from('profiles')
-        .select('*')
+        .select('id, is_admin, created_at, updated_at, email, display_name, is_super_admin, avatar_url')
         .eq('id', user.id)
         .single();
 
@@ -23,7 +23,6 @@ export const useProfile = () => {
         return null;
       }
 
-      console.log("Profile data received:", profile);
       return profile as Profile;
     },
   });
