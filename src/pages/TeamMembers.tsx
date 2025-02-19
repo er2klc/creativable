@@ -24,16 +24,26 @@ const TeamMembers = () => {
     queryFn: async () => {
       if (!teamSlug) throw new Error("No team slug provided");
       
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id, name, slug, logo_url')
-        .eq('slug', teamSlug)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('teams')
+          .select('id, name, slug, logo_url')
+          .eq('slug', teamSlug)
+          .maybeSingle();
 
-      if (error) throw error;
-      if (!data) throw new Error("Team not found");
+        if (error) throw error;
+        if (!data) throw new Error("Team not found");
 
-      return data;
+        return {
+          id: data.id,
+          name: data.name,
+          slug: data.slug,
+          logo_url: data.logo_url
+        };
+      } catch (err) {
+        console.error('Error fetching team:', err);
+        return null;
+      }
     },
     enabled: !!teamSlug
   });
@@ -41,14 +51,20 @@ const TeamMembers = () => {
   const { data: memberPoints, isLoading: isLoadingPoints } = useQuery({
     queryKey: ['member-points', teamData?.id],
     queryFn: async () => {
-      const { data } = await supabase
-        .from('team_member_points')
-        .select('level, points')
-        .eq('team_id', teamData.id)
-        .eq('user_id', profile.id)
-        .maybeSingle();
+      try {
+        const { data, error } = await supabase
+          .from('team_member_points')
+          .select('level, points')
+          .eq('team_id', teamData.id)
+          .eq('user_id', profile.id)
+          .maybeSingle();
 
-      return data;
+        if (error) throw error;
+        return data;
+      } catch (err) {
+        console.error('Error fetching member points:', err);
+        return null;
+      }
     },
     enabled: !!teamData?.id && !!profile?.id
   });
@@ -56,33 +72,38 @@ const TeamMembers = () => {
   const { data: members, isLoading: isLoadingMembers } = useQuery({
     queryKey: ['team-members', teamData?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('team_members')
-        .select(`
-          *,
-          profile:user_id (
-            id,
-            display_name,
-            avatar_url,
-            bio,
-            status,
-            last_seen,
-            slug
-          ),
-          points:team_member_points!inner (
-            level,
-            points
-          )
-        `)
-        .eq('team_id', teamData.id)
-        .order('points(points)', { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from('team_members')
+          .select(`
+            *,
+            profile:user_id (
+              id,
+              display_name,
+              avatar_url,
+              bio,
+              status,
+              last_seen,
+              slug
+            ),
+            points:team_member_points!inner (
+              level,
+              points
+            )
+          `)
+          .eq('team_id', teamData.id)
+          .order('points(points)', { ascending: false });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      return data.map(member => ({
-        ...member,
-        points: member.points[0] || { level: 1, points: 0 }
-      }));
+        return data.map(member => ({
+          ...member,
+          points: member.points[0] || { level: 1, points: 0 }
+        }));
+      } catch (err) {
+        console.error('Error fetching members:', err);
+        return [];
+      }
     },
     enabled: !!teamData?.id,
     staleTime: 30000 // 30 seconds

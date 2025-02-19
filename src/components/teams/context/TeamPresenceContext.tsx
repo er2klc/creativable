@@ -29,15 +29,22 @@ export const TeamPresenceProvider = ({
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
 
   useEffect(() => {
-    // Funktion zum Aktualisieren des Online-Status
     const updateOnlineStatus = async (userId: string, isOnline: boolean) => {
-      await supabase
-        .from('profiles')
-        .update({ 
-          status: isOnline ? 'online' : 'offline',
-          last_seen: new Date().toISOString()
-        })
-        .eq('id', userId);
+      try {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ 
+            status: isOnline ? 'online' : 'offline',
+            last_seen: new Date().toISOString()
+          })
+          .eq('id', userId);
+        
+        if (error) {
+          console.error('Error updating status:', error);
+        }
+      } catch (err) {
+        console.error('Error updating online status:', err);
+      }
     };
 
     const channel = supabase.channel(`team_${teamId}`)
@@ -64,7 +71,6 @@ export const TeamPresenceProvider = ({
         });
       });
 
-    // Subscribe zum Channel
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         const { data: { session } } = await supabase.auth.getSession();
@@ -77,10 +83,8 @@ export const TeamPresenceProvider = ({
       }
     });
 
-    // Cleanup wenn die Komponente unmounted
     return () => {
       channel.unsubscribe();
-      supabase.removeChannel(channel);
     };
   }, [teamId]);
 
