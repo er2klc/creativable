@@ -16,19 +16,24 @@ const MemberProfile = () => {
   const navigate = useNavigate();
   const user = useUser();
 
+  const { data: teamData } = useQuery({
+    queryKey: ['team', teamSlug],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from('teams')
+        .select('id, name, logo_url')
+        .eq('slug', teamSlug)
+        .single();
+      return data;
+    },
+    enabled: !!teamSlug
+  });
+
   const { data: memberData, isLoading } = useQuery({
     queryKey: ['member-profile', teamSlug, memberSlug],
     queryFn: async () => {
-      // Get team ID first
-      const { data: team } = await supabase
-        .from('teams')
-        .select('id')
-        .eq('slug', teamSlug)
-        .single();
+      if (!teamData) throw new Error('Team not found');
 
-      if (!team) throw new Error('Team not found');
-
-      // Get member profile
       const { data: profile } = await supabase
         .from('profiles')
         .select(`
@@ -44,15 +49,13 @@ const MemberProfile = () => {
 
       if (!profile) throw new Error('Member not found');
 
-      // Get member points and level
       const { data: points } = await supabase
         .from('team_member_points')
         .select('points, level')
-        .eq('team_id', team.id)
+        .eq('team_id', teamData.id)
         .eq('user_id', profile.id)
         .single();
 
-      // Get activity stats
       const { data: activity } = await supabase
         .from('member_activities')
         .select('*')
@@ -76,7 +79,7 @@ const MemberProfile = () => {
     );
   }
 
-  if (!memberData) {
+  if (!memberData || !teamData) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -92,10 +95,25 @@ const MemberProfile = () => {
         <div className="h-16 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
             <div className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              <h1 className="text-lg md:text-xl font-semibold text-foreground">
-                Member Details
-              </h1>
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <div 
+                  className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => navigate(`/unity/team/${teamSlug}`)}
+                >
+                  {teamData.logo_url ? (
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={teamData.logo_url} alt={teamData.name} />
+                      <AvatarFallback>{teamData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  ) : null}
+                  <span>{teamData.name}</span>
+                </div>
+                <span className="text-muted-foreground">/</span>
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  <span className="text-foreground">Member Details</span>
+                </div>
+              </div>
             </div>
             <div className="w-[300px]">
               <SearchBar />

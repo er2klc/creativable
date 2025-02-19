@@ -10,11 +10,13 @@ import { Users } from "lucide-react";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
   const { data: profile } = useProfile();
   const user = useUser();
+  const navigate = useNavigate();
 
   const { data: teamData, isLoading: isLoadingTeam } = useQuery({
     queryKey: ['team', teamSlug],
@@ -23,7 +25,7 @@ const TeamMembers = () => {
       
       const { data, error } = await supabase
         .from('teams')
-        .select('id, name, slug')
+        .select('id, name, slug, logo_url')
         .eq('slug', teamSlug)
         .single();
 
@@ -114,10 +116,25 @@ const TeamMembers = () => {
           <div className="h-16 px-4 flex items-center">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
               <div className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                <h1 className="text-lg md:text-xl font-semibold text-foreground">
-                  Members
-                </h1>
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <div 
+                    className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors"
+                    onClick={() => navigate(`/unity/team/${teamSlug}`)}
+                  >
+                    {teamData.logo_url ? (
+                      <Avatar className="h-6 w-6">
+                        <AvatarImage src={teamData.logo_url} alt={teamData.name} />
+                        <AvatarFallback>{teamData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    ) : null}
+                    <span>{teamData.name}</span>
+                  </div>
+                  <span className="text-muted-foreground">/</span>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    <span className="text-foreground">Members</span>
+                  </div>
+                </div>
               </div>
               <div className="w-[300px]">
                 <SearchBar />
