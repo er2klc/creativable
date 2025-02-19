@@ -1,5 +1,5 @@
 
-import { eachDayOfInterval, format, isSameDay, startOfYear, endOfYear, isToday, startOfWeek, endOfWeek, differenceInWeeks } from "date-fns";
+import { eachDayOfInterval, format, isSameDay, startOfYear, endOfYear, isToday, startOfWeek, endOfWeek, addWeeks } from "date-fns";
 import { de } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -10,9 +10,9 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
   const startDate = startOfYear(new Date(currentYear, 0, 1));
   const endDate = endOfYear(new Date(currentYear, 11, 31));
   
-  const allDays = eachDayOfInterval({ start: startDate, end: endDate });
-
   const activityByDay = new Map<string, DayActivity>();
+  const allDays = eachDayOfInterval({ start: startDate, end: endDate });
+  
   allDays.forEach(day => {
     const dayActivities = activities.filter(activity => 
       isSameDay(new Date(activity.created_at), day)
@@ -31,6 +31,18 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     });
   });
 
+  const weeks: Date[][] = [];
+  let currentDate = startDate;
+  
+  while (currentDate <= endDate) {
+    const weekDays = eachDayOfInterval({
+      start: startOfWeek(currentDate, { weekStartsOn: 1 }),
+      end: endOfWeek(currentDate, { weekStartsOn: 1 })
+    });
+    weeks.push(weekDays);
+    currentDate = addWeeks(currentDate, 1);
+  }
+
   const getIntensity = (total: number): number => {
     if (total === 0) return 0;
     if (total <= 2) return 1;
@@ -38,27 +50,6 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     if (total <= 10) return 3;
     return 4;
   };
-
-  const totalWeeks = differenceInWeeks(endDate, startDate) + 1;
-  const weeks: Date[][] = [];
-  let currentDate = startDate;
-
-  for (let week = 0; week < totalWeeks; week++) {
-    const weekDays = eachDayOfInterval({
-      start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-      end: endOfWeek(currentDate, { weekStartsOn: 1 })
-    });
-    weeks.push(weekDays);
-    currentDate = new Date(currentDate.setDate(currentDate.getDate() + 7));
-  }
-
-  const monthLabels = Array.from({ length: 13 }, (_, i) => {
-    const date = new Date(currentYear, (i + 11) % 12, 1);
-    return {
-      month: format(date, 'MMM', { locale: de }) + '.',
-      weekIndex: Math.floor(i * (weeks.length / 13))
-    };
-  });
 
   const getSpecialMessage = (day: DayActivity): string | undefined => {
     if (day.total === 0) return undefined;
@@ -77,96 +68,80 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     <div className="bg-white rounded-lg p-2 border border-gray-200 w-full">
       <h3 className="text-lg font-semibold mb-2 text-gray-900">Activity</h3>
       <TooltipProvider>
-        <div className="relative min-w-0 overflow-x-hidden">
-          <div className="grid grid-cols-[auto_1fr] gap-2 w-full">
-            <div /> {/* Spacer for weekday labels */}
-            <div className="grid grid-cols-[repeat(52,1fr)] text-start text-xs text-gray-500">
-              {monthLabels.map((label, index) => (
-                <div
-                  key={index}
-                  className="text-[9px] font-medium whitespace-nowrap"
-                  style={{
-                    gridColumn: `${label.weekIndex + 1} / span ${
-                      index < monthLabels.length - 1
-                        ? monthLabels[index + 1].weekIndex - label.weekIndex
-                        : 53 - label.weekIndex
-                    }`
-                  }}
-                >
-                  {label.month}
+        <div className="relative overflow-x-auto">
+          <div className="flex gap-1">
+            <div className="grid grid-rows-7 text-[9px] text-gray-500 gap-[2px] pr-2">
+              {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day, index) => (
+                <div key={day} className="h-[20px] flex items-center">
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex gap-1">
+              {weeks.map((week, weekIndex) => (
+                <div key={weekIndex} className="grid grid-rows-7 gap-[2px]">
+                  {week.map((day, dayIndex) => {
+                    const activity = activityByDay.get(format(day, 'yyyy-MM-dd'));
+                    if (!activity) return null;
+
+                    const specialMessage = getSpecialMessage(activity);
+                    
+                    return (
+                      <Tooltip key={`${weekIndex}-${dayIndex}`}>
+                        <TooltipTrigger asChild>
+                          <div className="relative">
+                            <div
+                              className={cn(
+                                "w-[20px] h-[20px] flex items-center justify-center text-[9px] rounded-sm transition-colors",
+                                isToday(day) && "ring-1 ring-black ring-offset-1",
+                                getIntensity(activity.total) === 0 && "bg-[#ebedf0]",
+                                getIntensity(activity.total) === 1 && "bg-[#9be9a8]",
+                                getIntensity(activity.total) === 2 && "bg-[#40c463]",
+                                getIntensity(activity.total) === 3 && "bg-[#30a14e]",
+                                getIntensity(activity.total) === 4 && "bg-[#216e39]",
+                                activity.total > 0 && "text-white font-medium"
+                              )}
+                            >
+                              {format(day, 'd')}
+                            </div>
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent 
+                          className="bg-white border border-gray-200 text-gray-900 p-2 rounded-md shadow-sm"
+                        >
+                          <div className="text-[10px] space-y-0.5">
+                            <div>
+                              {activity.total} {activity.total === 1 ? 'activity' : 'activities'}
+                              {activity.posts > 0 && ` (${activity.posts} posts)`}
+                              {activity.comments > 0 && ` (${activity.comments} comments)`}
+                              {activity.likes > 0 && ` (${activity.likes} reactions)`}
+                            </div>
+                            <div className="font-medium">
+                              {format(day, 'EEEE, d. MMMM yyyy', { locale: de })}
+                            </div>
+                            {specialMessage && (
+                              <div className="text-gray-500">{specialMessage}</div>
+                            )}
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    );
+                  })}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="grid grid-cols-[auto_1fr] gap-2">
-            <div className="grid grid-rows-7 text-[9px] text-gray-500 gap-[0.5px] pr-1">
-              <div>Mon</div>
-              <div>Tue</div>
-              <div>Wed</div>
-              <div>Thu</div>
-              <div>Fri</div>
-              <div>Sat</div>
-              <div>Sun</div>
-            </div>
-
-            <div className="grid grid-cols-[repeat(52,1fr)] grid-rows-7 gap-[0.5px]">
-              {weeks.map((week, weekIndex) =>
-                week.map((day, dayIndex) => {
-                  const activity = activityByDay.get(format(day, 'yyyy-MM-dd'));
-                  if (!activity) return null;
-
-                  const specialMessage = getSpecialMessage(activity);
-                  
-                  return (
-                    <Tooltip key={`${weekIndex}-${dayIndex}`}>
-                      <TooltipTrigger asChild>
-                        <div
-                          className={cn(
-                            "aspect-square w-full min-w-[8px] min-h-[8px]",
-                            isToday(day) && "ring-1 ring-black ring-offset-1",
-                            getIntensity(activity.total) === 0 && "bg-[#ebedf0]",
-                            getIntensity(activity.total) === 1 && "bg-[#9be9a8]",
-                            getIntensity(activity.total) === 2 && "bg-[#40c463]",
-                            getIntensity(activity.total) === 3 && "bg-[#30a14e]",
-                            getIntensity(activity.total) === 4 && "bg-[#216e39]"
-                          )}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent 
-                        className="bg-white border border-gray-200 text-gray-900 p-1 rounded-md shadow-sm"
-                      >
-                        <div className="text-[10px] space-y-0.5">
-                          <div>
-                            {activity.total} {activity.total === 1 ? 'activity' : 'activities'}
-                            {activity.posts > 0 && ` (${activity.posts} posts)`}
-                            {activity.comments > 0 && ` (${activity.comments} comments)`}
-                            {activity.likes > 0 && ` (${activity.likes} reactions)`}
-                          </div>
-                          <div className="font-medium">
-                            {format(day, 'EEEE, MMMM d, yyyy', { locale: de })}
-                          </div>
-                          {specialMessage && (
-                            <div className="text-gray-500">{specialMessage}</div>
-                          )}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  );
-                })
-              )}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-end text-[10px] text-gray-500 mt-1">
+          <div className="flex items-center justify-end text-[10px] text-gray-500 mt-2">
             <div className="flex items-center gap-1">
               <span>Less</span>
-              <div className="flex gap-[0.5px]">
-                <div className="w-[8px] h-[8px] bg-[#ebedf0]" />
-                <div className="w-[8px] h-[8px] bg-[#9be9a8]" />
-                <div className="w-[8px] h-[8px] bg-[#40c463]" />
-                <div className="w-[8px] h-[8px] bg-[#30a14e]" />
-                <div className="w-[8px] h-[8px] bg-[#216e39]" />
+              <div className="flex gap-[1px]">
+                <div className="w-[16px] h-[16px] rounded-sm bg-[#ebedf0]" />
+                <div className="w-[16px] h-[16px] rounded-sm bg-[#9be9a8]" />
+                <div className="w-[16px] h-[16px] rounded-sm bg-[#40c463]" />
+                <div className="w-[16px] h-[16px] rounded-sm bg-[#30a14e]" />
+                <div className="w-[16px] h-[16px] rounded-sm bg-[#216e39]" />
               </div>
               <span>More</span>
             </div>
