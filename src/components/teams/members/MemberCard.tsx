@@ -9,6 +9,7 @@ import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type Tables } from "@/integrations/supabase/types";
+import { useTeamPresence } from "../context/TeamPresenceContext";
 
 interface MemberCardProps {
   member: Tables<"team_members"> & {
@@ -22,7 +23,8 @@ interface MemberCardProps {
 }
 
 export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
-  const isOnline = member.profile?.status === 'online';
+  const { isOnline } = useTeamPresence();
+  const memberIsOnline = isOnline(member.user_id);
   const canChat = currentUserLevel >= 3 && member.points?.level >= 3;
   const lastSeen = member.profile?.last_seen;
 
@@ -39,7 +41,7 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
             </Avatar>
             <div className={cn(
               "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background",
-              isOnline ? "bg-green-500" : "bg-gray-300"
+              memberIsOnline ? "bg-green-500 animate-pulse" : "bg-gray-300"
             )} />
           </div>
           <TooltipProvider>
@@ -78,7 +80,7 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
           )}
 
           <div className="flex items-center gap-2 text-xs text-muted-foreground mt-2">
-            {lastSeen && !isOnline && (
+            {lastSeen && !memberIsOnline && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
                 {formatDistanceToNow(new Date(lastSeen), { addSuffix: true, locale: de })}

@@ -6,6 +6,7 @@ import { MemberCard } from "@/components/teams/members/MemberCard";
 import { useProfile } from "@/hooks/use-profile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
+import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceContext";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
@@ -98,22 +99,24 @@ const TeamMembers = () => {
     );
   }
 
-  if (!members) {
+  if (!members || !teamData) {
     return <div className="p-4">Team nicht gefunden</div>;
   }
 
   return (
-    <div className="container py-8">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {members.map((member) => (
-          <MemberCard 
-            key={member.id} 
-            member={member}
-            currentUserLevel={memberPoints?.level || 0}
-          />
-        ))}
+    <TeamPresenceProvider teamId={teamData.id}>
+      <div className="container py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {members.map((member) => (
+            <MemberCard 
+              key={member.id} 
+              member={member}
+              currentUserLevel={memberPoints?.level || 0}
+            />
+          ))}
+        </div>
       </div>
-    </div>
+    </TeamPresenceProvider>
   );
 };
 
