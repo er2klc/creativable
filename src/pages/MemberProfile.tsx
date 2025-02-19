@@ -10,6 +10,8 @@ import { ActivityCalendar } from "@/components/teams/members/profile/ActivityCal
 import { ProfileHeader } from "@/components/teams/members/profile/ProfileHeader";
 import { MembershipCard } from "@/components/teams/members/profile/MembershipCard";
 import { ProfileCard } from "@/components/teams/members/profile/ProfileCard";
+import { ActivityFeed } from "@/components/teams/members/profile/ActivityFeed";
+import { Activity } from "@/components/teams/members/profile/types";
 
 const MemberProfile = () => {
   const { teamSlug, memberSlug } = useParams();
@@ -38,6 +40,7 @@ const MemberProfile = () => {
     queryFn: async () => {
       if (!teamData?.id || !memberSlug) return null;
 
+      // Get profile data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -47,6 +50,7 @@ const MemberProfile = () => {
       if (profileError) throw profileError;
       if (!profile) return null;
 
+      // Get team membership
       const { data: teamMember, error: teamMemberError } = await supabase
         .from('team_members')
         .select('*')
@@ -57,32 +61,101 @@ const MemberProfile = () => {
       if (teamMemberError) throw teamMemberError;
       if (!teamMember) return null;
 
-      const { data: points } = await supabase
-        .from('team_member_points')
-        .select('*')
-        .eq('team_id', teamData.id)
-        .eq('user_id', profile.id)
-        .maybeSingle();
+      // Get points and activity data
+      const [pointsResponse, activityResponse, postsResponse, commentsResponse] = await Promise.all([
+        supabase
+          .from('team_member_points')
+          .select('*')
+          .eq('team_id', teamData.id)
+          .eq('user_id', profile.id)
+          .maybeSingle(),
+        supabase
+          .from('team_member_activity_log')
+          .select('*')
+          .eq('team_id', teamData.id)
+          .eq('user_id', profile.id)
+          .order('activity_date', { ascending: false })
+          .limit(50),
+        supabase
+          .from('team_posts')
+          .select(`
+            *,
+            team_categories (
+              name,
+              color
+            ),
+            team_post_comments (
+              id
+            ),
+            team_post_reactions (
+              id
+            )
+          `)
+          .eq('team_id', teamData.id)
+          .eq('created_by', profile.id)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('team_post_comments')
+          .select(`
+            *,
+            team_posts (
+              title,
+              slug,
+              team_categories (
+                name,
+                color
+              )
+            )
+          `)
+          .eq('created_by', profile.id)
+          .order('created_at', { ascending: false })
+      ]);
 
-      const { data: activity } = await supabase
-        .from('team_member_activity_log')
-        .select('*')
-        .eq('team_id', teamData.id)
-        .eq('user_id', profile.id)
-        .order('activity_date', { ascending: false })
-        .limit(50);
+      // Transform posts and comments into activities
+      const activities: Activity[] = [
+        ...(postsResponse.data?.map(post => ({
+          id: post.id,
+          type: 'post' as const,
+          title: post.title,
+          content: post.content,
+          created_at: post.created_at,
+          file_urls: post.file_urls,
+          category: {
+            name: post.team_categories.name,
+            color: post.team_categories.color,
+          },
+          reactions_count: post.team_post_reactions.length,
+          comments_count: post.team_post_comments.length,
+          slug: post.slug,
+        })) || []),
+        ...(commentsResponse.data?.map(comment => ({
+          id: comment.id,
+          type: 'comment' as const,
+          content: comment.content,
+          created_at: comment.created_at,
+          post: {
+            title: comment.team_posts.title,
+            slug: comment.team_posts.slug,
+            category: {
+              name: comment.team_posts.team_categories.name,
+              color: comment.team_posts.team_categories.color,
+            },
+          },
+        })) || []),
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
       return {
         ...profile,
         teamMember,
-        points: points?.points ?? 0,
-        level: points?.level ?? 1,
+        points: pointsResponse.data?.points ?? 0,
+        level: pointsResponse.data?.level ?? 1,
         stats: {
-          posts_count: 0,
+          posts_count: postsResponse.data?.length ?? 0,
           followers_count: 0,
           following_count: 0
         },
-        activity: activity ?? []
+        activity: activityResponse.data ?? [],
+        activities
       };
     },
     enabled: !!teamData?.id && !!teamSlug && !!memberSlug
@@ -132,6 +205,10 @@ const MemberProfile = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
             <ActivityCalendar activities={memberData.activity} />
+            <ActivityFeed 
+              activities={memberData.activities} 
+              teamSlug={teamSlug!}
+            />
             <MembershipCard 
               teamData={teamData}
               followersCount={memberData.stats.followers_count}
