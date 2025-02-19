@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useParams } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -19,6 +19,7 @@ export function PostsAndDiscussions() {
   const user = useUser();
   const [activeTab, setActiveTab] = useState(categorySlug || 'all');
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
@@ -34,13 +35,12 @@ export function PostsAndDiscussions() {
         .eq('slug', teamSlug)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching team:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data as Team;
     },
     enabled: !!teamSlug,
+    staleTime: 0,
+    cacheTime: 0
   });
 
   const { data: currentPost, isLoading: isPostLoading } = useQuery({
@@ -181,26 +181,16 @@ export function PostsAndDiscussions() {
     }
   }, [categorySlug]);
 
-  if (!teamSlug) {
-    return (
-      <Card className="p-6">
-        <div className="text-center text-muted-foreground">
-          Invalid team URL. Please check the URL and try again.
-        </div>
-      </Card>
-    );
-  }
-
   if (isTeamLoading) {
     return <LoadingState />;
   }
 
   if (!team) {
     return (
-      <Card className="p-6">
-        <div className="text-center text-muted-foreground">
-          Team not found
-        </div>
+      <Card>
+        <CardContent className="p-6">
+          <div className="text-center">Team nicht gefunden</div>
+        </CardContent>
       </Card>
     );
   }
@@ -210,49 +200,52 @@ export function PostsAndDiscussions() {
   }
 
   return (
-    <>
-      <TeamHeader 
-        teamName={team.name}
-        teamSlug={team.slug}
-        userEmail={user?.email}
-      />
+    <TeamPresenceProvider teamId={team.id}>
+      <div>
+        <TeamHeader 
+          teamName={team.name}
+          teamSlug={team.slug}
+          logoUrl={team.logo_url}
+          userEmail={user?.email}
+        />
+        
+        <WelcomeDialog 
+          isOpen={showWelcomeDialog}
+          onClose={() => setShowWelcomeDialog(false)}
+          onSubmit={handleWelcomeSubmit}
+          categoryId={introCategory?.id || ''}
+        />
 
-      <WelcomeDialog 
-        isOpen={showWelcomeDialog}
-        onClose={() => setShowWelcomeDialog(false)}
-        onSubmit={handleWelcomeSubmit}
-        categoryId={introCategory?.id || ''}
-      />
-
-      <div className="pt-8">
-        <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
-          {!postSlug && (
-            <div className="flex items-center gap-4">
-              <PostCategoriesScroll
-                activeTab={activeTab}
-                onCategoryClick={handleCategoryClick}
-                isAdmin={isAdmin}
-                teamSlug={teamSlug}
-              />
-            </div>
-          )}
-
-          <div className="w-full overflow-hidden">
-            <div className="max-h-[calc(100vh-180px)] overflow-y-auto pr-4 -mr-4">
-              {postSlug ? (
-                <PostDetail post={currentPost} teamSlug={teamSlug} />
-              ) : (
-                <CategoryOverview 
-                  teamId={team.id} 
-                  teamSlug={teamSlug} 
-                  categorySlug={categorySlug}
-                  canPost={canPost} 
+        <div className="pt-8">
+          <div className="space-y-6 max-w-[1200px] mx-auto px-4 pt-4">
+            {!postSlug && (
+              <div className="flex items-center gap-4">
+                <PostCategoriesScroll
+                  activeTab={activeTab}
+                  onCategoryClick={handleCategoryClick}
+                  isAdmin={isAdmin}
+                  teamSlug={teamSlug}
                 />
-              )}
+              </div>
+            )}
+
+            <div className="w-full overflow-hidden">
+              <div className="max-h-[calc(100vh-180px)] overflow-y-auto pr-4 -mr-4">
+                {postSlug ? (
+                  <PostDetail post={currentPost} teamSlug={teamSlug} />
+                ) : (
+                  <CategoryOverview 
+                    teamId={team.id} 
+                    teamSlug={teamSlug} 
+                    categorySlug={categorySlug}
+                    canPost={canPost} 
+                  />
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </>
+    </TeamPresenceProvider>
   );
 }

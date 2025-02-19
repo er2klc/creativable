@@ -1,5 +1,6 @@
+
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MemberCard } from "@/components/teams/members/MemberCard";
 import { useProfile } from "@/hooks/use-profile";
@@ -17,6 +18,7 @@ const TeamMembers = () => {
   const { data: profile } = useProfile();
   const user = useUser();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: teamData, isLoading: isLoadingTeam } = useQuery({
     queryKey: ['team', teamSlug],
@@ -27,25 +29,27 @@ const TeamMembers = () => {
         .from('teams')
         .select('id, name, slug, logo_url')
         .eq('slug', teamSlug)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       if (!data) throw new Error("Team not found");
 
       return data;
     },
-    enabled: !!teamSlug
+    enabled: !!teamSlug,
+    staleTime: 0,
+    cacheTime: 0
   });
 
-  const { data: memberPoints } = useQuery({
-    queryKey: ['member-points', profile?.id, teamData?.id],
+  const { data: memberPoints, isLoading: isLoadingPoints } = useQuery({
+    queryKey: ['member-points', teamData?.id],
     queryFn: async () => {
       const { data } = await supabase
         .from('team_member_points')
         .select('level, points')
         .eq('team_id', teamData.id)
         .eq('user_id', profile.id)
-        .single();
+        .maybeSingle();
 
       return data;
     },
@@ -79,8 +83,16 @@ const TeamMembers = () => {
       if (error) throw error;
       return data;
     },
-    enabled: !!teamData?.id
+    enabled: !!teamData?.id,
+    initialData: []
   });
+
+  // Prefetch member data when component mounts
+  useEffect(() => {
+    if (teamData?.id) {
+      queryClient.prefetchQuery(['team-members', teamData.id]);
+    }
+  }, [teamData?.id, queryClient]);
 
   if (isLoadingTeam || isLoadingMembers) {
     return (
