@@ -64,7 +64,7 @@ const TeamMembers = () => {
         .from('team_members')
         .select(`
           *,
-          profile:profiles(
+          profile:user_id (
             id,
             display_name,
             avatar_url,
@@ -73,7 +73,7 @@ const TeamMembers = () => {
             last_seen,
             slug
           ),
-          points:team_member_points(
+          points:team_member_points!inner (
             level,
             points
           )
@@ -82,13 +82,15 @@ const TeamMembers = () => {
         .order('points(points)', { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      return data.map(member => ({
+        ...member,
+        points: member.points[0] || { level: 1, points: 0 }
+      }));
     },
     enabled: !!teamData?.id,
-    initialData: []
   });
 
-  // Prefetch member data when component mounts
   useEffect(() => {
     if (teamData?.id) {
       queryClient.prefetchQuery(['team-members', teamData.id]);
