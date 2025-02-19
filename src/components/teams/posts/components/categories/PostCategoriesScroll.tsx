@@ -1,10 +1,13 @@
 
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Lock, MessageCircle } from "lucide-react";
+import { Lock, MessageCircle, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTeamCategories } from "@/hooks/useTeamCategories";
 import { iconMap } from "../category-dialog/constants";
+import { Button } from "@/components/ui/button";
+import { CategoryManagementDialog } from "../category-dialog/CategoryManagementDialog";
+import { useState } from "react";
 
 interface PostCategoriesScrollProps {
   activeTab: string;
@@ -16,8 +19,10 @@ interface PostCategoriesScrollProps {
 export const PostCategoriesScroll = ({ 
   activeTab, 
   onCategoryClick, 
+  isAdmin,
   teamSlug 
 }: PostCategoriesScrollProps) => {
+  const [showManageDialog, setShowManageDialog] = useState(false);
   const { data: categories, isLoading } = useTeamCategories(teamSlug);
 
   // Filter categories - only show those with posts for everyone
@@ -36,9 +41,7 @@ export const PostCategoriesScroll = ({
   return (
     <div className="relative w-full">
       <ScrollArea className="w-full border-b">
-        <div 
-          className="flex gap-2 py-2 px-4"
-        >
+        <div className="flex items-center gap-2 py-2 px-4">
           {!isPostDetailView && (
             <Badge
               variant="outline"
@@ -72,11 +75,30 @@ export const PostCategoriesScroll = ({
                 {!category.is_public && <Lock className="h-3 w-3 ml-2" />}
                 <span className="text-xs ml-1">({category.post_count})</span>
               </Badge>
-            )}
+            );
+          })}
+
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2"
+              onClick={() => setShowManageDialog(true)}
+            >
+              <Settings className="h-4 w-4" />
+            </Button>
           )}
         </div>
         <ScrollBar orientation="horizontal" className="h-2.5" />
       </ScrollArea>
+
+      {isAdmin && (
+        <CategoryManagementDialog
+          open={showManageDialog}
+          onOpenChange={setShowManageDialog}
+          teamSlug={teamSlug}
+        />
+      )}
     </div>
   );
 };
