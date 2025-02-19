@@ -11,8 +11,8 @@ export const TeamCardImage = ({ team }: TeamCardImageProps) => {
   const [showVideo, setShowVideo] = useState(false);
 
   const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (team.video_url && !showVideo) {
-      e.stopPropagation();
       setShowVideo(true);
     }
   };
@@ -23,14 +23,16 @@ export const TeamCardImage = ({ team }: TeamCardImageProps) => {
   };
 
   return (
-    <div className="w-full h-full" onClick={handleClick}>
+    <div className="relative w-full h-full">
       {showVideo && team.video_url ? (
-        <iframe
-          className="absolute inset-0 w-full h-full"
-          src={`https://www.youtube.com/embed/${getVideoId(team.video_url)}?autoplay=1`}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
+        <div className="absolute inset-0 w-full h-full z-20">
+          <iframe
+            className="w-full h-full"
+            src={`https://www.youtube.com/embed/${getVideoId(team.video_url)}?autoplay=1`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
       ) : (
         <>
           {team.logo_url ? (
@@ -47,7 +49,10 @@ export const TeamCardImage = ({ team }: TeamCardImageProps) => {
             </div>
           )}
           {team.video_url && !showVideo && (
-            <div className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors hover:bg-black/30">
+            <div 
+              className="absolute inset-0 flex items-center justify-center bg-black/20 transition-colors hover:bg-black/30 cursor-pointer z-10"
+              onClick={handleClick}
+            >
               <Play className="w-8 h-8 text-white/90" />
             </div>
           )}

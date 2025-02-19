@@ -17,8 +17,8 @@ export const TeamCardContent = ({ team }: TeamCardContentProps) => {
   const user = useUser();
   const isTeamOwner = user?.id === team.created_by;
   
-  // Calculate member ratio for progress bar
-  const maxMembers = 50; // Example max members
+  // Use max_members from team data with fallback to 100
+  const maxMembers = team.max_members || 100;
   const memberProgress = (team.stats?.totalMembers || 0) / maxMembers * 100;
 
   return (
