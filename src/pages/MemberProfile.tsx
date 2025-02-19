@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,7 +15,6 @@ import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 
 const ActivityCalendar = ({ activities }) => {
-  // Simplified calendar component
   return (
     <div className="bg-white rounded-lg p-4">
       <h3 className="text-lg font-semibold mb-4">Activity</h3>
@@ -54,11 +52,15 @@ const MemberProfile = () => {
   const { data: teamData } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
-      const { data } = await supabase
+      if (!teamSlug) return null;
+      
+      const { data, error } = await supabase
         .from('teams')
-        .select('id, name, logo_url')
+        .select('*')
         .eq('slug', teamSlug)
-        .single();
+        .maybeSingle();
+
+      if (error) throw error;
       return data;
     },
     enabled: !!teamSlug
@@ -67,68 +69,52 @@ const MemberProfile = () => {
   const { data: memberData, isLoading } = useQuery({
     queryKey: ['member-profile', teamSlug, memberSlug],
     queryFn: async () => {
-      if (!teamData) throw new Error('Team not found');
+      if (!teamData?.id || !memberSlug) return null;
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select(`
-          id,
-          display_name,
-          avatar_url,
-          bio,
-          status,
-          last_seen,
-          personality_type,
-          location,
-          created_at,
-          social_links
-        `)
+        .select('*')
         .eq('slug', memberSlug)
-        .single();
+        .maybeSingle();
 
-      if (!profile) throw new Error('Member not found');
+      if (profileError) throw profileError;
+      if (!profile) return null;
 
-      // Query team member points
+      const { data: teamMember, error: teamMemberError } = await supabase
+        .from('team_members')
+        .select('*')
+        .eq('team_id', teamData.id)
+        .eq('user_id', profile.id)
+        .maybeSingle();
+
+      if (teamMemberError) throw teamMemberError;
+      if (!teamMember) return null;
+
       const { data: points } = await supabase
         .from('team_member_points')
-        .select('points, level')
-        .eq('team_id', teamData.id)
-        .eq('user_id', profile.id)
-        .maybeSingle();
-
-      // Get team member stats with a separate query
-      const { data: stats } = await supabase
-        .from('team_member_stats')
-        .select('posts_count, followers_count, following_count')
-        .eq('team_id', teamData.id)
-        .eq('user_id', profile.id)
-        .maybeSingle();
-
-      // Get activity data
-      const { data: activity } = await supabase
-        .from('team_member_activity')
         .select('*')
+        .eq('team_id', teamData.id)
         .eq('user_id', profile.id)
-        .order('created_at', { ascending: false })
+        .maybeSingle();
+
+      const { data: activity } = await supabase
+        .from('team_member_activity_log')
+        .select('*')
+        .eq('team_id', teamData.id)
+        .eq('user_id', profile.id)
+        .order('activity_date', { ascending: false })
         .limit(50);
-
-      // Create default values for missing data
-      const defaultStats = {
-        posts_count: 0,
-        followers_count: 0,
-        following_count: 0
-      };
-
-      const defaultPoints = {
-        points: 0,
-        level: 1
-      };
 
       return {
         ...profile,
-        points: points?.points ?? defaultPoints.points,
-        level: points?.level ?? defaultPoints.level,
-        stats: stats ?? defaultStats,
+        teamMember,
+        points: points?.points ?? 0,
+        level: points?.level ?? 1,
+        stats: {
+          posts_count: 0,
+          followers_count: 0,
+          following_count: 0
+        },
         activity: activity ?? []
       };
     },
@@ -153,21 +139,12 @@ const MemberProfile = () => {
     );
   }
 
-  // Calculate points needed for next level using nullish coalescing for safety
-  const currentPoints = memberData.points ?? 0;
-  const currentLevel = memberData.level ?? 1;
+  const currentPoints = memberData.points;
+  const currentLevel = memberData.level;
   const pointsToNextLevel = (currentLevel * 100) - currentPoints;
-
-  // Ensure stats exists with default values
-  const stats = memberData.stats ?? {
-    posts_count: 0,
-    followers_count: 0,
-    following_count: 0
-  };
 
   return (
     <div>
-      {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
         <div className="h-16 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
@@ -212,7 +189,6 @@ const MemberProfile = () => {
         </Button>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {/* Main Content - Left Column */}
           <div className="md:col-span-2 space-y-6">
             <ActivityCalendar activities={memberData.activity} />
             
@@ -228,14 +204,13 @@ const MemberProfile = () => {
                   </Avatar>
                   <div>
                     <h4 className="font-medium">{teamData.name}</h4>
-                    <p className="text-sm text-muted-foreground">Private • {stats.followers_count} Members</p>
+                    <p className="text-sm text-muted-foreground">Private • {memberData.stats.followers_count} Members</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Profile Info - Right Column */}
           <div className="space-y-6">
             <Card>
               <CardContent className="p-6">
@@ -288,15 +263,15 @@ const MemberProfile = () => {
 
                   <div className="grid grid-cols-3 gap-4 py-4 border-y">
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{stats.posts_count}</div>
+                      <div className="text-2xl font-bold">{memberData.stats.posts_count}</div>
                       <div className="text-xs text-muted-foreground">Posts</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{stats.followers_count}</div>
+                      <div className="text-2xl font-bold">{memberData.stats.followers_count}</div>
                       <div className="text-xs text-muted-foreground">Followers</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{stats.following_count}</div>
+                      <div className="text-2xl font-bold">{memberData.stats.following_count}</div>
                       <div className="text-xs text-muted-foreground">Following</div>
                     </div>
                   </div>
