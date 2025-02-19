@@ -29,7 +29,12 @@ const MemberProfile = () => {
         .maybeSingle();
 
       if (error) throw error;
-      return data;
+      return data ? {
+        id: data.id,
+        name: data.name,
+        slug: data.slug,
+        logo_url: data.logo_url
+      } : null;
     },
     enabled: !!teamSlug
   });
@@ -39,23 +44,17 @@ const MemberProfile = () => {
     queryFn: async () => {
       if (!teamData?.id || !memberSlug) return null;
 
-      // Profile data query
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('id, display_name, email, avatar_url, slug, status, last_seen')
-        .eq('slug', memberSlug)
-        .maybeSingle();
-
-      if (profileError) throw profileError;
-      if (!profile) return null;
-
-      // Team member data and member count queries
-      const [memberResponse, countResponse, settingsResponse] = await Promise.all([
+      const [profileResponse, memberResponse, countResponse, settingsResponse] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('id, display_name, email, avatar_url, slug, status, last_seen')
+          .eq('slug', memberSlug)
+          .maybeSingle(),
         supabase
           .from('team_members')
           .select('role')
           .eq('team_id', teamData.id)
-          .eq('user_id', profile.id)
+          .eq('user_id', profileResponse.data?.id)
           .maybeSingle(),
         supabase
           .from('team_members')
@@ -64,14 +63,15 @@ const MemberProfile = () => {
         supabase
           .from('settings')
           .select('about_me')
-          .eq('user_id', profile.id)
+          .eq('user_id', profileResponse.data?.id)
           .maybeSingle()
       ]);
 
-      if (memberResponse.error) throw memberResponse.error;
-      if (!memberResponse.data) return null;
+      if (profileResponse.error || !profileResponse.data) return null;
+      if (memberResponse.error || !memberResponse.data) return null;
 
-      // Activity queries
+      const profile = profileResponse.data;
+      
       const [pointsResponse, activityResponse, postsResponse, commentsResponse] = await Promise.all([
         supabase
           .from('team_member_points')
@@ -88,13 +88,31 @@ const MemberProfile = () => {
           .limit(50),
         supabase
           .from('team_posts')
-          .select('id, title, content, created_at, team_categories (name, color), team_post_comments (id), team_post_reactions (id), slug')
+          .select(`
+            id,
+            title,
+            content,
+            created_at,
+            team_categories (name, color),
+            team_post_comments (id),
+            team_post_reactions (id),
+            slug
+          `)
           .eq('team_id', teamData.id)
           .eq('created_by', profile.id)
           .order('created_at', { ascending: false }),
         supabase
           .from('team_post_comments')
-          .select('id, content, created_at, team_posts (title, slug, team_categories (name, color))')
+          .select(`
+            id,
+            content,
+            created_at,
+            team_posts (
+              title,
+              slug,
+              team_categories (name, color)
+            )
+          `)
           .eq('created_by', profile.id)
           .order('created_at', { ascending: false })
       ]);

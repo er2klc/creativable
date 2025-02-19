@@ -38,16 +38,49 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
     queryFn: async () => {
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select(`
+          id,
+          title,
+          content,
+          created_at,
+          read,
+          type,
+          metadata,
+          target_page,
+          deleted_at
+        `)
         .is('deleted_at', null)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as Notification[];
+      return (data || []) as Notification[];
     }
   });
 
   useEffect(() => {
+    const handleRealtimeNotification = (payload: any) => {
+      // Nur die benötigten Daten aus dem Payload extrahieren
+      const sanitizedPayload = {
+        id: payload.new?.id,
+        title: payload.new?.title,
+        content: payload.new?.content,
+        created_at: payload.new?.created_at,
+        read: payload.new?.read,
+        type: payload.new?.type,
+        metadata: payload.new?.metadata,
+        target_page: payload.new?.target_page,
+        deleted_at: payload.new?.deleted_at
+      };
+
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      
+      if (payload.eventType === 'INSERT') {
+        toast(sanitizedPayload.title, {
+          description: sanitizedPayload.content,
+        });
+      }
+    };
+
     const channel = supabase
       .channel('notifications-channel')
       .on(
@@ -57,17 +90,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
           schema: 'public',
           table: 'notifications'
         },
-        (payload) => {
-          console.log('Received notification update:', payload);
-          queryClient.invalidateQueries({ queryKey: ['notifications'] });
-          
-          if (payload.eventType === 'INSERT') {
-            const newNotification = payload.new as Notification;
-            toast(newNotification.title, {
-              description: newNotification.content,
-            });
-          }
-        }
+        handleRealtimeNotification
       )
       .subscribe();
 
@@ -116,56 +139,6 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
     }
   };
 
-  const handleNotificationClick = async (notification: Notification) => {
-    try {
-      const { error } = await supabase
-        .from('notifications')
-        .update({ read: true })
-        .eq('id', notification.id);
-
-      if (error) {
-        console.error('Error marking notification as read:', error);
-        return;
-      }
-
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-
-      // Handle routing based on notification type
-      if (notification.type.includes('presentation_')) {
-        // For presentation notifications, always use the leadId from metadata
-        if (notification.metadata?.leadId) {
-          navigate(`/contacts/${notification.metadata.leadId}`);
-        }
-      } else if (notification.metadata?.leadId) {
-        // For other lead-related notifications
-        navigate(`/contacts/${notification.metadata.leadId}`);
-      } else if (notification.target_page) {
-        // For any other notifications with a target page
-        navigate(notification.target_page);
-      }
-
-      onOpenChange(false);
-    } catch (error) {
-      console.error('Error in markAsRead:', error);
-      toast.error('Fehler beim Markieren der Benachrichtigung als gelesen');
-    }
-  };
-
-  const getNotificationIcon = (type: string) => {
-    switch (type) {
-      case 'presentation_view':
-        return '👀';
-      case 'presentation_halfway':
-        return '▶️';
-      case 'presentation_completed':
-        return '✅';
-      case 'appointment_reminder':
-        return '📅';
-      default:
-        return '📢';
-    }
-  };
-
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="!w-[100vw] sm:!max-w-[600px] mt-0 z-[100]">
@@ -176,8 +149,25 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
         <NotificationList
           notifications={notifications}
           onDelete={handleDeleteNotification}
-          onNotificationClick={handleNotificationClick}
-          getNotificationIcon={getNotificationIcon}
+          onNotificationClick={async (notification) => {
+            try {
+              await supabase
+                .from('notifications')
+                .update({ read: true })
+                .eq('id', notification.id);
+
+              queryClient.invalidateQueries({ queryKey: ['notifications'] });
+
+              if (notification.target_page) {
+                navigate(notification.target_page);
+              }
+
+              onOpenChange(false);
+            } catch (error) {
+              console.error('Error marking notification as read:', error);
+              toast.error('Fehler beim Markieren der Benachrichtigung als gelesen');
+            }
+          }}
         />
       </SheetContent>
     </Sheet>

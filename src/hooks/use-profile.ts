@@ -7,23 +7,43 @@ export const useProfile = () => {
   return useQuery({
     queryKey: ['user-profile'],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user?.id) return null;
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user?.id) return null;
 
-      console.log("Fetching profile for user:", user.id);
-      
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select('id, is_admin, created_at, updated_at, email, display_name, is_super_admin, avatar_url')
-        .eq('id', user.id)
-        .single();
+        console.log("Fetching profile for user:", user.id);
+        
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select(`
+            id,
+            is_admin,
+            created_at,
+            updated_at,
+            email,
+            display_name,
+            is_super_admin,
+            avatar_url
+          `)
+          .eq('id', user.id)
+          .maybeSingle();
 
-      if (error) {
-        console.error("Error fetching profile:", error);
+        if (error) {
+          console.error("Error fetching profile:", error);
+          return null;
+        }
+
+        // Entferne nicht-serialisierbare Eigenschaften
+        const sanitizedProfile = {
+          ...profile,
+          __proto__: undefined
+        };
+
+        return sanitizedProfile as Profile;
+      } catch (error) {
+        console.error("Error in useProfile:", error);
         return null;
       }
-
-      return profile as Profile;
     },
   });
 };
