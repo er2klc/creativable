@@ -1,12 +1,11 @@
 
-import { eachDayOfInterval, format, isSameDay, startOfYear, endOfYear, isToday, getMonth, startOfMonth, endOfWeek, startOfWeek, differenceInWeeks, getDay } from "date-fns";
+import { eachDayOfInterval, format, isSameDay, startOfYear, endOfYear, isToday, startOfWeek, endOfWeek, differenceInWeeks } from "date-fns";
 import { de } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { ActivityCalendarProps, DayActivity } from "./types/calendar";
 
 export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
-  // Get date range for current year
   const currentYear = new Date().getFullYear();
   const startDate = startOfYear(new Date(currentYear, 0, 1));
   const endDate = endOfYear(new Date(currentYear, 11, 31));
@@ -21,6 +20,7 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
       isSameDay(new Date(activity.created_at), day)
     );
 
+    // Zähle Posts und Kommentare
     const posts = dayActivities.filter(a => a.type === 'post').length;
     const comments = dayActivities.filter(a => a.type === 'comment').length;
     const likes = dayActivities.reduce((sum, a) => sum + (a.reactions_count || 0), 0);
@@ -57,18 +57,13 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     currentDate = new Date(currentDate.setDate(currentDate.getDate() + 7));
   }
 
-  // Get month labels optimized for 4-week intervals
-  const monthLabels: { month: string, weekIndex: number }[] = [];
-  weeks.forEach((week, index) => {
-    const firstDayOfWeek = week[0];
-    const weekOfMonth = Math.floor(index % 4);
-    
-    if (index === 0 || weekOfMonth === 0) {
-      monthLabels.push({
-        month: format(firstDayOfWeek, 'MMM', { locale: de }),
-        weekIndex: index
-      });
-    }
+  // Gleichmäßige Verteilung der Monate
+  const monthLabels = Array.from({ length: 13 }, (_, i) => {
+    const date = new Date(currentYear, (i + 11) % 12, 1); // Start mit Dezember des Vorjahres
+    return {
+      month: format(date, 'MMM', { locale: de }) + '.',
+      weekIndex: Math.floor(i * (weeks.length / 13))
+    };
   });
 
   const getSpecialMessage = (day: DayActivity): string | undefined => {
@@ -96,11 +91,13 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
               {monthLabels.map((label, index) => (
                 <div
                   key={index}
-                  className="text-[9px] font-medium"
+                  className="text-[9px] font-medium whitespace-nowrap"
                   style={{
-                    gridColumn: `${label.weekIndex + 1} / span ${index < monthLabels.length - 1 
-                      ? monthLabels[index + 1].weekIndex - label.weekIndex 
-                      : 53 - label.weekIndex}`
+                    gridColumn: `${label.weekIndex + 1} / span ${
+                      index < monthLabels.length - 1
+                        ? monthLabels[index + 1].weekIndex - label.weekIndex
+                        : 53 - label.weekIndex
+                    }`
                   }}
                 >
                   {label.month}
@@ -156,6 +153,9 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
                         <div className="text-[10px] space-y-0.5">
                           <div>
                             {activity.total} {activity.total === 1 ? 'activity' : 'activities'}
+                            {activity.posts > 0 && ` (${activity.posts} posts)`}
+                            {activity.comments > 0 && ` (${activity.comments} comments)`}
+                            {activity.likes > 0 && ` (${activity.likes} reactions)`}
                           </div>
                           <div className="font-medium">
                             {format(day, 'EEEE, MMMM d, yyyy', { locale: de })}
