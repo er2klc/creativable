@@ -49,28 +49,30 @@ export const TeamCard = ({
   const isTeamOwner = isSuperAdmin || user?.id === team.created_by;
 
   return (
-    <Card className="overflow-hidden bg-card/50 hover:shadow-sm transition-shadow">
-      <div className="flex flex-col h-full">
-        <div onClick={(e) => handleClick(e, true)} className="flex-shrink-0">
-          <TeamCardImage team={team} />
+    <Card 
+      className="group overflow-hidden bg-[#222] cursor-pointer"
+      onClick={(e) => handleClick(e, false)}
+    >
+      <div className="relative h-[240px]">
+        <TeamCardImage team={team} />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#222]/95 to-transparent" />
+        <div className="absolute bottom-4 left-0 right-0 text-center">
+          <h3 className="text-xl font-bold text-white/90">{team.name}</h3>
         </div>
-        <div 
-          className="p-3 flex flex-col relative flex-grow"
-          onClick={(e) => handleClick(e, false)}
-        >
-          <div className="absolute top-2 right-2 z-10">
-            <TeamCardActions
-              teamId={team.id}
-              joinCode={team.join_code}
-              onDelete={() => onDelete(team.id)}
-              onLeave={() => onLeave(team.id)}
-              onCopyJoinCode={onCopyJoinCode}
-              isOwner={isTeamOwner}
-              team={team}
-            />
-          </div>
-          <TeamCardContent team={team} />
+        <div className="absolute top-4 right-4">
+          <TeamCardActions
+            teamId={team.id}
+            joinCode={team.join_code}
+            onDelete={() => onDelete(team.id)}
+            onLeave={() => onLeave(team.id)}
+            onCopyJoinCode={onCopyJoinCode}
+            isOwner={isTeamOwner}
+            team={team}
+          />
         </div>
+      </div>
+      <div className="p-6 bg-gradient-to-t from-[#333] to-[#222]">
+        <TeamCardContent team={team} />
       </div>
     </Card>
   );

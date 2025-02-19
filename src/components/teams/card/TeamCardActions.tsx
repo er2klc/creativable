@@ -28,7 +28,7 @@ export const TeamCardActions = ({
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   return (
-    <div className="flex items-center gap-2 bg-white/90 backdrop-blur-sm rounded-lg p-1" onClick={(e) => e.stopPropagation()}>
+    <div className="flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-1 z-10" onClick={(e) => e.stopPropagation()}>
       {joinCode && (
         <Button
           variant="ghost"
@@ -37,7 +37,7 @@ export const TeamCardActions = ({
             e.stopPropagation();
             onCopyJoinCode(joinCode);
           }}
-          className="h-8 w-8"
+          className="h-8 w-8 text-white/90 hover:text-white hover:bg-white/10"
           title="Code kopieren"
         >
           <Copy className="h-4 w-4" />
@@ -48,7 +48,7 @@ export const TeamCardActions = ({
           variant="ghost"
           size="icon"
           onClick={() => setIsEditDialogOpen(true)}
-          className="h-8 w-8"
+          className="h-8 w-8 text-white/90 hover:text-white hover:bg-white/10"
           title="Team bearbeiten"
         >
           <Edit className="h-4 w-4" />
@@ -62,7 +62,7 @@ export const TeamCardActions = ({
             e.stopPropagation();
             onLeave();
           }}
-          className="h-8 w-8 text-destructive hover:text-destructive"
+          className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-white/10"
           title="Team verlassen"
         >
           <LogOut className="h-4 w-4" />
@@ -72,7 +72,7 @@ export const TeamCardActions = ({
           <Button
             variant="ghost"
             size="icon"
-            className="h-8 w-8 text-destructive hover:text-destructive"
+            className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-white/10"
             title="Team löschen"
           >
             <Trash2 className="h-4 w-4" />
@@ -85,7 +85,6 @@ export const TeamCardActions = ({
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
         onTeamUpdated={async () => {
-          // Refresh team data
           window.location.reload();
         }}
       />
