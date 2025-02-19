@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { format, isWithinInterval, formatDistanceToNow, addWeeks, parseISO, isBefore, isAfter, addMonths, addDays, addHours, differenceInDays, startOfDay, endOfDay, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
@@ -147,7 +146,7 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
 
   return (
     <>
-      <div className="flex items-center gap-4 mt-2 text-muted-foreground">
+      <div className="flex items-center justify-center mt-2 text-muted-foreground">
         <div className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer group relative"
              onClick={() => handleEventClick(nextEvents[0])}>
           <Calendar className="h-4 w-4" />
@@ -179,15 +178,6 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
             </div>
           )}
         </div>
-
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={handleCalendarClick}
-          className="text-xs h-7 px-2 hover:text-foreground"
-        >
-          Kalender
-        </Button>
       </div>
 
       <Dialog open={showDetails} onOpenChange={setShowDetails}>

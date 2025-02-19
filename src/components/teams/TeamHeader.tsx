@@ -7,7 +7,6 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import { NextTeamEvent } from "./events/NextTeamEvent";
 
 interface TeamHeaderProps {
@@ -126,9 +125,8 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
           isCollapsed ? "opacity-0" : "opacity-100"
         )} />
 
-        {/* Add NextTeamEvent component */}
         <div className={cn(
-          "transition-all duration-300",
+          "transition-all duration-300 flex justify-center",
           isCollapsed ? "opacity-0" : "opacity-100"
         )}>
           <NextTeamEvent teamId={team.id} teamSlug={team.slug} />
