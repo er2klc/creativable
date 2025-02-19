@@ -88,20 +88,23 @@ const MemberProfile = () => {
 
       if (!profile) throw new Error('Member not found');
 
+      // Query team member points
       const { data: points } = await supabase
         .from('team_member_points')
         .select('points, level')
         .eq('team_id', teamData.id)
         .eq('user_id', profile.id)
-        .single();
+        .maybeSingle();
 
+      // Get team member stats with a separate query
       const { data: stats } = await supabase
         .from('team_member_stats')
         .select('posts_count, followers_count, following_count')
         .eq('team_id', teamData.id)
         .eq('user_id', profile.id)
-        .single();
+        .maybeSingle();
 
+      // Get activity data
       const { data: activity } = await supabase
         .from('team_member_activity')
         .select('*')
@@ -109,14 +112,27 @@ const MemberProfile = () => {
         .order('created_at', { ascending: false })
         .limit(50);
 
+      // Create default values for missing data
+      const defaultStats = {
+        posts_count: 0,
+        followers_count: 0,
+        following_count: 0
+      };
+
+      const defaultPoints = {
+        points: 0,
+        level: 1
+      };
+
       return {
         ...profile,
-        points: points?.points || 0,
-        level: points?.level || 1,
-        stats: stats || { posts_count: 0, followers_count: 0, following_count: 0 },
-        activity: activity || []
+        points: points?.points ?? defaultPoints.points,
+        level: points?.level ?? defaultPoints.level,
+        stats: stats ?? defaultStats,
+        activity: activity ?? []
       };
-    }
+    },
+    enabled: !!teamData?.id && !!teamSlug && !!memberSlug
   });
 
   if (isLoading) {
@@ -137,11 +153,21 @@ const MemberProfile = () => {
     );
   }
 
-  // Calculate points needed for next level
-  const pointsToNextLevel = (memberData.level * 100) - memberData.points;
+  // Calculate points needed for next level using nullish coalescing for safety
+  const currentPoints = memberData.points ?? 0;
+  const currentLevel = memberData.level ?? 1;
+  const pointsToNextLevel = (currentLevel * 100) - currentPoints;
+
+  // Ensure stats exists with default values
+  const stats = memberData.stats ?? {
+    posts_count: 0,
+    followers_count: 0,
+    following_count: 0
+  };
 
   return (
     <div>
+      {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
         <div className="h-16 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
@@ -202,13 +228,11 @@ const MemberProfile = () => {
                   </Avatar>
                   <div>
                     <h4 className="font-medium">{teamData.name}</h4>
-                    <p className="text-sm text-muted-foreground">Private • {memberData.stats.followers_count} Members</p>
+                    <p className="text-sm text-muted-foreground">Private • {stats.followers_count} Members</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-
-            {/* Activity Feed would go here */}
           </div>
 
           {/* Profile Info - Right Column */}
@@ -226,10 +250,10 @@ const MemberProfile = () => {
 
                   <div className="mb-6">
                     <div className="flex justify-between text-sm mb-2">
-                      <span>Level {memberData.level}</span>
+                      <span>Level {currentLevel}</span>
                       <span>{pointsToNextLevel} points to next level</span>
                     </div>
-                    <Progress value={memberData.points % 100} className="h-2" />
+                    <Progress value={currentPoints % 100} className="h-2" />
                   </div>
 
                   <div className="text-left space-y-3 mb-6">
@@ -264,15 +288,15 @@ const MemberProfile = () => {
 
                   <div className="grid grid-cols-3 gap-4 py-4 border-y">
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{memberData.stats.posts_count}</div>
+                      <div className="text-2xl font-bold">{stats.posts_count}</div>
                       <div className="text-xs text-muted-foreground">Posts</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{memberData.stats.followers_count}</div>
+                      <div className="text-2xl font-bold">{stats.followers_count}</div>
                       <div className="text-xs text-muted-foreground">Followers</div>
                     </div>
                     <div className="text-center">
-                      <div className="text-2xl font-bold">{memberData.stats.following_count}</div>
+                      <div className="text-2xl font-bold">{stats.following_count}</div>
                       <div className="text-xs text-muted-foreground">Following</div>
                     </div>
                   </div>
