@@ -31,16 +31,19 @@ export const SnapCard = ({
   onBack,
   showBackButton = false
 }: SnapCardProps) => {
-  if (snap.component) {
-    return null;
-  }
-
   const handleClick = (e: React.MouseEvent) => {
     if (!isManaging && snap.onClick) {
       e.preventDefault();
       snap.onClick();
     }
   };
+
+  // Wenn der Snap eine Component hat und diese gerade angezeigt wird (showBackButton true),
+  // dann zeigen wir die Component an
+  if (snap.component && showBackButton) {
+    const Component = snap.component;
+    return <Component />;
+  }
 
   return (
     <Card
