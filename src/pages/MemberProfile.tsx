@@ -55,10 +55,16 @@ const MemberProfile = () => {
         return null;
       }
 
-      // 2. Verify team membership
+      // 2. Verify team membership and get team-specific data
       const { data: membershipData, error: membershipError } = await supabase
         .from('team_members')
-        .select('role')
+        .select(`
+          role,
+          team_member_points!inner (
+            points,
+            level
+          )
+        `)
         .eq('team_id', teamData.id)
         .eq('user_id', profileData.id)
         .maybeSingle();
@@ -68,19 +74,7 @@ const MemberProfile = () => {
         return null;
       }
 
-      // Fetch points data with proper error handling
-      const { data: pointsData, error: pointsError } = await supabase
-        .from('team_member_points')
-        .select('points, level')
-        .eq('team_id', teamData.id)
-        .eq('user_id', profileData.id)
-        .single();
-
-      if (pointsError) {
-        console.error('Error fetching points:', pointsError);
-      }
-
-      // 3. Fetch remaining data in parallel
+      // 3. Fetch team-specific activity data
       const [
         { count: membersCount },
         { data: settingsData },
@@ -125,17 +119,19 @@ const MemberProfile = () => {
             id,
             content,
             created_at,
-            team_posts (
+            team_posts!inner (
               title,
               slug,
+              team_id,
               team_categories (name, color)
             )
           `)
           .eq('created_by', profileData.id)
+          .eq('team_posts.team_id', teamData.id)
           .order('created_at', { ascending: false })
       ]);
 
-      // 4. Transform and combine activity data
+      // 4. Transform and combine activity data (team-specific only)
       const activities = [
         ...(postsData?.map(post => ({
           id: post.id,
@@ -167,12 +163,15 @@ const MemberProfile = () => {
         })) || []),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // 5. Return combined member data with proper level and points handling
+      // 5. Return member data with team-specific stats
+      const points = membershipData.team_member_points?.points ?? 0;
+      const level = membershipData.team_member_points?.level ?? 0;
+
       return {
         ...profileData,
         teamMember: membershipData,
-        points: pointsData?.points ?? 0,
-        level: pointsData?.level ?? 0,
+        points,
+        level,
         stats: {
           posts_count: postsData?.length ?? 0,
           followers_count: 0,
