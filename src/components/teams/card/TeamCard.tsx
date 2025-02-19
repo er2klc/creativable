@@ -50,18 +50,18 @@ export const TeamCard = ({
 
   return (
     <Card
-      className="cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden w-full"
+      className="hover:shadow-sm transition-shadow relative overflow-hidden w-full bg-card/50"
     >
-      <div className="grid md:grid-cols-3 gap-0">
+      <div className="grid md:grid-cols-2 gap-0">
         <div className="md:col-span-1" onClick={(e) => handleClick(e, true)}>
           <TeamCardImage team={team} />
         </div>
         <div 
-          className="md:col-span-2 p-6 flex flex-col border-l border-border"
+          className="md:col-span-1 p-4 flex flex-col border-l border-border/50"
           onClick={(e) => handleClick(e, false)}
         >
           <div className="flex flex-col h-full">
-            <div className="absolute top-4 right-4 z-10">
+            <div className="absolute top-3 right-3 z-10">
               <TeamCardActions
                 teamId={team.id}
                 joinCode={team.join_code}
