@@ -1,5 +1,5 @@
 
-import { eachDayOfInterval, format, isSameDay, startOfYear, endOfYear, isToday, startOfWeek, endOfWeek, addWeeks } from "date-fns";
+import { eachDayOfInterval, format, isSameDay, startOfYear, endOfYear, isToday, addDays, differenceInDays } from "date-fns";
 import { de } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -33,14 +33,13 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
 
   const weeks: Date[][] = [];
   let currentDate = startDate;
-  
   while (currentDate <= endDate) {
-    const weekDays = eachDayOfInterval({
-      start: startOfWeek(currentDate, { weekStartsOn: 1 }),
-      end: endOfWeek(currentDate, { weekStartsOn: 1 })
-    });
-    weeks.push(weekDays);
-    currentDate = addWeeks(currentDate, 1);
+    const week = [];
+    for (let i = 0; i < 7; i++) {
+      week.push(addDays(currentDate, i));
+    }
+    weeks.push(week);
+    currentDate = addDays(currentDate, 7);
   }
 
   const getIntensity = (total: number): number => {
@@ -64,6 +63,10 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     return undefined;
   };
 
+  const isFirstDayOfMonth = (date: Date) => date.getDate() === 1;
+  const shouldShowMonth = (weekDays: Date[]) => 
+    weekDays.some(day => isFirstDayOfMonth(day));
+
   return (
     <div className="bg-white rounded-lg p-2 border border-gray-200 w-full">
       <h3 className="text-lg font-semibold mb-2 text-gray-900">Activity</h3>
@@ -80,7 +83,12 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
 
             <div className="flex gap-1">
               {weeks.map((week, weekIndex) => (
-                <div key={weekIndex} className="grid grid-rows-7 gap-[2px]">
+                <div key={weekIndex} className="grid grid-rows-7 gap-[2px] relative">
+                  {shouldShowMonth(week) && (
+                    <div className="absolute -top-6 text-xs text-gray-500">
+                      {format(week[0], 'MMM', { locale: de })}
+                    </div>
+                  )}
                   {week.map((day, dayIndex) => {
                     const activity = activityByDay.get(format(day, 'yyyy-MM-dd'));
                     if (!activity) return null;
@@ -93,18 +101,15 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
                           <div className="relative">
                             <div
                               className={cn(
-                                "w-[20px] h-[20px] flex items-center justify-center text-[9px] rounded-sm transition-colors",
+                                "w-[20px] h-[20px] flex items-center justify-center rounded-sm transition-colors",
                                 isToday(day) && "ring-1 ring-black ring-offset-1",
                                 getIntensity(activity.total) === 0 && "bg-[#ebedf0]",
                                 getIntensity(activity.total) === 1 && "bg-[#9be9a8]",
                                 getIntensity(activity.total) === 2 && "bg-[#40c463]",
                                 getIntensity(activity.total) === 3 && "bg-[#30a14e]",
-                                getIntensity(activity.total) === 4 && "bg-[#216e39]",
-                                activity.total > 0 && "text-white font-medium"
+                                getIntensity(activity.total) === 4 && "bg-[#216e39]"
                               )}
-                            >
-                              {format(day, 'd')}
-                            </div>
+                            />
                           </div>
                         </TooltipTrigger>
                         <TooltipContent 
