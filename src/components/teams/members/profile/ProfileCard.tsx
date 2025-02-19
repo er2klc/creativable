@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Brain, Calendar, Clock, MapPin, Link, Instagram, Linkedin } from "lucide-react";
+import { Brain, MapPin, Link, Instagram, Linkedin } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -68,7 +68,6 @@ export const ProfileCard = ({
 
   const handleFollow = async () => {
     try {
-      // Implementierung des Follow-Systems kommt später
       setIsFollowing(!isFollowing);
       toast.success(isFollowing ? 'Unfollowed successfully' : 'Followed successfully');
     } catch (error) {
@@ -77,7 +76,12 @@ export const ProfileCard = ({
   };
 
   const bioText = settings?.about_me || memberData.bio || "Dieser Nutzer hat noch keine Bio hinzugefügt.";
-  const joinedDate = new Date(memberData.created_at);
+  
+  // Sicheres Parsen des Datums mit Fallback
+  const joinedDateString = memberData.created_at ? formatDistanceToNow(
+    new Date(memberData.created_at),
+    { addSuffix: true, locale: de }
+  ) : "Datum unbekannt";
 
   return (
     <Card>
@@ -94,7 +98,7 @@ export const ProfileCard = ({
           <p className="text-sm text-gray-600 mb-4">{bioText}</p>
 
           <p className="text-sm text-muted-foreground mb-4">
-            Mitglied seit {formatDistanceToNow(joinedDate, { addSuffix: true, locale: de })}
+            Mitglied seit {joinedDateString}
           </p>
 
           {isOwnProfile ? (
