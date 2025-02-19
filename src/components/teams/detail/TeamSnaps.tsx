@@ -112,6 +112,14 @@ export const TeamSnaps = ({
 
   const adminSnaps: Snap[] = isAdmin ? [
     {
+      id: "member-management",
+      icon: <Users className="h-8 w-8" />,
+      label: "Mitgliederverwaltung",
+      description: "Verwalte Mitglieder und Punkte",
+      gradient: "from-indigo-500 to-indigo-600",
+      onClick: () => handleSnapClick("member-management"),
+    },
+    {
       id: "settings",
       icon: <Settings className="h-8 w-8" />,
       label: "Einstellungen",
