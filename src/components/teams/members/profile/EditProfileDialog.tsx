@@ -125,8 +125,10 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
 
       if (error) throw error;
 
-      // Invalidate the correct queries
-      queryClient.invalidateQueries({ queryKey: ['member-profile', teamSlug] });
+      // Invalidate both the member profile and member stats queries
+      queryClient.invalidateQueries({ 
+        queryKey: ['member-profile', teamSlug, profileData.id] 
+      });
       
       toast.success('Profil erfolgreich aktualisiert');
       onClose();

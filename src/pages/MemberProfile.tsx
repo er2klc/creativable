@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +11,6 @@ import { ProfileHeader } from "@/components/teams/members/profile/ProfileHeader"
 import { MembershipCard } from "@/components/teams/members/profile/MembershipCard";
 import { ProfileCard } from "@/components/teams/members/profile/ProfileCard";
 import { ActivityFeed } from "@/components/teams/members/profile/ActivityFeed";
-import { Activity } from "@/components/teams/members/profile/types";
 
 const MemberProfile = () => {
   const { teamSlug, memberSlug } = useParams();
