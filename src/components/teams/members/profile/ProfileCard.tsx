@@ -1,17 +1,18 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Brain, MapPin, Link as LinkIcon, Instagram, Linkedin, Mail } from "lucide-react";
+import { Brain, MapPin, Link as LinkIcon, Instagram, Linkedin, Mail, UserPlus, UserMinus } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { EditProfileDialog } from "./EditProfileDialog";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useParams } from "react-router-dom";
 
 interface ProfileCardProps {
   memberData: {
@@ -50,32 +51,79 @@ export const ProfileCard = ({
   aboutMe
 }: ProfileCardProps) => {
   const user = useUser();
-  const [isFollowing, setIsFollowing] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const queryClient = useQueryClient();
+  const { teamSlug } = useParams();
   const isOwnProfile = user?.id === memberData.id;
 
-  const { data: memberSince } = useQuery({
-    queryKey: ['member-since', memberData.id],
+  // Fetch team_id based on teamSlug
+  const { data: teamData } = useQuery({
+    queryKey: ['team', teamSlug],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('team_members')
-        .select('joined_at')
-        .eq('user_id', memberData.id)
-        .order('joined_at', { ascending: true })
-        .limit(1)
+        .from('teams')
+        .select('id')
+        .eq('slug', teamSlug)
         .single();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch follow status
+  const { data: followStatus, isLoading: isLoadingFollow } = useQuery({
+    queryKey: ['follow-status', memberData.id, teamData?.id],
+    enabled: !!teamData?.id && !isOwnProfile,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('team_member_follows')
+        .select('id')
+        .eq('follower_id', user?.id)
+        .eq('following_id', memberData.id)
+        .eq('team_id', teamData.id)
+        .maybeSingle();
 
       if (error) throw error;
-      return data.joined_at;
+      return !!data;
     }
   });
 
   const handleFollow = async () => {
+    if (!teamData?.id || !user) return;
+
     try {
-      setIsFollowing(!isFollowing);
-      toast.success(isFollowing ? 'Unfollowed successfully' : 'Followed successfully');
+      if (followStatus) {
+        // Unfollow
+        const { error } = await supabase
+          .from('team_member_follows')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', memberData.id)
+          .eq('team_id', teamData.id);
+
+        if (error) throw error;
+        toast.success('Du folgst diesem Mitglied nicht mehr');
+      } else {
+        // Follow
+        const { error } = await supabase
+          .from('team_member_follows')
+          .insert({
+            follower_id: user.id,
+            following_id: memberData.id,
+            team_id: teamData.id
+          });
+
+        if (error) throw error;
+        toast.success('Du folgst diesem Mitglied jetzt');
+      }
+
+      // Invalidate queries to update UI
+      queryClient.invalidateQueries({ queryKey: ['follow-status'] });
+      queryClient.invalidateQueries({ queryKey: ['member-stats'] });
     } catch (error) {
-      toast.error('Failed to update follow status');
+      console.error('Error toggling follow status:', error);
+      toast.error('Fehler beim Aktualisieren des Follow-Status');
     }
   };
 
@@ -111,10 +159,21 @@ export const ProfileCard = ({
           ) : (
             <Button 
               className="w-full" 
-              variant={isFollowing ? "outline" : "default"}
+              variant={followStatus ? "outline" : "default"}
               onClick={handleFollow}
+              disabled={isLoadingFollow}
             >
-              {isFollowing ? 'Following' : 'Follow'}
+              {followStatus ? (
+                <>
+                  <UserMinus className="h-4 w-4 mr-2" />
+                  Entfolgen
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Folgen
+                </>
+              )}
             </Button>
           )}
 
