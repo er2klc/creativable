@@ -100,12 +100,12 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="flex flex-col max-h-[85vh] p-0 gap-0 w-[95vw] sm:max-w-[400px]">
-        <DialogHeader className="p-4 pb-2 border-b">
+      <DialogContent className="flex flex-col h-[85vh] p-0 gap-0 w-[95vw] sm:max-w-[400px]">
+        <DialogHeader className="shrink-0 p-4 pb-2 border-b">
           <DialogTitle>Profil bearbeiten</DialogTitle>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-4">
+        <div className="flex-1 overflow-y-auto px-4 pb-[70px]">
           <div className="grid gap-4 py-4">
             <div className="flex justify-center">
               <TeamLogoUpload
@@ -220,7 +220,7 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
           </div>
         </div>
 
-        <div className="sticky bottom-0 p-4 bg-background border-t flex justify-end gap-3">
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-background border-t flex justify-end gap-3">
           <Button variant="outline" onClick={onClose}>
             Abbrechen
           </Button>
