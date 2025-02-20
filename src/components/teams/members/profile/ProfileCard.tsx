@@ -129,10 +129,24 @@ export const ProfileCard = ({
 
   const bioText = aboutMe || memberData.bio || "Dieser Nutzer hat noch keine Bio hinzugefügt.";
   
-  const joinedDateString = memberSince ? formatDistanceToNow(
-    new Date(memberSince),
-    { addSuffix: true, locale: de }
-  ) : "Datum wird geladen...";
+  // Query für Member Details inkl. created_at
+  const { data: memberDetails } = useQuery({
+    queryKey: ['member-details', memberData.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('created_at')
+        .eq('id', memberData.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+  
+  const joinedDateString = memberDetails?.created_at 
+    ? formatDistanceToNow(new Date(memberDetails.created_at), { addSuffix: true, locale: de })
+    : "Datum wird geladen...";
 
   return (
     <Card>
