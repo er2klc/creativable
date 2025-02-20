@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -12,10 +13,13 @@ interface CreateTeamDialogProps {
   onTeamCreated?: () => Promise<void>;
 }
 
+const MAX_DESCRIPTION_LENGTH = 300;
+
 export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [descriptionLength, setDescriptionLength] = useState(0);
   const [videoUrl, setVideoUrl] = useState("");
   const [joinCode, setJoinCode] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -26,11 +30,18 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
   const resetState = () => {
     setName("");
     setDescription("");
+    setDescriptionLength(0);
     setVideoUrl("");
     setJoinCode(null);
     setLogoFile(null);
     setLogoPreview(null);
     setIsLoading(false);
+  };
+
+  const handleDescriptionChange = (content: string) => {
+    const textLength = content.replace(/<[^>]*>/g, '').length;
+    setDescriptionLength(textLength);
+    setDescription(content);
   };
 
   const handleCreate = async () => {
@@ -41,6 +52,11 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
 
     if (!name.trim()) {
       toast.error("Bitte geben Sie einen Team-Namen ein");
+      return;
+    }
+
+    if (descriptionLength > MAX_DESCRIPTION_LENGTH) {
+      toast.error(`Die Beschreibung darf maximal ${MAX_DESCRIPTION_LENGTH} Zeichen enthalten`);
       return;
     }
 
@@ -123,7 +139,7 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
           Team erstellen
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px]">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Neues Team erstellen</DialogTitle>
           <DialogDescription>
@@ -132,22 +148,26 @@ export const CreateTeamDialog = ({ onTeamCreated }: CreateTeamDialogProps) => {
         </DialogHeader>
         {!joinCode ? (
           <>
-            <CreateTeamForm
-              name={name}
-              setName={setName}
-              description={description}
-              setDescription={setDescription}
-              videoUrl={videoUrl}
-              setVideoUrl={setVideoUrl}
-              logoFile={logoFile}
-              setLogoFile={setLogoFile}
-              logoPreview={logoPreview}
-              setLogoPreview={setLogoPreview}
-            />
-            <DialogFooter>
+            <div className="overflow-y-auto flex-1 px-1">
+              <CreateTeamForm
+                name={name}
+                setName={setName}
+                description={description}
+                setDescription={handleDescriptionChange}
+                videoUrl={videoUrl}
+                setVideoUrl={setVideoUrl}
+                logoFile={logoFile}
+                setLogoFile={setLogoFile}
+                logoPreview={logoPreview}
+                setLogoPreview={setLogoPreview}
+                descriptionLength={descriptionLength}
+                maxLength={MAX_DESCRIPTION_LENGTH}
+              />
+            </div>
+            <DialogFooter className="pt-4 border-t mt-2">
               <Button
                 onClick={handleCreate}
-                disabled={!name.trim() || isLoading}
+                disabled={!name.trim() || isLoading || descriptionLength > MAX_DESCRIPTION_LENGTH}
               >
                 {isLoading ? "Erstelle..." : "Team erstellen"}
               </Button>

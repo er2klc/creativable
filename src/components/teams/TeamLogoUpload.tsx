@@ -22,7 +22,7 @@ export const TeamLogoUpload = ({
 }: TeamLogoUploadProps) => {
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2 mb-2">
+      <div className="flex items-center gap-2">
         <span className="text-sm font-medium">Team Logo</span>
         <TooltipProvider>
           <Tooltip>
@@ -43,13 +43,13 @@ export const TeamLogoUpload = ({
           </Tooltip>
         </TooltipProvider>
       </div>
-      <div className="h-[180px]">
+      <div className="h-[150px]">
         {logoPreview ? (
           <div className="relative h-full w-full">
             <img 
               src={logoPreview} 
               alt="" 
-              className="max-h-[180px] w-full object-contain rounded-md"
+              className="max-h-[150px] w-full object-contain rounded-md"
             />
             <button
               type="button"
@@ -66,7 +66,7 @@ export const TeamLogoUpload = ({
             <img 
               src={currentLogoUrl} 
               alt="" 
-              className="max-h-[180px] w-full object-contain rounded-md"
+              className="max-h-[150px] w-full object-contain rounded-md"
             />
             <button
               type="button"

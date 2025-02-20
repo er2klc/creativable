@@ -15,6 +15,8 @@ interface CreateTeamFormProps {
   setLogoFile: (file: File | null) => void;
   logoPreview: string | null;
   setLogoPreview: (preview: string | null) => void;
+  descriptionLength: number;
+  maxLength: number;
 }
 
 export const CreateTeamForm = ({
@@ -27,7 +29,9 @@ export const CreateTeamForm = ({
   logoFile,
   setLogoFile,
   logoPreview,
-  setLogoPreview
+  setLogoPreview,
+  descriptionLength,
+  maxLength
 }: CreateTeamFormProps) => {
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -60,13 +64,25 @@ export const CreateTeamForm = ({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="description">Beschreibung</Label>
-        <div className="h-[150px] overflow-y-auto border rounded-md">
-          <TiptapEditor
-            content={description}
-            onChange={setDescription}
-          />
+        <div className="flex justify-between items-center mb-1">
+          <Label htmlFor="description">Beschreibung</Label>
+          <span className={`text-sm ${descriptionLength > maxLength ? "text-red-500" : "text-gray-500"}`}>
+            {descriptionLength}/{maxLength}
+          </span>
         </div>
+        <div className="border rounded-md">
+          <div className="sticky top-0 z-50 bg-background">
+            <TiptapEditor
+              content={description}
+              onChange={setDescription}
+            />
+          </div>
+        </div>
+        {descriptionLength > maxLength && (
+          <p className="text-xs text-red-500">
+            Die Beschreibung ist zu lang. Bitte kürzen Sie sie auf maximal {maxLength} Zeichen.
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -79,14 +95,11 @@ export const CreateTeamForm = ({
         />
       </div>
 
-      <div className="space-y-2">
-        <Label>Team Logo</Label>
-        <TeamLogoUpload
-          logoPreview={logoPreview}
-          onLogoChange={handleLogoChange}
-          onLogoRemove={handleLogoRemove}
-        />
-      </div>
+      <TeamLogoUpload
+        logoPreview={logoPreview}
+        onLogoChange={handleLogoChange}
+        onLogoRemove={handleLogoRemove}
+      />
     </div>
   );
 };
