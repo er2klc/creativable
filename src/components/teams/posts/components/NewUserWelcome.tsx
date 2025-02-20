@@ -1,7 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Wave } from "lucide-react";
+import { Smile } from "lucide-react";
 
 interface NewUserWelcomeProps {
   onIntroductionClick: () => void;
@@ -12,7 +12,7 @@ export const NewUserWelcome = ({ onIntroductionClick }: NewUserWelcomeProps) => 
     <Card className="p-8 text-center">
       <div className="flex flex-col items-center gap-4">
         <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-          <Wave className="h-6 w-6 text-primary" />
+          <Smile className="h-6 w-6 text-primary" />
         </div>
         <h2 className="text-2xl font-semibold">Willkommen in der Community!</h2>
         <p className="text-muted-foreground max-w-[500px]">
