@@ -15,9 +15,21 @@ interface TeamHeaderProps {
   teamName: string;
   teamSlug: string;
   userEmail?: string;
+  logoUrl?: string;
+  canPost?: boolean;
+  isLevel0?: boolean;
+  onIntroductionClick?: () => void;
 }
 
-export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) => {
+export const TeamHeader = ({ 
+  teamName, 
+  teamSlug, 
+  userEmail,
+  logoUrl,
+  canPost = true,
+  isLevel0,
+  onIntroductionClick
+}: TeamHeaderProps) => {
   const navigate = useNavigate();
   const user = useUser();
 
@@ -76,9 +88,9 @@ export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) =
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <div className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors" onClick={() => navigate(`/unity/team/${teamSlug}`)}>
-                  {team?.logo_url ? (
+                  {logoUrl ? (
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={getAvatarUrl(team.logo_url)} alt={teamName} />
+                      <AvatarImage src={getAvatarUrl(logoUrl)} alt={teamName} />
                       <AvatarFallback>{teamName.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                   ) : (
@@ -100,7 +112,14 @@ export const TeamHeader = ({ teamName, teamSlug, userEmail }: TeamHeaderProps) =
                 <SearchBar />
               </div>
               {!isLoading && isAdmin && <EditCategoryDialog teamSlug={teamSlug} />}
-              {!isLoading && team?.id && <CreatePostDialog teamId={team.id} />}
+              {!isLoading && team?.id && (
+                <CreatePostDialog 
+                  teamId={team.id} 
+                  canPost={canPost}
+                  isLevel0={isLevel0}
+                  onIntroductionClick={onIntroductionClick}
+                />
+              )}
             </div>
             <HeaderActions profile={null} userEmail={userEmail} />
           </div>

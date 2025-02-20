@@ -10,23 +10,36 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { CreatePostForm } from "./dialog/CreatePostForm";
 import { useTeamMembers } from "./dialog/useTeamMembers";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useUser } from "@supabase/auth-helpers-react";
 import { CreatePostCategoriesScroll } from "./components/categories/CreatePostCategoriesScroll";
 
 interface CreatePostDialogProps {
   teamId: string;
   categoryId?: string;
+  canPost: boolean;
+  isLevel0?: boolean;
+  onIntroductionClick?: () => void;
 }
 
-export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) => {
+export const CreatePostDialog = ({ 
+  teamId, 
+  categoryId,
+  canPost,
+  isLevel0,
+  onIntroductionClick
+}: CreatePostDialogProps) => {
   const [open, setOpen] = useState(false);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | undefined>(categoryId);
-  const user = useUser();
   const { teamSlug } = useParams();
 
   const { data: teamMembers } = useTeamMembers(teamId);
@@ -56,45 +69,38 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
     enabled: !!teamSlug,
   });
 
-  const { data: teamMember } = useQuery({
-    queryKey: ["team-member-role", teamId, user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
-
-      const { data: memberData, error } = await supabase
-        .from("team_members")
-        .select(`
-          role,
-          points:team_member_points(level)
-        `)
-        .eq("team_id", teamId)
-        .eq("user_id", user.id)
-        .single();
-
-      if (error) throw error;
-      return {
-        role: memberData.role,
-        level: memberData.points?.[0]?.level || 0
-      };
-    },
-    enabled: !!teamId && !!user?.id,
-  });
-
-  const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
-
   const handleCategoryChange = (categorySlug?: string) => {
     if (!categories) return;
     const category = categories.find(cat => cat.slug === categorySlug);
     setSelectedCategoryId(category?.id);
   };
 
+  const button = (
+    <Button disabled={!canPost}>
+      <Plus className="h-4 w-4 mr-2" />
+      Neuer Beitrag
+    </Button>
+  );
+
+  if (isLevel0) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {button}
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Stelle dich erst der Community vor, um Beiträge erstellen zu können</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Neuer Beitrag
-        </Button>
+        {button}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[725px]">
         <DialogHeader>
@@ -108,7 +114,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
           <CreatePostCategoriesScroll 
             activeTab={categories?.find(cat => cat.id === selectedCategoryId)?.slug || ""}
             onCategoryClick={handleCategoryChange}
-            isAdmin={isAdmin}
+            isAdmin={false}
             teamSlug={teamSlug || ""}
           />
         </div>
@@ -118,7 +124,7 @@ export const CreatePostDialog = ({ teamId, categoryId }: CreatePostDialogProps) 
           categoryId={selectedCategoryId}
           onSuccess={() => setOpen(false)}
           teamMembers={teamMembers}
-          isAdmin={isAdmin}
+          isAdmin={false}
           teamSlug={teamSlug || ""}
         />
       </DialogContent>

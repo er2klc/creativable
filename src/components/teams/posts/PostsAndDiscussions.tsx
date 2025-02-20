@@ -1,5 +1,5 @@
 
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,6 +14,7 @@ import { LoadingState } from "./LoadingState";
 import { WelcomeDialog } from "./dialog/WelcomeDialog";
 import { toast } from "sonner";
 import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceContext";
+import { NewUserWelcome } from "./components/NewUserWelcome";
 
 export function PostsAndDiscussions() {
   const navigate = useNavigate();
@@ -40,58 +41,10 @@ export function PostsAndDiscussions() {
       if (error) throw error;
       return data as Team;
     },
-    enabled: !!teamSlug,
-    staleTime: 0,
-    cacheTime: 0
+    enabled: !!teamSlug
   });
 
-  const { data: currentPost, isLoading: isPostLoading } = useQuery({
-    queryKey: ['team-post', teamSlug, postSlug],
-    queryFn: async () => {
-      if (!postSlug || !team?.id) return null;
-
-      const { data, error } = await supabase
-        .from('team_posts')
-        .select(`
-          *,
-          author:profiles!team_posts_created_by_fkey (
-            id,
-            display_name,
-            avatar_url,
-            email
-          ),
-          team_categories (
-            id,
-            name,
-            slug,
-            color
-          ),
-          team_post_comments (
-            id,
-            content,
-            created_at,
-            author:profiles!team_post_comments_created_by_fkey (
-              id,
-              display_name,
-              avatar_url
-            )
-          )
-        `)
-        .eq('slug', postSlug)
-        .eq('team_id', team.id)
-        .single();
-
-      if (error) {
-        console.error('Error fetching post:', error);
-        throw error;
-      }
-
-      return data;
-    },
-    enabled: !!postSlug && !!team?.id,
-  });
-
-  const { data: teamMember } = useQuery({
+  const { data: teamMember, isLoading: isTeamMemberLoading } = useQuery({
     queryKey: ['team-member-role', team?.id],
     queryFn: async () => {
       if (!team?.id || !user?.id) return null;
@@ -127,14 +80,15 @@ export function PostsAndDiscussions() {
     enabled: !!team?.id,
   });
 
+  const isLevel0 = teamMember?.team_member_points?.level === 0;
+  const canPost = !isLevel0;
+
+  // Sofort den Dialog zeigen, wenn Level 0 und introCategory existiert
   useEffect(() => {
-    if (teamMember?.team_member_points?.level === 0 && introCategory) {
+    if (isLevel0 && introCategory && !postSlug) {
       setShowWelcomeDialog(true);
     }
-  }, [teamMember, introCategory]);
-
-  const isAdmin = teamMember?.role === 'admin' || teamMember?.role === 'owner';
-  const canPost = isAdmin || (teamMember?.team_member_points?.level || 0) > 0;
+  }, [isLevel0, introCategory, postSlug]);
 
   const handleWelcomeSubmit = async (data: { name: string; introduction: string }) => {
     if (!user?.id || !team?.id || !introCategory) return;
@@ -154,6 +108,10 @@ export function PostsAndDiscussions() {
 
       toast.success("Vorstellung erfolgreich gepostet!");
       setShowWelcomeDialog(false);
+      
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['team-member-role'] });
+      queryClient.invalidateQueries({ queryKey: ['team-posts'] });
     } catch (error) {
       console.error('Error creating introduction post:', error);
       toast.error("Fehler beim Erstellen der Vorstellung");
@@ -197,10 +155,6 @@ export function PostsAndDiscussions() {
     );
   }
 
-  if (postSlug && isPostLoading) {
-    return <LoadingState />;
-  }
-
   return (
     <TeamPresenceProvider teamId={team.id}>
       <div>
@@ -209,6 +163,9 @@ export function PostsAndDiscussions() {
           teamSlug={team.slug}
           logoUrl={team.logo_url}
           userEmail={user?.email}
+          canPost={canPost}
+          isLevel0={isLevel0}
+          onIntroductionClick={() => setShowWelcomeDialog(true)}
         />
         
         <WelcomeDialog 
@@ -225,7 +182,7 @@ export function PostsAndDiscussions() {
                 <PostCategoriesScroll
                   activeTab={activeTab}
                   onCategoryClick={handleCategoryClick}
-                  isAdmin={isAdmin}
+                  isAdmin={false}
                   teamSlug={teamSlug}
                 />
               </div>
@@ -233,7 +190,9 @@ export function PostsAndDiscussions() {
 
             <div className="w-full overflow-hidden">
               <div className="max-h-[calc(100vh-180px)] overflow-y-auto pr-4 -mr-4">
-                {postSlug ? (
+                {isLevel0 && !postSlug ? (
+                  <NewUserWelcome onIntroductionClick={() => setShowWelcomeDialog(true)} />
+                ) : postSlug ? (
                   <PostDetail post={currentPost} teamSlug={teamSlug} />
                 ) : (
                   <CategoryOverview 
