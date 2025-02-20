@@ -62,7 +62,7 @@ const TeamMembers = () => {
           .from('team_members')
           .select(`
             *,
-            profile:user_id!inner (
+            profile:profiles!user_id (
               id,
               display_name,
               avatar_url,
@@ -71,19 +71,23 @@ const TeamMembers = () => {
               last_seen,
               slug
             ),
-            points:team_member_points!inner (
+            points:team_member_points (
               level,
               points
             )
           `)
           .eq('team_id', teamData.id)
-          .order('points(points)', { ascending: false });
+          .order('points.points', { ascending: false });
 
         if (error) throw error;
 
         return data.map(member => ({
           ...member,
-          points: member.points || { level: 0, points: 0 }
+          profile: member.profile || {
+            display_name: 'Kein Name angegeben',
+            avatar_url: null
+          },
+          points: member.points?.[0] || { level: 0, points: 0 }
         }));
       } catch (err) {
         console.error('Error fetching members:', err);
