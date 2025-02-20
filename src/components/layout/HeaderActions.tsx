@@ -17,6 +17,8 @@ import { NotificationSidebar } from "@/components/notifications/NotificationSide
 import { Profile } from "@/integrations/supabase/types/profiles";
 import { getAvatarUrl } from "@/lib/supabase-utils";
 import { useProfile } from "@/hooks/use-profile";
+import { ChatDialog } from "@/components/chat/ChatDialog";
+import { MessageCircle } from "lucide-react";
 
 interface HeaderActionsProps {
   profile?: Profile | null;
@@ -26,6 +28,7 @@ interface HeaderActionsProps {
 export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const navigate = useNavigate();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
   const { data: profile } = useProfile();
 
   const { data: unreadCount = 0 } = useQuery({
@@ -70,6 +73,14 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
             </Badge>
           )}
         </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={() => setChatOpen(true)}
+        >
+          <MessageCircle className="h-5 w-5" />
+        </Button>
         <div className="h-6 w-px bg-gray-200" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -102,6 +113,11 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
       <NotificationSidebar
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
+      />
+
+      <ChatDialog 
+        open={chatOpen}
+        onOpenChange={setChatOpen}
       />
     </>
   );
