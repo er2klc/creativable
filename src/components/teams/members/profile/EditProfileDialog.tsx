@@ -101,124 +101,127 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="max-h-[85vh] p-0 gap-0 w-[95vw] sm:max-w-[400px]">
+        <DialogHeader className="p-4 pb-2">
           <DialogTitle>Profil bearbeiten</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="flex justify-center">
-            <TeamLogoUpload
-              currentLogoUrl={formData.avatar_url}
-              onLogoChange={handleAvatarChange}
-              onLogoRemove={() => setFormData(prev => ({ ...prev, avatar_url: null }))}
-              logoPreview={avatarPreview}
-            />
-          </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input
-              id="name"
-              value={formData.display_name}
-              onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
-              placeholder="Dein Name"
-            />
-          </div>
+        <div className="overflow-y-auto flex-1 px-4">
+          <div className="grid gap-4 py-2">
+            <div className="flex justify-center">
+              <TeamLogoUpload
+                currentLogoUrl={formData.avatar_url}
+                onLogoChange={handleAvatarChange}
+                onLogoRemove={() => setFormData(prev => ({ ...prev, avatar_url: null }))}
+                logoPreview={avatarPreview}
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="bio">Über mich</Label>
-            <Textarea
-              id="bio"
-              value={formData.bio}
-              onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
-              placeholder="Erzähle etwas über dich..."
-            />
-          </div>
+            <div className="grid gap-2">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                value={formData.display_name}
+                onChange={(e) => setFormData(prev => ({ ...prev, display_name: e.target.value }))}
+                placeholder="Dein Name"
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <Label className="flex items-center gap-2">
-              <Brain className="h-4 w-4" />
-              Persönlichkeitstyp
-            </Label>
-            <Input
-              value={formData.personality_type}
-              onChange={(e) => setFormData(prev => ({ ...prev, personality_type: e.target.value }))}
-              placeholder="z.B. INFJ, ENTJ..."
-            />
-          </div>
+            <div className="grid gap-2">
+              <Label htmlFor="bio">Über mich</Label>
+              <Textarea
+                id="bio"
+                value={formData.bio}
+                onChange={(e) => setFormData(prev => ({ ...prev, bio: e.target.value }))}
+                placeholder="Erzähle etwas über dich..."
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <Label className="flex items-center gap-2">
-              <MapPin className="h-4 w-4" />
-              Standort
-            </Label>
-            <Input
-              value={formData.location}
-              onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
-              placeholder="z.B. Berlin, Deutschland"
-            />
-          </div>
+            <div className="grid gap-2">
+              <Label className="flex items-center gap-2">
+                <Brain className="h-4 w-4" />
+                Persönlichkeitstyp
+              </Label>
+              <Input
+                value={formData.personality_type}
+                onChange={(e) => setFormData(prev => ({ ...prev, personality_type: e.target.value }))}
+                placeholder="z.B. INFJ, ENTJ..."
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <Label className="flex items-center gap-2">
-              <LinkIcon className="h-4 w-4" />
-              Website
-            </Label>
-            <Input
-              value={formData.social_links?.website || ""}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                social_links: { ...prev.social_links, website: e.target.value }
-              }))}
-              placeholder="https://..."
-            />
-          </div>
+            <div className="grid gap-2">
+              <Label className="flex items-center gap-2">
+                <MapPin className="h-4 w-4" />
+                Standort
+              </Label>
+              <Input
+                value={formData.location}
+                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="z.B. Berlin, Deutschland"
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <Label className="flex items-center gap-2">
-              <Instagram className="h-4 w-4" />
-              Instagram Benutzername
-            </Label>
-            <Input
-              value={formData.social_links?.instagram || ""}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                social_links: { ...prev.social_links, instagram: e.target.value }
-              }))}
-              placeholder="@username"
-            />
-          </div>
+            <div className="grid gap-2">
+              <Label className="flex items-center gap-2">
+                <LinkIcon className="h-4 w-4" />
+                Website
+              </Label>
+              <Input
+                value={formData.social_links?.website || ""}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  social_links: { ...prev.social_links, website: e.target.value }
+                }))}
+                placeholder="https://..."
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <Label className="flex items-center gap-2">
-              <Linkedin className="h-4 w-4" />
-              LinkedIn URL
-            </Label>
-            <Input
-              value={formData.social_links?.linkedin || ""}
-              onChange={(e) => setFormData(prev => ({ 
-                ...prev, 
-                social_links: { ...prev.social_links, linkedin: e.target.value }
-              }))}
-              placeholder="https://linkedin.com/in/..."
-            />
-          </div>
+            <div className="grid gap-2">
+              <Label className="flex items-center gap-2">
+                <Instagram className="h-4 w-4" />
+                Instagram Benutzername
+              </Label>
+              <Input
+                value={formData.social_links?.instagram || ""}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  social_links: { ...prev.social_links, instagram: e.target.value }
+                }))}
+                placeholder="@username"
+              />
+            </div>
 
-          <div className="grid gap-2">
-            <Label className="flex items-center gap-2">
-              <Mail className="h-4 w-4" />
-              Email
-            </Label>
-            <Input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              placeholder="email@example.com"
-            />
+            <div className="grid gap-2">
+              <Label className="flex items-center gap-2">
+                <Linkedin className="h-4 w-4" />
+                LinkedIn URL
+              </Label>
+              <Input
+                value={formData.social_links?.linkedin || ""}
+                onChange={(e) => setFormData(prev => ({ 
+                  ...prev, 
+                  social_links: { ...prev.social_links, linkedin: e.target.value }
+                }))}
+                placeholder="https://linkedin.com/in/..."
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label className="flex items-center gap-2">
+                <Mail className="h-4 w-4" />
+                Email
+              </Label>
+              <Input
+                type="email"
+                value={formData.email}
+                onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                placeholder="email@example.com"
+              />
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 mt-4">
+        <div className="sticky bottom-0 p-4 bg-background border-t mt-4 flex justify-end gap-3">
           <Button variant="outline" onClick={onClose}>
             Abbrechen
           </Button>
