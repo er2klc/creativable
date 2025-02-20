@@ -4155,6 +4155,12 @@ export type Database = {
         }
         Returns: Json
       }
+      delete_team_cascade: {
+        Args: {
+          team_id_param: string
+        }
+        Returns: undefined
+      }
       generate_elevate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
