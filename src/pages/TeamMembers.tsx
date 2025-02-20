@@ -149,4 +149,39 @@ const TeamMembers = () => {
                     {teamData?.logo_url ? (
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={teamData.logo_url} alt={teamData.name} />
-                        <AvatarFall
+                        <AvatarFallback>{teamData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                      </Avatar>
+                    ) : null}
+                    <span>{teamData?.name}</span>
+                  </div>
+                  <span className="text-muted-foreground">/</span>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    <span className="text-foreground">Members</span>
+                  </div>
+                </div>
+              </div>
+              <div className="w-[300px]">
+                <SearchBar />
+              </div>
+              <HeaderActions profile={null} userEmail={user?.email} />
+            </div>
+          </div>
+        </div>
+        <div className="container py-8 mt-16">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {members.map((member) => (
+              <MemberCard 
+                key={member.id} 
+                member={member}
+                currentUserLevel={memberPoints?.level || 0}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </TeamPresenceProvider>
+  );
+};
+
+export default TeamMembers;
