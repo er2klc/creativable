@@ -9,9 +9,17 @@ interface DeleteTeamDialogProps {
   children: React.ReactNode;
   onDelete: () => void;
   teamName: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export const DeleteTeamDialog = ({ children, onDelete, teamName }: DeleteTeamDialogProps) => {
+export const DeleteTeamDialog = ({ 
+  children, 
+  onDelete, 
+  teamName,
+  open,
+  onOpenChange
+}: DeleteTeamDialogProps) => {
   const [confirmationName, setConfirmationName] = useState("");
   const [isConfirmButtonEnabled, setIsConfirmButtonEnabled] = useState(false);
 
@@ -19,8 +27,16 @@ export const DeleteTeamDialog = ({ children, onDelete, teamName }: DeleteTeamDia
     setIsConfirmButtonEnabled(confirmationName === teamName);
   }, [confirmationName, teamName]);
 
+  // Reset state when dialog closes
+  useEffect(() => {
+    if (!open) {
+      setConfirmationName("");
+      setIsConfirmButtonEnabled(false);
+    }
+  }, [open]);
+
   return (
-    <AlertDialog>
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogTrigger asChild>
         {children}
       </AlertDialogTrigger>
@@ -56,12 +72,20 @@ export const DeleteTeamDialog = ({ children, onDelete, teamName }: DeleteTeamDia
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter className="gap-2 sm:gap-0">
+        <AlertDialogFooter className="flex flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            className="w-full sm:w-auto"
+          >
+            Abbrechen
+          </Button>
           <Button
             variant="destructive"
             onClick={(e) => {
               e.stopPropagation();
               onDelete();
+              onOpenChange(false);
             }}
             disabled={!isConfirmButtonEnabled}
             className="w-full sm:w-auto"

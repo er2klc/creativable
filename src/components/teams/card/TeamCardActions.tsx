@@ -26,6 +26,7 @@ export const TeamCardActions = ({
   team,
 }: TeamCardActionsProps) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   return (
     <div className="flex items-center gap-2 bg-black/50 backdrop-blur-sm rounded-lg p-1 z-10" onClick={(e) => e.stopPropagation()}>
@@ -44,17 +45,34 @@ export const TeamCardActions = ({
         </Button>
       )}
       {isOwner && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsEditDialogOpen(true)}
-          className="h-8 w-8 text-white/90 hover:text-white hover:bg-white/10"
-          title="Team bearbeiten"
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
+        <>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsEditDialogOpen(true)}
+            className="h-8 w-8 text-white/90 hover:text-white hover:bg-white/10"
+            title="Team bearbeiten"
+          >
+            <Edit className="h-4 w-4" />
+          </Button>
+          <DeleteTeamDialog 
+            open={isDeleteDialogOpen} 
+            onOpenChange={setIsDeleteDialogOpen}
+            onDelete={onDelete} 
+            teamName={team.name}
+          >
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-white/10"
+              title="Team löschen"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </DeleteTeamDialog>
+        </>
       )}
-      {!isOwner ? (
+      {!isOwner && (
         <Button
           variant="ghost"
           size="icon"
@@ -67,17 +85,6 @@ export const TeamCardActions = ({
         >
           <LogOut className="h-4 w-4" />
         </Button>
-      ) : (
-        <DeleteTeamDialog onDelete={onDelete} teamName={team.name}>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-red-400 hover:text-red-300 hover:bg-white/10"
-            title="Team löschen"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </DeleteTeamDialog>
       )}
 
       <EditTeamDialog
