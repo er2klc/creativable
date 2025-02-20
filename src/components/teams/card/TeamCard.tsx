@@ -2,7 +2,6 @@
 import { type Tables } from "@/integrations/supabase/types";
 import { Card } from "@/components/ui/card";
 import { TeamCardActions } from "./TeamCardActions";
-import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { TeamCardImage } from "./TeamCardImage";
 import { TeamCardContent } from "./TeamCardContent";
@@ -54,7 +53,7 @@ export const TeamCard = ({
       className="group overflow-hidden bg-[#222] cursor-pointer"
       onClick={(e) => handleClick(e, false)}
     >
-      <div className="relative h-[240px]">
+      <div className="relative h-[200px]">
         <TeamCardImage team={team} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#222]/95 to-transparent" />
         <div className="absolute bottom-4 left-0 right-0 text-center">
@@ -72,7 +71,7 @@ export const TeamCard = ({
           />
         </div>
       </div>
-      <div className="p-6 bg-gradient-to-t from-[#333] to-[#222]">
+      <div className="p-6 bg-gradient-to-t from-[#333] to-[#222] min-h-[200px]">
         <TeamCardContent team={team} />
       </div>
     </Card>

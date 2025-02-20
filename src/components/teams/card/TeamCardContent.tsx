@@ -13,20 +13,28 @@ interface TeamCardContentProps {
   };
 }
 
+const MAX_DESCRIPTION_LENGTH = 250;
+
 export const TeamCardContent = ({ team }: TeamCardContentProps) => {
   const user = useUser();
   const isTeamOwner = user?.id === team.created_by;
   
-  // Use max_members from team data with fallback to 100
   const maxMembers = team.max_members || 100;
   const memberProgress = (team.stats?.totalMembers || 0) / maxMembers * 100;
+
+  const truncateDescription = (description: string) => {
+    if (description.length <= MAX_DESCRIPTION_LENGTH) return description;
+    return description.substring(0, MAX_DESCRIPTION_LENGTH) + "...";
+  };
 
   return (
     <div className="space-y-4 font-light">
       {team.description && (
         <div 
-          className="text-sm text-gray-300/90 line-clamp-2 font-normal"
-          dangerouslySetInnerHTML={{ __html: team.description }}
+          className="text-sm text-gray-300/90 line-clamp-4 font-normal min-h-[5rem]"
+          dangerouslySetInnerHTML={{ 
+            __html: truncateDescription(team.description)
+          }}
         />
       )}
       
