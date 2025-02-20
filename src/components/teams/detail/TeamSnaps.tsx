@@ -1,4 +1,3 @@
-
 import { MessageSquare, Bell, CalendarIcon, FolderOpenIcon, Users, Settings, Trophy, BarChart3 } from "lucide-react";
 import { SnapList } from "./snap-lists/SnapList";
 import { AdminSnapList } from "./snap-lists/AdminSnapList";
@@ -8,6 +7,7 @@ import { useSnapManagement } from "./hooks/useSnapManagement";
 import { useNavigate, useParams } from "react-router-dom";
 import { Snap } from "./types";
 import { MembersCard } from "./snap-cards/MembersCard";
+import { useTeamNavigation } from '@/hooks/useTeamNavigation';
 
 interface TeamSnapsProps {
   isAdmin: boolean;
@@ -30,9 +30,13 @@ export const TeamSnaps = ({
   onBack,
   activeSnapView 
 }: TeamSnapsProps) => {
-  const navigate = useNavigate();
   const { teamSlug: routeTeamSlug } = useParams();
   const { hiddenSnaps, hideSnapMutation, unhideSnapMutation } = useSnapManagement(teamId);
+  const {
+    navigateToPosts,
+    navigateToLeaderboard,
+    navigateToMembers,
+  } = useTeamNavigation();
 
   const currentTeamSlug = teamSlug || routeTeamSlug;
 
@@ -42,26 +46,23 @@ export const TeamSnaps = ({
       return;
     }
 
-    console.log("handleSnapClick called with:", { snapId, currentTeamSlug });
+    const navigationOptions = { teamSlug: currentTeamSlug };
     
     switch (snapId) {
       case "posts":
-        console.log("Navigating to posts with teamSlug:", currentTeamSlug);
-        navigate(`/unity/${currentTeamSlug}/posts`);
+        navigateToPosts(navigationOptions);
         break;
       case "calendar":
         onCalendarClick();
         break;
       case "leaderboard":
-        console.log("Navigating to leaderboard with teamSlug:", currentTeamSlug);
-        navigate(`/unity/${currentTeamSlug}/leaderboard`);
+        navigateToLeaderboard(navigationOptions);
         break;
       case "members":
-        console.log("Navigating to members with teamSlug:", currentTeamSlug);
-        navigate(`/unity/${currentTeamSlug}/members`);
+        navigateToMembers(navigationOptions);
         break;
       default:
-        navigate(`/unity/${currentTeamSlug}/${snapId}`);
+        navigateToPosts({ ...navigationOptions, postSlug: snapId });
     }
     onSnapClick(snapId);
   };
@@ -145,7 +146,6 @@ export const TeamSnaps = ({
     },
   ] : [];
 
-  // Define the variables needed for filtering visible and hidden snaps
   const allSnaps = [...regularSnaps, ...adminSnaps];
   const visibleRegularSnaps = regularSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
   const visibleAdminSnaps = adminSnaps.filter(snap => !hiddenSnaps.includes(snap.id));
@@ -196,4 +196,3 @@ export const TeamSnaps = ({
     </div>
   );
 };
-
