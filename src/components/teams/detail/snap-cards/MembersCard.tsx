@@ -37,8 +37,12 @@ export const MEMBERS_QUERY = `
 export const transformMemberData = (member: any) => ({
   ...member,
   points: {
-    level: member.points?.[0]?.level || 0,
-    points: member.points?.[0]?.points || 0
+    level: Array.isArray(member.points) 
+      ? member.points[0]?.level || 0 
+      : member.points?.level || 0,
+    points: Array.isArray(member.points)
+      ? member.points[0]?.points || 0
+      : member.points?.points || 0
   }
 });
 
