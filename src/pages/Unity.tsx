@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -84,10 +85,7 @@ const Unity = () => {
 
     try {
       const { error } = await supabase
-        .from('teams')
-        .delete()
-        .eq('id', teamId)
-        .single();
+        .rpc('delete_team_cascade', { team_id_param: teamId });
 
       if (error) {
         console.error('Error deleting team:', error);
