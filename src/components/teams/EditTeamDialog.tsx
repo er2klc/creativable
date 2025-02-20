@@ -69,11 +69,11 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] w-[95vw] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Team bearbeiten</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-4 py-4 overflow-y-auto px-1">
           <div className="space-y-2">
             <Label htmlFor="name">Name</Label>
             <Input
@@ -90,7 +90,7 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
                 {descriptionLength}/{MAX_DESCRIPTION_LENGTH}
               </span>
             </div>
-            <div className="border rounded-md min-h-[240px]">
+            <div className="border rounded-md min-h-[200px]">
               <TiptapEditor
                 content={description}
                 onChange={handleDescriptionChange}
@@ -127,7 +127,7 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
             onLogoRemove={() => setImageUrl(null)}
           />
         </div>
-        <div className="flex justify-end gap-3">
+        <div className="flex justify-end gap-3 pt-4 border-t mt-2">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Abbrechen
           </Button>

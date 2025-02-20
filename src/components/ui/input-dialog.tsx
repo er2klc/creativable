@@ -54,7 +54,7 @@ export function InputDialog({
     <Dialog open={isOpen} onOpenChange={handleDialogChange}>
       <DialogContent 
         onClick={handleClick}
-        className="z-[99999] relative"
+        className="sm:max-w-[425px] w-[95vw] fixed top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%] z-[999999]"
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

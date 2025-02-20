@@ -1,4 +1,12 @@
 
+import { Info } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 interface TeamLogoUploadProps {
   currentLogoUrl?: string | null;
   onLogoChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -14,13 +22,34 @@ export const TeamLogoUpload = ({
 }: TeamLogoUploadProps) => {
   return (
     <div className="space-y-2">
-      <div className="h-[240px]">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-sm font-medium">Team Logo</span>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="text-gray-500 hover:text-gray-700">
+                <Info className="h-4 w-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-[280px] p-3">
+              <h4 className="font-medium mb-2">Optimale Bildgrößen:</h4>
+              <ul className="text-xs space-y-1">
+                <li>• Empfohlene Größe: 1280 x 720 Pixel</li>
+                <li>• Optimales Seitenverhältnis: 16:9</li>
+                <li>• Minimale Breite: 640 Pixel</li>
+                <li>• Maximale Dateigröße: 2MB</li>
+              </ul>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      <div className="h-[180px]">
         {logoPreview ? (
           <div className="relative h-full w-full">
             <img 
               src={logoPreview} 
               alt="" 
-              className="max-h-[240px] w-full object-contain rounded-md"
+              className="max-h-[180px] w-full object-contain rounded-md"
             />
             <button
               type="button"
@@ -37,7 +66,7 @@ export const TeamLogoUpload = ({
             <img 
               src={currentLogoUrl} 
               alt="" 
-              className="max-h-[240px] w-full object-contain rounded-md"
+              className="max-h-[180px] w-full object-contain rounded-md"
             />
             <button
               type="button"
@@ -65,18 +94,6 @@ export const TeamLogoUpload = ({
             </label>
           </div>
         )}
-      </div>
-      <div className="bg-gray-50 p-3 rounded-md">
-        <h4 className="text-sm font-medium text-gray-700 mb-2">Optimale Bildgrößen:</h4>
-        <ul className="text-xs text-gray-600 space-y-1">
-          <li>• Empfohlene Größe: 1200 x 630 Pixel</li>
-          <li>• Optimales Seitenverhältnis: 1.91:1 (Querformat)</li>
-          <li>• Minimale Breite: 600 Pixel</li>
-          <li>• Maximale Dateigröße: 2MB</li>
-        </ul>
-        <p className="text-xs text-gray-500 mt-2">
-          Tipp: Verwenden Sie ein Bild im Querformat für die beste Darstellung in allen Bereichen.
-        </p>
       </div>
     </div>
   );
