@@ -13,6 +13,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { 
   MEMBERS_QUERY, 
   MEMBERS_SNAP_QUERY_KEY,
@@ -21,14 +22,17 @@ import {
   fetchTeamMembers 
 } from "@/components/teams/detail/snap-cards/MembersCard";
 
+const MEMBERS_PER_PAGE = 50;
+
 const TeamMembers = () => {
   const { teamSlug } = useParams();
   const { data: profile } = useProfile();
   const user = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const { data: teamData, isLoading: isLoadingTeam } = useQuery({
+  const { data: teamData, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
       if (!teamSlug) throw new Error("No team slug provided");
@@ -86,19 +90,40 @@ const TeamMembers = () => {
     enabled: !!teamData?.id,
     staleTime: 1000 * 60 * 5,
     cacheTime: 1000 * 60 * 30,
-    retry: 3,  // Retry failed requests up to 3 times
+    retry: 3,
     refetchOnMount: true,
-    keepPreviousData: true  // Keep showing old data while fetching new data
+    keepPreviousData: true
   });
 
-  const isLoading = isLoadingTeam || isLoadingMembers;
+  // Sort members: current user first, then by level
+  const sortedMembers = useMemo(() => {
+    if (!members.length) return [];
+    
+    return members.sort((a, b) => {
+      // Current user always first
+      if (a.id === user?.id) return -1;
+      if (b.id === user?.id) return 1;
+      
+      // Then sort by level
+      return (b.points?.level || 0) - (a.points?.level || 0);
+    });
+  }, [members, user?.id]);
+
+  // Pagination
+  const totalPages = Math.ceil(sortedMembers.length / MEMBERS_PER_PAGE);
+  const paginatedMembers = sortedMembers.slice(
+    (currentPage - 1) * MEMBERS_PER_PAGE,
+    currentPage * MEMBERS_PER_PAGE
+  );
+
+  const isLoading = isTeamLoading || isLoadingMembers;
   const hasCachedData = members.length > 0;
 
   if (isLoading && !hasCachedData) {
     return (
       <div className="container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(6)].map((_, i) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(8)].map((_, i) => (
             <Card key={i} className="p-4">
               <div className="flex items-start justify-between mb-4">
                 <Skeleton className="h-16 w-16 rounded-full" />
@@ -155,9 +180,10 @@ const TeamMembers = () => {
             </div>
           </div>
         </div>
+
         <div className="container py-8 mt-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {members.map((member) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {paginatedMembers.map((member) => (
               <MemberCard 
                 key={member.id} 
                 member={member}
@@ -165,6 +191,29 @@ const TeamMembers = () => {
               />
             ))}
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex justify-center gap-2 mt-8">
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+              >
+                Vorherige
+              </Button>
+              <span className="flex items-center px-4">
+                Seite {currentPage} von {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+              >
+                Nächste
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </TeamPresenceProvider>
