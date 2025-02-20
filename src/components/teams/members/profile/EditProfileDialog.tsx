@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -98,27 +99,33 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
+      const updateData = {
+        display_name: formData.display_name,
+        bio: formData.bio,
+        avatar_url: formData.avatar_url,
+        personality_type: formData.personality_type,
+        location: formData.location,
+        social_links: {
+          website: formData.social_links.website,
+          instagram: formData.social_links.instagram,
+          linkedin: formatLinkedInUrl(formData.social_links.linkedin)
+        },
+        email: formData.email,
+        updated_at: new Date()
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          display_name: formData.display_name,
-          bio: formData.bio,
-          avatar_url: formData.avatar_url,
-          personality_type: formData.personality_type,
-          location: formData.location,
-          social_links: {
-            ...formData.social_links,
-            linkedin: formatLinkedInUrl(formData.social_links.linkedin)
-          },
-          email: formData.email
-        })
-        .eq('id', profileData.id);
+        .update(updateData)
+        .eq('id', profileData.id)
+        .select();
 
       if (error) throw error;
 
       toast.success('Profil erfolgreich aktualisiert');
       onClose();
     } catch (error) {
+      console.error('Error updating profile:', error);
       toast.error('Fehler beim Aktualisieren des Profils');
     } finally {
       setIsLoading(false);
