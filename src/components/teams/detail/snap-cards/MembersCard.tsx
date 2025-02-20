@@ -15,13 +15,13 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
   const navigate = useNavigate();
 
   const { data: members } = useQuery({
-    queryKey: ['team-members-list', teamId],
+    queryKey: ['team-members', teamId],
     queryFn: async () => {
-      const { data: teamMembers } = await supabase
+      const { data: teamMembers, error } = await supabase
         .from('team_members')
         .select(`
-          user_id,
-          profiles:user_id (
+          *,
+          profile:profiles!user_id (
             id,
             display_name,
             avatar_url,
@@ -29,7 +29,7 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
             status,
             last_seen
           ),
-          team_member_points (
+          team_member_points!inner (
             level,
             points
           )
@@ -37,14 +37,31 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
         .eq('team_id', teamId)
         .order('role', { ascending: false });
 
+      if (error) {
+        console.error('Error fetching team members:', error);
+        return [];
+      }
+
       if (!teamMembers) return [];
 
       return teamMembers.map(member => ({
-        ...member.profiles,
-        level: member.team_member_points?.[0]?.level || 1,
+        ...member,
+        profile: member.profile || {
+          id: member.user_id,
+          display_name: 'Kein Name angegeben',
+          avatar_url: null,
+          slug: null,
+          status: 'offline',
+          last_seen: null
+        },
+        level: member.team_member_points?.[0]?.level || 0,
         points: member.team_member_points?.[0]?.points || 0
       }));
-    }
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    cacheTime: 1000 * 60 * 60, // 1 hour
+    refetchOnWindowFocus: false,
+    keepPreviousData: true
   });
 
   if (!members?.length) return null;
@@ -55,26 +72,26 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
         <Card
           key={member.id}
           className="p-4 cursor-pointer hover:shadow-md transition-all"
-          onClick={() => navigate(`/unity/team/${teamSlug}/members/${member.slug}`)}
+          onClick={() => navigate(`/unity/team/${teamSlug}/members/${member.profile.slug}`)}
         >
           <div className="flex flex-col items-center text-center space-y-2">
             <div className="relative">
               <Avatar className="h-16 w-16">
-                <AvatarImage src={member.avatar_url} />
+                <AvatarImage src={member.profile.avatar_url} />
                 <AvatarFallback>
-                  {member.display_name?.substring(0, 2).toUpperCase()}
+                  {member.profile.display_name?.substring(0, 2).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
               <div 
                 className={cn(
                   "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background",
-                  member.status === 'online' ? "bg-green-500" : "bg-gray-300"
+                  member.profile.status === 'online' ? "bg-green-500" : "bg-gray-300"
                 )}
               />
             </div>
             <div>
               <div className="font-medium truncate max-w-[120px]">
-                {member.display_name}
+                {member.profile.display_name}
               </div>
               <div className="text-xs text-muted-foreground">
                 Level {member.level}
