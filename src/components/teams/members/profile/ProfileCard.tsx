@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
@@ -28,6 +27,7 @@ interface ProfileCardProps {
       instagram?: string;
       linkedin?: string;
     };
+    joined_at: string;
     stats: {
       posts_count: number;
       followers_count: number;
@@ -56,7 +56,6 @@ export const ProfileCard = ({
   const { teamSlug } = useParams();
   const isOwnProfile = user?.id === memberData.id;
 
-  // Fetch team_id based on teamSlug
   const { data: teamData } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
@@ -71,7 +70,6 @@ export const ProfileCard = ({
     }
   });
 
-  // Get member stats from our new materialized view
   const { data: memberStats } = useQuery({
     queryKey: ['member-stats', memberData.id, teamData?.id],
     enabled: !!teamData?.id,
@@ -88,7 +86,6 @@ export const ProfileCard = ({
     }
   });
 
-  // Fetch follow status
   const { data: followStatus, isLoading: isLoadingFollow } = useQuery({
     queryKey: ['follow-status', memberData.id, teamData?.id],
     enabled: !!teamData?.id && !isOwnProfile,
@@ -111,7 +108,6 @@ export const ProfileCard = ({
 
     try {
       if (followStatus) {
-        // Unfollow
         const { error } = await supabase
           .from('team_member_follows')
           .delete()
@@ -122,7 +118,6 @@ export const ProfileCard = ({
         if (error) throw error;
         toast.success('Du folgst diesem Mitglied nicht mehr');
       } else {
-        // Follow
         const { error } = await supabase
           .from('team_member_follows')
           .insert({
@@ -135,7 +130,6 @@ export const ProfileCard = ({
         toast.success('Du folgst diesem Mitglied jetzt');
       }
 
-      // Invalidate queries to update UI
       queryClient.invalidateQueries({ queryKey: ['follow-status'] });
       queryClient.invalidateQueries({ queryKey: ['member-stats'] });
     } catch (error) {
@@ -145,8 +139,7 @@ export const ProfileCard = ({
   };
 
   const bioText = aboutMe || memberData.bio || "Dieser Nutzer hat noch keine Bio hinzugefügt.";
-  
-  // Query für Member Details inkl. created_at
+
   const { data: memberDetails } = useQuery({
     queryKey: ['member-details', memberData.id],
     queryFn: async () => {
@@ -160,12 +153,11 @@ export const ProfileCard = ({
       return data;
     }
   });
-  
-  const joinedDateString = memberDetails?.created_at 
-    ? formatDistanceToNow(new Date(memberDetails.created_at), { addSuffix: true, locale: de })
+
+  const joinedDateString = memberData.joined_at
+    ? formatDistanceToNow(new Date(memberData.joined_at), { addSuffix: true, locale: de })
     : "Datum wird geladen...";
 
-  // Use stats from materialized view if available, fallback to props
   const stats = memberStats || memberData.stats;
 
   return (

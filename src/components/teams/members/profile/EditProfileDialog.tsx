@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,8 @@ import { toast } from "sonner";
 import { Brain, MapPin, Link as LinkIcon, Instagram, Linkedin, Mail, Info } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useQueryClient } from "@tanstack/react-query";
+import { useParams } from "react-router-dom";
 
 interface EditProfileDialogProps {
   isOpen: boolean;
@@ -32,6 +33,8 @@ interface EditProfileDialogProps {
 }
 
 export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileDialogProps) {
+  const queryClient = useQueryClient();
+  const { teamSlug } = useParams();
   const { settings } = useSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -122,6 +125,9 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
 
       if (error) throw error;
 
+      // Invalidate the correct queries
+      queryClient.invalidateQueries({ queryKey: ['member-profile', teamSlug] });
+      
       toast.success('Profil erfolgreich aktualisiert');
       onClose();
     } catch (error) {

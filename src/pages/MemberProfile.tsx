@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -43,10 +42,21 @@ const MemberProfile = () => {
     queryFn: async () => {
       if (!teamData?.id || !memberSlug) return null;
 
-      // 1. Fetch profile data
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
-        .select('id, display_name, email, avatar_url, slug, status, last_seen')
+        .select(`
+          id, 
+          display_name, 
+          email, 
+          avatar_url, 
+          slug, 
+          status, 
+          last_seen,
+          bio,
+          personality_type,
+          location,
+          social_links
+        `)
         .eq('slug', memberSlug)
         .maybeSingle();
 
@@ -55,11 +65,11 @@ const MemberProfile = () => {
         return null;
       }
 
-      // 2. Verify team membership and get team-specific data
       const { data: membershipData, error: membershipError } = await supabase
         .from('team_members')
         .select(`
           role,
+          joined_at,
           team_member_points!inner (
             points,
             level
@@ -74,7 +84,6 @@ const MemberProfile = () => {
         return null;
       }
 
-      // 3. Fetch team-specific activity data
       const [
         { count: membersCount },
         { data: settingsData },
@@ -131,7 +140,6 @@ const MemberProfile = () => {
           .order('created_at', { ascending: false })
       ]);
 
-      // 4. Transform and combine activity data (team-specific only)
       const activities = [
         ...(postsData?.map(post => ({
           id: post.id,
@@ -163,13 +171,13 @@ const MemberProfile = () => {
         })) || []),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      // 5. Return member data with team-specific stats
       const points = membershipData.team_member_points?.points ?? 0;
       const level = membershipData.team_member_points?.level ?? 0;
 
       return {
         ...profileData,
         teamMember: membershipData,
+        joined_at: membershipData.joined_at,
         points,
         level,
         stats: {
