@@ -24,52 +24,37 @@ const TeamMembers = () => {
     queryFn: async () => {
       if (!teamSlug) throw new Error("No team slug provided");
       
-      try {
-        const { data, error } = await supabase
-          .from('teams')
-          .select('id, name, slug, logo_url')
-          .eq('slug', teamSlug)
-          .maybeSingle();
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, name, slug, logo_url')
+        .eq('slug', teamSlug)
+        .maybeSingle();
 
-        if (error) throw error;
-        if (!data) throw new Error("Team not found");
+      if (error) throw error;
+      if (!data) throw new Error("Team not found");
 
-        return {
-          id: data.id,
-          name: data.name,
-          slug: data.slug,
-          logo_url: data.logo_url
-        };
-      } catch (err) {
-        console.error('Error fetching team:', err);
-        return null;
-      }
+      return data;
     },
     enabled: !!teamSlug
   });
 
-  const { data: memberPoints, isLoading: isLoadingPoints } = useQuery({
+  const { data: memberPoints } = useQuery({
     queryKey: ['member-points', teamData?.id],
     queryFn: async () => {
-      try {
-        const { data, error } = await supabase
-          .from('team_member_points')
-          .select('level, points')
-          .eq('team_id', teamData.id)
-          .eq('user_id', profile.id)
-          .maybeSingle();
+      const { data, error } = await supabase
+        .from('team_member_points')
+        .select('level, points')
+        .eq('team_id', teamData.id)
+        .eq('user_id', profile.id)
+        .maybeSingle();
 
-        if (error) throw error;
-        return data;
-      } catch (err) {
-        console.error('Error fetching member points:', err);
-        return null;
-      }
+      if (error) throw error;
+      return data || { level: 0, points: 0 };
     },
     enabled: !!teamData?.id && !!profile?.id
   });
 
-  const { data: members, isLoading: isLoadingMembers } = useQuery({
+  const { data: members = [], isLoading: isLoadingMembers } = useQuery({
     queryKey: ['team-members', teamData?.id],
     queryFn: async () => {
       try {
@@ -77,7 +62,7 @@ const TeamMembers = () => {
           .from('team_members')
           .select(`
             *,
-            profile:user_id (
+            profile:user_id!inner (
               id,
               display_name,
               avatar_url,
@@ -86,7 +71,7 @@ const TeamMembers = () => {
               last_seen,
               slug
             ),
-            points:team_member_points (
+            points:team_member_points!inner (
               level,
               points
             )
@@ -98,7 +83,7 @@ const TeamMembers = () => {
 
         return data.map(member => ({
           ...member,
-          points: member.points[0] || { level: 0, points: 0 }
+          points: member.points || { level: 0, points: 0 }
         }));
       } catch (err) {
         console.error('Error fetching members:', err);
