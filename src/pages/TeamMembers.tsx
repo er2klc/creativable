@@ -44,12 +44,16 @@ const TeamMembers = () => {
 
       return data;
     },
-    enabled: !!teamSlug
+    enabled: !!teamSlug,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    cacheTime: 1000 * 60 * 30, // 30 minutes
   });
 
   const { data: memberPoints } = useQuery({
     queryKey: ['member-points', teamData?.id, profile?.id],
     queryFn: async () => {
+      if (!teamData?.id || !profile?.id) return { level: 0, points: 0 };
+
       const { data, error } = await supabase
         .from('team_member_points')
         .select('level, points')
@@ -64,6 +68,7 @@ const TeamMembers = () => {
       return data || { level: 0, points: 0 };
     },
     enabled: !!teamData?.id && !!profile?.id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
     placeholderData: { level: 0, points: 0 }
   });
 
@@ -71,12 +76,21 @@ const TeamMembers = () => {
     queryKey: ['team-members', teamData?.id],
     queryFn: async () => {
       try {
+        if (!teamData?.id) {
+          console.warn('No team ID available for members query');
+          return [];
+        }
+
+        console.log('Fetching members for team:', teamData.id);
+
         const [membersResponse, pointsResponse] = await Promise.all([
           supabase
             .from('team_members')
             .select(`
-              *,
-              profile:profiles!user_id (
+              id,
+              user_id,
+              role,
+              profile:profiles (
                 id,
                 display_name,
                 avatar_url,
@@ -94,22 +108,44 @@ const TeamMembers = () => {
             .eq('team_id', teamData.id)
         ]);
 
-        if (membersResponse.error) throw membersResponse.error;
-        if (pointsResponse.error) throw pointsResponse.error;
+        if (membersResponse.error) {
+          console.error('Members query error:', membersResponse.error);
+          throw membersResponse.error;
+        }
+        if (pointsResponse.error) {
+          console.error('Points query error:', pointsResponse.error);
+          throw pointsResponse.error;
+        }
+
+        if (!membersResponse.data?.length) {
+          console.log('No members found for team:', teamData.id);
+        }
 
         const pointsMap = new Map(
           pointsResponse.data.map(p => [p.user_id, { level: p.level, points: p.points }])
         );
 
-        const processedMembers = membersResponse.data.map(member => ({
-          ...member,
-          profile: member.profile || {
-            display_name: 'Kein Name angegeben',
-            avatar_url: null
-          },
-          points: pointsMap.get(member.user_id) || { level: 0, points: 0 }
-        }));
+        const processedMembers = membersResponse.data.map(member => {
+          if (!member.profile) {
+            console.warn(`No profile found for member ${member.user_id}`);
+          }
 
+          return {
+            ...member,
+            profile: member.profile || {
+              id: member.user_id,
+              display_name: 'Kein Name angegeben',
+              avatar_url: null,
+              bio: null,
+              status: 'offline',
+              last_seen: null,
+              slug: null
+            },
+            points: pointsMap.get(member.user_id) || { level: 0, points: 0 }
+          };
+        });
+
+        console.log('Processed members:', processedMembers.length);
         return processedMembers.sort((a, b) => (b.points?.points || 0) - (a.points?.points || 0));
       } catch (err) {
         console.error('Error fetching members:', err);
@@ -118,6 +154,10 @@ const TeamMembers = () => {
       }
     },
     enabled: !!teamData?.id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    cacheTime: 1000 * 60 * 30, // 30 minutes
+    keepPreviousData: true,
+    retry: 3,
     placeholderData: []
   });
 
