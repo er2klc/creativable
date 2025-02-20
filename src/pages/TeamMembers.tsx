@@ -13,6 +13,7 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { MEMBERS_QUERY, MEMBERS_QUERY_KEY } from "@/components/teams/detail/snap-cards/MembersCard";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
@@ -45,8 +46,8 @@ const TeamMembers = () => {
       return data;
     },
     enabled: !!teamSlug,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 1000 * 60 * 5,
+    cacheTime: 1000 * 60 * 30,
   });
 
   const { data: memberPoints } = useQuery({
@@ -68,97 +69,36 @@ const TeamMembers = () => {
       return data || { level: 0, points: 0 };
     },
     enabled: !!teamData?.id && !!profile?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5,
     placeholderData: { level: 0, points: 0 }
   });
 
   const { data: members = [], isLoading: isLoadingMembers } = useQuery({
-    queryKey: ['team-members', teamData?.id],
+    queryKey: MEMBERS_QUERY_KEY(teamData?.id || ''),
     queryFn: async () => {
-      try {
-        if (!teamData?.id) {
-          console.warn('No team ID available for members query');
-          return [];
-        }
+      if (!teamData?.id) return [];
 
-        console.log('Fetching members for team:', teamData.id);
+      const { data, error } = await supabase
+        .from('team_members')
+        .select(MEMBERS_QUERY)
+        .eq('team_id', teamData.id);
 
-        const [membersResponse, pointsResponse] = await Promise.all([
-          supabase
-            .from('team_members')
-            .select(`
-              id,
-              user_id,
-              role,
-              profile:profiles (
-                id,
-                display_name,
-                avatar_url,
-                bio,
-                status,
-                last_seen,
-                slug
-              )
-            `)
-            .eq('team_id', teamData.id),
-          
-          supabase
-            .from('team_member_points')
-            .select('user_id, level, points')
-            .eq('team_id', teamData.id)
-        ]);
-
-        if (membersResponse.error) {
-          console.error('Members query error:', membersResponse.error);
-          throw membersResponse.error;
-        }
-        if (pointsResponse.error) {
-          console.error('Points query error:', pointsResponse.error);
-          throw pointsResponse.error;
-        }
-
-        if (!membersResponse.data?.length) {
-          console.log('No members found for team:', teamData.id);
-        }
-
-        const pointsMap = new Map(
-          pointsResponse.data.map(p => [p.user_id, { level: p.level, points: p.points }])
-        );
-
-        const processedMembers = membersResponse.data.map(member => {
-          if (!member.profile) {
-            console.warn(`No profile found for member ${member.user_id}`);
-          }
-
-          return {
-            ...member,
-            profile: member.profile || {
-              id: member.user_id,
-              display_name: 'Kein Name angegeben',
-              avatar_url: null,
-              bio: null,
-              status: 'offline',
-              last_seen: null,
-              slug: null
-            },
-            points: pointsMap.get(member.user_id) || { level: 0, points: 0 }
-          };
-        });
-
-        console.log('Processed members:', processedMembers.length);
-        return processedMembers.sort((a, b) => (b.points?.points || 0) - (a.points?.points || 0));
-      } catch (err) {
-        console.error('Error fetching members:', err);
+      if (error) {
+        console.error('Error fetching members:', error);
         toast.error("Fehler beim Laden der Mitglieder");
         return [];
       }
+
+      return data.sort((a, b) => 
+        (b.team_member_points?.[0]?.points || 0) - (a.team_member_points?.[0]?.points || 0)
+      );
     },
     enabled: !!teamData?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 30, // 30 minutes
+    staleTime: 1000 * 60 * 5,
+    cacheTime: 1000 * 60 * 30,
     keepPreviousData: true,
-    retry: 3,
-    placeholderData: []
+    suspense: false,
+    retry: 3
   });
 
   const isLoading = isLoadingTeam || isLoadingMembers;
@@ -230,7 +170,13 @@ const TeamMembers = () => {
             {members.map((member) => (
               <MemberCard 
                 key={member.id} 
-                member={member}
+                member={{
+                  ...member,
+                  points: {
+                    level: member.team_member_points?.[0]?.level || 0,
+                    points: member.team_member_points?.[0]?.points || 0
+                  }
+                }}
                 currentUserLevel={memberPoints?.level || 0}
               />
             ))}
