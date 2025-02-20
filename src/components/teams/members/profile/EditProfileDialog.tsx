@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +7,9 @@ import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Brain, MapPin, Link as LinkIcon, Instagram, Linkedin, Mail } from "lucide-react";
+import { Brain, MapPin, Link as LinkIcon, Instagram, Linkedin, Mail, Info } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface EditProfileDialogProps {
   isOpen: boolean;
@@ -56,14 +56,12 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
 
   function extractLinkedInUsername(url?: string): string {
     if (!url) return "";
-    // Versuche den Benutzernamen aus der URL zu extrahieren
     const match = url.match(/linkedin\.com\/in\/([^\/]+)/);
     return match ? match[1] : url.replace("https://linkedin.com/in/", "");
   }
 
   function formatLinkedInUrl(username: string): string {
     if (!username) return "";
-    // Entferne eventuell vorhandene URL-Komponenten
     const cleanUsername = username.replace("https://linkedin.com/in/", "");
     return `https://linkedin.com/in/${cleanUsername}`;
   }
@@ -167,6 +165,23 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
               <Label className="flex items-center gap-2">
                 <Brain className="h-4 w-4" />
                 Persönlichkeitstyp
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground hover:text-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-[300px] p-4">
+                      <p className="font-medium mb-2">Die 16 MBTI-Persönlichkeitstypen:</p>
+                      <p className="mb-2">Jeder Typ (z.B. INFJ, ENTJ) setzt sich aus 4 Präferenzen zusammen:</p>
+                      <ul className="space-y-1">
+                        <li>• Introvertiert (I) vs. Extravertiert (E)</li>
+                        <li>• Intuition (N) vs. Sensorik (S)</li>
+                        <li>• Fühlen (F) vs. Denken (T)</li>
+                        <li>• Urteilen (J) vs. Wahrnehmen (P)</li>
+                      </ul>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </Label>
               <Input
                 value={formData.personality_type}
