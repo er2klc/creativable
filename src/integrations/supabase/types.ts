@@ -2958,6 +2958,13 @@ export type Database = {
             foreignKeyName: "fk_team_member_points_team_member"
             columns: ["team_id", "user_id"]
             isOneToOne: true
+            referencedRelation: "team_member_stats"
+            referencedColumns: ["team_id", "user_id"]
+          },
+          {
+            foreignKeyName: "fk_team_member_points_team_member"
+            columns: ["team_id", "user_id"]
+            isOneToOne: true
             referencedRelation: "team_members"
             referencedColumns: ["team_id", "user_id"]
           },
@@ -4047,6 +4054,38 @@ export type Database = {
           slug: string | null
         }
         Relationships: []
+      }
+      team_member_stats: {
+        Row: {
+          followers_count: number | null
+          following_count: number | null
+          posts_count: number | null
+          team_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       team_points_30_days: {
         Row: {

@@ -71,6 +71,23 @@ export const ProfileCard = ({
     }
   });
 
+  // Get member stats from our new materialized view
+  const { data: memberStats } = useQuery({
+    queryKey: ['member-stats', memberData.id, teamData?.id],
+    enabled: !!teamData?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('team_member_stats')
+        .select('*')
+        .eq('user_id', memberData.id)
+        .eq('team_id', teamData.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
+
   // Fetch follow status
   const { data: followStatus, isLoading: isLoadingFollow } = useQuery({
     queryKey: ['follow-status', memberData.id, teamData?.id],
@@ -148,6 +165,9 @@ export const ProfileCard = ({
     ? formatDistanceToNow(new Date(memberDetails.created_at), { addSuffix: true, locale: de })
     : "Datum wird geladen...";
 
+  // Use stats from materialized view if available, fallback to props
+  const stats = memberStats || memberData.stats;
+
   return (
     <Card>
       <CardContent className="p-6">
@@ -193,15 +213,15 @@ export const ProfileCard = ({
 
           <div className="grid grid-cols-3 gap-4 py-4 border-y mt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold">{memberData.stats.posts_count}</div>
+              <div className="text-2xl font-bold">{stats.posts_count}</div>
               <div className="text-xs text-muted-foreground">Posts</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{memberData.stats.followers_count}</div>
+              <div className="text-2xl font-bold">{stats.followers_count}</div>
               <div className="text-xs text-muted-foreground">Followers</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{memberData.stats.following_count}</div>
+              <div className="text-2xl font-bold">{stats.following_count}</div>
               <div className="text-xs text-muted-foreground">Following</div>
             </div>
           </div>
