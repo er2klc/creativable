@@ -45,8 +45,7 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
         .from('team_post_comments')
         .update({ 
           content: newContent,
-          edited: true,
-          last_edited_at: new Date().toISOString()
+          updated_at: new Date().toISOString()
         })
         .eq('id', comment.id);
 
@@ -54,6 +53,11 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
       
       setIsEditing(false);
       toast.success("Kommentar wurde aktualisiert");
+      
+      // Optimistic update
+      comment.content = newContent;
+      comment.edited = true;
+      comment.last_edited_at = new Date().toISOString();
     } catch (error) {
       console.error('Error updating comment:', error);
       toast.error("Fehler beim Aktualisieren des Kommentars");

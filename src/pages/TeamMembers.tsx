@@ -12,6 +12,7 @@ import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
@@ -30,12 +31,17 @@ const TeamMembers = () => {
         .eq('slug', teamSlug)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        toast.error("Fehler beim Laden des Teams");
+        throw error;
+      }
       if (!data) throw new Error("Team not found");
 
       return data;
     },
-    enabled: !!teamSlug
+    enabled: !!teamSlug,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 3
   });
 
   const { data: memberPoints } = useQuery({
@@ -48,54 +54,72 @@ const TeamMembers = () => {
         .eq('user_id', profile.id)
         .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        toast.error("Fehler beim Laden der Punktedaten");
+        throw error;
+      }
       return data || { level: 0, points: 0 };
     },
-    enabled: !!teamData?.id && !!profile?.id
+    enabled: !!teamData?.id && !!profile?.id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 3
   });
 
   const { data: members = [], isLoading: isLoadingMembers } = useQuery({
     queryKey: ['team-members', teamData?.id],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from('team_members')
-          .select(`
-            *,
-            profile:profiles!user_id (
-              id,
-              display_name,
-              avatar_url,
-              bio,
-              status,
-              last_seen,
-              slug
-            ),
-            points:team_member_points (
-              level,
-              points
-            )
-          `)
-          .eq('team_id', teamData.id)
-          .order('points.points', { ascending: false });
+        // Separate queries for better performance and error handling
+        const [membersResponse, pointsResponse] = await Promise.all([
+          supabase
+            .from('team_members')
+            .select(`
+              *,
+              profile:profiles!user_id (
+                id,
+                display_name,
+                avatar_url,
+                bio,
+                status,
+                last_seen,
+                slug
+              )
+            `)
+            .eq('team_id', teamData.id),
+          
+          supabase
+            .from('team_member_points')
+            .select('user_id, level, points')
+            .eq('team_id', teamData.id)
+        ]);
 
-        if (error) throw error;
+        if (membersResponse.error) throw membersResponse.error;
+        if (pointsResponse.error) throw pointsResponse.error;
 
-        return data.map(member => ({
+        // Combine the data
+        const pointsMap = new Map(
+          pointsResponse.data.map(p => [p.user_id, { level: p.level, points: p.points }])
+        );
+
+        return membersResponse.data.map(member => ({
           ...member,
           profile: member.profile || {
             display_name: 'Kein Name angegeben',
             avatar_url: null
           },
-          points: member.points?.[0] || { level: 0, points: 0 }
-        }));
+          points: pointsMap.get(member.user_id) || { level: 0, points: 0 }
+        })).sort((a, b) => (b.points?.points || 0) - (a.points?.points || 0));
+
       } catch (err) {
         console.error('Error fetching members:', err);
+        toast.error("Fehler beim Laden der Mitglieder");
         return [];
       }
     },
     enabled: !!teamData?.id,
-    staleTime: 30000 // 30 seconds
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    retry: 3,
+    keepPreviousData: true // Keep showing old data while fetching new data
   });
 
   if (isLoadingTeam || isLoadingMembers) {
