@@ -42,11 +42,11 @@ export const MembershipCard = ({ userId }: MembershipCardProps) => {
       
       const counts: Record<string, number> = {};
       
-      // Fetch counts for all teams in parallel
+      // Fetch counts for all teams in parallel using only id counting
       const countPromises = teams.map(async (team) => {
         const { count } = await supabase
           .from('team_members')
-          .select('*', { count: 'exact', head: true })
+          .select('id', { count: 'exact', head: true })
           .eq('team_id', team.teams.id);
           
         return { teamId: team.teams.id, count: count || 0 };
@@ -54,14 +54,18 @@ export const MembershipCard = ({ userId }: MembershipCardProps) => {
       
       const results = await Promise.all(countPromises);
       
-      // Convert results to object format
+      // Convert results to object format with improved type safety
       results.forEach(result => {
-        counts[result.teamId] = result.count;
+        if (result.teamId) {
+          counts[result.teamId] = result.count;
+        }
       });
       
       return counts;
     },
-    enabled: !!teams?.length
+    enabled: !!teams?.length,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
+    cacheTime: 1000 * 60 * 30 // Keep in cache for 30 minutes
   });
 
   if (!teams?.length) return null;
