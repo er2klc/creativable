@@ -1,8 +1,26 @@
+
 # Welcome to your Lovable project
 
 ## Project info
 
 **URL**: https://lovable.dev/projects/a4ad13a0-2567-4aa0-9108-edcda03334af
+
+## URL Structure
+
+The application uses the following URL structure for team-related pages:
+
+- `/unity` - Main Unity dashboard
+- `/unity/:teamSlug` - Team overview
+- `/unity/:teamSlug/members` - Team members list
+- `/unity/:teamSlug/members/:memberSlug` - Individual member profile
+- `/unity/:teamSlug/posts` - Team posts and discussions
+- `/unity/:teamSlug/posts/category/:categorySlug` - Posts filtered by category
+- `/unity/:teamSlug/posts/:postSlug` - Individual post detail
+- `/unity/:teamSlug/calendar` - Team calendar
+- `/unity/:teamSlug/pulse` - Team pulse view
+- `/unity/:teamSlug/leaderboard` - Team leaderboard
+
+Note: The legacy URL pattern `/unity/team/:teamSlug/*` has been deprecated and will automatically redirect to the new URL structure.
 
 ## How can I edit this code?
 
