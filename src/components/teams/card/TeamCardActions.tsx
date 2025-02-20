@@ -68,7 +68,7 @@ export const TeamCardActions = ({
           <LogOut className="h-4 w-4" />
         </Button>
       ) : (
-        <DeleteTeamDialog onDelete={onDelete}>
+        <DeleteTeamDialog onDelete={onDelete} teamName={team.name}>
           <Button
             variant="ghost"
             size="icon"
