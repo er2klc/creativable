@@ -140,20 +140,6 @@ export const ProfileCard = ({
 
   const bioText = aboutMe || memberData.bio || "Dieser Nutzer hat noch keine Bio hinzugefügt.";
 
-  const { data: memberDetails } = useQuery({
-    queryKey: ['member-details', memberData.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('created_at')
-        .eq('id', memberData.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    }
-  });
-
   const joinedDateString = memberData.joined_at
     ? formatDistanceToNow(new Date(memberData.joined_at), { addSuffix: true, locale: de })
     : "Datum wird geladen...";
@@ -173,6 +159,17 @@ export const ProfileCard = ({
           <p className="text-muted-foreground mb-2">@{memberSlug}</p>
           
           <p className="text-sm text-gray-600 mb-4">{bioText}</p>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Brain className="h-4 w-4" />
+              <span>{memberData.personality_type || "Nicht angegeben"}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4" />
+              <span>{memberData.location || "Nicht angegeben"}</span>
+            </div>
+          </div>
 
           <p className="text-sm text-muted-foreground mb-4">
             Mitglied seit {joinedDateString}
@@ -225,20 +222,6 @@ export const ProfileCard = ({
             </div>
             <Progress value={currentPoints % 100} className="h-2" />
           </div>
-
-          {memberData.personality_type && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
-              <Brain className="h-4 w-4" />
-              <span>{memberData.personality_type}</span>
-            </div>
-          )}
-
-          {memberData.location && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-              <MapPin className="h-4 w-4" />
-              <span>{memberData.location}</span>
-            </div>
-          )}
 
           <div className="flex justify-center gap-4 mt-6 pt-4 border-t">
             {memberData.social_links?.website && (
