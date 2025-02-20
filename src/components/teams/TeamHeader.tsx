@@ -1,3 +1,4 @@
+
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -5,7 +6,6 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { TeamHeaderTitle } from "./header/TeamHeaderTitle";
 import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
-import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
 
@@ -70,6 +70,10 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
             id,
             display_name,
             avatar_url
+          ),
+          points:team_member_points!team_id_user_id_fkey (
+            level,
+            points
           )
         `)
         .eq('team_id', team.id);
