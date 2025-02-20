@@ -13,7 +13,11 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { MEMBERS_QUERY, MEMBERS_QUERY_KEY } from "@/components/teams/detail/snap-cards/MembersCard";
+import { 
+  MEMBERS_QUERY, 
+  MEMBERS_QUERY_KEY, 
+  transformMemberData 
+} from "@/components/teams/detail/snap-cards/MembersCard";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
@@ -89,9 +93,8 @@ const TeamMembers = () => {
         return [];
       }
 
-      return data.sort((a, b) => 
-        (b.team_member_points?.[0]?.points || 0) - (a.team_member_points?.[0]?.points || 0)
-      );
+      const transformedData = data.map(transformMemberData);
+      return transformedData.sort((a, b) => b.points.points - a.points.points);
     },
     enabled: !!teamData?.id,
     staleTime: 1000 * 60 * 5,
@@ -146,45 +149,4 @@ const TeamMembers = () => {
                     {teamData?.logo_url ? (
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={teamData.logo_url} alt={teamData.name} />
-                        <AvatarFallback>{teamData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                    ) : null}
-                    <span>{teamData?.name}</span>
-                  </div>
-                  <span className="text-muted-foreground">/</span>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    <span className="text-foreground">Members</span>
-                  </div>
-                </div>
-              </div>
-              <div className="w-[300px]">
-                <SearchBar />
-              </div>
-              <HeaderActions profile={null} userEmail={user?.email} />
-            </div>
-          </div>
-        </div>
-        <div className="container py-8 mt-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {members.map((member) => (
-              <MemberCard 
-                key={member.id} 
-                member={{
-                  ...member,
-                  points: {
-                    level: member.team_member_points?.[0]?.level || 0,
-                    points: member.team_member_points?.[0]?.points || 0
-                  }
-                }}
-                currentUserLevel={memberPoints?.level || 0}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    </TeamPresenceProvider>
-  );
-};
-
-export default TeamMembers;
+                        <AvatarFall

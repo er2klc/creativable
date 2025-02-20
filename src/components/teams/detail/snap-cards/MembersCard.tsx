@@ -11,7 +11,7 @@ interface MembersCardProps {
   teamSlug: string;
 }
 
-// Shared query configuration
+// Shared query configuration and data transformation
 export const MEMBERS_QUERY_KEY = (teamId: string) => ['team-members', teamId];
 export const MEMBERS_QUERY = `
   id,
@@ -26,11 +26,19 @@ export const MEMBERS_QUERY = `
     last_seen,
     slug
   ),
-  team_member_points (
+  points:team_member_points (
     level,
     points
   )
 `;
+
+export const transformMemberData = (member: any) => ({
+  ...member,
+  points: {
+    level: member.points?.[0]?.level || 0,
+    points: member.points?.[0]?.points || 0
+  }
+});
 
 export const fetchTeamMembers = async (teamId: string) => {
   const { data: teamMembers, error } = await supabase
@@ -44,7 +52,7 @@ export const fetchTeamMembers = async (teamId: string) => {
     return [];
   }
 
-  return teamMembers;
+  return teamMembers.map(transformMemberData);
 };
 
 export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
@@ -69,7 +77,7 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
           .eq('team_id', teamId);
 
         if (error) throw error;
-        return data;
+        return data.map(transformMemberData);
       },
     });
   };
@@ -108,7 +116,7 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
                 {member.profile?.display_name}
               </div>
               <div className="text-xs text-muted-foreground">
-                Level {member.team_member_points?.[0]?.level || 0}
+                Level {member.points.level}
               </div>
             </div>
           </div>
