@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Brain, MapPin, Link, Instagram, Linkedin } from "lucide-react";
+import { Brain, MapPin, Link as LinkIcon, Instagram, Linkedin, Mail } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -18,7 +18,6 @@ interface ProfileCardProps {
     display_name?: string;
     bio?: string;
     last_seen: string;
-    created_at: string;
     id: string;
     personality_type?: string;
     location?: string;
@@ -32,6 +31,7 @@ interface ProfileCardProps {
       followers_count: number;
       following_count: number;
     };
+    email?: string;
   };
   memberSlug: string;
   currentLevel: number;
@@ -52,17 +52,20 @@ export const ProfileCard = ({
   const [isFollowing, setIsFollowing] = useState(false);
   const isOwnProfile = user?.id === memberData.id;
 
-  const { data: settings } = useQuery({
-    queryKey: ['user-settings', memberData.id],
+  // Query für das Beitrittsdatum
+  const { data: memberSince } = useQuery({
+    queryKey: ['member-since', memberData.id],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('settings')
-        .select('about_me')
+        .from('team_members')
+        .select('joined_at')
         .eq('user_id', memberData.id)
+        .order('joined_at', { ascending: true })
+        .limit(1)
         .single();
 
       if (error) throw error;
-      return data;
+      return data.joined_at;
     }
   });
 
@@ -75,13 +78,12 @@ export const ProfileCard = ({
     }
   };
 
-  const bioText = settings?.about_me || memberData.bio || "Dieser Nutzer hat noch keine Bio hinzugefügt.";
+  const bioText = aboutMe || memberData.bio || "Dieser Nutzer hat noch keine Bio hinzugefügt.";
   
-  // Sicheres Parsen des Datums mit Fallback
-  const joinedDateString = memberData.created_at ? formatDistanceToNow(
-    new Date(memberData.created_at),
+  const joinedDateString = memberSince ? formatDistanceToNow(
+    new Date(memberSince),
     { addSuffix: true, locale: de }
-  ) : "Datum unbekannt";
+  ) : "Datum wird geladen...";
 
   return (
     <Card>
@@ -136,20 +138,6 @@ export const ProfileCard = ({
             <Progress value={currentPoints % 100} className="h-2" />
           </div>
 
-          {memberData.social_links && (
-            <div className="flex justify-center gap-4">
-              {memberData.social_links.website && (
-                <Link className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-              )}
-              {memberData.social_links.instagram && (
-                <Instagram className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-              )}
-              {memberData.social_links.linkedin && (
-                <Linkedin className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-              )}
-            </div>
-          )}
-
           {memberData.personality_type && (
             <div className="flex items-center gap-2 text-sm text-muted-foreground mt-4">
               <Brain className="h-4 w-4" />
@@ -163,6 +151,47 @@ export const ProfileCard = ({
               <span>{memberData.location}</span>
             </div>
           )}
+
+          <div className="flex justify-center gap-4 mt-6 pt-4 border-t">
+            {memberData.social_links?.website && (
+              <a 
+                href={memberData.social_links.website} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <LinkIcon className="h-5 w-5" />
+              </a>
+            )}
+            {memberData.social_links?.instagram && (
+              <a 
+                href={`https://instagram.com/${memberData.social_links.instagram}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Instagram className="h-5 w-5" />
+              </a>
+            )}
+            {memberData.social_links?.linkedin && (
+              <a 
+                href={memberData.social_links.linkedin} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Linkedin className="h-5 w-5" />
+              </a>
+            )}
+            {memberData.email && (
+              <a 
+                href={`mailto:${memberData.email}`}
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <Mail className="h-5 w-5" />
+              </a>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
