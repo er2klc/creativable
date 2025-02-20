@@ -71,7 +71,7 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
             display_name,
             avatar_url
           ),
-          points:team_member_points!team_id_user_id_fkey (
+          points:team_member_points (
             level,
             points
           )
