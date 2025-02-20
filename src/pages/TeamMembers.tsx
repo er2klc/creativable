@@ -13,38 +13,16 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import { useTeamData } from "@/hooks/useTeamData";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
   const { data: profile } = useProfile();
   const user = useUser();
   const navigate = useNavigate();
+  const { teamData, isLoadingTeam } = useTeamData(teamSlug);
 
-  const { data: teamData, isLoading: isLoadingTeam } = useQuery({
-    queryKey: ['team', teamSlug],
-    queryFn: async () => {
-      if (!teamSlug) throw new Error("No team slug provided");
-      
-      const { data, error } = await supabase
-        .from('teams')
-        .select('id, name, slug, logo_url')
-        .eq('slug', teamSlug)
-        .maybeSingle();
-
-      if (error) {
-        toast.error("Fehler beim Laden des Teams");
-        throw error;
-      }
-      if (!data) throw new Error("Team not found");
-
-      return data;
-    },
-    enabled: !!teamSlug,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 3
-  });
-
-  const { data: memberPoints } = useQuery({
+  const { data: memberPoints, isLoading: isLoadingPoints } = useQuery({
     queryKey: ['member-points', teamData?.id],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -55,21 +33,19 @@ const TeamMembers = () => {
         .maybeSingle();
 
       if (error) {
-        toast.error("Fehler beim Laden der Punktedaten");
-        throw error;
+        console.error('Error fetching points:', error);
+        return { level: 0, points: 0 };
       }
       return data || { level: 0, points: 0 };
     },
     enabled: !!teamData?.id && !!profile?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    retry: 3
+    placeholderData: { level: 0, points: 0 }
   });
 
   const { data: members = [], isLoading: isLoadingMembers } = useQuery({
     queryKey: ['team-members', teamData?.id],
     queryFn: async () => {
       try {
-        // Separate queries for better performance and error handling
         const [membersResponse, pointsResponse] = await Promise.all([
           supabase
             .from('team_members')
@@ -96,33 +72,37 @@ const TeamMembers = () => {
         if (membersResponse.error) throw membersResponse.error;
         if (pointsResponse.error) throw pointsResponse.error;
 
-        // Combine the data
         const pointsMap = new Map(
           pointsResponse.data.map(p => [p.user_id, { level: p.level, points: p.points }])
         );
 
-        return membersResponse.data.map(member => ({
+        const processedMembers = membersResponse.data.map(member => ({
           ...member,
           profile: member.profile || {
             display_name: 'Kein Name angegeben',
             avatar_url: null
           },
           points: pointsMap.get(member.user_id) || { level: 0, points: 0 }
-        })).sort((a, b) => (b.points?.points || 0) - (a.points?.points || 0));
+        }));
 
+        return processedMembers.sort((a, b) => (b.points?.points || 0) - (a.points?.points || 0));
       } catch (err) {
         console.error('Error fetching members:', err);
-        toast.error("Fehler beim Laden der Mitglieder");
         return [];
       }
     },
     enabled: !!teamData?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutes
+    placeholderData: [],
+    staleTime: 1000 * 60 * 30, // 30 minutes
+    cacheTime: 1000 * 60 * 60, // 1 hour
     retry: 3,
-    keepPreviousData: true // Keep showing old data while fetching new data
+    keepPreviousData: true
   });
 
-  if (isLoadingTeam || isLoadingMembers) {
+  const isLoading = isLoadingTeam || isLoadingMembers || isLoadingPoints;
+  const hasCachedData = members.length > 0;
+
+  if (isLoading && !hasCachedData) {
     return (
       <div className="container py-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -145,12 +125,12 @@ const TeamMembers = () => {
     );
   }
 
-  if (!members || !teamData) {
+  if (!teamData && !isLoading) {
     return <div className="p-4">Team nicht gefunden</div>;
   }
 
   return (
-    <TeamPresenceProvider teamId={teamData.id}>
+    <TeamPresenceProvider teamId={teamData?.id}>
       <div>
         <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
           <div className="h-16 px-4 flex items-center">
@@ -161,13 +141,13 @@ const TeamMembers = () => {
                     className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors"
                     onClick={() => navigate(`/unity/team/${teamSlug}`)}
                   >
-                    {teamData.logo_url ? (
+                    {teamData?.logo_url ? (
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={teamData.logo_url} alt={teamData.name} />
                         <AvatarFallback>{teamData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                     ) : null}
-                    <span>{teamData.name}</span>
+                    <span>{teamData?.name}</span>
                   </div>
                   <span className="text-muted-foreground">/</span>
                   <div className="flex items-center gap-2">

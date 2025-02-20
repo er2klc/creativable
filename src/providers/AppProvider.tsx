@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,9 +11,12 @@ import { AuthProvider } from "./AuthProvider";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      retry: 1,
+      staleTime: 1000 * 60 * 30, // 30 minutes
+      cacheTime: 1000 * 60 * 60, // 1 hour
+      retry: 3,
+      retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
       refetchOnWindowFocus: false,
-      staleTime: 1000 * 60 * 5, // 5 minutes
+      keepPreviousData: true
     },
   },
 });
