@@ -13,7 +13,7 @@ interface TeamCardContentProps {
   };
 }
 
-const MAX_DESCRIPTION_LENGTH = 250;
+const MAX_DESCRIPTION_LENGTH = 300;
 
 export const TeamCardContent = ({ team }: TeamCardContentProps) => {
   const user = useUser();
@@ -31,7 +31,7 @@ export const TeamCardContent = ({ team }: TeamCardContentProps) => {
     <div className="space-y-4 font-light">
       {team.description && (
         <div 
-          className="text-sm text-gray-300/90 line-clamp-4 font-normal min-h-[5rem]"
+          className="text-sm text-gray-300/90 font-normal min-h-[5rem]"
           dangerouslySetInnerHTML={{ 
             __html: truncateDescription(team.description)
           }}

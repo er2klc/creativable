@@ -22,7 +22,7 @@ interface EditTeamDialogProps {
   onTeamUpdated: () => Promise<void>;
 }
 
-const MAX_DESCRIPTION_LENGTH = 250;
+const MAX_DESCRIPTION_LENGTH = 300;
 
 export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: EditTeamDialogProps) => {
   const [name, setName] = useState(team.name);
@@ -90,7 +90,7 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
                 {descriptionLength}/{MAX_DESCRIPTION_LENGTH}
               </span>
             </div>
-            <div className="border rounded-md">
+            <div className="border rounded-md min-h-[240px]">
               <TiptapEditor
                 content={description}
                 onChange={handleDescriptionChange}
