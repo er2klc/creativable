@@ -13,17 +13,42 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
-import { useTeamData } from "@/hooks/useTeamData";
 
 const TeamMembers = () => {
   const { teamSlug } = useParams();
   const { data: profile } = useProfile();
   const user = useUser();
   const navigate = useNavigate();
-  const { teamData, isLoadingTeam } = useTeamData(teamSlug);
 
-  const { data: memberPoints, isLoading: isLoadingPoints } = useQuery({
-    queryKey: ['member-points', teamData?.id],
+  const { data: teamData, isLoading: isLoadingTeam } = useQuery({
+    queryKey: ['team', teamSlug],
+    queryFn: async () => {
+      if (!teamSlug) throw new Error("No team slug provided");
+      
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, name, slug, logo_url')
+        .eq('slug', teamSlug)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error loading team:", error);
+        toast.error("Fehler beim Laden des Teams");
+        throw error;
+      }
+
+      if (!data) {
+        toast.error("Team nicht gefunden");
+        throw new Error("Team not found");
+      }
+
+      return data;
+    },
+    enabled: !!teamSlug
+  });
+
+  const { data: memberPoints } = useQuery({
+    queryKey: ['member-points', teamData?.id, profile?.id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('team_member_points')
@@ -88,18 +113,15 @@ const TeamMembers = () => {
         return processedMembers.sort((a, b) => (b.points?.points || 0) - (a.points?.points || 0));
       } catch (err) {
         console.error('Error fetching members:', err);
+        toast.error("Fehler beim Laden der Mitglieder");
         return [];
       }
     },
     enabled: !!teamData?.id,
-    placeholderData: [],
-    staleTime: 1000 * 60 * 30, // 30 minutes
-    cacheTime: 1000 * 60 * 60, // 1 hour
-    retry: 3,
-    keepPreviousData: true
+    placeholderData: []
   });
 
-  const isLoading = isLoadingTeam || isLoadingMembers || isLoadingPoints;
+  const isLoading = isLoadingTeam || isLoadingMembers;
   const hasCachedData = members.length > 0;
 
   if (isLoading && !hasCachedData) {
