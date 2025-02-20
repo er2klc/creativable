@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Brain, MapPin, Link as LinkIcon, Instagram, Linkedin, Mail } from "lucide-react";
+import { useSettings } from "@/hooks/use-settings";
 
 interface EditProfileDialogProps {
   isOpen: boolean;
@@ -30,17 +31,42 @@ interface EditProfileDialogProps {
 }
 
 export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileDialogProps) {
+  const { settings } = useSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     display_name: profileData.display_name || "",
-    bio: profileData.bio || "",
+    bio: settings?.about_me || profileData.bio || "",
     avatar_url: profileData.avatar_url || null,
     personality_type: profileData.personality_type || "",
     location: profileData.location || "",
-    social_links: profileData.social_links || {},
+    social_links: {
+      website: profileData.social_links?.website || "",
+      instagram: profileData.social_links?.instagram || "",
+      linkedin: extractLinkedInUsername(profileData.social_links?.linkedin) || "",
+    },
     email: profileData.email || ""
   });
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (settings?.about_me) {
+      setFormData(prev => ({ ...prev, bio: settings.about_me || prev.bio }));
+    }
+  }, [settings?.about_me]);
+
+  function extractLinkedInUsername(url?: string): string {
+    if (!url) return "";
+    // Versuche den Benutzernamen aus der URL zu extrahieren
+    const match = url.match(/linkedin\.com\/in\/([^\/]+)/);
+    return match ? match[1] : url.replace("https://linkedin.com/in/", "");
+  }
+
+  function formatLinkedInUrl(username: string): string {
+    if (!username) return "";
+    // Entferne eventuell vorhandene URL-Komponenten
+    const cleanUsername = username.replace("https://linkedin.com/in/", "");
+    return `https://linkedin.com/in/${cleanUsername}`;
+  }
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -82,7 +108,10 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
           avatar_url: formData.avatar_url,
           personality_type: formData.personality_type,
           location: formData.location,
-          social_links: formData.social_links,
+          social_links: {
+            ...formData.social_links,
+            linkedin: formatLinkedInUrl(formData.social_links.linkedin)
+          },
           email: formData.email
         })
         .eq('id', profileData.id);
@@ -107,14 +136,12 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
 
         <div className="flex-1 overflow-y-auto px-4 pb-[70px]">
           <div className="grid gap-4 py-4">
-            <div className="flex justify-center">
-              <TeamLogoUpload
-                currentLogoUrl={formData.avatar_url}
-                onLogoChange={handleAvatarChange}
-                onLogoRemove={() => setFormData(prev => ({ ...prev, avatar_url: null }))}
-                logoPreview={avatarPreview}
-              />
-            </div>
+            <TeamLogoUpload
+              currentLogoUrl={formData.avatar_url}
+              onLogoChange={handleAvatarChange}
+              onLogoRemove={() => setFormData(prev => ({ ...prev, avatar_url: null }))}
+              logoPreview={avatarPreview}
+            />
 
             <div className="grid gap-2">
               <Label htmlFor="name">Name</Label>
@@ -166,7 +193,7 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
                 Website
               </Label>
               <Input
-                value={formData.social_links?.website || ""}
+                value={formData.social_links.website}
                 onChange={(e) => setFormData(prev => ({ 
                   ...prev, 
                   social_links: { ...prev.social_links, website: e.target.value }
@@ -181,7 +208,7 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
                 Instagram Benutzername
               </Label>
               <Input
-                value={formData.social_links?.instagram || ""}
+                value={formData.social_links.instagram}
                 onChange={(e) => setFormData(prev => ({ 
                   ...prev, 
                   social_links: { ...prev.social_links, instagram: e.target.value }
@@ -193,15 +220,15 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
             <div className="grid gap-2">
               <Label className="flex items-center gap-2">
                 <Linkedin className="h-4 w-4" />
-                LinkedIn URL
+                LinkedIn Benutzername
               </Label>
               <Input
-                value={formData.social_links?.linkedin || ""}
+                value={formData.social_links.linkedin}
                 onChange={(e) => setFormData(prev => ({ 
                   ...prev, 
                   social_links: { ...prev.social_links, linkedin: e.target.value }
                 }))}
-                placeholder="https://linkedin.com/in/..."
+                placeholder="dein-benutzername"
               />
             </div>
 
