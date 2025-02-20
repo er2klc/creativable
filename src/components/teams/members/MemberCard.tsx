@@ -26,7 +26,8 @@ interface MemberCardProps {
 export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
   const { isOnline } = useTeamPresence();
   const memberIsOnline = isOnline(member.user_id);
-  const canChat = currentUserLevel >= 3 && member.points?.level >= 3;
+  const points = member.points || { level: 0, points: 0 };
+  const canChat = currentUserLevel >= 3 && points.level >= 3;
   const lastSeen = member.profile?.last_seen;
   const navigate = useNavigate();
   const { teamSlug } = useParams();
@@ -60,12 +61,12 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
             <Tooltip>
               <TooltipTrigger>
                 <div className="bg-gradient-to-r from-primary/80 to-primary rounded-full h-8 w-8 flex items-center justify-center text-white font-medium">
-                  {member.points?.level || 0}
+                  {points.level}
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Level {member.points?.level || 0}</p>
-                <p className="text-xs text-muted-foreground">{member.points?.points || 0} Punkte</p>
+                <p>Level {points.level}</p>
+                <p className="text-xs text-muted-foreground">{points.points} Punkte</p>
               </TooltipContent>
             </Tooltip>
           </TooltipProvider>
@@ -107,7 +108,7 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
             size="sm"
             variant="secondary"
             onClick={(e) => {
-              e.stopPropagation(); // Verhindert, dass der Card-Click ausgelöst wird
+              e.stopPropagation();
             }}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
