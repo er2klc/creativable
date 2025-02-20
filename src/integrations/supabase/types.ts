@@ -1901,7 +1901,10 @@ export type Database = {
           is_admin: boolean | null
           is_super_admin: boolean | null
           last_seen: string | null
+          location: string | null
+          personality_type: string | null
           slug: string | null
+          social_links: Json | null
           status: string | null
           updated_at: string | null
         }
@@ -1915,7 +1918,10 @@ export type Database = {
           is_admin?: boolean | null
           is_super_admin?: boolean | null
           last_seen?: string | null
+          location?: string | null
+          personality_type?: string | null
           slug?: string | null
+          social_links?: Json | null
           status?: string | null
           updated_at?: string | null
         }
@@ -1929,7 +1935,10 @@ export type Database = {
           is_admin?: boolean | null
           is_super_admin?: boolean | null
           last_seen?: string | null
+          location?: string | null
+          personality_type?: string | null
           slug?: string | null
+          social_links?: Json | null
           status?: string | null
           updated_at?: string | null
         }
