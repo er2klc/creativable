@@ -59,7 +59,10 @@ export const fetchTeamMembers = async (teamId: string, limit?: number) => {
     return [];
   }
 
-  return teamMembers.map(transformMemberData);
+  const transformedData = teamMembers.map(transformMemberData);
+  
+  // Sort by points regardless of limit
+  return transformedData.sort((a, b) => b.points.points - a.points.points);
 };
 
 export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {

@@ -86,12 +86,9 @@ const TeamMembers = () => {
     enabled: !!teamData?.id,
     staleTime: 1000 * 60 * 5,
     cacheTime: 1000 * 60 * 30,
-    initialData: () => {
-      // Versuche zuerst die Snap-Daten als InitialData zu verwenden
-      const snapData = queryClient.getQueryData(MEMBERS_SNAP_QUERY_KEY(teamData?.id || ''));
-      return snapData || [];
-    },
-    refetchOnMount: true
+    retry: 3,  // Retry failed requests up to 3 times
+    refetchOnMount: true,
+    keepPreviousData: true  // Keep showing old data while fetching new data
   });
 
   const isLoading = isLoadingTeam || isLoadingMembers;
