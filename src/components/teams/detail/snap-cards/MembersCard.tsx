@@ -26,7 +26,7 @@ export const MEMBERS_QUERY = `
     last_seen,
     slug
   ),
-  team_member_points!inner (
+  team_member_points (
     level,
     points
   )
