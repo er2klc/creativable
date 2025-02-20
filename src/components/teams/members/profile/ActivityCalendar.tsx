@@ -1,4 +1,3 @@
-
 import { eachDayOfInterval, format, isSameDay, startOfYear, endOfYear, isToday, addDays } from "date-fns";
 import { de } from "date-fns/locale";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -63,21 +62,16 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     return undefined;
   };
 
-  // Verbesserte Monatsberechnung
-  const totalWeeks = weeks.length;
-  const calendarWidth = totalWeeks * 13; // 13px = 12px Kachel + 1px Gap
-  
-  // Erstelle die Monate mit ihrer relativen Position
-  const months = Array.from({ length: 12 }, (_, i) => {
-    const position = Math.round((i / 11) * (totalWeeks - 1));
-    return {
-      name: format(new Date(currentYear, i, 1), 'MMM', { locale: de }),
-      position: position
-    };
-  });
-  
-  // Stelle sicher, dass Dezember an der letzten Position ist
-  months[11].position = totalWeeks - 1;
+  const monthPositions = weeks.map((week, weekIndex) => {
+    const firstDayOfWeek = week[0];
+    if (firstDayOfWeek.getDate() <= 7) {
+      return {
+        month: format(firstDayOfWeek, 'MMM', { locale: de }),
+        weekIndex
+      };
+    }
+    return null;
+  }).filter((pos): pos is { month: string; weekIndex: number } => pos !== null);
 
   return (
     <div className="bg-white rounded-lg p-2 border border-gray-200 w-full">
@@ -86,21 +80,21 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
         <div className="relative overflow-x-auto">
           <div className="flex flex-col">
             <div className="flex relative mb-6 pl-[calc(1rem+12px)]">
-              {months.map(({ name, position }, index) => (
+              {monthPositions.map(({ month, weekIndex }) => (
                 <div
-                  key={name}
+                  key={month}
                   className="absolute text-[9px] text-gray-500"
                   style={{
-                    left: `${position * 13}px`,
+                    left: `${weekIndex * (12 + 1.6)}px`,
                     width: '12px',
                     textAlign: 'center'
                   }}
                 >
-                  {name}
+                  {month}
                 </div>
               ))}
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-[0.1rem]">
               <div className="grid grid-rows-7 text-[9px] text-gray-500 gap-[2px] pr-2">
                 {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map((day) => (
                   <div key={day} className="h-[12px] flex items-center">
@@ -109,7 +103,7 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
                 ))}
               </div>
 
-              <div className="flex gap-1">
+              <div className="flex gap-[0.1rem]">
                 {weeks.map((week, weekIndex) => (
                   <div key={weekIndex} className="grid grid-rows-7 gap-[2px]">
                     {week.map((day, dayIndex) => {
