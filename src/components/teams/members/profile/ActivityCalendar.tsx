@@ -63,12 +63,21 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     return undefined;
   };
 
-  // Monate und deren Positionen berechnen
+  // Verbesserte Monatsberechnung
   const totalWeeks = weeks.length;
-  const months = Array.from({ length: 12 }, (_, i) => ({
-    name: format(new Date(currentYear, i, 1), 'MMM', { locale: de }),
-    position: Math.floor((i * (totalWeeks - 1)) / 11)
-  }));
+  const calendarWidth = totalWeeks * 13; // 13px = 12px Kachel + 1px Gap
+  
+  // Erstelle die Monate mit ihrer relativen Position
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const position = Math.round((i / 11) * (totalWeeks - 1));
+    return {
+      name: format(new Date(currentYear, i, 1), 'MMM', { locale: de }),
+      position: position
+    };
+  });
+  
+  // Stelle sicher, dass Dezember an der letzten Position ist
+  months[11].position = totalWeeks - 1;
 
   return (
     <div className="bg-white rounded-lg p-2 border border-gray-200 w-full">
