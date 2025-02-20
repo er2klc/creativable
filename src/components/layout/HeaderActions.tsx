@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, User, CreditCard, Receipt, LogOut } from "lucide-react";
@@ -28,7 +27,7 @@ interface HeaderActionsProps {
 export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const navigate = useNavigate();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [chatOpen, setChatOpen] = useState(false);
+  const [teamChatOpen, setTeamChatOpen] = useState(false);
   const { data: profile } = useProfile();
 
   const { data: unreadCount = 0 } = useQuery({
@@ -77,7 +76,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
           variant="ghost"
           size="icon"
           className="relative"
-          onClick={() => setChatOpen(true)}
+          onClick={() => setTeamChatOpen(true)}
         >
           <MessageCircle className="h-5 w-5" />
         </Button>
@@ -116,8 +115,8 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
       />
 
       <ChatDialog 
-        open={chatOpen}
-        onOpenChange={setChatOpen}
+        open={teamChatOpen}
+        onOpenChange={setTeamChatOpen}
       />
     </>
   );
