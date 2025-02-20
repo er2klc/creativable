@@ -63,24 +63,33 @@ export const ActivityCalendar = ({ activities }: ActivityCalendarProps) => {
     return undefined;
   };
 
+  // Monate und deren Positionen berechnen
+  const totalWeeks = weeks.length;
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    name: format(new Date(currentYear, i, 1), 'MMM', { locale: de }),
+    position: Math.floor((i * (totalWeeks - 1)) / 11)
+  }));
+
   return (
     <div className="bg-white rounded-lg p-2 border border-gray-200 w-full">
       <h3 className="text-lg font-semibold mb-2 text-gray-900">Activity</h3>
       <TooltipProvider>
         <div className="relative overflow-x-auto">
           <div className="flex flex-col">
-            <div className="flex gap-1 mb-6">
-              {weeks.map((week, weekIndex) => {
-                const firstDayOfWeek = week[0];
-                if (firstDayOfWeek.getDate() <= 7) {
-                  return (
-                    <div key={weekIndex} className="w-[12px] text-[9px] text-gray-500">
-                      {format(firstDayOfWeek, 'MMM', { locale: de })}
-                    </div>
-                  );
-                }
-                return <div key={weekIndex} className="w-[12px]" />;
-              })}
+            <div className="flex relative mb-6 pl-[calc(1rem+12px)]">
+              {months.map(({ name, position }, index) => (
+                <div
+                  key={name}
+                  className="absolute text-[9px] text-gray-500"
+                  style={{
+                    left: `${position * 13}px`,
+                    width: '12px',
+                    textAlign: 'center'
+                  }}
+                >
+                  {name}
+                </div>
+              ))}
             </div>
             <div className="flex gap-1">
               <div className="grid grid-rows-7 text-[9px] text-gray-500 gap-[2px] pr-2">
