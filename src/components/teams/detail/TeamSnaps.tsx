@@ -47,21 +47,21 @@ export const TeamSnaps = ({
     switch (snapId) {
       case "posts":
         console.log("Navigating to posts with teamSlug:", currentTeamSlug);
-        navigate(`/unity/team/${currentTeamSlug}/posts`);
+        navigate(`/unity/${currentTeamSlug}/posts`);
         break;
       case "calendar":
         onCalendarClick();
         break;
       case "leaderboard":
         console.log("Navigating to leaderboard with teamSlug:", currentTeamSlug);
-        navigate(`/unity/team/${currentTeamSlug}/leaderboard`);
+        navigate(`/unity/${currentTeamSlug}/leaderboard`);
         break;
       case "members":
         console.log("Navigating to members with teamSlug:", currentTeamSlug);
-        navigate(`/unity/team/${currentTeamSlug}/members`);
+        navigate(`/unity/${currentTeamSlug}/members`);
         break;
       default:
-        navigate(`/unity/team/${currentTeamSlug}/${snapId}`);
+        navigate(`/unity/${currentTeamSlug}/${snapId}`);
     }
     onSnapClick(snapId);
   };

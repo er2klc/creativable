@@ -17,47 +17,47 @@ export const platformRoutes = [
     label: "Unity",
   },
   {
-    path: "/unity/team/:teamSlug",
+    path: "/unity/:teamSlug",
     element: <TeamDetail />,
     label: "Team Detail",
   },
   {
-    path: "/unity/team/:teamSlug/members",
+    path: "/unity/:teamSlug/members",
     element: <TeamMembers />,
     label: "Team Members",
   },
   {
-    path: "/unity/team/:teamSlug/members/:memberSlug",
+    path: "/unity/:teamSlug/members/:memberSlug",
     element: <MemberProfile />,
     label: "Member Profile",
   },
   {
-    path: "/unity/team/:teamSlug/posts",
+    path: "/unity/:teamSlug/posts",
     element: <PostsAndDiscussions />,
     label: "Team Posts",
   },
   {
-    path: "/unity/team/:teamSlug/posts/category/:categorySlug",
+    path: "/unity/:teamSlug/posts/category/:categorySlug",
     element: <PostsAndDiscussions />,
     label: "Team Posts Category",
   },
   {
-    path: "/unity/team/:teamSlug/posts/:postSlug",
+    path: "/unity/:teamSlug/posts/:postSlug",
     element: <PostsAndDiscussions />,
     label: "Post Detail",
   },
   {
-    path: "/unity/team/:teamSlug/calendar",
+    path: "/unity/:teamSlug/calendar",
     element: <TeamCalendar />,
     label: "Team Calendar",
   },
   {
-    path: "/unity/team/:teamSlug/pulse",
+    path: "/unity/:teamSlug/pulse",
     element: <TeamPulse />,
     label: "Team Pulse",
   },
   {
-    path: "/unity/team/:teamSlug/leaderboard",
+    path: "/unity/:teamSlug/leaderboard",
     element: <LeaderBoard />,
     label: "Leaderboard",
   },
@@ -70,5 +70,16 @@ export const platformRoutes = [
     path: "/elevate/modul/:slug",
     element: <PlatformDetail />,
     label: "Platform Detail",
+  },
+  // Legacy routes for backward compatibility
+  {
+    path: "/unity/team/:teamSlug",
+    element: <TeamDetail />,
+    label: "Team Detail Legacy",
+  },
+  {
+    path: "/unity/team/:teamSlug/*",
+    element: <TeamDetail />,
+    label: "Team Detail Legacy Wildcard",
   }
 ];

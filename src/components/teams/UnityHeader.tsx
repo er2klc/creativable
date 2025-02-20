@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { CreateTeamDialog } from "./CreateTeamDialog";
 import { JoinTeamDialog } from "./JoinTeamDialog";
@@ -7,6 +6,7 @@ import { UserPlus, Infinity } from "lucide-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useNavigate } from "react-router-dom";
 
 interface UnityHeaderProps {
   onTeamCreated: () => Promise<void>;
@@ -16,6 +16,11 @@ interface UnityHeaderProps {
 export const UnityHeader = ({ onTeamCreated, onTeamJoined }: UnityHeaderProps) => {
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false);
   const user = useUser();
+  const navigate = useNavigate();
+
+  const handleTeamClick = (teamSlug: string) => {
+    navigate(`/unity/${teamSlug}`);
+  };
 
   return (
     <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">

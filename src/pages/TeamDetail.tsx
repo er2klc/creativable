@@ -9,7 +9,7 @@ import { TeamHeader } from "@/components/teams/TeamHeader";
 import { CreateNewsDialog } from "@/components/teams/news/CreateNewsDialog";
 import { NewsList } from "@/components/teams/news/NewsList";
 import { useUser } from "@supabase/auth-helpers-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { TeamSnaps } from "@/components/teams/detail/TeamSnaps";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/dashboard/SearchBar";
@@ -21,6 +21,14 @@ const TeamDetail = () => {
   const user = useUser();
   const [isManaging, setIsManaging] = useState(false);
   const [activeSnapView, setActiveSnapView] = useState<string | null>(null);
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.includes('/unity/team/')) {
+      const newPath = path.replace('/unity/team/', '/unity/');
+      navigate(newPath, { replace: true });
+    }
+  }, [navigate]);
 
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ["team", teamSlug],
