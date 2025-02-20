@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useState, useEffect } from "react";
 import { PostCategoriesScroll } from "./components/categories/PostCategoriesScroll";
@@ -18,19 +18,18 @@ import { NewUserWelcome } from "./components/NewUserWelcome";
 
 export function PostsAndDiscussions() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { teamSlug, categorySlug, postSlug } = useParams();
   const user = useUser();
   const [activeTab, setActiveTab] = useState(categorySlug || 'all');
   const [showWelcomeDialog, setShowWelcomeDialog] = useState(false);
   const queryClient = useQueryClient();
 
+  // Fetch team data
   const { data: team, isLoading: isTeamLoading } = useQuery({
     queryKey: ['team', teamSlug],
     queryFn: async () => {
-      if (!teamSlug) {
-        console.error('No team slug provided');
-        return null;
-      }
+      if (!teamSlug) return null;
 
       const { data, error } = await supabase
         .from('teams')
@@ -44,51 +43,70 @@ export function PostsAndDiscussions() {
     enabled: !!teamSlug
   });
 
+  // Fetch team member data independently
   const { data: teamMember, isLoading: isTeamMemberLoading } = useQuery({
-    queryKey: ['team-member-role', team?.id],
+    queryKey: ['team-member-level', teamSlug, user?.id],
     queryFn: async () => {
-      if (!team?.id || !user?.id) return null;
+      if (!teamSlug || !user?.id) return null;
+
+      const { data: teamData } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamSlug)
+        .single();
+
+      if (!teamData?.id) return null;
 
       const { data, error } = await supabase
         .from('team_members')
         .select('role, team_member_points!inner(level)')
-        .eq('team_id', team.id)
+        .eq('team_id', teamData.id)
         .eq('user_id', user.id)
         .single();
 
       if (error) throw error;
       return data;
     },
-    enabled: !!team?.id && !!user?.id,
+    enabled: !!teamSlug && !!user?.id
   });
 
+  // Fetch intro category independently
   const { data: introCategory } = useQuery({
-    queryKey: ['intro-category', team?.id],
+    queryKey: ['intro-category', teamSlug],
     queryFn: async () => {
-      if (!team?.id) return null;
+      if (!teamSlug) return null;
+
+      const { data: teamData } = await supabase
+        .from('teams')
+        .select('id')
+        .eq('slug', teamSlug)
+        .single();
+
+      if (!teamData?.id) return null;
 
       const { data, error } = await supabase
         .from('team_categories')
         .select('id')
-        .eq('team_id', team.id)
+        .eq('team_id', teamData.id)
         .eq('name', 'Vorstellung')
         .single();
 
       if (error) return null;
       return data;
     },
-    enabled: !!team?.id,
+    enabled: !!teamSlug
   });
 
   const isLevel0 = teamMember?.team_member_points?.level === 0;
   const canPost = !isLevel0;
 
-  // Sofort den Dialog zeigen, wenn Level 0 und introCategory existiert
+  // Show welcome dialog whenever we're on the posts page and user is level 0
   useEffect(() => {
-    if (isLevel0 && introCategory && !postSlug) {
+    const isPostsPage = location.pathname.includes('/posts') && !postSlug;
+    if (isLevel0 && isPostsPage) {
       setShowWelcomeDialog(true);
     }
-  }, [isLevel0, introCategory, postSlug]);
+  }, [isLevel0, location.pathname, postSlug]);
 
   const handleWelcomeSubmit = async (data: { name: string; introduction: string }) => {
     if (!user?.id || !team?.id || !introCategory) return;
@@ -110,7 +128,7 @@ export function PostsAndDiscussions() {
       setShowWelcomeDialog(false);
       
       // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['team-member-role'] });
+      queryClient.invalidateQueries({ queryKey: ['team-member-level'] });
       queryClient.invalidateQueries({ queryKey: ['team-posts'] });
     } catch (error) {
       console.error('Error creating introduction post:', error);
@@ -141,7 +159,7 @@ export function PostsAndDiscussions() {
     }
   }, [categorySlug]);
 
-  if (isTeamLoading) {
+  if (isTeamLoading || isTeamMemberLoading) {
     return <LoadingState />;
   }
 
