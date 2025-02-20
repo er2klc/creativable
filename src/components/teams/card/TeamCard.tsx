@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useUser } from "@supabase/auth-helpers-react";
 import { TeamCardImage } from "./TeamCardImage";
 import { TeamCardContent } from "./TeamCardContent";
+import { useTeamNavigation } from "@/hooks/useTeamNavigation";
 
 interface TeamWithStats extends Tables<"teams"> {
   stats?: {
@@ -29,7 +30,7 @@ export const TeamCard = ({
   onCopyJoinCode,
   isSuperAdmin = false
 }: TeamCardProps) => {
-  const navigate = useNavigate();
+  const { navigateToTeam } = useTeamNavigation();
   const user = useUser();
 
   const handleClick = (e: React.MouseEvent, isVideoArea: boolean) => {
@@ -43,7 +44,7 @@ export const TeamCard = ({
       return;
     }
     
-    navigate(`/unity/team/${team.slug}`);
+    navigateToTeam(team.slug);
   };
 
   const isTeamOwner = isSuperAdmin || user?.id === team.created_by;
