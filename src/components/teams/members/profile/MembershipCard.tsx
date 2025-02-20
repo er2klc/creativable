@@ -34,27 +34,30 @@ export const MembershipCard = ({ userId }: MembershipCardProps) => {
     }
   });
 
-  // Neue Query für die Mitgliederanzahl pro Team
+  // Query for member counts for each team
   const { data: memberCounts } = useQuery({
     queryKey: ['team-member-counts', teams?.map(t => t.teams.id)],
     queryFn: async () => {
       if (!teams?.length) return {};
       
-      const { data, error } = await supabase
-        .from('team_members')
-        .select('team_id, count', { count: 'exact', head: true })
-        .in('team_id', teams.map(t => t.teams.id));
-
-      if (error) throw error;
-
       const counts: Record<string, number> = {};
-      for (const team of teams) {
+      
+      // Fetch counts for all teams in parallel
+      const countPromises = teams.map(async (team) => {
         const { count } = await supabase
           .from('team_members')
           .select('*', { count: 'exact', head: true })
           .eq('team_id', team.teams.id);
-        counts[team.teams.id] = count || 0;
-      }
+          
+        return { teamId: team.teams.id, count: count || 0 };
+      });
+      
+      const results = await Promise.all(countPromises);
+      
+      // Convert results to object format
+      results.forEach(result => {
+        counts[result.teamId] = result.count;
+      });
       
       return counts;
     },
