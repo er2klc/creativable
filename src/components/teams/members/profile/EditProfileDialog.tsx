@@ -51,7 +51,6 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
       };
       reader.readAsDataURL(file);
 
-      // Upload to Supabase Storage
       const fileExt = file.name.split('.').pop();
       const fileName = `${profileData.id}-${Date.now()}.${fileExt}`;
       
@@ -101,13 +100,13 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[85vh] p-0 gap-0 w-[95vw] sm:max-w-[400px]">
-        <DialogHeader className="p-4 pb-2">
+      <DialogContent className="flex flex-col max-h-[85vh] p-0 gap-0 w-[95vw] sm:max-w-[400px]">
+        <DialogHeader className="p-4 pb-2 border-b">
           <DialogTitle>Profil bearbeiten</DialogTitle>
         </DialogHeader>
 
-        <div className="overflow-y-auto flex-1 px-4">
-          <div className="grid gap-4 py-2">
+        <div className="flex-1 overflow-y-auto px-4">
+          <div className="grid gap-4 py-4">
             <div className="flex justify-center">
               <TeamLogoUpload
                 currentLogoUrl={formData.avatar_url}
@@ -221,7 +220,7 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
           </div>
         </div>
 
-        <div className="sticky bottom-0 p-4 bg-background border-t mt-4 flex justify-end gap-3">
+        <div className="sticky bottom-0 p-4 bg-background border-t flex justify-end gap-3">
           <Button variant="outline" onClick={onClose}>
             Abbrechen
           </Button>
