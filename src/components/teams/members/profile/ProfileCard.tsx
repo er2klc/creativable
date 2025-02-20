@@ -11,14 +11,15 @@ import { de } from "date-fns/locale";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { EditProfileDialog } from "./EditProfileDialog";
 
 interface ProfileCardProps {
   memberData: {
+    id: string;
     avatar_url?: string;
     display_name?: string;
     bio?: string;
     last_seen: string;
-    id: string;
     personality_type?: string;
     location?: string;
     social_links?: {
@@ -50,9 +51,9 @@ export const ProfileCard = ({
 }: ProfileCardProps) => {
   const user = useUser();
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const isOwnProfile = user?.id === memberData.id;
 
-  // Query für das Beitrittsdatum
   const { data: memberSince } = useQuery({
     queryKey: ['member-since', memberData.id],
     queryFn: async () => {
@@ -104,7 +105,9 @@ export const ProfileCard = ({
           </p>
 
           {isOwnProfile ? (
-            <Button className="w-full">Edit Profile</Button>
+            <Button onClick={() => setIsEditDialogOpen(true)} className="w-full">
+              Profil bearbeiten
+            </Button>
           ) : (
             <Button 
               className="w-full" 
@@ -193,6 +196,14 @@ export const ProfileCard = ({
             )}
           </div>
         </div>
+
+        {isOwnProfile && (
+          <EditProfileDialog
+            isOpen={isEditDialogOpen}
+            onClose={() => setIsEditDialogOpen(false)}
+            profileData={memberData}
+          />
+        )}
       </CardContent>
     </Card>
   );
