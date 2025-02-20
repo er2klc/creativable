@@ -190,24 +190,21 @@ export function TiptapEditor({
   };
 
   return (
-    <div 
-      className="border rounded-md w-full overflow-hidden flex flex-col" 
-      onClick={(e) => e.stopPropagation()}
-    >
-      <EditorToolbar 
-        editor={editor}
-        onImageClick={() => setShowImageDialog(true)}
-        onLinkClick={() => setShowLinkDialog(true)}
-        onHashtagClick={() => setShowHashtagDialog(true)}
-        onEmojiSelect={handleEmojiSelect}
-        isAdmin={isAdmin}
-        teamId={teamId}
-      />
+    <div className="flex flex-col overflow-hidden">
+      <div className="sticky top-0 z-50 bg-background border-b shadow-sm">
+        <EditorToolbar 
+          editor={editor}
+          onImageClick={() => setShowImageDialog(true)}
+          onLinkClick={() => setShowLinkDialog(true)}
+          onHashtagClick={() => setShowHashtagDialog(true)}
+          onEmojiSelect={handleEmojiSelect}
+          isAdmin={isAdmin}
+          teamId={teamId}
+        />
+      </div>
 
       <div className="flex-1 overflow-y-auto">
-        <div className="px-3 py-2">
-          <EditorContent editor={editor} />
-        </div>
+        <EditorContent editor={editor} />
       </div>
 
       <InputDialog

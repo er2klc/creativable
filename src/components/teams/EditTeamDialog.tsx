@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,13 +22,29 @@ interface EditTeamDialogProps {
   onTeamUpdated: () => Promise<void>;
 }
 
+const MAX_DESCRIPTION_LENGTH = 250;
+
 export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: EditTeamDialogProps) => {
   const [name, setName] = useState(team.name);
   const [description, setDescription] = useState(team.description || "");
   const [imageUrl, setImageUrl] = useState<string | null>(team.logo_url || null);
   const [videoUrl, setVideoUrl] = useState(team.video_url || "");
+  const [descriptionLength, setDescriptionLength] = useState(
+    team.description?.replace(/<[^>]*>/g, '').length || 0
+  );
+
+  const handleDescriptionChange = (content: string) => {
+    const textLength = content.replace(/<[^>]*>/g, '').length;
+    setDescriptionLength(textLength);
+    setDescription(content);
+  };
 
   const handleSave = async () => {
+    if (descriptionLength > MAX_DESCRIPTION_LENGTH) {
+      toast.error(`Beschreibung darf maximal ${MAX_DESCRIPTION_LENGTH} Zeichen enthalten`);
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('teams')
@@ -67,15 +84,24 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="description">Beschreibung</Label>
-            <div className="max-h-[200px] overflow-y-auto border rounded-md">
-              <div className="sticky top-0 z-10 bg-background border-b">
-                <TiptapEditor
-                  content={description}
-                  onChange={setDescription}
-                />
-              </div>
+            <div className="flex justify-between items-center text-sm mb-1">
+              <Label htmlFor="description">Beschreibung</Label>
+              <span className={`${descriptionLength > MAX_DESCRIPTION_LENGTH ? "text-red-500" : "text-gray-500"}`}>
+                {descriptionLength}/{MAX_DESCRIPTION_LENGTH}
+              </span>
             </div>
+            <div className="border rounded-md">
+              <TiptapEditor
+                content={description}
+                onChange={handleDescriptionChange}
+                preventSubmitOnEnter
+              />
+            </div>
+            {descriptionLength > MAX_DESCRIPTION_LENGTH && (
+              <p className="text-xs text-red-500 mt-1">
+                Die Beschreibung ist zu lang. Bitte kürzen Sie sie auf maximal {MAX_DESCRIPTION_LENGTH} Zeichen.
+              </p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="videoUrl">Video URL (optional)</Label>
@@ -105,7 +131,10 @@ export const EditTeamDialog = ({ team, open, onOpenChange, onTeamUpdated }: Edit
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Abbrechen
           </Button>
-          <Button onClick={handleSave}>
+          <Button 
+            onClick={handleSave}
+            disabled={descriptionLength > MAX_DESCRIPTION_LENGTH}
+          >
             Speichern
           </Button>
         </div>
