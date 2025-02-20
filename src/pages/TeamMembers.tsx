@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MemberCard } from "@/components/teams/members/MemberCard";
 import { useProfile } from "@/hooks/use-profile";
@@ -15,8 +15,10 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { 
   MEMBERS_QUERY, 
-  MEMBERS_QUERY_KEY, 
-  transformMemberData 
+  MEMBERS_SNAP_QUERY_KEY,
+  MEMBERS_FULL_QUERY_KEY,
+  transformMemberData,
+  fetchTeamMembers 
 } from "@/components/teams/detail/snap-cards/MembersCard";
 
 const TeamMembers = () => {
@@ -24,6 +26,7 @@ const TeamMembers = () => {
   const { data: profile } = useProfile();
   const user = useUser();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: teamData, isLoading: isLoadingTeam } = useQuery({
     queryKey: ['team', teamSlug],
@@ -78,30 +81,17 @@ const TeamMembers = () => {
   });
 
   const { data: members = [], isLoading: isLoadingMembers } = useQuery({
-    queryKey: MEMBERS_QUERY_KEY(teamData?.id || ''),
-    queryFn: async () => {
-      if (!teamData?.id) return [];
-
-      const { data, error } = await supabase
-        .from('team_members')
-        .select(MEMBERS_QUERY)
-        .eq('team_id', teamData.id);
-
-      if (error) {
-        console.error('Error fetching members:', error);
-        toast.error("Fehler beim Laden der Mitglieder");
-        return [];
-      }
-
-      const transformedData = data.map(transformMemberData);
-      return transformedData.sort((a, b) => b.points.points - a.points.points);
-    },
+    queryKey: MEMBERS_FULL_QUERY_KEY(teamData?.id || ''),
+    queryFn: () => fetchTeamMembers(teamData?.id || ''),
     enabled: !!teamData?.id,
     staleTime: 1000 * 60 * 5,
     cacheTime: 1000 * 60 * 30,
-    keepPreviousData: true,
-    suspense: false,
-    retry: 3
+    initialData: () => {
+      // Versuche zuerst die Snap-Daten als InitialData zu verwenden
+      const snapData = queryClient.getQueryData(MEMBERS_SNAP_QUERY_KEY(teamData?.id || ''));
+      return snapData || [];
+    },
+    refetchOnMount: true
   });
 
   const isLoading = isLoadingTeam || isLoadingMembers;

@@ -11,8 +11,10 @@ interface MembersCardProps {
   teamSlug: string;
 }
 
-// Shared query configuration and data transformation
-export const MEMBERS_QUERY_KEY = (teamId: string) => ['team-members', teamId];
+// Separate query keys for snap and full view
+export const MEMBERS_SNAP_QUERY_KEY = (teamId: string) => ['team-members-snap', teamId];
+export const MEMBERS_FULL_QUERY_KEY = (teamId: string) => ['team-members-full', teamId];
+
 export const MEMBERS_QUERY = `
   id,
   user_id,
@@ -40,12 +42,17 @@ export const transformMemberData = (member: any) => ({
   }
 });
 
-export const fetchTeamMembers = async (teamId: string) => {
-  const { data: teamMembers, error } = await supabase
+export const fetchTeamMembers = async (teamId: string, limit?: number) => {
+  let query = supabase
     .from('team_members')
     .select(MEMBERS_QUERY)
-    .eq('team_id', teamId)
-    .limit(6);
+    .eq('team_id', teamId);
+
+  if (limit) {
+    query = query.limit(limit);
+  }
+
+  const { data: teamMembers, error } = await query;
 
   if (error) {
     console.error('Error fetching team members:', error);
@@ -60,29 +67,28 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
   const queryClient = useQueryClient();
 
   const { data: members } = useQuery({
-    queryKey: MEMBERS_QUERY_KEY(teamId),
-    queryFn: () => fetchTeamMembers(teamId),
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    cacheTime: 1000 * 60 * 30, // 30 minutes
+    queryKey: MEMBERS_SNAP_QUERY_KEY(teamId),
+    queryFn: () => fetchTeamMembers(teamId, 6),
+    staleTime: 1000 * 60 * 5,
+    cacheTime: 1000 * 60 * 30,
   });
 
-  const handleMouseEnter = () => {
-    // Prefetch the full members data
-    queryClient.prefetchQuery({
-      queryKey: MEMBERS_QUERY_KEY(teamId),
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from('team_members')
-          .select(MEMBERS_QUERY)
-          .eq('team_id', teamId);
-
-        if (error) throw error;
-        return data.map(transformMemberData);
-      },
+  // Prefetch function for full members list
+  const prefetchFullMembers = async () => {
+    await queryClient.prefetchQuery({
+      queryKey: MEMBERS_FULL_QUERY_KEY(teamId),
+      queryFn: () => fetchTeamMembers(teamId),
+      staleTime: 1000 * 60 * 5,
     });
   };
 
-  const handleClick = () => {
+  const handleMouseEnter = () => {
+    prefetchFullMembers();
+  };
+
+  const handleClick = async () => {
+    // Ensure data is prefetched before navigation
+    await prefetchFullMembers();
     navigate(`/unity/team/${teamSlug}/members`);
   };
 
