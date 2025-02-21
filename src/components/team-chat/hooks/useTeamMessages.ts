@@ -22,6 +22,18 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
+      // Mark messages as read when fetching them
+      await supabase
+        .from('team_direct_messages')
+        .update({ 
+          read: true,
+          read_at: new Date().toISOString()
+        })
+        .eq('sender_id', selectedUserId)
+        .eq('receiver_id', user.id)
+        .eq('team_id', teamId)
+        .eq('read', false);
+
       const { data: messages, error } = await supabase
         .from('team_direct_messages')
         .select(`
@@ -60,7 +72,8 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
         receiver_id: selectedUserId,
         team_id: teamId,
         content,
-        read: false
+        read: false,
+        delivered_at: new Date().toISOString()
       };
 
       const { data, error } = await supabase
@@ -85,7 +98,6 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
       return data;
     },
     onMutate: async (content) => {
-      // Optimistisches Update
       const { data: session } = await supabase.auth.getSession();
       if (!session.session?.user) return;
 
@@ -97,10 +109,13 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
         content,
         created_at: new Date().toISOString(),
         read: false,
+        read_at: null,
+        delivered_at: new Date().toISOString(),
         sender: {
           id: session.session.user.id,
           display_name: session.session.user.email?.split('@')[0] || 'User',
-          avatar_url: null
+          avatar_url: null,
+          level: currentUserLevel || 0
         },
         receiver: null
       };
@@ -129,7 +144,7 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
       .on(
         'postgres_changes',
         {
-          event: 'INSERT',
+          event: '*',
           schema: 'public',
           table: 'team_direct_messages',
           filter: `team_id=eq.${teamId}`
@@ -147,7 +162,7 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
 
   return {
     messages,
-    isLoading: false, // Wir setzen isLoading auf false, da wir optimistische Updates verwenden
+    isLoading: false,
     sendMessage: (content: string) => sendMessageMutation.mutate(content)
   };
 };

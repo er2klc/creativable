@@ -3,19 +3,22 @@ import { TeamMember } from "./types";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 interface TeamChatListProps {
   members: TeamMember[];
   selectedUserId?: string;
   onSelectUser: (member: TeamMember) => void;
   currentUserLevel?: number;
+  unreadMessagesByUser: Record<string, number>;
 }
 
 export const TeamChatList = ({ 
   members, 
   selectedUserId, 
   onSelectUser, 
-  currentUserLevel 
+  currentUserLevel,
+  unreadMessagesByUser 
 }: TeamChatListProps) => {
   if (!currentUserLevel || currentUserLevel < 3) {
     return (
@@ -45,10 +48,18 @@ export const TeamChatList = ({
                 {member.display_name?.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div className="flex flex-col items-start">
+            <div className="flex flex-col items-start flex-1">
               <span className="text-sm font-medium">
                 {member.display_name}
               </span>
+              {unreadMessagesByUser[member.id] > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="mt-1 text-xs h-5 min-w-[20px] flex items-center justify-center"
+                >
+                  {unreadMessagesByUser[member.id]}
+                </Badge>
+              )}
             </div>
           </button>
         ))}

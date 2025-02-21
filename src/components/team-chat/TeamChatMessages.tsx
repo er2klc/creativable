@@ -7,6 +7,26 @@ import { useUser } from "@supabase/auth-helpers-react";
 import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { Check } from "lucide-react";
+
+const MessageStatus = ({ message }: { message: TeamMessage }) => {
+  if (!message.delivered_at) return null;
+  
+  return (
+    <div className="flex items-center justify-end mt-1">
+      <div className="flex gap-0">
+        <Check className={cn(
+          "h-3 w-3",
+          message.read_at ? "text-blue-500" : "text-muted-foreground"
+        )} />
+        <Check className={cn(
+          "h-3 w-3 -ml-1",
+          message.read_at ? "text-blue-500" : "text-muted-foreground/0"
+        )} />
+      </div>
+    </div>
+  );
+};
 
 interface TeamChatMessagesProps {
   messages: TeamMessage[];
@@ -59,7 +79,7 @@ export const TeamChatMessages = ({ messages, scrollRef, isLoading }: TeamChatMes
                 isOwnMessage && "items-end"
               )}>
                 <div className={cn(
-                  "px-3 py-2 rounded-lg",
+                  "px-3 py-2 rounded-lg max-w-[85%]",
                   isOwnMessage 
                     ? "bg-primary text-primary-foreground" 
                     : "bg-muted"
@@ -69,9 +89,12 @@ export const TeamChatMessages = ({ messages, scrollRef, isLoading }: TeamChatMes
                   </p>
                 </div>
                 
-                <span className="text-xs text-muted-foreground mt-1">
-                  {format(new Date(message.created_at), "HH:mm", { locale: de })}
-                </span>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-xs text-muted-foreground">
+                    {format(new Date(message.created_at), "HH:mm", { locale: de })}
+                  </span>
+                  {isOwnMessage && <MessageStatus message={message} />}
+                </div>
               </div>
             </div>
           );
