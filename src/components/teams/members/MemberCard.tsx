@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +55,7 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
 
   const handleCardClick = () => {
     if (member.profile?.slug) {
-      navigate(`/unity/team/${teamSlug}/members/${member.profile.slug}`);
+      navigate(`/unity/${teamSlug}/members/${member.profile.slug}`);
     }
   };
 
@@ -67,7 +68,7 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
   const [isAwardPointsOpen, setIsAwardPointsOpen] = useState(false);
 
   return (
-    <Card className="relative group">
+    <Card className="relative group cursor-pointer" onClick={handleCardClick}>
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="relative">
@@ -166,7 +167,10 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
               variant="outline"
               size="sm"
               className="w-full flex items-center justify-center"
-              onClick={() => setIsAwardPointsOpen(true)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsAwardPointsOpen(true);
+              }}
             >
               <Award className="h-4 w-4 mr-2" />
               Punkte vergeben

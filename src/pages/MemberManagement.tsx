@@ -2,16 +2,20 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { MemberCard } from "@/components/teams/members/MemberCard";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Users } from "lucide-react";
+import { TeamMemberSearch } from "@/components/teams/search/TeamMemberSearch";
+import { useState, useCallback } from "react";
+import { useDebounce } from "@/hooks/use-debounce";
 
 const MemberManagement = () => {
   const { teamSlug } = useParams();
   const user = useUser();
   const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 300);
 
   const { data: team } = useQuery({
     queryKey: ['team', teamSlug],
@@ -29,9 +33,9 @@ const MemberManagement = () => {
   });
 
   const { data: members = [] } = useQuery({
-    queryKey: ['team-members', team?.id],
+    queryKey: ['team-members', team?.id, debouncedSearch],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from('team_members')
         .select(`
           *,
@@ -49,8 +53,13 @@ const MemberManagement = () => {
             points
           )
         `)
-        .eq('team_id', team.id)
-        .order('joined_at', { ascending: false });
+        .eq('team_id', team.id);
+
+      if (debouncedSearch) {
+        query = query.or(`profile.display_name.ilike.%${debouncedSearch}%,profile.email.ilike.%${debouncedSearch}%`);
+      }
+
+      const { data, error } = await query.order('joined_at', { ascending: false });
 
       if (error) throw error;
       return data;
@@ -76,6 +85,10 @@ const MemberManagement = () => {
 
   const currentUserLevel = currentMember?.points?.level || 0;
   const isAdmin = currentMember?.role === 'admin' || currentMember?.role === 'owner';
+
+  const handleSearch = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
   if (!isAdmin) {
     return (
@@ -106,7 +119,7 @@ const MemberManagement = () => {
               </div>
             </div>
             <div className="w-[300px]">
-              <SearchBar />
+              <TeamMemberSearch onSearch={handleSearch} />
             </div>
             <HeaderActions profile={null} userEmail={user?.email} />
           </div>
