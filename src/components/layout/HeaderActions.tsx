@@ -31,6 +31,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const { data: profile } = useProfile();
   const teamChatOpen = useTeamChatStore((state) => state.isOpen);
   const setTeamChatOpen = useTeamChatStore((state) => state.setOpen);
+  const openChatWithUser = useTeamChatStore((state) => state.openChatWithUser);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications'],
@@ -46,25 +47,64 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
     refetchInterval: 30000
   });
 
+  const { data: lastUnreadMessage } = useQuery({
+    queryKey: ['last-unread-message'],
+    queryFn: async () => {
+      if (!profile?.id) return null;
+      
+      const { data, error } = await supabase
+        .from('team_direct_messages')
+        .select(`
+          *,
+          sender:sender_id (id),
+          team:team_id (id, slug)
+        `)
+        .eq('receiver_id', profile.id)
+        .eq('read', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!profile?.id,
+    refetchInterval: 10000
+  });
+
   const { data: unreadMessages = 0 } = useQuery({
     queryKey: ['unread-messages'],
     queryFn: async () => {
+      if (!profile?.id) return 0;
+
       const { count, error } = await supabase
         .from('team_direct_messages')
         .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', profile?.id)
+        .eq('receiver_id', profile.id)
         .eq('read', false);
 
       if (error) throw error;
       return count || 0;
     },
-    refetchInterval: 10000,
-    enabled: !!profile?.id
+    enabled: !!profile?.id,
+    refetchInterval: 10000
   });
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
     navigate("/auth");
+  };
+
+  const handleChatClick = async () => {
+    if (lastUnreadMessage) {
+      // Wenn es eine ungelesene Nachricht gibt, navigiere zum entsprechenden Team
+      navigate(`/unity/${lastUnreadMessage.team.slug}`);
+      // Öffne den Chat mit dem Absender
+      openChatWithUser(lastUnreadMessage.sender.id, lastUnreadMessage.team_id);
+    } else {
+      // Wenn keine ungelesene Nachricht vorliegt, öffne einfach den Chat-Dialog
+      setTeamChatOpen(true);
+    }
   };
 
   const avatarUrl = getAvatarUrl(profile?.avatar_url, userEmail);
@@ -94,7 +134,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
           variant="ghost"
           size="icon"
           className="relative"
-          onClick={() => setTeamChatOpen(true)}
+          onClick={handleChatClick}
         >
           <MessageCircle className="h-5 w-5" />
           {unreadMessages > 0 && (
