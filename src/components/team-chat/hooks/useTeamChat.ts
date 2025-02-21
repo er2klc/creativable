@@ -23,22 +23,26 @@ export const useTeamChat = () => {
         .eq('slug', teamSlug)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching team:', error);
+        throw error;
+      }
       return data;
     },
     enabled: !!teamSlug
   });
 
-  // Fetch team members
+  // Fetch team members with correct ID handling
   const { data: teamMembers = [], isLoading: isLoadingMembers } = useQuery({
     queryKey: ['team-members', team?.id],
     queryFn: async () => {
       if (!team?.id) return [];
 
+      console.log('Fetching team members for team:', team.id);
+
       const { data: members, error } = await supabase
         .from('team_members')
         .select(`
-          id,
           user_id,
           profiles:user_id (
             id,
@@ -51,25 +55,38 @@ export const useTeamChat = () => {
         .eq('team_id', team.id)
         .order('created_at');
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching team members:', error);
+        throw error;
+      }
 
-      return members.map(m => ({
-        id: m.user_id,
+      // Map the data ensuring we use user_id as the primary identifier
+      const mappedMembers = members.map(m => ({
+        id: m.user_id, // Use user_id consistently as the primary identifier
         display_name: m.profiles.display_name,
         avatar_url: m.profiles.avatar_url,
         last_seen: m.profiles.last_seen,
         email: m.profiles.email
-      })) as TeamMember[];
+      }));
+
+      console.log('Mapped team members:', mappedMembers);
+      return mappedMembers as TeamMember[];
     },
     enabled: !!team?.id
   });
 
-  // Automatisch den Benutzer auswählen wenn selectedUserId gesetzt ist
+  // Select user when selectedUserId changes
   useEffect(() => {
     if (selectedUserId && teamMembers.length > 0) {
+      console.log('Looking for user with ID:', selectedUserId);
+      console.log('Available team members:', teamMembers);
+      
       const userToSelect = teamMembers.find(member => member.id === selectedUserId);
       if (userToSelect) {
+        console.log('Found and selecting user:', userToSelect);
         setSelectedUser(userToSelect);
+      } else {
+        console.log('User not found in team members');
       }
     }
   }, [selectedUserId, teamMembers]);
@@ -147,6 +164,7 @@ export const useTeamChat = () => {
   };
 
   const selectUser = (user: TeamMember) => {
+    console.log('Selecting user:', user);
     setSelectedUser(user);
   };
 
