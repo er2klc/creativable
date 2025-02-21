@@ -1,4 +1,3 @@
-
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Award } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { AwardPointsDialog } from "@/components/teams/members/AwardPointsDialog";
 import { toast } from "sonner";
@@ -47,6 +46,31 @@ const MemberManagement = () => {
     },
     enabled: !!teamSlug
   });
+
+  useEffect(() => {
+    if (!team?.id) return;
+
+    const channel = supabase
+      .channel('member-points')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'team_member_points',
+          filter: `team_id=eq.${team.id}`
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['team-members'] });
+          queryClient.invalidateQueries({ queryKey: ['current-member'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [team?.id, queryClient]);
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['team-members', team?.id, debouncedSearch],
@@ -116,8 +140,15 @@ const MemberManagement = () => {
   });
 
   const handleAwardPoints = async () => {
-    await queryClient.invalidateQueries({ queryKey: ['team-members'] });
-    toast.success("Punkte wurden erfolgreich vergeben!");
+    const previousMembers = queryClient.getQueryData(['team-members', team?.id, debouncedSearch]);
+    
+    try {
+      await queryClient.invalidateQueries({ queryKey: ['team-members'] });
+      toast.success("Punkte wurden erfolgreich vergeben!");
+    } catch (error) {
+      queryClient.setQueryData(['team-members', team?.id, debouncedSearch], previousMembers);
+      toast.error("Fehler beim Vergeben der Punkte");
+    }
   };
 
   const isAdmin = currentMember?.role === 'admin' || currentMember?.role === 'owner';
