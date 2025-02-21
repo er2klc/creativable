@@ -16,7 +16,7 @@ import {
   Target,
   Coffee,
   Gift,
-  Party,
+  PartyPopper, // Changed from Party to PartyPopper
   Smile,
   Trophy,
   Crown
@@ -39,7 +39,7 @@ export const iconMap = {
   "target": Target,
   "coffee": Coffee,
   "gift": Gift,
-  "party": Party,
+  "party-popper": PartyPopper, // Updated key to match new icon name
   "smile": Smile,
   "trophy": Trophy,
   "crown": Crown
