@@ -18,7 +18,7 @@ import { Profile } from "@/integrations/supabase/types/profiles";
 import { getAvatarUrl } from "@/lib/supabase-utils";
 import { useProfile } from "@/hooks/use-profile";
 import { TeamChatDialog } from "@/components/team-chat/TeamChatDialog";
-import { useTeamChatStore } from "@/components/teams/members/MemberCard";
+import { useTeamChatStore } from "@/store/useTeamChatStore";
 
 interface HeaderActionsProps {
   profile?: Profile | null;
