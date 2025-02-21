@@ -1,6 +1,7 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, User, CreditCard, Receipt, LogOut } from "lucide-react";
+import { Bell, User, CreditCard, Receipt, LogOut, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +17,8 @@ import { NotificationSidebar } from "@/components/notifications/NotificationSide
 import { Profile } from "@/integrations/supabase/types/profiles";
 import { getAvatarUrl } from "@/lib/supabase-utils";
 import { useProfile } from "@/hooks/use-profile";
-import { ChatDialog } from "@/components/chat/ChatDialog";
-import { MessageCircle } from "lucide-react";
+import { TeamChatDialog } from "@/components/team-chat/TeamChatDialog";
+import { useTeamChatStore } from "@/components/teams/members/MemberCard";
 
 interface HeaderActionsProps {
   profile?: Profile | null;
@@ -27,8 +28,9 @@ interface HeaderActionsProps {
 export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const navigate = useNavigate();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
-  const [teamChatOpen, setTeamChatOpen] = useState(false);
   const { data: profile } = useProfile();
+  const teamChatOpen = useTeamChatStore((state) => state.isOpen);
+  const setTeamChatOpen = useTeamChatStore((state) => state.setOpen);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications'],
@@ -42,6 +44,22 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
       return count || 0;
     },
     refetchInterval: 30000
+  });
+
+  const { data: unreadMessages = 0 } = useQuery({
+    queryKey: ['unread-messages'],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from('team_direct_messages')
+        .select('*', { count: 'exact', head: true })
+        .eq('receiver_id', profile?.id)
+        .eq('read', false);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    refetchInterval: 10000,
+    enabled: !!profile?.id
   });
 
   const handleLogout = async () => {
@@ -79,6 +97,14 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
           onClick={() => setTeamChatOpen(true)}
         >
           <MessageCircle className="h-5 w-5" />
+          {unreadMessages > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {unreadMessages}
+            </Badge>
+          )}
         </Button>
         <div className="h-6 w-px bg-gray-200" />
         <DropdownMenu>
@@ -114,7 +140,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
         onOpenChange={setNotificationsOpen}
       />
 
-      <ChatDialog 
+      <TeamChatDialog 
         open={teamChatOpen}
         onOpenChange={setTeamChatOpen}
       />

@@ -11,6 +11,21 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { type Tables } from "@/integrations/supabase/types";
 import { useTeamPresence } from "../context/TeamPresenceContext";
 import { useNavigate, useParams } from "react-router-dom";
+import { create } from "zustand";
+
+interface TeamChatStore {
+  isOpen: boolean;
+  selectedUserId: string | null;
+  setOpen: (isOpen: boolean) => void;
+  setSelectedUserId: (userId: string | null) => void;
+}
+
+export const useTeamChatStore = create<TeamChatStore>((set) => ({
+  isOpen: false,
+  selectedUserId: null,
+  setOpen: (isOpen) => set({ isOpen }),
+  setSelectedUserId: (userId) => set({ selectedUserId: userId })
+}));
 
 interface MemberCardProps {
   member: Tables<"team_members"> & {
@@ -31,11 +46,19 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
   const lastSeen = member.profile?.last_seen;
   const navigate = useNavigate();
   const { teamSlug } = useParams();
+  const setOpen = useTeamChatStore((state) => state.setOpen);
+  const setSelectedUserId = useTeamChatStore((state) => state.setSelectedUserId);
 
   const handleCardClick = () => {
     if (member.profile?.slug) {
       navigate(`/unity/team/${teamSlug}/members/${member.profile.slug}`);
     }
+  };
+
+  const handleChatClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedUserId(member.user_id);
+    setOpen(true);
   };
 
   return (
@@ -107,9 +130,7 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
             className="w-full mt-3"
             size="sm"
             variant="secondary"
-            onClick={(e) => {
-              e.stopPropagation();
-            }}
+            onClick={handleChatClick}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
             Nachricht senden
