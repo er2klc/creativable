@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +12,6 @@ import { useTeamPresence } from "../context/TeamPresenceContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTeamChatStore } from "@/store/useTeamChatStore";
 import { useUser } from "@supabase/auth-helpers-react";
-
 interface MemberCardProps {
   member: Tables<"team_members"> & {
     profile: Tables<"profiles">;
@@ -26,30 +24,37 @@ interface MemberCardProps {
   isAdmin?: boolean;
   className?: string;
 }
-
-export const MemberCard = ({ member, currentUserLevel, className }: MemberCardProps) => {
-  const { isOnline } = useTeamPresence();
+export const MemberCard = ({
+  member,
+  currentUserLevel,
+  className
+}: MemberCardProps) => {
+  const {
+    isOnline
+  } = useTeamPresence();
   const memberIsOnline = isOnline(member.user_id);
-  const points = member.points || { level: 0, points: 0 };
+  const points = member.points || {
+    level: 0,
+    points: 0
+  };
   const user = useUser();
   const isCurrentUser = user?.id === member.user_id;
   const canChat = !isCurrentUser && currentUserLevel >= 3 && points.level >= 3;
   const lastSeen = member.profile?.last_seen;
   const navigate = useNavigate();
-  const { teamSlug } = useParams();
-  const setSelectedUserId = useTeamChatStore((state) => state.setSelectedUserId);
-
+  const {
+    teamSlug
+  } = useParams();
+  const setSelectedUserId = useTeamChatStore(state => state.setSelectedUserId);
   const handleCardClick = () => {
     if (member.profile?.slug) {
       navigate(`/unity/${teamSlug}/members/${member.profile.slug}`);
     }
   };
-
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedUserId(member.user_id);
   };
-
   const getRoleBadgeStyle = (role: string) => {
     switch (role) {
       case 'owner':
@@ -60,15 +65,7 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
         return 'bg-gradient-to-r from-gray-600 to-gray-500';
     }
   };
-
-  return (
-    <Card 
-      className={cn(
-        "group overflow-hidden bg-[#222] cursor-pointer relative h-[320px]",
-        className
-      )}
-      onClick={handleCardClick}
-    >
+  return <Card className={cn("group overflow-hidden bg-[#222] cursor-pointer relative h-[320px]", className)} onClick={handleCardClick}>
       <div className="relative h-[220px]">
         <div className="absolute inset-0 bg-gradient-to-t from-[#222]/95 to-transparent" />
         <div className="w-full h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 flex items-center justify-center pt-8">
@@ -89,9 +86,7 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
           {/* Avatar with Online Status */}
           <div className="relative z-20">
             {/* Online Status Ring */}
-            {memberIsOnline && (
-              <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-green-500/20 to-green-500/30 animate-pulse" />
-            )}
+            {memberIsOnline && <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-green-500/20 to-green-500/30 animate-pulse" />}
             <div className="relative">
               <Avatar className="h-32 w-32 border-2 border-white/20 shadow-lg relative">
                 <AvatarImage src={member.profile?.avatar_url} />
@@ -100,79 +95,57 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
                 </AvatarFallback>
               </Avatar>
               {/* Heartbeat Online Indicator */}
-              {memberIsOnline && (
-                <div className="absolute -bottom-1 -right-1 z-30">
+              {memberIsOnline && <div className="absolute -bottom-1 -right-1 z-30">
                   <div className="animate-[heartbeat_2s_ease-in-out_infinite]">
                     <div className="h-4 w-4 rounded-full bg-green-500 border-2 border-[#222] shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
                   </div>
-                </div>
-              )}
+                </div>}
             </div>
           </div>
         </div>
 
         {/* Role Badge & Username */}
         <div className="absolute -bottom-1 inset-x-0 flex flex-col items-center z-30 pb-4">
-          <Badge 
-            className={cn(
-              "px-4 py-1 shadow-lg",
-              getRoleBadgeStyle(member.role)
-            )}
-          >
+          <Badge className={cn("px-4 py-1 shadow-lg", getRoleBadgeStyle(member.role))}>
             {member.role}
           </Badge>
-          {member.profile?.slug && (
-            <p className="text-sm text-white/80 mt-1">
+          {member.profile?.slug && <p className="text-sm text-white/80 mt-1">
               @{member.profile.slug}
-            </p>
-          )}
+            </p>}
         </div>
       </div>
 
       <div className="absolute inset-x-0 bottom-0 p-6 pt-8 bg-gradient-to-t from-[#333] via-[#222] to-transparent">
         <div className="space-y-2 mt-10">
-          <div className="flex items-center justify-center pb-4">
+          <div className="flex items-center justify-center pb-">
             <h3 className="font-medium text-base text-white/90 truncate max-w-[95%] text-center">
               {member.profile?.display_name}
             </h3>
           </div>
 
-          {!isCurrentUser && member.profile?.bio && (
-            <p className="text-sm text-white/60 line-clamp-2">
+          {!isCurrentUser && member.profile?.bio && <p className="text-sm text-white/60 line-clamp-2">
               {member.profile.bio}
-            </p>
-          )}
+            </p>}
 
           <div className="flex items-center gap-2 text-xs text-white/60 mt-2">
-            {lastSeen && !memberIsOnline && (
-              <span className="flex items-center gap-1">
+            {lastSeen && !memberIsOnline && <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {formatDistanceToNow(new Date(lastSeen), { addSuffix: true, locale: de })}
-              </span>
-            )}
+                {formatDistanceToNow(new Date(lastSeen), {
+              addSuffix: true,
+              locale: de
+            })}
+              </span>}
           </div>
 
           <div className="flex gap-2 mt-4">
-            {canChat && (
-              <Button
-                className="w-full bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-200"
-                size="sm"
-                onClick={handleChatClick}
-              >
+            {canChat && <Button className="w-full bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-200" size="sm" onClick={handleChatClick}>
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Nachricht senden
-              </Button>
-            )}
-            {!canChat && currentUserLevel < 3 && !isCurrentUser && (
-              <TooltipProvider>
+              </Button>}
+            {!canChat && currentUserLevel < 3 && !isCurrentUser && <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger>
-                    <Button
-                      className="w-full bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-200"
-                      size="sm"
-                      disabled
-                      onClick={(e) => e.stopPropagation()}
-                    >
+                    <Button className="w-full bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-200" size="sm" disabled onClick={e => e.stopPropagation()}>
                       <MessageSquare className="h-4 w-4 mr-2" />
                       Nachricht senden
                     </Button>
@@ -181,11 +154,9 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
                     Du brauchst Level 3 um Nachrichten zu senden
                   </TooltipContent>
                 </Tooltip>
-              </TooltipProvider>
-            )}
+              </TooltipProvider>}
           </div>
         </div>
       </div>
-    </Card>
-  );
+    </Card>;
 };
