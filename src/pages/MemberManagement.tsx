@@ -45,13 +45,19 @@ const MemberManagement = () => {
     enabled: !!teamSlug
   });
 
-  const { data: members = [] } = useQuery({
+  const { data: members = [], isLoading } = useQuery({
     queryKey: ['team-members', team?.id, debouncedSearch],
     queryFn: async () => {
-      let query = supabase
+      if (!team?.id) return [];
+
+      const query = supabase
         .from('team_members')
         .select(`
-          *,
+          id,
+          role,
+          team_id,
+          joined_at,
+          user_id,
           profile:user_id(
             id,
             avatar_url,
@@ -60,7 +66,7 @@ const MemberManagement = () => {
             bio,
             slug
           ),
-          points:team_member_points!inner(
+          points:team_member_points(
             level,
             points
           )
@@ -68,13 +74,17 @@ const MemberManagement = () => {
         .eq('team_id', team.id);
 
       if (debouncedSearch) {
-        query = query.or(`profile.display_name.ilike.%${debouncedSearch}%,profile.email.ilike.%${debouncedSearch}%`);
+        query.filter('profile.display_name', 'ilike', `%${debouncedSearch}%`);
       }
 
       const { data, error } = await query.order('joined_at', { ascending: false });
 
-      if (error) throw error;
-      return data;
+      if (error) {
+        console.error('Error fetching members:', error);
+        throw error;
+      }
+
+      return data || [];
     },
     enabled: !!team?.id
   });
@@ -84,7 +94,7 @@ const MemberManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('team_members')
-        .select('*, points:team_member_points!inner(level, points)')
+        .select('*, points:team_member_points(level, points)')
         .eq('team_id', team.id)
         .eq('user_id', user.id)
         .maybeSingle();
@@ -155,52 +165,66 @@ const MemberManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {members.map((member) => (
-                <TableRow key={member.id}>
-                  <TableCell className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={member.profile?.avatar_url} />
-                      <AvatarFallback>
-                        {member.profile?.display_name?.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <div className="font-medium">{member.profile?.display_name}</div>
-                      <div className="text-sm text-muted-foreground">{member.profile?.email}</div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={member.role === 'owner' ? "default" : "secondary"}
-                      className="capitalize"
-                    >
-                      {member.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right font-medium">
-                    {member.points?.level || 0}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {member.points?.points || 0}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {member.role !== 'owner' && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedMember({
-                          id: member.id,
-                          name: member.profile?.display_name || "Unbekannt",
-                          teamId: member.team_id
-                        })}
-                      >
-                        <Award className="h-4 w-4 mr-2" />
-                        Punkte vergeben
-                      </Button>
-                    )}
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4">
+                    Lade Mitglieder...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : members.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-4 text-muted-foreground">
+                    {debouncedSearch ? 'Keine Mitglieder gefunden.' : 'Keine Mitglieder vorhanden.'}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                members.map((member) => (
+                  <TableRow key={member.id}>
+                    <TableCell className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={member.profile?.avatar_url} />
+                        <AvatarFallback>
+                          {member.profile?.display_name?.substring(0, 2).toUpperCase()}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <div className="font-medium">{member.profile?.display_name}</div>
+                        <div className="text-sm text-muted-foreground">{member.profile?.email}</div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        variant={member.role === 'owner' ? "default" : "secondary"}
+                        className="capitalize"
+                      >
+                        {member.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      {member.points?.[0]?.level || 0}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {member.points?.[0]?.points || 0}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {member.role !== 'owner' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedMember({
+                            id: member.id,
+                            name: member.profile?.display_name || "Unbekannt",
+                            teamId: member.team_id
+                          })}
+                        >
+                          <Award className="h-4 w-4 mr-2" />
+                          Punkte vergeben
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </div>
