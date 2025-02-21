@@ -71,9 +71,10 @@ export function LevelCard({
         
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{label}</span>
-          <div className="flex flex-col items-end">
+          <div className="flex items-center gap-1.5">
             <span>{membersCount} ({Math.round(percentage)}%)</span>
-            <span className="text-xs text-muted-foreground">
+            <span>•</span>
+            <span>
               {level === 10 ? 
                 `Ab ${minPoints.toLocaleString()} Punkte` : 
                 `${minPoints.toLocaleString()}-${maxPoints.toLocaleString()} Punkte`}
