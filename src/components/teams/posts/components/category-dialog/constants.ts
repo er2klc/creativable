@@ -16,7 +16,7 @@ import {
   Target,
   Coffee,
   Gift,
-  PartyPopper, // Changed from Party to PartyPopper
+  PartyPopper,
   Smile,
   Trophy,
   Crown
@@ -39,10 +39,16 @@ export const iconMap = {
   "target": Target,
   "coffee": Coffee,
   "gift": Gift,
-  "party-popper": PartyPopper, // Updated key to match new icon name
+  "party-popper": PartyPopper,
   "smile": Smile,
   "trophy": Trophy,
   "crown": Crown
 };
 
 export type IconName = keyof typeof iconMap;
+
+// Exportiere die verfügbaren Icons als Array von Objekten mit name und icon
+export const availableIcons = Object.entries(iconMap).map(([name, icon]) => ({
+  name,
+  icon
+}));
