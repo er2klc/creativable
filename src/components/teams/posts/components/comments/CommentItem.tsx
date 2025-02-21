@@ -11,6 +11,7 @@ import { CommentReactions } from "./CommentReactions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface CommentItemProps {
   comment: {
@@ -30,14 +31,36 @@ interface CommentItemProps {
   onDelete: (id: string) => void;
   level?: number;
   replies?: typeof CommentItemProps.comment[];
+  teamSlug?: string;
 }
 
-export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: CommentItemProps) => {
+export const CommentItem = ({ comment, onDelete, level = 0, replies = [], teamSlug }: CommentItemProps) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isReplying, setIsReplying] = useState(false);
   const [showReplies, setShowReplies] = useState(true);
   const user = useUser();
+  const navigate = useNavigate();
   const isAuthor = user?.id === comment.created_by;
+
+  const handleMentionClick = (event: React.MouseEvent) => {
+    const target = event.target as HTMLElement;
+    if (target.hasAttribute('data-mention-slug') && teamSlug) {
+      const mentionSlug = target.getAttribute('data-mention-slug');
+      navigate(`/unity/team/${teamSlug}/members/${mentionSlug}`);
+    }
+  };
+
+  const renderContent = () => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(comment.content, 'text/html');
+    
+    // Füge click handler zu allen mentions hinzu
+    doc.querySelectorAll('[data-mention-slug]').forEach(mention => {
+      mention.classList.add('cursor-pointer', 'hover:text-primary/80');
+    });
+    
+    return doc.body.innerHTML;
+  };
 
   const handleSaveEdit = async (newContent: string) => {
     try {
@@ -52,9 +75,6 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
       if (error) throw error;
       
       setIsEditing(false);
-      toast.success("Kommentar wurde aktualisiert");
-      
-      // Optimistic update
       comment.content = newContent;
       comment.edited = true;
       comment.last_edited_at = new Date().toISOString();
@@ -91,7 +111,10 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
       if (error) throw error;
 
       setIsReplying(false);
-      toast.success("Antwort wurde hinzugefügt");
+      // Clear editor content after successful reply
+      if (data) {
+        toast.success("Antwort wurde hinzugefügt");
+      }
     } catch (error) {
       console.error('Error adding reply:', error);
       toast.error("Fehler beim Hinzufügen der Antwort");
@@ -177,8 +200,9 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
           ) : (
             <>
               <div 
-                className="prose prose-sm max-w-none" 
-                dangerouslySetInnerHTML={{ __html: comment.content }} 
+                className="prose prose-sm max-w-none"
+                dangerouslySetInnerHTML={{ __html: renderContent() }}
+                onClick={handleMentionClick}
               />
               <CommentReactions commentId={comment.id} />
               {hasReplies && !isReplying && (
@@ -202,6 +226,7 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
             initialContent={`@${comment.author.display_name} `}
             onSave={handleReply}
             onCancel={() => setIsReplying(false)}
+            clearOnSubmit={true}
           />
         </div>
       )}
@@ -214,6 +239,7 @@ export const CommentItem = ({ comment, onDelete, level = 0, replies = [] }: Comm
               comment={reply}
               onDelete={onDelete}
               level={level + 1}
+              teamSlug={teamSlug}
             />
           ))}
         </div>
