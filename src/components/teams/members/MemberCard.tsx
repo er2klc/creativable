@@ -131,8 +131,8 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
 
       <div className="absolute inset-x-0 bottom-0 p-6 pt-8 bg-gradient-to-t from-[#333] via-[#222] to-transparent">
         <div className="space-y-2 mt-10">
-          <div className="flex items-center justify-between pb-2">
-            <h3 className="font-medium text-base text-white/90 truncate max-w-[90%] mx-auto">
+          <div className="flex items-center justify-center pb-4">
+            <h3 className="font-medium text-base text-white/90 truncate max-w-[95%] text-center">
               {member.profile?.display_name}
             </h3>
           </div>
