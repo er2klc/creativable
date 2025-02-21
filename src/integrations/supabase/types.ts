@@ -2695,6 +2695,34 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "team_direct_messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "team_direct_messages_receiver_id_fkey"
+            columns: ["receiver_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "team_direct_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "member_activities"
+            referencedColumns: ["profile_id"]
+          },
+          {
+            foreignKeyName: "team_direct_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "team_direct_messages_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
