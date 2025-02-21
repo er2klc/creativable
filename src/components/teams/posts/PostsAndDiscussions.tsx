@@ -1,4 +1,3 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { CategoryOverview } from "./CategoryOverview";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -15,6 +14,7 @@ import { WelcomeDialog } from "./dialog/WelcomeDialog";
 import { toast } from "sonner";
 import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceContext";
 import { NewUserWelcome } from "./components/NewUserWelcome";
+import { Post } from "./types/post";
 
 export function PostsAndDiscussions() {
   const navigate = useNavigate();
@@ -68,6 +68,39 @@ export function PostsAndDiscussions() {
       return data;
     },
     enabled: !!teamSlug && !!user?.id
+  });
+
+  // Fetch current post if postSlug is present
+  const { data: currentPost, isLoading: isPostLoading } = useQuery<Post>({
+    queryKey: ['post', postSlug],
+    queryFn: async () => {
+      if (!postSlug || !teamSlug) throw new Error('Post slug or team slug missing');
+
+      const { data, error } = await supabase
+        .from('team_posts')
+        .select(`
+          *,
+          team_categories (
+            name,
+            slug,
+            color
+          ),
+          author:profiles!team_posts_created_by_fkey (
+            display_name,
+            avatar_url,
+            email
+          ),
+          team_post_comments (
+            id
+          )
+        `)
+        .eq('slug', postSlug)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!postSlug && !!teamSlug
   });
 
   // Fetch intro category independently
@@ -171,6 +204,10 @@ export function PostsAndDiscussions() {
         </CardContent>
       </Card>
     );
+  }
+
+  if (isPostLoading) {
+    return <LoadingState />;
   }
 
   return (
