@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -102,26 +101,21 @@ const TeamMembers = () => {
     if (!members.length) return [];
     
     return members.sort((a, b) => {
-      // Current user always first
-      if (a.id === user?.id) return -1;
-      if (b.id === user?.id) return 1;
-      
       // Then sort by level
       return (b.points?.level || 0) - (a.points?.level || 0);
     });
-  }, [members, user?.id]);
+  }, [members]);
 
   // Find current user's member data
-  const currentUserMember = sortedMembers.find(member => member.id === user?.id);
+  const currentUserMember = sortedMembers.find(member => member.user_id === user?.id);
 
-  // Pagination
-  const totalPages = Math.ceil(sortedMembers.length / MEMBERS_PER_PAGE);
-  const paginatedMembers = sortedMembers
-    .filter(member => member.id !== user?.id) // Filter out current user from grid
-    .slice(
-      (currentPage - 1) * MEMBERS_PER_PAGE,
-      currentPage * MEMBERS_PER_PAGE
-    );
+  // Pagination with filtered members (excluding current user)
+  const filteredMembers = sortedMembers.filter(member => member.user_id !== user?.id);
+  const totalPages = Math.ceil(filteredMembers.length / MEMBERS_PER_PAGE);
+  const paginatedMembers = filteredMembers.slice(
+    (currentPage - 1) * MEMBERS_PER_PAGE,
+    currentPage * MEMBERS_PER_PAGE
+  );
 
   const isLoading = isTeamLoading || isLoadingMembers;
   const hasCachedData = members.length > 0;
@@ -129,18 +123,15 @@ const TeamMembers = () => {
   if (isLoading && !hasCachedData) {
     return (
       <div className="container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[...Array(8)].map((_, i) => (
-            <Card key={i} className="p-4">
-              <div className="flex items-start justify-between mb-4">
-                <Skeleton className="h-16 w-16 rounded-full" />
-                <Skeleton className="h-8 w-8 rounded-full" />
-              </div>
-              <div className="space-y-2">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <Card key={i} className="h-[320px] bg-[#222]">
+              <div className="animate-pulse">
+                <div className="h-[200px] bg-gray-800" />
+                <div className="p-6 space-y-4">
+                  <div className="h-4 bg-gray-700 rounded w-3/4" />
+                  <div className="h-4 bg-gray-700 rounded w-1/2" />
+                </div>
               </div>
             </Card>
           ))}
@@ -191,9 +182,9 @@ const TeamMembers = () => {
           {currentUserMember && (
             <div className="mb-8 bg-gradient-to-r from-[#E5DEFF] to-[#F1F0FB] rounded-xl p-6 shadow-sm">
               <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20">
+                <Avatar className="h-20 w-20 border-2 border-white/10">
                   <AvatarImage src={currentUserMember.profile?.avatar_url || ''} />
-                  <AvatarFallback>
+                  <AvatarFallback className="text-2xl">
                     {currentUserMember.profile?.display_name?.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
@@ -217,6 +208,7 @@ const TeamMembers = () => {
                 key={member.id} 
                 member={member}
                 currentUserLevel={memberPoints?.level || 0}
+                isAdmin={currentUserMember?.role === 'admin' || currentUserMember?.role === 'owner'}
               />
             ))}
           </div>
