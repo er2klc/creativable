@@ -14,6 +14,8 @@ export const useTeamChatStore = create<TeamChatStore>((set) => ({
   setOpen: (isOpen) => set({ isOpen }),
   setSelectedUserId: (userId) => {
     set({ selectedUserId: userId });
-    set({ isOpen: true }); // Automatisch den Chat öffnen wenn ein Benutzer ausgewählt wird
+    if (userId) {
+      set({ isOpen: true }); // Automatisch den Chat öffnen wenn ein Benutzer ausgewählt wird
+    }
   },
 }));

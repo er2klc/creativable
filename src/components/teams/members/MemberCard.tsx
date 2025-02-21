@@ -1,8 +1,9 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Clock } from "lucide-react";
+import { MessageSquare, Clock, Award } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -10,24 +11,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { type Tables } from "@/integrations/supabase/types";
 import { useTeamPresence } from "../context/TeamPresenceContext";
 import { useNavigate, useParams } from "react-router-dom";
-import { create } from "zustand";
 import { useState } from "react";
 import { AwardPointsDialog } from "./AwardPointsDialog";
-import { Award } from "lucide-react";
-
-interface TeamChatStore {
-  isOpen: boolean;
-  selectedUserId: string | null;
-  setOpen: (isOpen: boolean) => void;
-  setSelectedUserId: (userId: string | null) => void;
-}
-
-export const useTeamChatStore = create<TeamChatStore>((set) => ({
-  isOpen: false,
-  selectedUserId: null,
-  setOpen: (isOpen) => set({ isOpen }),
-  setSelectedUserId: (userId) => set({ selectedUserId: userId })
-}));
+import { useTeamChatStore } from "@/store/useTeamChatStore";
 
 interface MemberCardProps {
   member: Tables<"team_members"> & {
@@ -49,7 +35,6 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
   const lastSeen = member.profile?.last_seen;
   const navigate = useNavigate();
   const { teamSlug } = useParams();
-  const setOpen = useTeamChatStore((state) => state.setOpen);
   const setSelectedUserId = useTeamChatStore((state) => state.setSelectedUserId);
 
   const handleCardClick = () => {
@@ -61,7 +46,6 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedUserId(member.user_id);
-    setOpen(true);
   };
 
   const [isAwardPointsOpen, setIsAwardPointsOpen] = useState(false);
@@ -132,11 +116,7 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
             className="w-full mt-3"
             size="sm"
             variant="secondary"
-            onClick={(e) => {
-              e.stopPropagation();
-              setSelectedUserId(member.user_id);
-              setOpen(true);
-            }}
+            onClick={handleChatClick}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
             Nachricht senden
