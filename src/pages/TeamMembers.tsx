@@ -1,12 +1,12 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MemberCard } from "@/components/teams/members/MemberCard";
 import { useProfile } from "@/hooks/use-profile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceContext";
+import { TeamPresenceProvider, useTeamPresence } from "@/components/teams/context/TeamPresenceContext";
 import { Users } from "lucide-react";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -22,7 +22,6 @@ import {
   transformMemberData,
   fetchTeamMembers 
 } from "@/components/teams/detail/snap-cards/MembersCard";
-import { useTeamPresence } from "@/components/teams/context/TeamPresenceContext";
 
 const MEMBERS_PER_PAGE = 50;
 
@@ -97,28 +96,23 @@ const TeamMembers = () => {
     keepPreviousData: true
   });
 
-  // Sort members: online first, then by level
   const sortedMembers = useMemo(() => {
     if (!members.length) return [];
     
     return members.sort((a, b) => {
-      // Find current user's member data
       if (a.user_id === user?.id) return -1;
       if (b.user_id === user?.id) return 1;
 
-      // Then sort by online status
       const isOnline = useTeamPresence().isOnline;
       const aIsOnline = isOnline(a.user_id);
       const bIsOnline = isOnline(b.user_id);
       if (aIsOnline && !bIsOnline) return -1;
       if (!aIsOnline && bIsOnline) return 1;
 
-      // Then sort by level
       return (b.points?.level || 0) - (a.points?.level || 0);
     });
   }, [members, user?.id]);
 
-  // Find current user's member data
   const currentUserMember = sortedMembers.find(member => member.user_id === user?.id);
 
   const isLoading = isTeamLoading || isLoadingMembers;
@@ -182,7 +176,6 @@ const TeamMembers = () => {
         </div>
 
         <div className="container py-8 mt-16">
-          {/* Current User Card */}
           {currentUserMember && (
             <div className="mb-8">
               <MemberCard 
@@ -194,10 +187,9 @@ const TeamMembers = () => {
             </div>
           )}
 
-          {/* Member Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {sortedMembers
-              .filter(member => member.user_id !== user?.id) // Filter out current user since it's shown above
+              .filter(member => member.user_id !== user?.id)
               .slice((currentPage - 1) * MEMBERS_PER_PAGE, currentPage * MEMBERS_PER_PAGE)
               .map((member) => (
                 <MemberCard 
@@ -209,7 +201,6 @@ const TeamMembers = () => {
               ))}
           </div>
 
-          {/* Pagination Controls */}
           {totalPages > 1 && (
             <div className="flex justify-center gap-2 mt-8">
               <Button
