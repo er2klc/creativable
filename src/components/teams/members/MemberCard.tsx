@@ -73,14 +73,14 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
         <div className="absolute inset-0 bg-gradient-to-t from-[#222]/95 to-transparent" />
         <div className="w-full h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 flex items-center justify-center pt-8">
           {/* Level Badge - Left Top */}
-          <div className="absolute top-4 left-4 z-20">
+          <div className="absolute top-4 left-4 z-30">
             <div className="bg-[#1A1F2C]/60 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-1 text-white/90">
               Level {points.level}
             </div>
           </div>
 
           {/* Points Badge - Right Top */}
-          <div className="absolute top-4 right-4 z-20">
+          <div className="absolute top-4 right-4 z-30">
             <div className="bg-[#1A1F2C]/60 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-1 text-white/90">
               {points.points} Punkte
             </div>
@@ -112,7 +112,7 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
         </div>
 
         {/* Role Badge & Username */}
-        <div className="absolute -bottom-6 inset-x-0 flex flex-col items-center z-20">
+        <div className="absolute -bottom-2 inset-x-0 flex flex-col items-center z-30">
           <Badge 
             className={cn(
               "px-4 py-1 shadow-lg",
@@ -122,15 +122,15 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
             {member.role}
           </Badge>
           {member.profile?.slug && (
-            <p className="text-sm text-white/80 mt-2">
+            <p className="text-sm text-white/80 mt-1">
               @{member.profile.slug}
             </p>
           )}
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-[#333] to-[#222]">
-        <div className="space-y-2 mt-4">
+      <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-[#333] via-[#222] to-transparent">
+        <div className="space-y-2 mt-8">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-base text-white/90 truncate">
               {member.profile?.display_name}
@@ -189,3 +189,4 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
     </Card>
   );
 };
+
