@@ -61,7 +61,7 @@ const MemberManagement = () => {
           team_id,
           joined_at,
           user_id,
-          profile:user_id(
+          profile:profiles!user_id(
             id,
             avatar_url,
             display_name,
@@ -69,7 +69,7 @@ const MemberManagement = () => {
             bio,
             slug
           ),
-          points:team_member_points(
+          team_member_points!inner(
             level,
             points
           )
@@ -77,7 +77,8 @@ const MemberManagement = () => {
         .eq('team_id', team.id);
 
       if (debouncedSearch) {
-        query.or(`profile.display_name.ilike.%${debouncedSearch}%,profile.email.ilike.%${debouncedSearch}%`);
+        const searchTerm = debouncedSearch.toLowerCase();
+        query.or(`profiles.display_name.ilike.%${searchTerm}%,profiles.email.ilike.%${searchTerm}%`);
       }
 
       const { data, error } = await query.order('joined_at', { ascending: false });
@@ -97,10 +98,16 @@ const MemberManagement = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('team_members')
-        .select('*, points:team_member_points(level, points)')
+        .select(`
+          *,
+          team_member_points!inner(
+            level,
+            points
+          )
+        `)
         .eq('team_id', team.id)
         .eq('user_id', user.id)
-        .maybeSingle();
+        .single();
 
       if (error) throw error;
       return data;
@@ -230,10 +237,10 @@ const MemberManagement = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {member.points?.[0]?.level || 0}
+                      {member.team_member_points?.level || 0}
                     </TableCell>
                     <TableCell className="text-right">
-                      {member.points?.[0]?.points || 0}
+                      {member.team_member_points?.points || 0}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
