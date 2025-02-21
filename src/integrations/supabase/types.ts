@@ -2666,8 +2666,10 @@ export type Database = {
         Row: {
           content: string
           created_at: string | null
+          delivered_at: string | null
           id: string
           read: boolean | null
+          read_at: string | null
           receiver_id: string
           sender_id: string
           team_id: string
@@ -2676,8 +2678,10 @@ export type Database = {
         Insert: {
           content: string
           created_at?: string | null
+          delivered_at?: string | null
           id?: string
           read?: boolean | null
+          read_at?: string | null
           receiver_id: string
           sender_id: string
           team_id: string
@@ -2686,8 +2690,10 @@ export type Database = {
         Update: {
           content?: string
           created_at?: string | null
+          delivered_at?: string | null
           id?: string
           read?: boolean | null
+          read_at?: string | null
           receiver_id?: string
           sender_id?: string
           team_id?: string
