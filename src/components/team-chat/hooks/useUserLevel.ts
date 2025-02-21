@@ -1,9 +1,10 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export const useUserLevel = (teamId?: string, userId?: string) => {
-  const { data: currentUserLevel } = useQuery({
+  const { data: currentUserLevel, isLoading: isLoadingLevel } = useQuery({
     queryKey: ['user-level', teamId, userId],
     queryFn: async () => {
       if (!teamId || !userId) return 0;
@@ -15,11 +16,14 @@ export const useUserLevel = (teamId?: string, userId?: string) => {
         .eq('user_id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        toast.error('Fehler beim Laden des User-Levels');
+        throw error;
+      }
       return data?.level || 0;
     },
     enabled: !!teamId && !!userId
   });
 
-  return currentUserLevel;
+  return { currentUserLevel, isLoadingLevel };
 };
