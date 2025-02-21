@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MemberCard } from "@/components/teams/members/MemberCard";
 import { useProfile } from "@/hooks/use-profile";
@@ -22,6 +22,7 @@ import {
   transformMemberData,
   fetchTeamMembers 
 } from "@/components/teams/detail/snap-cards/MembersCard";
+import { useTeamPresence } from "@/components/teams/context/TeamPresenceContext";
 
 const MEMBERS_PER_PAGE = 50;
 
@@ -96,26 +97,29 @@ const TeamMembers = () => {
     keepPreviousData: true
   });
 
-  // Sort members: current user first, then by level
+  // Sort members: online first, then by level
   const sortedMembers = useMemo(() => {
     if (!members.length) return [];
     
     return members.sort((a, b) => {
+      // Find current user's member data
+      if (a.user_id === user?.id) return -1;
+      if (b.user_id === user?.id) return 1;
+
+      // Then sort by online status
+      const isOnline = useTeamPresence().isOnline;
+      const aIsOnline = isOnline(a.user_id);
+      const bIsOnline = isOnline(b.user_id);
+      if (aIsOnline && !bIsOnline) return -1;
+      if (!aIsOnline && bIsOnline) return 1;
+
       // Then sort by level
       return (b.points?.level || 0) - (a.points?.level || 0);
     });
-  }, [members]);
+  }, [members, user?.id]);
 
   // Find current user's member data
   const currentUserMember = sortedMembers.find(member => member.user_id === user?.id);
-
-  // Pagination with filtered members (excluding current user)
-  const filteredMembers = sortedMembers.filter(member => member.user_id !== user?.id);
-  const totalPages = Math.ceil(filteredMembers.length / MEMBERS_PER_PAGE);
-  const paginatedMembers = filteredMembers.slice(
-    (currentPage - 1) * MEMBERS_PER_PAGE,
-    currentPage * MEMBERS_PER_PAGE
-  );
 
   const isLoading = isTeamLoading || isLoadingMembers;
   const hasCachedData = members.length > 0;
@@ -178,39 +182,31 @@ const TeamMembers = () => {
         </div>
 
         <div className="container py-8 mt-16">
-          {/* Current User Hero Section */}
+          {/* Current User Card */}
           {currentUserMember && (
-            <div className="mb-8 bg-gradient-to-r from-[#E5DEFF] to-[#F1F0FB] rounded-xl p-6 shadow-sm">
-              <div className="flex items-center gap-6">
-                <Avatar className="h-20 w-20 border-2 border-white/10">
-                  <AvatarImage src={currentUserMember.profile?.avatar_url || ''} />
-                  <AvatarFallback className="text-2xl">
-                    {currentUserMember.profile?.display_name?.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h2 className="text-xl font-semibold">{currentUserMember.profile?.display_name}</h2>
-                  <div className="flex items-center gap-4 mt-2">
-                    <Badge variant="secondary">Level {currentUserMember.points?.level || 0}</Badge>
-                    <span className="text-sm text-muted-foreground">
-                      {currentUserMember.points?.points || 0} Punkte
-                    </span>
-                  </div>
-                </div>
-              </div>
+            <div className="mb-8">
+              <MemberCard 
+                member={currentUserMember}
+                currentUserLevel={memberPoints?.level || 0}
+                isAdmin={currentUserMember?.role === 'admin' || currentUserMember?.role === 'owner'}
+                className="transform scale-105 hover:scale-[1.06] transition-transform duration-200"
+              />
             </div>
           )}
 
           {/* Member Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {paginatedMembers.map((member) => (
-              <MemberCard 
-                key={member.id} 
-                member={member}
-                currentUserLevel={memberPoints?.level || 0}
-                isAdmin={currentUserMember?.role === 'admin' || currentUserMember?.role === 'owner'}
-              />
-            ))}
+            {sortedMembers
+              .filter(member => member.user_id !== user?.id) // Filter out current user since it's shown above
+              .slice((currentPage - 1) * MEMBERS_PER_PAGE, currentPage * MEMBERS_PER_PAGE)
+              .map((member) => (
+                <MemberCard 
+                  key={member.id} 
+                  member={member}
+                  currentUserLevel={memberPoints?.level || 0}
+                  isAdmin={currentUserMember?.role === 'admin' || currentUserMember?.role === 'owner'}
+                />
+              ))}
           </div>
 
           {/* Pagination Controls */}

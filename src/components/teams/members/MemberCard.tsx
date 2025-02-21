@@ -24,9 +24,10 @@ interface MemberCardProps {
   };
   currentUserLevel: number;
   isAdmin?: boolean;
+  className?: string;
 }
 
-export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
+export const MemberCard = ({ member, currentUserLevel, className }: MemberCardProps) => {
   const { isOnline } = useTeamPresence();
   const memberIsOnline = isOnline(member.user_id);
   const points = member.points || { level: 0, points: 0 };
@@ -62,52 +63,56 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
 
   return (
     <Card 
-      className="group overflow-hidden bg-[#222] cursor-pointer relative h-[320px]"
+      className={cn(
+        "group overflow-hidden bg-[#222] cursor-pointer relative h-[320px]",
+        className
+      )}
       onClick={handleCardClick}
     >
       <div className="relative h-[220px]">
         <div className="absolute inset-0 bg-gradient-to-t from-[#222]/95 to-transparent" />
         <div className="w-full h-full bg-gradient-to-br from-indigo-900 via-purple-900 to-indigo-800 flex items-center justify-center pt-8">
           {/* Level Badge - Left Top */}
-          <div className="absolute top-4 left-4">
+          <div className="absolute top-4 left-4 z-20">
             <div className="bg-[#1A1F2C]/60 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-1 text-white/90">
               Level {points.level}
             </div>
           </div>
 
           {/* Points Badge - Right Top */}
-          <div className="absolute top-4 right-4">
+          <div className="absolute top-4 right-4 z-20">
             <div className="bg-[#1A1F2C]/60 backdrop-blur-sm border border-white/10 rounded-lg px-3 py-1 text-white/90">
               {points.points} Punkte
             </div>
           </div>
 
           {/* Avatar with Online Status */}
-          <div className="relative">
-            <Avatar className="h-32 w-32 border-2 border-white/20 shadow-lg">
-              <AvatarImage src={member.profile?.avatar_url} />
-              <AvatarFallback className="text-3xl text-white/90">
-                {member.profile?.display_name?.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="absolute -bottom-1 -right-1">
-              <div className={cn(
-                "flex items-center justify-center",
-                memberIsOnline ? "animate-pulse" : ""
-              )}>
-                <div className={cn(
-                  "h-4 w-4 rounded-full border-2 border-[#222]",
-                  memberIsOnline 
-                    ? "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]" 
-                    : "bg-gray-500"
-                )} />
-              </div>
+          <div className="relative z-20">
+            {/* Online Status Ring */}
+            {memberIsOnline && (
+              <div className="absolute -inset-2 rounded-full bg-gradient-to-r from-green-500/20 to-green-500/30 animate-pulse" />
+            )}
+            <div className="relative">
+              <Avatar className="h-32 w-32 border-2 border-white/20 shadow-lg relative">
+                <AvatarImage src={member.profile?.avatar_url} />
+                <AvatarFallback className="text-3xl text-white/90">
+                  {member.profile?.display_name?.substring(0, 2).toUpperCase()}
+                </AvatarFallback>
+              </Avatar>
+              {/* Heartbeat Online Indicator */}
+              {memberIsOnline && (
+                <div className="absolute -bottom-1 -right-1 z-30">
+                  <div className="animate-[heartbeat_2s_ease-in-out_infinite]">
+                    <div className="h-4 w-4 rounded-full bg-green-500 border-2 border-[#222] shadow-[0_0_10px_rgba(34,197,94,0.5)]" />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Role Badge & Username */}
-        <div className="absolute -bottom-6 inset-x-0 flex flex-col items-center">
+        <div className="absolute -bottom-6 inset-x-0 flex flex-col items-center z-20">
           <Badge 
             className={cn(
               "px-4 py-1 shadow-lg",
