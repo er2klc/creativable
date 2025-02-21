@@ -1,4 +1,3 @@
-
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -115,7 +114,6 @@ const TeamMembers = () => {
 
   const currentUserMember = sortedMembers.find(member => member.user_id === user?.id);
 
-  // Calculate total pages
   const totalPages = useMemo(() => {
     const totalMembers = sortedMembers.filter(member => member.user_id !== user?.id).length;
     return Math.ceil(totalMembers / MEMBERS_PER_PAGE);
@@ -188,7 +186,7 @@ const TeamMembers = () => {
                 member={currentUserMember}
                 currentUserLevel={memberPoints?.level || 0}
                 isAdmin={currentUserMember?.role === 'admin' || currentUserMember?.role === 'owner'}
-                className="transform scale-105 hover:scale-[1.06] transition-transform duration-200"
+                className="transform scale-102 hover:scale-[1.03] transition-transform duration-200"
               />
             </div>
           )}

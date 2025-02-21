@@ -130,14 +130,14 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
       </div>
 
       <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-[#333] via-[#222] to-transparent">
-        <div className="space-y-2 mt-8">
-          <div className="flex items-center justify-between">
-            <h3 className="font-medium text-base text-white/90 truncate">
+        <div className="space-y-2 mt-10">
+          <div className="flex items-center justify-between pb-2">
+            <h3 className="font-medium text-base text-white/90 truncate max-w-[90%] mx-auto">
               {member.profile?.display_name}
             </h3>
           </div>
 
-          {member.profile?.bio && (
+          {!isCurrentUser && member.profile?.bio && (
             <p className="text-sm text-white/60 line-clamp-2">
               {member.profile.bio}
             </p>
@@ -189,4 +189,3 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
     </Card>
   );
 };
-
