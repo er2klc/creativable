@@ -30,7 +30,7 @@ export const useTeamChat = () => {
       if (error) throw error;
 
       return members.map(m => ({
-        id: m.user_id, // Wichtig: Wir verwenden hier user_id statt profiles.id
+        id: m.user_id,
         display_name: m.profiles.display_name,
         avatar_url: m.profiles.avatar_url,
         last_seen: m.profiles.last_seen,
@@ -110,7 +110,7 @@ export const useTeamChat = () => {
   };
 
   const selectUser = (user: TeamMember) => {
-    console.log('Selecting user:', user); // Debug log
+    console.log('Selecting user:', user);
     setSelectedUser(user);
   };
 
