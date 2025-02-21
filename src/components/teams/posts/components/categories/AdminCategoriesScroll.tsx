@@ -36,7 +36,8 @@ export const AdminCategoriesScroll = ({
       </Button>
       
       {categories?.map((category) => {
-        const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
+        // Fallback to MessageCircle if icon is invalid or not found in iconMap
+        const IconComponent = category.icon && iconMap[category.icon] ? iconMap[category.icon] : MessageCircle;
         
         return (
           <Badge

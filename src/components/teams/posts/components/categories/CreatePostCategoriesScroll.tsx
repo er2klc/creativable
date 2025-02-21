@@ -33,7 +33,8 @@ export const CreatePostCategoriesScroll = ({
   return (
     <BaseCategoryScroll className="border-b">
       {filteredCategories?.map((category) => {
-        const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
+        // Fallback to MessageCircle if icon is invalid or not found in iconMap
+        const IconComponent = category.icon && iconMap[category.icon] ? iconMap[category.icon] : MessageCircle;
         const defaultColor = "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]";
         return (
           <Badge
