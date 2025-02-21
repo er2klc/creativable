@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,6 +12,16 @@ export const useTeamChat = () => {
   const selectedUserId = useTeamChatStore((state) => state.selectedUserId);
   const { teamSlug } = useParams();
 
+  // Get current user's session
+  const { data: currentUserSession } = useQuery({
+    queryKey: ['auth-session'],
+    queryFn: async () => {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      if (error) throw error;
+      return session;
+    }
+  });
+
   // Get team ID from slug
   const { data: team } = useQuery({
     queryKey: ['team', teamSlug],
@@ -23,22 +32,36 @@ export const useTeamChat = () => {
         .eq('slug', teamSlug)
         .single();
 
-      if (error) {
-        console.error('Error fetching team:', error);
-        throw error;
-      }
+      if (error) throw error;
       return data;
     },
     enabled: !!teamSlug
   });
 
-  // Fetch team members with correct ID handling
+  // Get current user's level
+  const { data: currentUserLevel } = useQuery({
+    queryKey: ['user-level', team?.id, currentUserSession?.user?.id],
+    queryFn: async () => {
+      if (!team?.id || !currentUserSession?.user?.id) return 0;
+
+      const { data, error } = await supabase
+        .from('team_member_points')
+        .select('level')
+        .eq('team_id', team.id)
+        .eq('user_id', currentUserSession.user.id)
+        .single();
+
+      if (error) throw error;
+      return data?.level || 0;
+    },
+    enabled: !!team?.id && !!currentUserSession?.user?.id
+  });
+
+  // Fetch eligible team members (Level 3 or higher)
   const { data: teamMembers = [], isLoading: isLoadingMembers } = useQuery({
     queryKey: ['team-members', team?.id],
     queryFn: async () => {
       if (!team?.id) return [];
-
-      console.log('Fetching team members for team:', team.id);
 
       const { data: members, error } = await supabase
         .from('team_members')
@@ -50,26 +73,28 @@ export const useTeamChat = () => {
             avatar_url,
             last_seen,
             email
+          ),
+          points:team_member_points!inner (
+            level
           )
         `)
         .eq('team_id', team.id)
-        .order('created_at');
+        .gte('team_member_points.level', 3)
+        .order('points.level', { ascending: false });
 
-      if (error) {
-        console.error('Error fetching team members:', error);
-        throw error;
-      }
+      if (error) throw error;
 
-      // Map the data ensuring we use user_id as the primary identifier
-      const mappedMembers = members.map(m => ({
-        id: m.user_id, // Use user_id consistently as the primary identifier
-        display_name: m.profiles.display_name,
-        avatar_url: m.profiles.avatar_url,
-        last_seen: m.profiles.last_seen,
-        email: m.profiles.email
-      }));
+      const mappedMembers = members
+        .filter(m => m.user_id !== currentUserSession?.user?.id) // Filter out current user
+        .map(m => ({
+          id: m.user_id,
+          display_name: m.profiles.display_name,
+          avatar_url: m.profiles.avatar_url,
+          last_seen: m.profiles.last_seen,
+          email: m.profiles.email,
+          level: m.points.level
+        }));
 
-      console.log('Mapped team members:', mappedMembers);
       return mappedMembers as TeamMember[];
     },
     enabled: !!team?.id
@@ -78,15 +103,9 @@ export const useTeamChat = () => {
   // Select user when selectedUserId changes
   useEffect(() => {
     if (selectedUserId && teamMembers.length > 0) {
-      console.log('Looking for user with ID:', selectedUserId);
-      console.log('Available team members:', teamMembers);
-      
       const userToSelect = teamMembers.find(member => member.id === selectedUserId);
       if (userToSelect) {
-        console.log('Found and selecting user:', userToSelect);
         setSelectedUser(userToSelect);
-      } else {
-        console.log('User not found in team members');
       }
     }
   }, [selectedUserId, teamMembers]);
@@ -125,10 +144,11 @@ export const useTeamChat = () => {
     enabled: !!selectedUser?.id && !!team?.id
   });
 
-  // Send message mutation
+  // Send message mutation with level check
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
       if (!selectedUser?.id || !team?.id) throw new Error('No user or team selected');
+      if (!currentUserLevel || currentUserLevel < 3) throw new Error('Insufficient level to send messages');
 
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) throw new Error('Not authenticated');
@@ -164,7 +184,6 @@ export const useTeamChat = () => {
   };
 
   const selectUser = (user: TeamMember) => {
-    console.log('Selecting user:', user);
     setSelectedUser(user);
   };
 
@@ -199,6 +218,7 @@ export const useTeamChat = () => {
     isLoading: isLoadingMembers || isLoadingMessages,
     sendMessage,
     selectUser,
-    teamMembers
+    teamMembers,
+    currentUserLevel
   };
 };

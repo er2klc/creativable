@@ -1,6 +1,6 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useRef, useEffect } from "react";
+import { useRef } from "react";
 import { TeamChatHeader } from "./TeamChatHeader";
 import { TeamChatMessages } from "./TeamChatMessages";
 import { TeamChatInput } from "./TeamChatInput";
@@ -24,7 +24,8 @@ export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
     isLoading,
     sendMessage,
     selectUser,
-    teamMembers 
+    teamMembers,
+    currentUserLevel 
   } = useTeamChat();
 
   const handleClose = () => {
@@ -49,6 +50,7 @@ export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
             members={teamMembers}
             selectedUserId={selectedUser?.id}
             onSelectUser={selectUser}
+            currentUserLevel={currentUserLevel}
           />
           
           <div className="flex-1 flex flex-col min-w-0 border-l">
@@ -64,7 +66,7 @@ export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
             ) : (
               <div className="flex-1 flex items-center justify-center">
                 <p className="text-muted-foreground">
-                  Wähle ein Teammitglied aus um zu chatten
+                  Wähle einen Chat-Partner aus der Liste
                 </p>
               </div>
             )}

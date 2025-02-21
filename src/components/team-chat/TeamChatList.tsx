@@ -6,20 +6,43 @@ import { useTeamPresence } from "@/components/teams/context/TeamPresenceContext"
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
+import { Shield } from "lucide-react";
 
 interface TeamChatListProps {
   members: TeamMember[];
   selectedUserId?: string;
   onSelectUser: (user: TeamMember) => void;
+  currentUserLevel?: number;
 }
 
-export const TeamChatList = ({ members, selectedUserId, onSelectUser }: TeamChatListProps) => {
+export const TeamChatList = ({ members, selectedUserId, onSelectUser, currentUserLevel }: TeamChatListProps) => {
   const { isOnline } = useTeamPresence();
+
+  if (!currentUserLevel || currentUserLevel < 3) {
+    return (
+      <div className="w-[280px] border-r flex flex-col">
+        <div className="p-4 text-center text-muted-foreground">
+          <Shield className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+          <p>Du benötigst Level 3 oder höher um Nachrichten zu senden.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (members.length === 0) {
+    return (
+      <div className="w-[280px] border-r flex flex-col">
+        <div className="p-4 text-center text-muted-foreground">
+          <p>Keine Teammitglieder mit Level 3 oder höher verfügbar.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-[280px] border-r flex flex-col">
       <div className="p-2 border-b">
-        <h3 className="text-sm font-semibold px-2">Team Mitglieder</h3>
+        <h3 className="text-sm font-semibold px-2">Chat-Partner (Level 3+)</h3>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
@@ -47,8 +70,9 @@ export const TeamChatList = ({ members, selectedUserId, onSelectUser }: TeamChat
                 />
               </div>
               <div className="flex-1 text-left">
-                <div className="text-sm font-medium truncate">
+                <div className="text-sm font-medium truncate flex items-center gap-1">
                   {member.display_name}
+                  <span className="text-xs text-muted-foreground">(Level {member.level})</span>
                 </div>
                 {member.last_seen && !isOnline(member.id) && (
                   <div className="text-xs text-muted-foreground">
@@ -65,4 +89,4 @@ export const TeamChatList = ({ members, selectedUserId, onSelectUser }: TeamChat
       </ScrollArea>
     </div>
   );
-}
+};
