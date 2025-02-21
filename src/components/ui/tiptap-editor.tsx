@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { EditorContent, useEditor, ReactRenderer } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Mention from '@tiptap/extension-mention';
@@ -10,6 +10,7 @@ import { InputDialog } from './input-dialog';
 import { EditorToolbar } from './tiptap/editor-toolbar';
 import { MentionList } from "@/components/teams/posts/components/comments/MentionList";
 import tippy from 'tippy.js';
+import { useNavigate } from 'react-router-dom';
 
 interface TiptapEditorProps {
   content: string;
@@ -22,6 +23,7 @@ interface TiptapEditorProps {
   editorProps?: any;
   isAdmin?: boolean;
   teamId?: string;
+  teamSlug?: string;
 }
 
 export function TiptapEditor({ 
@@ -34,11 +36,13 @@ export function TiptapEditor({
   preventSubmitOnEnter = false,
   editorProps,
   isAdmin = false,
-  teamId
+  teamId,
+  teamSlug
 }: TiptapEditorProps) {
   const [showLinkDialog, setShowLinkDialog] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
   const [showHashtagDialog, setShowHashtagDialog] = useState(false);
+  const navigate = useNavigate();
 
   const editor = useEditor({
     extensions: [
@@ -73,7 +77,9 @@ export function TiptapEditor({
       }),
       Mention.configure({
         HTMLAttributes: { 
-          class: 'text-primary underline cursor-pointer hover:text-primary/80'
+          class: 'text-primary underline cursor-pointer hover:text-primary/80',
+          'data-mention-id': 'id',
+          'data-mention-slug': 'slug'
         },
         suggestion: {
           items: ({ query }) => {
@@ -139,10 +145,19 @@ export function TiptapEditor({
       onChange(editor.getHTML());
     },
     editorProps: {
+      ...editorProps,
       attributes: {
         class: 'prose-sm focus:outline-none min-h-[150px] max-w-none break-words w-full overflow-y-auto max-h-[500px] p-4 whitespace-pre-wrap',
       },
-      ...editorProps
+      handleClick: (view, pos, event) => {
+        const node = view.state.doc.nodeAt(pos);
+        if (node?.type.name === 'mention') {
+          const mentionSlug = node.attrs.slug;
+          if (mentionSlug && teamSlug) {
+            navigate(`/unity/team/${teamSlug}/members/${mentionSlug}`);
+          }
+        }
+      }
     },
   });
 

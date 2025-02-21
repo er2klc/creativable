@@ -13,7 +13,11 @@ export const MentionList = ({ items, command }: MentionListProps) => {
         <button
           key={item.id}
           className="relative flex w-full cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-          onClick={() => command(item)}
+          onClick={() => command({ 
+            id: item.id,
+            label: item.display_name,
+            slug: item.slug 
+          })}
         >
           <Avatar className="h-6 w-6 mr-2">
             <AvatarImage src={item.avatar_url} />
