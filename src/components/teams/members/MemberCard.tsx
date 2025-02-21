@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +11,9 @@ import { type Tables } from "@/integrations/supabase/types";
 import { useTeamPresence } from "../context/TeamPresenceContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { create } from "zustand";
+import { useState } from "react";
+import { AwardPointsDialog } from "./AwardPointsDialog";
+import { Award } from "lucide-react";
 
 interface TeamChatStore {
   isOpen: boolean;
@@ -36,9 +38,10 @@ interface MemberCardProps {
     };
   };
   currentUserLevel: number;
+  isAdmin: boolean;
 }
 
-export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
+export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProps) => {
   const { isOnline } = useTeamPresence();
   const memberIsOnline = isOnline(member.user_id);
   const points = member.points || { level: 0, points: 0 };
@@ -61,11 +64,10 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
     setOpen(true);
   };
 
+  const [isAwardPointsOpen, setIsAwardPointsOpen] = useState(false);
+
   return (
-    <Card 
-      className="overflow-hidden cursor-pointer transition-all duration-200 hover:shadow-md" 
-      onClick={handleCardClick}
-    >
+    <Card className="relative group">
       <div className="p-4">
         <div className="flex items-start justify-between mb-3">
           <div className="relative">
@@ -157,6 +159,28 @@ export const MemberCard = ({ member, currentUserLevel }: MemberCardProps) => {
             </Tooltip>
           </TooltipProvider>
         )}
+
+        {member.role !== 'owner' && isAdmin && (
+          <div className="flex gap-2 mt-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full flex items-center justify-center"
+              onClick={() => setIsAwardPointsOpen(true)}
+            >
+              <Award className="h-4 w-4 mr-2" />
+              Punkte vergeben
+            </Button>
+          </div>
+        )}
+
+        <AwardPointsDialog
+          isOpen={isAwardPointsOpen}
+          onClose={() => setIsAwardPointsOpen(false)}
+          memberId={member.id}
+          memberName={member.profile?.display_name || "Unbekannt"}
+          teamId={member.team_id}
+        />
       </div>
     </Card>
   );
