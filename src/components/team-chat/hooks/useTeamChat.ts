@@ -4,10 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { TeamMember, TeamMessage } from '../types';
 import { toast } from 'sonner';
+import { useTeamChatStore } from '@/store/useTeamChatStore';
 
 export const useTeamChat = () => {
   const [selectedUser, setSelectedUser] = useState<TeamMember | null>(null);
   const queryClient = useQueryClient();
+  const selectedUserId = useTeamChatStore((state) => state.selectedUserId);
 
   // Fetch team members
   const { data: teamMembers = [], isLoading: isLoadingMembers } = useQuery({
@@ -16,6 +18,7 @@ export const useTeamChat = () => {
       const { data: members, error } = await supabase
         .from('team_members')
         .select(`
+          id,
           user_id,
           profiles:user_id (
             id,
@@ -30,7 +33,7 @@ export const useTeamChat = () => {
       if (error) throw error;
 
       return members.map(m => ({
-        id: m.user_id,
+        id: m.user_id, // Hier verwenden wir user_id als Haupt-ID
         display_name: m.profiles.display_name,
         avatar_url: m.profiles.avatar_url,
         last_seen: m.profiles.last_seen,
@@ -38,6 +41,16 @@ export const useTeamChat = () => {
       })) as TeamMember[];
     }
   });
+
+  // Automatisch den Benutzer auswählen wenn selectedUserId gesetzt ist
+  useEffect(() => {
+    if (selectedUserId && teamMembers.length > 0) {
+      const userToSelect = teamMembers.find(member => member.id === selectedUserId);
+      if (userToSelect) {
+        setSelectedUser(userToSelect);
+      }
+    }
+  }, [selectedUserId, teamMembers]);
 
   // Fetch messages for selected user
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery({
@@ -110,7 +123,6 @@ export const useTeamChat = () => {
   };
 
   const selectUser = (user: TeamMember) => {
-    console.log('Selecting user:', user);
     setSelectedUser(user);
   };
 

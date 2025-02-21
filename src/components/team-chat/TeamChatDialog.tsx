@@ -8,7 +8,6 @@ import { TeamChatList } from "./TeamChatList";
 import { useTeamChat } from "./hooks/useTeamChat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { useTeamChatStore } from "@/store/useTeamChatStore";
 
 interface TeamChatDialogProps {
   open: boolean;
@@ -18,7 +17,6 @@ interface TeamChatDialogProps {
 export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
-  const selectedUserId = useTeamChatStore((state) => state.selectedUserId);
   
   const { 
     selectedUser,
@@ -28,16 +26,6 @@ export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
     selectUser,
     teamMembers 
   } = useTeamChat();
-
-  // Automatisch den vorausgewählten Benutzer setzen
-  useEffect(() => {
-    if (open && selectedUserId && teamMembers.length > 0) {
-      const userToSelect = teamMembers.find(member => member.id === selectedUserId);
-      if (userToSelect) {
-        selectUser(userToSelect);
-      }
-    }
-  }, [open, selectedUserId, teamMembers, selectUser]);
 
   const handleClose = () => {
     onOpenChange(false);

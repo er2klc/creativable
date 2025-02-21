@@ -45,6 +45,7 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
 
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Wir verwenden hier die user_id als eindeutige ID
     setSelectedUserId(member.user_id);
   };
 
