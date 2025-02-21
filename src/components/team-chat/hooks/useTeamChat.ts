@@ -5,16 +5,36 @@ import { supabase } from '@/integrations/supabase/client';
 import { TeamMember, TeamMessage } from '../types';
 import { toast } from 'sonner';
 import { useTeamChatStore } from '@/store/useTeamChatStore';
+import { useParams } from 'react-router-dom';
 
 export const useTeamChat = () => {
   const [selectedUser, setSelectedUser] = useState<TeamMember | null>(null);
   const queryClient = useQueryClient();
   const selectedUserId = useTeamChatStore((state) => state.selectedUserId);
+  const { teamSlug } = useParams();
+
+  // Get team ID from slug
+  const { data: team } = useQuery({
+    queryKey: ['team', teamSlug],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('teams')
+        .select('id, name')
+        .eq('slug', teamSlug)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!teamSlug
+  });
 
   // Fetch team members
   const { data: teamMembers = [], isLoading: isLoadingMembers } = useQuery({
-    queryKey: ['team-members'],
+    queryKey: ['team-members', team?.id],
     queryFn: async () => {
+      if (!team?.id) return [];
+
       const { data: members, error } = await supabase
         .from('team_members')
         .select(`
@@ -28,18 +48,20 @@ export const useTeamChat = () => {
             email
           )
         `)
+        .eq('team_id', team.id)
         .order('created_at');
 
       if (error) throw error;
 
       return members.map(m => ({
-        id: m.user_id, // Hier verwenden wir user_id als Haupt-ID
+        id: m.user_id,
         display_name: m.profiles.display_name,
         avatar_url: m.profiles.avatar_url,
         last_seen: m.profiles.last_seen,
         email: m.profiles.email
       })) as TeamMember[];
-    }
+    },
+    enabled: !!team?.id
   });
 
   // Automatisch den Benutzer auswählen wenn selectedUserId gesetzt ist
@@ -54,9 +76,9 @@ export const useTeamChat = () => {
 
   // Fetch messages for selected user
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery({
-    queryKey: ['team-messages', selectedUser?.id],
+    queryKey: ['team-messages', selectedUser?.id, team?.id],
     queryFn: async () => {
-      if (!selectedUser?.id) return [];
+      if (!selectedUser?.id || !team?.id) return [];
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
@@ -76,19 +98,20 @@ export const useTeamChat = () => {
             avatar_url
           )
         `)
+        .eq('team_id', team.id)
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
       return messages as TeamMessage[];
     },
-    enabled: !!selectedUser?.id
+    enabled: !!selectedUser?.id && !!team?.id
   });
 
   // Send message mutation
   const sendMessageMutation = useMutation({
     mutationFn: async (content: string) => {
-      if (!selectedUser?.id) throw new Error('No user selected');
+      if (!selectedUser?.id || !team?.id) throw new Error('No user or team selected');
 
       const { data: session } = await supabase.auth.getSession();
       if (!session.session) throw new Error('Not authenticated');
@@ -96,6 +119,7 @@ export const useTeamChat = () => {
       const message = {
         sender_id: session.session.user.id,
         receiver_id: selectedUser.id,
+        team_id: team.id,
         content,
         read: false
       };
@@ -110,7 +134,7 @@ export const useTeamChat = () => {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['team-messages', selectedUser?.id] });
+      queryClient.invalidateQueries({ queryKey: ['team-messages', selectedUser?.id, team?.id] });
     },
     onError: (error) => {
       console.error('Error sending message:', error);
@@ -128,7 +152,7 @@ export const useTeamChat = () => {
 
   // Set up real-time subscription
   useEffect(() => {
-    if (!selectedUser?.id) return;
+    if (!selectedUser?.id || !team?.id) return;
 
     const channel = supabase
       .channel('team-chat')
@@ -138,10 +162,10 @@ export const useTeamChat = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'team_direct_messages',
-          filter: `receiver_id=eq.${selectedUser.id}`
+          filter: `team_id=eq.${team.id},receiver_id=eq.${selectedUser.id}`
         },
         () => {
-          queryClient.invalidateQueries({ queryKey: ['team-messages', selectedUser.id] });
+          queryClient.invalidateQueries({ queryKey: ['team-messages', selectedUser.id, team.id] });
         }
       )
       .subscribe();
@@ -149,7 +173,7 @@ export const useTeamChat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [selectedUser?.id, queryClient]);
+  }, [selectedUser?.id, team?.id, queryClient]);
 
   return {
     selectedUser,
