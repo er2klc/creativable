@@ -112,7 +112,7 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
         </div>
 
         {/* Role Badge & Username */}
-        <div className="absolute -bottom-2 inset-x-0 flex flex-col items-center z-30">
+        <div className="absolute -bottom-1 inset-x-0 flex flex-col items-center z-30 pb-4">
           <Badge 
             className={cn(
               "px-4 py-1 shadow-lg",
@@ -129,7 +129,7 @@ export const MemberCard = ({ member, currentUserLevel, className }: MemberCardPr
         </div>
       </div>
 
-      <div className="absolute inset-x-0 bottom-0 p-6 bg-gradient-to-t from-[#333] via-[#222] to-transparent">
+      <div className="absolute inset-x-0 bottom-0 p-6 pt-8 bg-gradient-to-t from-[#333] via-[#222] to-transparent">
         <div className="space-y-2 mt-10">
           <div className="flex items-center justify-between pb-2">
             <h3 className="font-medium text-base text-white/90 truncate max-w-[90%] mx-auto">
