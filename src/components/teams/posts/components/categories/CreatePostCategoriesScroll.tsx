@@ -34,13 +34,14 @@ export const CreatePostCategoriesScroll = ({
     <BaseCategoryScroll className="border-b">
       {filteredCategories?.map((category) => {
         const IconComponent = category.icon ? iconMap[category.icon] : MessageCircle;
+        const defaultColor = "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]";
         return (
           <Badge
             key={category.id}
             variant="outline"
             className={cn(
               "cursor-pointer px-4 py-2 text-sm transition-colors whitespace-nowrap border-2 flex items-center gap-2 shrink-0",
-              category.color || "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]",
+              category.color || defaultColor,
               activeTab === category.slug ? "border-primary" : "border-transparent"
             )}
             onClick={() => onCategoryClick(category.slug)}

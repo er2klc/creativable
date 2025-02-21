@@ -19,6 +19,8 @@ export interface TeamCategory {
   }
 }
 
+const defaultColor = "bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]";
+
 export const useTeamCategories = (teamSlug?: string) => {
   return useQuery({
     queryKey: ['team-categories', teamSlug],
@@ -90,8 +92,8 @@ export const useTeamCategories = (teamSlug?: string) => {
           slug: category.slug,
           order_index: category.order_index,
           is_public: category.is_public ?? true,
-          icon: category.icon || 'MessageCircle',
-          color: category.color || 'bg-[#F2FCE2] hover:bg-[#E2ECD2] text-[#2A4A2A]',
+          icon: category.icon || 'message-circle',
+          color: category.color || defaultColor,
           settings: {
             size: settings?.size || 'small'
           },
