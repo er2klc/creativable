@@ -30,9 +30,9 @@ const getLevelColor = (level: number) => {
     5: "bg-[#FFDEE2] border-[#EBD0D4]",
     6: "bg-[#FFE4C4] border-[#EDC9A3]",
     7: "bg-[#E6E6FA] border-[#D8D8F0]",
-    8: "bg-[#F2FCE2] border-[#E2ECD2]", // Neues, sanfteres Grün
-    9: "bg-[#FEF7CD] border-[#EEE7BD]", // Neues, sanfteres Gelb
-    10: "bg-[#FEC6A1] border-[#EEB691]"  // Neues, sanfteres Gold
+    8: "bg-[#F2FCE2] border-[#E2ECD2]",
+    9: "bg-[#FEF7CD] border-[#EEE7BD]",
+    10: "bg-[#FEC6A1] border-[#EEB691]"
   };
   return colors[level as keyof typeof colors] || colors[0];
 };
@@ -71,7 +71,14 @@ export function LevelCard({
         
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>{label}</span>
-          <span>{membersCount} ({Math.round(percentage)}%)</span>
+          <div className="flex flex-col items-end">
+            <span>{membersCount} ({Math.round(percentage)}%)</span>
+            <span className="text-xs text-muted-foreground">
+              {level === 10 ? 
+                `Ab ${minPoints.toLocaleString()} Punkte` : 
+                `${minPoints.toLocaleString()}-${maxPoints.toLocaleString()} Punkte`}
+            </span>
+          </div>
         </div>
 
         {rewards.length > 0 && (
