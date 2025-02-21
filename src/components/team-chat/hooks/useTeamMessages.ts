@@ -66,18 +66,58 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
       const { data, error } = await supabase
         .from('team_direct_messages')
         .insert(message)
-        .select()
+        .select(`
+          *,
+          sender:sender_id (
+            id,
+            display_name,
+            avatar_url
+          ),
+          receiver:receiver_id (
+            id,
+            display_name,
+            avatar_url
+          )
+        `)
         .single();
 
       if (error) throw error;
       return data;
     },
+    onMutate: async (content) => {
+      // Optimistisches Update
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session?.user) return;
+
+      const optimisticMessage: TeamMessage = {
+        id: crypto.randomUUID(),
+        sender_id: session.session.user.id,
+        receiver_id: selectedUserId!,
+        team_id: teamId!,
+        content,
+        created_at: new Date().toISOString(),
+        read: false,
+        sender: {
+          id: session.session.user.id,
+          display_name: session.session.user.email?.split('@')[0] || 'User',
+          avatar_url: null
+        },
+        receiver: null
+      };
+
+      const previousMessages = queryClient.getQueryData<TeamMessage[]>(['team-messages', selectedUserId, teamId]) || [];
+      queryClient.setQueryData(['team-messages', selectedUserId, teamId], [...previousMessages, optimisticMessage]);
+
+      return { previousMessages };
+    },
+    onError: (error, variables, context) => {
+      if (context?.previousMessages) {
+        queryClient.setQueryData(['team-messages', selectedUserId, teamId], context.previousMessages);
+      }
+      toast.error('Fehler beim Senden der Nachricht');
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-messages', selectedUserId, teamId] });
-    },
-    onError: (error) => {
-      console.error('Error sending message:', error);
-      toast.error('Fehler beim Senden der Nachricht');
     }
   });
 
@@ -92,7 +132,7 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
           event: 'INSERT',
           schema: 'public',
           table: 'team_direct_messages',
-          filter: `team_id=eq.${teamId},receiver_id=eq.${selectedUserId}`
+          filter: `team_id=eq.${teamId}`
         },
         () => {
           queryClient.invalidateQueries({ queryKey: ['team-messages', selectedUserId, teamId] });
@@ -107,7 +147,7 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
 
   return {
     messages,
-    isLoading,
+    isLoading: false, // Wir setzen isLoading auf false, da wir optimistische Updates verwenden
     sendMessage: (content: string) => sendMessageMutation.mutate(content)
   };
 };

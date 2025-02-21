@@ -23,14 +23,6 @@ export const TeamChatMessages = ({ messages, scrollRef, isLoading }: TeamChatMes
     }
   }, [messages, scrollRef]);
 
-  if (isLoading) {
-    return (
-      <div className="flex-1 flex items-center justify-center">
-        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
-  }
-
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-4 text-center">
