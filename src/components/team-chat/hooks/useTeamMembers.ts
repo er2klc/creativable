@@ -33,11 +33,12 @@ export const useTeamMembers = (teamId?: string, currentUserId?: string) => {
         throw error;
       }
 
+      // Filter members (Level 3 oder höher, aber eigenen Account ausfiltern)
       const mappedMembers = members
         .filter(m => {
-          // Nur Mitglieder mit Level 3 oder höher, aber den aktuellen User nicht ausfiltern
           const level = m.points?.level || 0;
-          return level >= 3;
+          // Nur Mitglieder mit Level 3 oder höher UND nicht der aktuelle User
+          return level >= 3 && m.user_id !== currentUserId;
         })
         .map(m => ({
           id: m.user_id,

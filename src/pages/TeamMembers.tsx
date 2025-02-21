@@ -15,6 +15,7 @@ import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
   MEMBERS_QUERY, 
   MEMBERS_SNAP_QUERY_KEY,
@@ -110,12 +111,17 @@ const TeamMembers = () => {
     });
   }, [members, user?.id]);
 
+  // Find current user's member data
+  const currentUserMember = sortedMembers.find(member => member.id === user?.id);
+
   // Pagination
   const totalPages = Math.ceil(sortedMembers.length / MEMBERS_PER_PAGE);
-  const paginatedMembers = sortedMembers.slice(
-    (currentPage - 1) * MEMBERS_PER_PAGE,
-    currentPage * MEMBERS_PER_PAGE
-  );
+  const paginatedMembers = sortedMembers
+    .filter(member => member.id !== user?.id) // Filter out current user from grid
+    .slice(
+      (currentPage - 1) * MEMBERS_PER_PAGE,
+      currentPage * MEMBERS_PER_PAGE
+    );
 
   const isLoading = isTeamLoading || isLoadingMembers;
   const hasCachedData = members.length > 0;
@@ -123,7 +129,7 @@ const TeamMembers = () => {
   if (isLoading && !hasCachedData) {
     return (
       <div className="container py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[...Array(8)].map((_, i) => (
             <Card key={i} className="p-4">
               <div className="flex items-start justify-between mb-4">
@@ -154,24 +160,22 @@ const TeamMembers = () => {
           <div className="h-16 px-4 flex items-center">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <div 
-                    className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors"
-                    onClick={() => navigate(`/unity/team/${teamSlug}`)}
-                  >
-                    {teamData?.logo_url ? (
-                      <Avatar className="h-6 w-6">
-                        <AvatarImage src={teamData.logo_url} alt={teamData.name} />
-                        <AvatarFallback>{teamData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                      </Avatar>
-                    ) : null}
-                    <span>{teamData?.name}</span>
-                  </div>
-                  <span className="text-muted-foreground">/</span>
-                  <div className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    <span className="text-foreground">Members</span>
-                  </div>
+                <div 
+                  className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors"
+                  onClick={() => navigate(`/unity/${teamSlug}`)}
+                >
+                  {teamData?.logo_url ? (
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={teamData.logo_url} alt={teamData.name} />
+                      <AvatarFallback>{teamData.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  ) : null}
+                  <span>{teamData?.name}</span>
+                </div>
+                <span className="text-muted-foreground">/</span>
+                <div className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  <span className="text-foreground">Members</span>
                 </div>
               </div>
               <div className="w-[300px]">
@@ -183,7 +187,31 @@ const TeamMembers = () => {
         </div>
 
         <div className="container py-8 mt-16">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Current User Hero Section */}
+          {currentUserMember && (
+            <div className="mb-8 bg-gradient-to-r from-[#E5DEFF] to-[#F1F0FB] rounded-xl p-6 shadow-sm">
+              <div className="flex items-center gap-6">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={currentUserMember.profile?.avatar_url || ''} />
+                  <AvatarFallback>
+                    {currentUserMember.profile?.display_name?.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <h2 className="text-xl font-semibold">{currentUserMember.profile?.display_name}</h2>
+                  <div className="flex items-center gap-4 mt-2">
+                    <Badge variant="secondary">Level {currentUserMember.points?.level || 0}</Badge>
+                    <span className="text-sm text-muted-foreground">
+                      {currentUserMember.points?.points || 0} Punkte
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Member Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {paginatedMembers.map((member) => (
               <MemberCard 
                 key={member.id} 

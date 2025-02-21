@@ -24,7 +24,7 @@ interface MemberCardProps {
     };
   };
   currentUserLevel: number;
-  isAdmin: boolean;
+  isAdmin?: boolean;
 }
 
 export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProps) => {
@@ -36,6 +36,7 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
   const navigate = useNavigate();
   const { teamSlug } = useParams();
   const setSelectedUserId = useTeamChatStore((state) => state.setSelectedUserId);
+  const [isAwardPointsOpen, setIsAwardPointsOpen] = useState(false);
 
   const handleCardClick = () => {
     if (member.profile?.slug) {
@@ -45,32 +46,33 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
 
   const handleChatClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Wir verwenden hier die user_id als eindeutige ID
     setSelectedUserId(member.user_id);
   };
 
-  const [isAwardPointsOpen, setIsAwardPointsOpen] = useState(false);
-
   return (
-    <Card className="relative group cursor-pointer" onClick={handleCardClick}>
-      <div className="p-4">
-        <div className="flex items-start justify-between mb-3">
+    <Card 
+      className="relative group cursor-pointer overflow-hidden transition-all duration-200 hover:shadow-[0_4px_12px_rgba(0,0,0,0.08)] border border
+-gray-100"
+      onClick={handleCardClick}
+    >
+      <div className="p-6">
+        <div className="flex items-start justify-between mb-4">
           <div className="relative">
-            <Avatar className="h-16 w-16 border-2 border-background">
+            <Avatar className="h-16 w-16 border-2 border-white shadow-sm">
               <AvatarImage src={member.profile?.avatar_url} />
               <AvatarFallback>
                 {member.profile?.display_name?.substring(0, 2).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className={cn(
-              "absolute bottom-0 right-0 h-3 w-3 rounded-full border-2 border-background",
+              "absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white",
               memberIsOnline ? "bg-green-500 animate-pulse" : "bg-gray-300"
             )} />
           </div>
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <div className="bg-gradient-to-r from-primary/80 to-primary rounded-full h-8 w-8 flex items-center justify-center text-white font-medium">
+                <div className="bg-gradient-to-r from-primary/80 to-primary rounded-full h-8 w-8 flex items-center justify-center text-white font-medium shadow-sm">
                   {points.level}
                 </div>
               </TooltipTrigger>
@@ -82,16 +84,16 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
           </TooltipProvider>
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-base">{member.profile?.display_name}</h3>
+            <h3 className="font-medium text-base truncate">{member.profile?.display_name}</h3>
             <Badge variant={member.role === 'owner' ? "default" : "secondary"} className="ml-2">
               {member.role}
             </Badge>
           </div>
 
           {member.profile?.slug && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground truncate">
               @{member.profile.slug}
             </p>
           )}
@@ -114,7 +116,7 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
 
         {canChat && (
           <Button
-            className="w-full mt-3"
+            className="w-full mt-4"
             size="sm"
             variant="secondary"
             onClick={handleChatClick}
@@ -128,7 +130,7 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
             <Tooltip>
               <TooltipTrigger>
                 <Button
-                  className="w-full mt-3"
+                  className="w-full mt-4"
                   size="sm"
                   variant="secondary"
                   disabled
