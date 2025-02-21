@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -67,25 +68,25 @@ export const useTeamChat = () => {
         .from('team_members')
         .select(`
           user_id,
+          points:team_member_points!inner (
+            level
+          ),
           profiles:user_id (
             id,
             display_name,
             avatar_url,
             last_seen,
             email
-          ),
-          points:team_member_points!inner (
-            level
           )
         `)
         .eq('team_id', team.id)
-        .gte('team_member_points.level', 3)
+        .gte('points.level', 3)
         .order('points.level', { ascending: false });
 
       if (error) throw error;
 
       const mappedMembers = members
-        .filter(m => m.user_id !== currentUserSession?.user?.id) // Filter out current user
+        .filter(m => m.user_id !== currentUserSession?.user?.id)
         .map(m => ({
           id: m.user_id,
           display_name: m.profiles.display_name,
@@ -99,16 +100,6 @@ export const useTeamChat = () => {
     },
     enabled: !!team?.id
   });
-
-  // Select user when selectedUserId changes
-  useEffect(() => {
-    if (selectedUserId && teamMembers.length > 0) {
-      const userToSelect = teamMembers.find(member => member.id === selectedUserId);
-      if (userToSelect) {
-        setSelectedUser(userToSelect);
-      }
-    }
-  }, [selectedUserId, teamMembers]);
 
   // Fetch messages for selected user
   const { data: messages = [], isLoading: isLoadingMessages } = useQuery({
