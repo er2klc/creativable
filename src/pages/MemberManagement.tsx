@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,6 +14,7 @@ import { useState, useEffect } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { AwardPointsDialog } from "@/components/teams/members/AwardPointsDialog";
 import { toast } from "sonner";
+import { getAvatarUrl } from "@/lib/supabase-utils";
 import {
   Table,
   TableBody,
@@ -30,7 +32,6 @@ const MemberManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedMember, setSelectedMember] = useState<{id: string; name: string; teamId: string} | null>(null);
-  const [showSearch, setShowSearch] = useState(false);
 
   const { data: team } = useQuery({
     queryKey: ['team', teamSlug],
@@ -77,7 +78,7 @@ const MemberManagement = () => {
     queryFn: async () => {
       if (!team?.id) return [];
 
-      const query = supabase
+      let query = supabase
         .from('team_members')
         .select(`
           id,
@@ -101,8 +102,7 @@ const MemberManagement = () => {
         .eq('team_id', team.id);
 
       if (debouncedSearch) {
-        const searchTerm = debouncedSearch.toLowerCase();
-        query.or(`profiles.display_name.ilike.%${searchTerm}%,profiles.email.ilike.%${searchTerm}%`);
+        query = query.or(`profiles.display_name.ilike.%${debouncedSearch}%,profiles.email.ilike.%${debouncedSearch}%`);
       }
 
       const { data, error } = await query.order('joined_at', { ascending: false });
@@ -140,15 +140,8 @@ const MemberManagement = () => {
   });
 
   const handleAwardPoints = async () => {
-    const previousMembers = queryClient.getQueryData(['team-members', team?.id, debouncedSearch]);
-    
-    try {
-      await queryClient.invalidateQueries({ queryKey: ['team-members'] });
-      toast.success("Punkte wurden erfolgreich vergeben!");
-    } catch (error) {
-      queryClient.setQueryData(['team-members', team?.id, debouncedSearch], previousMembers);
-      toast.error("Fehler beim Vergeben der Punkte");
-    }
+    await queryClient.invalidateQueries({ queryKey: ['team-members'] });
+    toast.success("Punkte wurden erfolgreich vergeben!");
   };
 
   const isAdmin = currentMember?.role === 'admin' || currentMember?.role === 'owner';
@@ -173,6 +166,16 @@ const MemberManagement = () => {
                 className="flex items-center gap-2 cursor-pointer hover:text-foreground transition-colors"
                 onClick={() => navigate(`/unity/${teamSlug}`)}
               >
+                {team?.logo_url ? (
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={getAvatarUrl(team.logo_url)} alt={team.name} />
+                    <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                ) : (
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback>{team.name?.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                )}
                 {team?.name}
               </div>
               <span className="text-muted-foreground">/</span>
@@ -189,32 +192,15 @@ const MemberManagement = () => {
       <div className="container py-8 mt-16">
         <div className="flex items-center justify-between mb-6">
           <div className="relative">
-            {showSearch ? (
-              <div className="flex items-center gap-2">
-                <Search className="h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Mitglieder suchen..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64"
-                  autoFocus
-                  onBlur={() => {
-                    if (!searchQuery) {
-                      setShowSearch(false);
-                    }
-                  }}
-                />
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowSearch(true)}
-              >
-                <Search className="h-4 w-4 mr-2" />
-                Suchen
-              </Button>
-            )}
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Mitglieder suchen..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-64"
+              />
+            </div>
           </div>
         </div>
 
@@ -254,9 +240,7 @@ const MemberManagement = () => {
                       </Avatar>
                       <div>
                         <div className="font-medium">{member.profile?.display_name}</div>
-                        {showSearch && (
-                          <div className="text-sm text-muted-foreground">{member.profile?.email}</div>
-                        )}
+                        <div className="text-sm text-muted-foreground">{member.profile?.email}</div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -278,7 +262,7 @@ const MemberManagement = () => {
                         variant="outline"
                         size="sm"
                         onClick={() => setSelectedMember({
-                          id: member.id,
+                          id: member.user_id,
                           name: member.profile?.display_name || "Unbekannt",
                           teamId: member.team_id
                         })}

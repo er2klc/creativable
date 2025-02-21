@@ -14,9 +14,17 @@ interface AwardPointsDialogProps {
   memberId: string;
   memberName: string;
   teamId: string;
+  onSuccess?: () => Promise<void>;
 }
 
-export function AwardPointsDialog({ isOpen, onClose, memberId, memberName, teamId }: AwardPointsDialogProps) {
+export function AwardPointsDialog({ 
+  isOpen, 
+  onClose, 
+  memberId, 
+  memberName, 
+  teamId,
+  onSuccess 
+}: AwardPointsDialogProps) {
   const [points, setPoints] = useState("");
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,10 +46,10 @@ export function AwardPointsDialog({ isOpen, onClose, memberId, memberName, teamI
     setIsSubmitting(true);
     try {
       // Award points using the existing function
-      await supabase.rpc('award_team_points', {
+      const { error: pointsError } = await supabase.rpc('award_team_points', {
         p_team_id: teamId,
         p_user_id: memberId,
-        p_event_type: 'admin_award',
+        p_event_type: 'admin_points',
         p_points: pointsNum,
         p_metadata: {
           reason,
@@ -49,18 +57,26 @@ export function AwardPointsDialog({ isOpen, onClose, memberId, memberName, teamI
         }
       });
 
+      if (pointsError) throw pointsError;
+
       // Create notification for the user
-      await supabase.from('notifications').insert({
+      const { error: notificationError } = await supabase.from('notifications').insert({
         user_id: memberId,
         title: 'Punkte erhalten! 🎉',
         content: `Ein Admin hat dir ${pointsNum} Punkte vergeben: "${reason}"`,
-        type: 'points_awarded',
+        type: 'admin_points',
         metadata: {
           points: pointsNum,
           reason,
           team_id: teamId
         }
       });
+
+      if (notificationError) throw notificationError;
+
+      if (onSuccess) {
+        await onSuccess();
+      }
 
       toast.success("Punkte erfolgreich vergeben");
       onClose();
