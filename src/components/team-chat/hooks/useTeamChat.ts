@@ -30,7 +30,7 @@ export const useTeamChat = () => {
       if (error) throw error;
 
       return members.map(m => ({
-        id: m.profiles.id,
+        id: m.user_id, // Wichtig: Wir verwenden hier user_id statt profiles.id
         display_name: m.profiles.display_name,
         avatar_url: m.profiles.avatar_url,
         last_seen: m.profiles.last_seen,
@@ -44,6 +44,9 @@ export const useTeamChat = () => {
     queryKey: ['team-messages', selectedUser?.id],
     queryFn: async () => {
       if (!selectedUser?.id) return [];
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
       const { data: messages, error } = await supabase
         .from('team_direct_messages')
@@ -60,7 +63,7 @@ export const useTeamChat = () => {
             avatar_url
           )
         `)
-        .or(`sender_id.eq.${selectedUser.id},receiver_id.eq.${selectedUser.id}`)
+        .or(`and(sender_id.eq.${user.id},receiver_id.eq.${selectedUser.id}),and(sender_id.eq.${selectedUser.id},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
@@ -107,6 +110,7 @@ export const useTeamChat = () => {
   };
 
   const selectUser = (user: TeamMember) => {
+    console.log('Selecting user:', user); // Debug log
     setSelectedUser(user);
   };
 

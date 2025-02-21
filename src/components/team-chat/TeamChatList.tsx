@@ -19,7 +19,7 @@ export const TeamChatList = ({ members, selectedUserId, onSelectUser }: TeamChat
   return (
     <div className="w-[280px] border-r flex flex-col">
       <div className="p-2 border-b">
-        <h3 className="text-sm font-medium px-2">Team Mitglieder</h3>
+        <h3 className="text-sm font-semibold px-2">Team Mitglieder</h3>
       </div>
       <ScrollArea className="flex-1">
         <div className="p-2 space-y-1">
