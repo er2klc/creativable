@@ -1,3 +1,4 @@
+
 import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -30,7 +31,6 @@ const TeamMembers = () => {
   const { data: profile } = useProfile();
   const user = useUser();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data: teamData, isLoading: isTeamLoading } = useQuery({
@@ -114,6 +114,12 @@ const TeamMembers = () => {
   }, [members, user?.id]);
 
   const currentUserMember = sortedMembers.find(member => member.user_id === user?.id);
+
+  // Calculate total pages
+  const totalPages = useMemo(() => {
+    const totalMembers = sortedMembers.filter(member => member.user_id !== user?.id).length;
+    return Math.ceil(totalMembers / MEMBERS_PER_PAGE);
+  }, [sortedMembers, user?.id]);
 
   const isLoading = isTeamLoading || isLoadingMembers;
   const hasCachedData = members.length > 0;
