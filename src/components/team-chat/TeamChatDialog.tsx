@@ -1,6 +1,6 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { TeamChatHeader } from "./TeamChatHeader";
 import { TeamChatMessages } from "./TeamChatMessages";
 import { TeamChatInput } from "./TeamChatInput";
@@ -8,6 +8,7 @@ import { TeamChatList } from "./TeamChatList";
 import { useTeamChat } from "./hooks/useTeamChat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { useTeamChatStore } from "@/store/useTeamChatStore";
 
 interface TeamChatDialogProps {
   open: boolean;
@@ -17,6 +18,8 @@ interface TeamChatDialogProps {
 export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const selectedUserId = useTeamChatStore((state) => state.selectedUserId);
+  
   const { 
     selectedUser,
     messages,
@@ -25,6 +28,16 @@ export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
     selectUser,
     teamMembers 
   } = useTeamChat();
+
+  // Automatisch den vorausgewählten Benutzer setzen
+  useEffect(() => {
+    if (open && selectedUserId && teamMembers.length > 0) {
+      const userToSelect = teamMembers.find(member => member.id === selectedUserId);
+      if (userToSelect) {
+        selectUser(userToSelect);
+      }
+    }
+  }, [open, selectedUserId, teamMembers, selectUser]);
 
   const handleClose = () => {
     onOpenChange(false);
@@ -58,7 +71,7 @@ export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
                   scrollRef={scrollRef}
                   isLoading={isLoading} 
                 />
-                <TeamChatInput onSendMessage={sendMessage} />
+                <TeamChatInput onSendMessage={sendMessage} autoFocus={true} />
               </>
             ) : (
               <div className="flex-1 flex items-center justify-center">

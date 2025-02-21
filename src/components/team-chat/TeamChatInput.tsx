@@ -1,15 +1,23 @@
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SendHorizontal } from "lucide-react";
 
 interface TeamChatInputProps {
   onSendMessage: (content: string) => void;
+  autoFocus?: boolean;
 }
 
-export const TeamChatInput = ({ onSendMessage }: TeamChatInputProps) => {
+export const TeamChatInput = ({ onSendMessage, autoFocus = false }: TeamChatInputProps) => {
   const [message, setMessage] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (autoFocus && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [autoFocus]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +31,7 @@ export const TeamChatInput = ({ onSendMessage }: TeamChatInputProps) => {
     <form onSubmit={handleSubmit} className="border-t p-4 bg-background">
       <div className="flex items-center gap-2">
         <Input
+          ref={inputRef}
           placeholder="Schreibe eine Nachricht..."
           value={message}
           onChange={(e) => setMessage(e.target.value)}
@@ -34,4 +43,4 @@ export const TeamChatInput = ({ onSendMessage }: TeamChatInputProps) => {
       </div>
     </form>
   );
-};
+}

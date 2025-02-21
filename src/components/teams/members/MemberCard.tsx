@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -133,7 +132,11 @@ export const MemberCard = ({ member, currentUserLevel, isAdmin }: MemberCardProp
             className="w-full mt-3"
             size="sm"
             variant="secondary"
-            onClick={handleChatClick}
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedUserId(member.user_id);
+              setOpen(true);
+            }}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
             Nachricht senden
