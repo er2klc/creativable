@@ -1,6 +1,6 @@
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -13,6 +13,7 @@ import { Award } from "lucide-react";
 import { useState } from "react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { AwardPointsDialog } from "@/components/teams/members/AwardPointsDialog";
+import { toast } from "sonner";
 import {
   Table,
   TableBody,
@@ -26,9 +27,11 @@ const MemberManagement = () => {
   const { teamSlug } = useParams();
   const user = useUser();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 300);
   const [selectedMember, setSelectedMember] = useState<{id: string; name: string; teamId: string} | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
 
   const { data: team } = useQuery({
     queryKey: ['team', teamSlug],
@@ -74,7 +77,7 @@ const MemberManagement = () => {
         .eq('team_id', team.id);
 
       if (debouncedSearch) {
-        query.filter('profile.display_name', 'ilike', `%${debouncedSearch}%`);
+        query.or(`profile.display_name.ilike.%${debouncedSearch}%,profile.email.ilike.%${debouncedSearch}%`);
       }
 
       const { data, error } = await query.order('joined_at', { ascending: false });
@@ -104,6 +107,11 @@ const MemberManagement = () => {
     },
     enabled: !!team?.id && !!user?.id
   });
+
+  const handleAwardPoints = async () => {
+    await queryClient.invalidateQueries({ queryKey: ['team-members'] });
+    toast.success("Punkte wurden erfolgreich vergeben!");
+  };
 
   const isAdmin = currentMember?.role === 'admin' || currentMember?.role === 'owner';
 
@@ -141,15 +149,34 @@ const MemberManagement = () => {
       </div>
 
       <div className="container py-8 mt-16">
-        <div className="mb-6">
+        <div className="flex items-center justify-between mb-6">
           <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Mitglieder suchen..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 max-w-md"
-            />
+            {showSearch ? (
+              <div className="flex items-center gap-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Mitglieder suchen..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-64"
+                  autoFocus
+                  onBlur={() => {
+                    if (!searchQuery) {
+                      setShowSearch(false);
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSearch(true)}
+              >
+                <Search className="h-4 w-4 mr-2" />
+                Suchen
+              </Button>
+            )}
           </div>
         </div>
 
@@ -189,7 +216,9 @@ const MemberManagement = () => {
                       </Avatar>
                       <div>
                         <div className="font-medium">{member.profile?.display_name}</div>
-                        <div className="text-sm text-muted-foreground">{member.profile?.email}</div>
+                        {showSearch && (
+                          <div className="text-sm text-muted-foreground">{member.profile?.email}</div>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -207,20 +236,18 @@ const MemberManagement = () => {
                       {member.points?.[0]?.points || 0}
                     </TableCell>
                     <TableCell className="text-right">
-                      {member.role !== 'owner' && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedMember({
-                            id: member.id,
-                            name: member.profile?.display_name || "Unbekannt",
-                            teamId: member.team_id
-                          })}
-                        >
-                          <Award className="h-4 w-4 mr-2" />
-                          Punkte vergeben
-                        </Button>
-                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedMember({
+                          id: member.id,
+                          name: member.profile?.display_name || "Unbekannt",
+                          teamId: member.team_id
+                        })}
+                      >
+                        <Award className="h-4 w-4 mr-2" />
+                        Punkte vergeben
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -236,6 +263,7 @@ const MemberManagement = () => {
             memberId={selectedMember.id}
             memberName={selectedMember.name}
             teamId={selectedMember.teamId}
+            onSuccess={handleAwardPoints}
           />
         )}
       </div>
