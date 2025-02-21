@@ -40,3 +40,7 @@ export const getTeamLeaderboardUrl = (options: TeamNavigationOptions): string =>
 export const getTeamPulseUrl = (options: TeamNavigationOptions): string => {
   return `/unity/${options.teamSlug}/pulse`;
 };
+
+export const getTeamMemberManagementUrl = (options: TeamNavigationOptions): string => {
+  return `/unity/${options.teamSlug}/member-management`;
+};

@@ -7,7 +7,8 @@ import {
   getTeamPostsUrl,
   getTeamCalendarUrl,
   getTeamLeaderboardUrl,
-  getTeamPulseUrl
+  getTeamPulseUrl,
+  getTeamMemberManagementUrl
 } from '@/lib/navigation/team-navigation';
 
 export const useTeamNavigation = () => {
@@ -37,6 +38,10 @@ export const useTeamNavigation = () => {
     navigate(getTeamPulseUrl(options));
   };
 
+  const navigateToMemberManagement = (options: TeamNavigationOptions) => {
+    navigate(getTeamMemberManagementUrl(options));
+  };
+
   return {
     navigateToTeam,
     navigateToMembers,
@@ -44,5 +49,6 @@ export const useTeamNavigation = () => {
     navigateToCalendar,
     navigateToLeaderboard,
     navigateToPulse,
+    navigateToMemberManagement,
   };
 };

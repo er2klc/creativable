@@ -9,6 +9,7 @@ import { PostsAndDiscussions } from "@/components/teams/posts/PostsAndDiscussion
 import TeamCalendar from "@/pages/TeamCalendar";
 import MemberProfile from "@/pages/MemberProfile";
 import TeamMembers from "@/pages/TeamMembers";
+import MemberManagement from "@/pages/MemberManagement";
 
 export const platformRoutes = [
   {
@@ -30,6 +31,11 @@ export const platformRoutes = [
     path: "/unity/:teamSlug/members/:memberSlug",
     element: <MemberProfile />,
     label: "Member Profile",
+  },
+  {
+    path: "/unity/:teamSlug/member-management",
+    element: <MemberManagement />,
+    label: "Member Management",
   },
   {
     path: "/unity/:teamSlug/posts",

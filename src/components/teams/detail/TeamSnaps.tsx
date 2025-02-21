@@ -36,6 +36,7 @@ export const TeamSnaps = ({
     navigateToPosts,
     navigateToLeaderboard,
     navigateToMembers,
+    navigateToMemberManagement
   } = useTeamNavigation();
 
   const currentTeamSlug = teamSlug || routeTeamSlug;
@@ -60,6 +61,9 @@ export const TeamSnaps = ({
         break;
       case "members":
         navigateToMembers(navigationOptions);
+        break;
+      case "member-management":
+        navigateToMemberManagement(navigationOptions);
         break;
       default:
         navigateToPosts({ ...navigationOptions, postSlug: snapId });
