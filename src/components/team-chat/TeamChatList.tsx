@@ -18,7 +18,7 @@ export const TeamChatList = ({
   selectedUserId, 
   onSelectUser, 
   currentUserLevel,
-  unreadMessagesByUser 
+  unreadMessagesByUser = {} // Standardwert hinzufügen
 }: TeamChatListProps) => {
   if (!currentUserLevel || currentUserLevel < 3) {
     return (
@@ -52,7 +52,7 @@ export const TeamChatList = ({
               <span className="text-sm font-medium">
                 {member.display_name}
               </span>
-              {unreadMessagesByUser[member.id] > 0 && (
+              {(unreadMessagesByUser[member.id] || 0) > 0 && ( // Sicherer Zugriff
                 <Badge 
                   variant="destructive" 
                   className="mt-1 text-xs h-5 min-w-[20px] flex items-center justify-center"
