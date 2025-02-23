@@ -16,7 +16,6 @@ interface TeamChatStore {
   setLastTeamId: (teamId: string | null) => void;
   setUnreadMessageCount: (teamId: string, userId: string, count: number) => void;
   clearUnreadMessages: (teamId: string, userId: string) => void;
-  // Helper function to open chat with team context
   openTeamChat: (teamId: string, userId?: string) => void;
 }
 

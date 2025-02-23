@@ -4,6 +4,7 @@ import { DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { TeamMember } from "./types";
+import { TeamSwitcher } from "./TeamSwitcher";
 
 interface TeamChatHeaderProps {
   onClose: () => void;
@@ -14,8 +15,11 @@ export const TeamChatHeader = ({ onClose, selectedUser }: TeamChatHeaderProps) =
   return (
     <div className="flex flex-col">
       <div className="flex items-center gap-3 p-2">
-        {selectedUser ? (
+        <TeamSwitcher />
+        
+        {selectedUser && (
           <>
+            <span className="text-muted-foreground">/</span>
             <Avatar className="h-8 w-8">
               <AvatarImage src={selectedUser.avatar_url} />
               <AvatarFallback>
@@ -26,11 +30,9 @@ export const TeamChatHeader = ({ onClose, selectedUser }: TeamChatHeaderProps) =
               {selectedUser.display_name}
             </DialogTitle>
           </>
-        ) : (
-          <DialogTitle className="flex-1">Team Chat</DialogTitle>
         )}
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 ml-auto">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
