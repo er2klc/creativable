@@ -65,6 +65,54 @@ export function TeamSwitcher() {
     );
   }
 
+  const renderTeamList = () => {
+    if (isLoading) return <CommandEmpty>Lädt Teams...</CommandEmpty>;
+    if (teams.length === 0) return <CommandEmpty>Keine Teams gefunden.</CommandEmpty>;
+
+    return (
+      <CommandGroup>
+        {teams.map((team) => {
+          const unreadCount = unreadMessagesByTeam[team.id]?.totalCount || 0;
+          
+          return (
+            <CommandItem
+              key={team.id}
+              value={team.name}
+              onSelect={() => {
+                setSelectedTeamId(team.id);
+                setOpen(false);
+              }}
+            >
+              <div className="flex items-center gap-2 flex-1">
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={team.logo_url || ""} />
+                  <AvatarFallback>
+                    {team.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <span>{team.name}</span>
+              </div>
+              {unreadCount > 0 && (
+                <Badge 
+                  variant="secondary" 
+                  className="ml-2"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
+              <Check
+                className={cn(
+                  "ml-auto h-4 w-4",
+                  selectedTeamId === team.id ? "opacity-100" : "opacity-0"
+                )}
+              />
+            </CommandItem>
+          );
+        })}
+      </CommandGroup>
+    );
+  };
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
@@ -96,47 +144,7 @@ export function TeamSwitcher() {
       <PopoverContent className="w-[200px] p-0">
         <Command>
           <CommandInput placeholder="Team suchen..." />
-          <CommandEmpty>Kein Team gefunden.</CommandEmpty>
-          <CommandGroup>
-            {teams.map((team) => {
-              const unreadCount = unreadMessagesByTeam[team.id]?.totalCount || 0;
-              
-              return (
-                <CommandItem
-                  key={team.id}
-                  value={team.name}
-                  onSelect={() => {
-                    setSelectedTeamId(team.id);
-                    setOpen(false);
-                  }}
-                >
-                  <div className="flex items-center gap-2 flex-1">
-                    <Avatar className="h-5 w-5">
-                      <AvatarImage src={team.logo_url || ""} />
-                      <AvatarFallback>
-                        {team.name.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span>{team.name}</span>
-                  </div>
-                  {unreadCount > 0 && (
-                    <Badge 
-                      variant="secondary" 
-                      className="ml-2"
-                    >
-                      {unreadCount}
-                    </Badge>
-                  )}
-                  <Check
-                    className={cn(
-                      "ml-auto h-4 w-4",
-                      selectedTeamId === team.id ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                </CommandItem>
-              );
-            })}
-          </CommandGroup>
+          {renderTeamList()}
         </Command>
       </PopoverContent>
     </Popover>
