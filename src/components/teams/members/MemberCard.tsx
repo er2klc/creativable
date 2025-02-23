@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,7 @@ import { useTeamPresence } from "../context/TeamPresenceContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTeamChatStore } from "@/store/useTeamChatStore";
 import { useUser } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MemberCardProps {
   member: Tables<"team_members"> & {
@@ -38,6 +40,8 @@ export const MemberCard = ({
   const user = useUser();
   const isCurrentUser = user?.id === member.user_id;
   const canChat = !isCurrentUser && currentUserLevel >= 3 && member.points?.level >= 3;
+  const memberIsOnline = isOnline(member.user_id);
+  const lastSeen = member.profile?.last_seen;
 
   const handleCardClick = () => {
     if (member.profile?.slug) {
