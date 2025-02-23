@@ -53,4 +53,4 @@ export const TeamChatHeader = ({ onClose, selectedUser }: TeamChatHeaderProps) =
       <div className="h-px bg-border" />
     </div>
   );
-};
+}

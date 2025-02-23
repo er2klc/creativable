@@ -51,6 +51,7 @@ export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
             selectedUserId={selectedUser?.id}
             onSelectUser={selectUser}
             currentUserLevel={currentUserLevel}
+            unreadMessagesByUser={{}}
           />
           
           <div className="flex-1 flex flex-col min-w-0 border-l">
