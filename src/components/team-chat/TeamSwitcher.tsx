@@ -90,7 +90,7 @@ export function TeamSwitcher() {
               key={team.id}
               value={team.id}
               className={cn(
-                "flex items-center justify-between py-3 px-4",
+                "flex items-center justify-between py-3 px-4 [&>span:first-child]:hidden",
                 isSelected && "bg-accent"
               )}
             >
@@ -105,14 +105,12 @@ export function TeamSwitcher() {
               </div>
               <div className="flex items-center gap-3 shrink-0">
                 {unreadCount > 0 && (
-                  <Badge 
-                    variant="secondary"
-                  >
+                  <Badge variant="secondary">
                     {unreadCount}
                   </Badge>
                 )}
                 {isSelected && (
-                  <Check className="h-4 w-4 text-primary" />
+                  <Check className="h-4 w-4 text-primary shrink-0" />
                 )}
               </div>
             </SelectItem>
