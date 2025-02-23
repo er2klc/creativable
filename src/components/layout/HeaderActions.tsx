@@ -44,8 +44,8 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const { data: profile } = useProfile();
   const teamChatOpen = useTeamChatStore((state) => state.isOpen);
-  const setTeamChatOpen = useTeamChatStore((state) => state.setOpen);
   const openTeamChat = useTeamChatStore((state) => state.openTeamChat);
+  const setTeamChatOpen = useTeamChatStore((state) => state.setOpen);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -126,13 +126,15 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
     refetchInterval: 10000
   });
 
-  const handleChatClick = (team?: TeamWithUnreadCount) => {
-    if (team) {
-      navigate(getTeamUrl(team.slug));
-      openTeamChat(team.id);
-    } else {
-      setTeamChatOpen(true);
+  const handleChatClick = () => {
+    // If there are teams with unread messages, open the one with most unread messages
+    const teamWithMostUnread = teamsWithUnreadMessages[0];
+    if (teamWithMostUnread) {
+      openTeamChat(teamWithMostUnread.id);
     }
+    
+    // Open the chat dialog regardless
+    setTeamChatOpen(true);
   };
 
   const totalUnreadMessages = teamsWithUnreadMessages.reduce(
@@ -161,61 +163,22 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
           )}
         </Button>
 
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={handleChatClick}
+        >
+          <MessageCircle className="h-5 w-5" />
+          {totalUnreadMessages > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
             >
-              <MessageCircle className="h-5 w-5" />
-              {totalUnreadMessages > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  {totalUnreadMessages}
-                </Badge>
-              )}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-64">
-            {teamsWithUnreadMessages.map((team) => (
-              <DropdownMenuItem 
-                key={team.id}
-                onClick={() => handleChatClick(team)}
-                className="flex items-center justify-between"
-              >
-                <div className="flex items-center gap-2">
-                  {team.logo_url ? (
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage src={getAvatarUrl(team.logo_url)} alt={team.name} />
-                      <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  ) : (
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
-                    </Avatar>
-                  )}
-                  <span className="truncate">{team.name}</span>
-                </div>
-                {team.unread_count > 0 && (
-                  <Badge variant="secondary" className="ml-2">
-                    {team.unread_count}
-                  </Badge>
-                )}
-              </DropdownMenuItem>
-            ))}
-            {teamsWithUnreadMessages.length === 0 && (
-              <DropdownMenuItem
-                onClick={() => handleChatClick()}
-                className="flex items-center justify-center text-muted-foreground"
-              >
-                Keine ungelesenen Nachrichten
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {totalUnreadMessages}
+            </Badge>
+          )}
+        </Button>
 
         <div className="h-6 w-px bg-gray-200" />
         <DropdownMenu>
