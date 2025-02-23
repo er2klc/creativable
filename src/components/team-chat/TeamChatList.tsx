@@ -33,16 +33,18 @@ export const TeamChatList = ({
     );
   }
 
-  // Sortiere die Mitglieder nach Online-Status, Level und Namen
+  // Sort members by online status, level, and name
   const sortedMembers = [...members].sort((a, b) => {
-    // Online Status (Online zuerst)
-    if (isOnline(a.id) && !isOnline(b.id)) return -1;
-    if (!isOnline(a.id) && isOnline(b.id)) return 1;
+    // Online status (online first)
+    const aOnline = isOnline(a.id);
+    const bOnline = isOnline(b.id);
+    if (aOnline && !bOnline) return -1;
+    if (!aOnline && bOnline) return 1;
     
-    // Level (höher zuerst)
+    // Level (higher first)
     if (a.level !== b.level) return b.level - a.level;
     
-    // Alphabetisch nach Namen
+    // Alphabetically by name
     return (a.display_name || '').localeCompare(b.display_name || '');
   });
 
@@ -75,6 +77,9 @@ export const TeamChatList = ({
             <div className="flex flex-col items-start flex-1">
               <span className="text-sm font-medium">
                 {member.display_name}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Level {member.level}
               </span>
               {(unreadMessagesByUser[member.id] || 0) > 0 && (
                 <Badge 
