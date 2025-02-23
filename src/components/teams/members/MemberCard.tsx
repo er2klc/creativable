@@ -14,7 +14,7 @@ import { useTeamChatStore } from "@/store/useTeamChatStore";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useChatParticipants } from "@/components/team-chat/hooks/useChatParticipants";
-import { toast } from "react-toastify";
+import { toast } from "sonner";
 
 interface MemberCardProps {
   member: Tables<"team_members"> & {
