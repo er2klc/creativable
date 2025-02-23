@@ -69,9 +69,9 @@ export const ChatButton = () => {
       teamId = lastTeamId;
     }
 
-    // If we have a team ID, set it and open chat
+    // If we have a team ID, open team chat directly
     if (teamId) {
-      setSelectedTeamId(teamId);
+      openTeamChat(teamId);
     }
 
     setIsOpen(true);
