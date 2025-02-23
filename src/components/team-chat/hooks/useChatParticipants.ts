@@ -7,6 +7,7 @@ import { useTeamChatStore } from '@/store/useTeamChatStore';
 export const useChatParticipants = (teamId?: string) => {
   const queryClient = useQueryClient();
   const { openTeamChat } = useTeamChatStore();
+  const user = supabase.auth.user?.();
 
   const { data: participants = [], isLoading } = useQuery({
     queryKey: ['chat-participants', teamId],
@@ -25,7 +26,8 @@ export const useChatParticipants = (teamId?: string) => {
             email
           )
         `)
-        .eq('team_id', teamId);
+        .eq('team_id', teamId)
+        .eq('user_id', user?.id);
 
       if (error) {
         toast.error('Fehler beim Laden der Chat-Partner');
@@ -40,7 +42,7 @@ export const useChatParticipants = (teamId?: string) => {
         email: p.profiles.email
       }));
     },
-    enabled: !!teamId
+    enabled: !!teamId && !!user?.id
   });
 
   const addParticipant = useMutation({
@@ -49,7 +51,7 @@ export const useChatParticipants = (teamId?: string) => {
         .from('team_chat_participants')
         .insert([{
           team_id: teamId,
-          user_id: (await supabase.auth.getUser()).data.user?.id,
+          user_id: user?.id,
           participant_id: participantId
         }]);
 
@@ -63,6 +65,7 @@ export const useChatParticipants = (teamId?: string) => {
     onSuccess: (_, { teamId, participantId }) => {
       queryClient.invalidateQueries({ queryKey: ['chat-participants', teamId] });
       openTeamChat(teamId, participantId);
+      toast.success('Chat geöffnet');
     },
     onError: () => {
       toast.error('Fehler beim Hinzufügen des Chat-Partners');
@@ -75,7 +78,8 @@ export const useChatParticipants = (teamId?: string) => {
         .from('team_chat_participants')
         .delete()
         .eq('team_id', teamId)
-        .eq('participant_id', participantId);
+        .eq('participant_id', participantId)
+        .eq('user_id', user?.id);
 
       if (error) throw error;
     },

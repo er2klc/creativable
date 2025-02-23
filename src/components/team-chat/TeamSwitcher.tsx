@@ -49,74 +49,76 @@ export function TeamSwitcher() {
 
   if (error) {
     return (
-      <SelectTrigger className="w-[300px] justify-between" disabled>
-        <span>Fehler beim Laden</span>
-      </SelectTrigger>
+      <div className="w-[300px]">
+        <SelectTrigger disabled>
+          <span>Fehler beim Laden</span>
+        </SelectTrigger>
+      </div>
     );
   }
 
   return (
-    <Select 
-      value={selectedTeamId || ''} 
-      onValueChange={(value) => setSelectedTeamId(value)}
-      disabled={isLoading}
-    >
-      <SelectTrigger className="w-[300px]">
-        <SelectValue>
-          {isLoading ? (
-            <span>Lädt Teams...</span>
-          ) : (
-            <div className="flex items-center gap-3">
-              {selectedTeam && (
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={selectedTeam.logo_url || ""} alt={selectedTeam.name} />
-                  <AvatarFallback className="text-xs font-medium">
-                    {selectedTeam.name.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              <span className="font-medium truncate">{selectedTeam?.name || "Team wählen"}</span>
-            </div>
-          )}
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent className="min-w-[300px]">
-        {teams.map((team) => {
-          const unreadCount = unreadMessagesByTeam[team.id]?.totalCount || 0;
-          const isSelected = selectedTeamId === team.id;
-          
-          return (
-            <SelectItem
-              key={team.id}
-              value={team.id}
-              className={cn(
-                "flex items-center justify-between py-3 px-4 [&>span:first-child]:hidden",
-                isSelected && "bg-accent"
-              )}
-            >
-              <div className="flex items-center gap-3 flex-1 min-w-0">
-                <Avatar className="h-8 w-8 shrink-0">
-                  <AvatarImage src={team.logo_url || ""} alt={team.name} />
-                  <AvatarFallback className="text-xs font-medium">
-                    {team.name.substring(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="font-medium truncate">{team.name}</span>
-              </div>
-              <div className="flex items-center gap-3 shrink-0">
-                {unreadCount > 0 && (
-                  <Badge variant="secondary">
-                    {unreadCount}
-                  </Badge>
+    <div className="w-[300px]">
+      <Select 
+        value={selectedTeamId || ''} 
+        onValueChange={(value) => setSelectedTeamId(value)}
+        disabled={isLoading}
+      >
+        <SelectTrigger>
+          <SelectValue>
+            {isLoading ? (
+              <span>Lädt Teams...</span>
+            ) : (
+              <div className="flex items-center gap-3">
+                {selectedTeam && (
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={selectedTeam.logo_url || ""} alt={selectedTeam.name} />
+                    <AvatarFallback className="text-xs font-medium">
+                      {selectedTeam.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
                 )}
-                {isSelected && (
-                  <Check className="h-4 w-4 text-primary shrink-0" />
-                )}
+                <span className="font-medium truncate">{selectedTeam?.name || "Team wählen"}</span>
               </div>
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
+            )}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          {teams.map((team) => {
+            const unreadCount = unreadMessagesByTeam[team.id]?.totalCount || 0;
+            const isSelected = selectedTeamId === team.id;
+            
+            return (
+              <SelectItem
+                key={team.id}
+                value={team.id}
+                className={cn(
+                  "flex items-center justify-between py-3",
+                  isSelected && "bg-accent"
+                )}
+              >
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={team.logo_url || ""} alt={team.name} />
+                    <AvatarFallback className="text-xs font-medium">
+                      {team.name.substring(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="font-medium truncate">{team.name}</span>
+                  {unreadCount > 0 && (
+                    <Badge variant="secondary" className="ml-auto">
+                      {unreadCount}
+                    </Badge>
+                  )}
+                  {isSelected && (
+                    <Check className="h-4 w-4 text-primary ml-2" />
+                  )}
+                </div>
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
