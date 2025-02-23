@@ -1,11 +1,12 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { TeamChatDialog } from "@/components/team-chat/TeamChatDialog";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useTeamChatStore } from "@/store/useTeamChatStore";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 
 export const ChatButton = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,6 +44,11 @@ export const ChatButton = () => {
     return teamId;
   };
 
+  // Calculate total unread messages across all teams
+  const getTotalUnreadCount = () => {
+    return Object.values(unreadMessagesByTeam).reduce((total, data) => total + data.totalCount, 0);
+  };
+
   const handleClick = async () => {
     // Try to get team from current route first
     const match = location.pathname.match(/\/team-([^/]+)/);
@@ -71,21 +77,33 @@ export const ChatButton = () => {
     setIsOpen(true);
   };
 
+  const totalUnreadCount = getTotalUnreadCount();
+
   return (
     <>
       <div className={`fixed ${isMobile ? "bottom-20 right-4" : "bottom-4 right-4"} z-50`}>
-        <Button 
-          onClick={handleClick}
-          variant="outline" 
-          size="icon" 
-          className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all p-0 overflow-hidden bg-white dark:bg-gray-800"
-        >
-          <img 
-            src="/lovable-uploads/cccafff6-9621-43ff-a997-1c2d8d3e744d.png" 
-            alt="Chat" 
-            className="w-full h-full object-cover"
-          />
-        </Button>
+        <div className="relative">
+          <Button 
+            onClick={handleClick}
+            variant="outline" 
+            size="icon" 
+            className="h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all p-0 overflow-hidden bg-white dark:bg-gray-800"
+          >
+            <img 
+              src="/lovable-uploads/cccafff6-9621-43ff-a997-1c2d8d3e744d.png" 
+              alt="Chat" 
+              className="w-full h-full object-cover"
+            />
+          </Button>
+          {totalUnreadCount > 0 && (
+            <Badge 
+              variant="destructive"
+              className="absolute -top-2 -right-2 min-w-[20px] h-5 flex items-center justify-center rounded-full"
+            >
+              {totalUnreadCount > 99 ? '99+' : totalUnreadCount}
+            </Badge>
+          )}
+        </div>
       </div>
 
       <TeamChatDialog open={isOpen} onOpenChange={setIsOpen} />
