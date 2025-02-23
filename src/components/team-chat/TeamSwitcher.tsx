@@ -1,5 +1,5 @@
 
-import { Check, ChevronDown } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -68,14 +68,14 @@ export function TeamSwitcher() {
           ) : (
             <div className="flex items-center gap-2">
               {selectedTeam && (
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={selectedTeam.logo_url || ""} />
-                  <AvatarFallback>
+                <Avatar className="h-7 w-7">
+                  <AvatarImage src={selectedTeam.logo_url || ""} alt={selectedTeam.name} />
+                  <AvatarFallback className="text-xs font-medium">
                     {selectedTeam.name.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
               )}
-              <span>{selectedTeam?.name || "Team wählen"}</span>
+              <span className="font-medium truncate">{selectedTeam?.name || "Team wählen"}</span>
             </div>
           )}
         </SelectValue>
@@ -83,38 +83,39 @@ export function TeamSwitcher() {
       <SelectContent>
         {teams.map((team) => {
           const unreadCount = unreadMessagesByTeam[team.id]?.totalCount || 0;
+          const isSelected = selectedTeamId === team.id;
           
           return (
             <SelectItem
               key={team.id}
               value={team.id}
-              className="flex items-center justify-between"
+              className={cn(
+                "flex items-center justify-between py-3 px-2",
+                isSelected && "bg-accent"
+              )}
             >
-              <div className="flex items-center gap-2">
-                <Avatar className="h-5 w-5">
-                  <AvatarImage src={team.logo_url || ""} />
-                  <AvatarFallback>
+              <div className="flex items-center gap-3 flex-1 min-w-0">
+                <Avatar className="h-7 w-7 shrink-0">
+                  <AvatarImage src={team.logo_url || ""} alt={team.name} />
+                  <AvatarFallback className="text-xs font-medium">
                     {team.name.substring(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <span>{team.name}</span>
+                <span className="font-medium truncate">{team.name}</span>
               </div>
-              {unreadCount > 0 && (
-                <Badge 
-                  variant="secondary" 
-                  className="ml-2"
-                >
-                  {unreadCount}
-                </Badge>
-              )}
-              {selectedTeamId === team.id && (
-                <Check
-                  className={cn(
-                    "ml-auto h-4 w-4",
-                    selectedTeamId === team.id ? "opacity-100" : "opacity-0"
-                  )}
-                />
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {unreadCount > 0 && (
+                  <Badge 
+                    variant="secondary" 
+                    className="ml-2"
+                  >
+                    {unreadCount}
+                  </Badge>
+                )}
+                {isSelected && (
+                  <Check className="h-4 w-4 text-primary shrink-0" />
+                )}
+              </div>
             </SelectItem>
           );
         })}
