@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, User, CreditCard, Receipt, LogOut, MessageCircle } from "lucide-react";
+import { Bell, User, CreditCard, Receipt, LogOut, MessageCircle, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +23,14 @@ import { useTeamChatStore } from "@/store/useTeamChatStore";
 interface HeaderActionsProps {
   profile?: Profile | null;
   userEmail?: string;
+}
+
+interface TeamWithUnreadCount {
+  id: string;
+  name: string;
+  slug: string;
+  logo_url?: string;
+  unread_count: number;
 }
 
 export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
@@ -47,68 +55,62 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
     refetchInterval: 30000
   });
 
-  const { data: lastUnreadMessage } = useQuery({
-    queryKey: ['last-unread-message'],
+  const { data: teamsWithUnreadMessages = [] } = useQuery({
+    queryKey: ['teams-unread-messages'],
     queryFn: async () => {
-      if (!profile?.id) return null;
-      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+
       const { data, error } = await supabase
-        .from('team_direct_messages')
+        .from('teams')
         .select(`
-          *,
-          sender:sender_id (id),
-          team:team_id (id, slug)
+          id,
+          name,
+          slug,
+          logo_url,
+          unread_count:team_direct_messages!inner(count)
         `)
-        .eq('receiver_id', profile.id)
-        .eq('read', false)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
+        .eq('team_direct_messages.receiver_id', user.id)
+        .eq('team_direct_messages.read', false)
+        .order('name');
 
       if (error) throw error;
-      return data;
+
+      // Format and sort the data
+      const formattedData = (data || []).map(team => ({
+        id: team.id,
+        name: team.name,
+        slug: team.slug,
+        logo_url: team.logo_url,
+        unread_count: parseInt(team.unread_count)
+      })).sort((a, b) => b.unread_count - a.unread_count);
+
+      return formattedData as TeamWithUnreadCount[];
     },
-    enabled: !!profile?.id,
     refetchInterval: 10000
   });
 
-  const { data: unreadMessages = 0 } = useQuery({
-    queryKey: ['unread-messages'],
-    queryFn: async () => {
-      if (!profile?.id) return 0;
-
-      const { count, error } = await supabase
-        .from('team_direct_messages')
-        .select('*', { count: 'exact', head: true })
-        .eq('receiver_id', profile.id)
-        .eq('read', false);
-
-      if (error) throw error;
-      return count || 0;
-    },
-    enabled: !!profile?.id,
-    refetchInterval: 10000
-  });
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
-
-  const handleChatClick = async () => {
-    if (lastUnreadMessage) {
-      // Wenn es eine ungelesene Nachricht gibt, navigiere zum entsprechenden Team
-      navigate(`/unity/${lastUnreadMessage.team.slug}`);
-      // Öffne den Chat mit dem Absender
-      openChatWithUser(lastUnreadMessage.sender.id, lastUnreadMessage.team_id);
+  const handleChatClick = (team?: TeamWithUnreadCount) => {
+    if (team) {
+      navigate(`/unity/team-${team.slug}`);
+      setTeamChatOpen(true);
     } else {
-      // Wenn keine ungelesene Nachricht vorliegt, öffne einfach den Chat-Dialog
       setTeamChatOpen(true);
     }
   };
 
   const avatarUrl = getAvatarUrl(profile?.avatar_url, userEmail);
   const displayName = profile?.display_name || userEmail?.split('@')[0] || "U";
+
+  const totalUnreadMessages = teamsWithUnreadMessages.reduce(
+    (sum, team) => sum + team.unread_count, 
+    0
+  );
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   return (
     <>
@@ -130,22 +132,63 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
             </Badge>
           )}
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="relative"
-          onClick={handleChatClick}
-        >
-          <MessageCircle className="h-5 w-5" />
-          {unreadMessages > 0 && (
-            <Badge 
-              variant="destructive" 
-              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="relative"
             >
-              {unreadMessages}
-            </Badge>
-          )}
-        </Button>
+              <MessageCircle className="h-5 w-5" />
+              {totalUnreadMessages > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {totalUnreadMessages}
+                </Badge>
+              )}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-64">
+            {teamsWithUnreadMessages.map((team) => (
+              <DropdownMenuItem 
+                key={team.id}
+                onClick={() => handleChatClick(team)}
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center gap-2">
+                  {team.logo_url ? (
+                    <Avatar className="h-6 w-6">
+                      <AvatarImage src={getAvatarUrl(team.logo_url)} alt={team.name} />
+                      <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <Avatar className="h-6 w-6">
+                      <AvatarFallback>{team.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                  )}
+                  <span className="truncate">{team.name}</span>
+                </div>
+                {team.unread_count > 0 && (
+                  <Badge variant="secondary" className="ml-2">
+                    {team.unread_count}
+                  </Badge>
+                )}
+              </DropdownMenuItem>
+            ))}
+            {teamsWithUnreadMessages.length === 0 && (
+              <DropdownMenuItem
+                onClick={() => handleChatClick()}
+                className="flex items-center justify-center text-muted-foreground"
+              >
+                Keine ungelesenen Nachrichten
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <div className="h-6 w-px bg-gray-200" />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
