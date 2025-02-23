@@ -22,7 +22,7 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Mark messages as read when fetching them
+      // Markiere Nachrichten als gelesen, wenn der Chat geöffnet wird
       await supabase
         .from('team_direct_messages')
         .update({ 
@@ -33,6 +33,19 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
         .eq('receiver_id', user.id)
         .eq('team_id', teamId)
         .eq('read', false);
+
+      // Markiere zugehörige Benachrichtigungen als gelesen
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('type', 'team_chat_message')
+        .eq('metadata->sender_id', selectedUserId)
+        .eq('user_id', user.id)
+        .is('deleted_at', null)
+        .eq('read', false);
+
+      // Invalidiere Notifications Query
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
       const { data: messages, error } = await supabase
         .from('team_direct_messages')
@@ -97,42 +110,12 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
       if (error) throw error;
       return data;
     },
-    onMutate: async (content) => {
-      const { data: session } = await supabase.auth.getSession();
-      if (!session.session?.user) return;
-
-      const optimisticMessage: TeamMessage = {
-        id: crypto.randomUUID(),
-        sender_id: session.session.user.id,
-        receiver_id: selectedUserId!,
-        team_id: teamId!,
-        content,
-        created_at: new Date().toISOString(),
-        read: false,
-        read_at: null,
-        delivered_at: new Date().toISOString(),
-        sender: {
-          id: session.session.user.id,
-          display_name: session.session.user.email?.split('@')[0] || 'User',
-          avatar_url: null,
-          level: currentUserLevel || 0
-        },
-        receiver: null
-      };
-
-      const previousMessages = queryClient.getQueryData<TeamMessage[]>(['team-messages', selectedUserId, teamId]) || [];
-      queryClient.setQueryData(['team-messages', selectedUserId, teamId], [...previousMessages, optimisticMessage]);
-
-      return { previousMessages };
-    },
-    onError: (error, variables, context) => {
-      if (context?.previousMessages) {
-        queryClient.setQueryData(['team-messages', selectedUserId, teamId], context.previousMessages);
-      }
-      toast.error('Fehler beim Senden der Nachricht');
-    },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['team-messages', selectedUserId, teamId] });
+    },
+    onError: (error) => {
+      console.error('Error sending message:', error);
+      toast.error('Fehler beim Senden der Nachricht');
     }
   });
 
@@ -162,7 +145,7 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
 
   return {
     messages,
-    isLoading: false,
+    isLoading,
     sendMessage: (content: string) => sendMessageMutation.mutate(content)
   };
 };

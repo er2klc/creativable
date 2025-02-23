@@ -20,6 +20,10 @@ interface Notification {
     appointmentId?: string;
     dueDate?: string;
     presentation_id?: string;
+    message_id?: string;
+    team_id?: string;
+    sender_id?: string;
+    post_id?: string;
   };
   target_page?: string;
 }
@@ -50,6 +54,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
           deleted_at
         `)
         .is('deleted_at', null)
+        .eq('read', false)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
@@ -74,7 +79,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
       
-      if (payload.eventType === 'INSERT') {
+      if (payload.eventType === 'INSERT' && !payload.new?.read) {
         toast(sanitizedPayload.title, {
           description: sanitizedPayload.content,
         });
@@ -139,6 +144,44 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
     }
   };
 
+  const handleNotificationClick = async (notification: Notification) => {
+    try {
+      // Markiere Benachrichtigung als gelesen
+      await supabase
+        .from('notifications')
+        .update({ read: true })
+        .eq('id', notification.id);
+
+      // Wenn es eine Chat-Benachrichtigung ist, markiere auch die Nachricht als gelesen
+      if (notification.type === 'team_chat_message' && notification.metadata?.message_id) {
+        await supabase
+          .from('team_direct_messages')
+          .update({ 
+            read: true,
+            read_at: new Date().toISOString()
+          })
+          .eq('id', notification.metadata.message_id);
+
+        // Invalidiere auch die Chat-Queries
+        queryClient.invalidateQueries({ queryKey: ['team-messages'] });
+      }
+
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+
+      // Navigation zur entsprechenden Seite
+      if (notification.target_page) {
+        // Korrigiere doppelte "team" Präfixe in der URL
+        const correctedPath = notification.target_page.replace('/team-team-', '/team-');
+        navigate(correctedPath);
+      }
+
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error handling notification click:', error);
+      toast.error('Fehler beim Markieren der Benachrichtigung als gelesen');
+    }
+  };
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="right" className="!w-[100vw] sm:!max-w-[600px] mt-0 z-[100]">
@@ -149,25 +192,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
         <NotificationList
           notifications={notifications}
           onDelete={handleDeleteNotification}
-          onNotificationClick={async (notification) => {
-            try {
-              await supabase
-                .from('notifications')
-                .update({ read: true })
-                .eq('id', notification.id);
-
-              queryClient.invalidateQueries({ queryKey: ['notifications'] });
-
-              if (notification.target_page) {
-                navigate(notification.target_page);
-              }
-
-              onOpenChange(false);
-            } catch (error) {
-              console.error('Error marking notification as read:', error);
-              toast.error('Fehler beim Markieren der Benachrichtigung als gelesen');
-            }
-          }}
+          onNotificationClick={handleNotificationClick}
         />
       </SheetContent>
     </Sheet>
