@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, User, CreditCard, Receipt, LogOut, MessageCircle, Check } from "lucide-react";
+import { Bell, User, CreditCard, Receipt, LogOut, MessageCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +18,7 @@ import { getAvatarUrl } from "@/lib/supabase-utils";
 import { useProfile } from "@/hooks/use-profile";
 import { TeamChatDialog } from "@/components/team-chat/TeamChatDialog";
 import { useTeamChatStore } from "@/store/useTeamChatStore";
+import { getTeamUrl } from "@/lib/navigation/team-navigation";
 
 interface HeaderActionsProps {
   profile?: Profile | null;
@@ -39,7 +39,6 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const { data: profile } = useProfile();
   const teamChatOpen = useTeamChatStore((state) => state.isOpen);
   const setTeamChatOpen = useTeamChatStore((state) => state.setOpen);
-  const openChatWithUser = useTeamChatStore((state) => state.openChatWithUser);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications'],
@@ -76,7 +75,6 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
 
       if (error) throw error;
 
-      // Format and sort the data
       const formattedData = (data || []).map(team => ({
         id: team.id,
         name: team.name,
@@ -92,7 +90,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
 
   const handleChatClick = (team?: TeamWithUnreadCount) => {
     if (team) {
-      navigate(`/unity/team-${team.slug}`);
+      navigate(getTeamUrl(team.slug));
       setTeamChatOpen(true);
     } else {
       setTeamChatOpen(true);
