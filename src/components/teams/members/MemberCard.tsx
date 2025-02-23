@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,13 +7,11 @@ import { MessageSquare, Clock } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { type Tables } from "@/integrations/supabase/types";
 import { useTeamPresence } from "../context/TeamPresenceContext";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTeamChatStore } from "@/store/useTeamChatStore";
 import { useUser } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useChatParticipants } from "@/components/team-chat/hooks/useChatParticipants";
 import { toast } from "sonner";
 
@@ -55,19 +54,22 @@ export const MemberCard = ({
     e.stopPropagation();
     e.preventDefault();
     
-    if (!member.team_id) {
-      toast.error("Team ID nicht gefunden");
+    const teamId = member.team_id;
+    
+    if (!teamId) {
+      console.error("Team ID fehlt:", { member, teamSlug });
+      toast.error("Chat konnte nicht geöffnet werden");
       return;
     }
     
     try {
       await addParticipant.mutateAsync({
-        teamId: member.team_id,
+        teamId,
         participantId: member.user_id
       });
     } catch (error) {
       console.error("Fehler beim Öffnen des Chats:", error);
-      toast.error("Fehler beim Öffnen des Chats");
+      toast.error("Chat konnte nicht geöffnet werden");
     }
   };
 
