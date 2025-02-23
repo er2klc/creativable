@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, User, CreditCard, Receipt, LogOut, MessageCircle } from "lucide-react";
@@ -45,6 +46,11 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const teamChatOpen = useTeamChatStore((state) => state.isOpen);
   const setTeamChatOpen = useTeamChatStore((state) => state.setOpen);
   const openTeamChat = useTeamChatStore((state) => state.openTeamChat);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/auth");
+  };
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications'],
@@ -215,8 +221,8 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="h-8 w-8 cursor-pointer">
-              <AvatarImage src={avatarUrl} alt={displayName} />
-              <AvatarFallback>{displayName.substring(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={profile?.avatar_url || ""} alt={profile?.display_name || ""} />
+              <AvatarFallback>{(profile?.display_name || "").substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
