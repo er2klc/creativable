@@ -27,7 +27,7 @@ export function TeamSwitcher() {
   const setSelectedTeamId = useTeamChatStore((state) => state.setSelectedTeamId);
   const unreadMessagesByTeam = useTeamChatStore((state) => state.unreadMessagesByTeam);
 
-  const { data: teams = [] } = useQuery({
+  const { data: teams = [], isLoading, error } = useQuery({
     queryKey: ['user-teams'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -44,11 +44,26 @@ export function TeamSwitcher() {
         .order('name');
 
       if (error) throw error;
-      return data;
+      return data || []; // Ensure we always return an array
+    },
+    // Initialize selectedTeamId with first team if none selected
+    onSuccess: (data) => {
+      if (data.length > 0 && !selectedTeamId) {
+        setSelectedTeamId(data[0].id);
+      }
     }
   });
 
   const selectedTeam = teams.find((team) => team.id === selectedTeamId);
+
+  if (error) {
+    console.error('Error loading teams:', error);
+    return (
+      <Button variant="outline" className="w-[200px] justify-between" disabled>
+        Fehler beim Laden
+      </Button>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -58,18 +73,23 @@ export function TeamSwitcher() {
           role="combobox"
           aria-expanded={open}
           className="w-[200px] justify-between"
+          disabled={isLoading}
         >
-          <div className="flex items-center gap-2">
-            {selectedTeam && (
-              <Avatar className="h-5 w-5">
-                <AvatarImage src={selectedTeam.logo_url || ""} />
-                <AvatarFallback>
-                  {selectedTeam.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            )}
-            <span>{selectedTeam?.name || "Team wählen"}</span>
-          </div>
+          {isLoading ? (
+            <span>Lädt Teams...</span>
+          ) : (
+            <div className="flex items-center gap-2">
+              {selectedTeam && (
+                <Avatar className="h-5 w-5">
+                  <AvatarImage src={selectedTeam.logo_url || ""} />
+                  <AvatarFallback>
+                    {selectedTeam.name.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+              )}
+              <span>{selectedTeam?.name || "Team wählen"}</span>
+            </div>
+          )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
