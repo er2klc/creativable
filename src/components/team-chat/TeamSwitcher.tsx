@@ -64,7 +64,7 @@ export function TeamSwitcher() {
         onValueChange={(value) => setSelectedTeamId(value)}
         disabled={isLoading}
       >
-        <SelectTrigger>
+        <SelectTrigger className="w-full">
           <SelectValue>
             {isLoading ? (
               <span>Lädt Teams...</span>
@@ -83,7 +83,7 @@ export function TeamSwitcher() {
             )}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="w-[300px]">
           {teams.map((team) => {
             const unreadCount = unreadMessagesByTeam[team.id]?.totalCount || 0;
             const isSelected = selectedTeamId === team.id;
@@ -92,27 +92,28 @@ export function TeamSwitcher() {
               <SelectItem
                 key={team.id}
                 value={team.id}
-                className={cn(
-                  "flex items-center justify-between py-3",
-                  isSelected && "bg-accent"
-                )}
+                className="w-full"
               >
-                <div className="flex items-center gap-3 flex-1 min-w-0">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={team.logo_url || ""} alt={team.name} />
-                    <AvatarFallback className="text-xs font-medium">
-                      {team.name.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="font-medium truncate">{team.name}</span>
-                  {unreadCount > 0 && (
-                    <Badge variant="secondary" className="ml-auto">
-                      {unreadCount}
-                    </Badge>
-                  )}
-                  {isSelected && (
-                    <Check className="h-4 w-4 text-primary ml-2" />
-                  )}
+                <div className={cn(
+                  "flex items-center justify-between w-full py-2",
+                  isSelected && "font-medium"
+                )}>
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar className="h-8 w-8 shrink-0">
+                      <AvatarImage src={team.logo_url || ""} alt={team.name} />
+                      <AvatarFallback className="text-xs font-medium">
+                        {team.name.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <span className="truncate">{team.name}</span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {unreadCount > 0 && (
+                      <Badge variant="secondary">
+                        {unreadCount}
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </SelectItem>
             );

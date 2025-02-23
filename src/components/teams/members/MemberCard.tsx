@@ -14,6 +14,7 @@ import { useTeamChatStore } from "@/store/useTeamChatStore";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useChatParticipants } from "@/components/team-chat/hooks/useChatParticipants";
+import { toast } from "react-toastify";
 
 interface MemberCardProps {
   member: Tables<"team_members"> & {
@@ -52,12 +53,22 @@ export const MemberCard = ({
 
   const handleChatClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!member.team_id) return;
+    e.preventDefault();
     
-    addParticipant.mutate({
-      teamId: member.team_id,
-      participantId: member.user_id
-    });
+    if (!member.team_id) {
+      toast.error("Team ID nicht gefunden");
+      return;
+    }
+    
+    try {
+      await addParticipant.mutateAsync({
+        teamId: member.team_id,
+        participantId: member.user_id
+      });
+    } catch (error) {
+      console.error("Fehler beim Öffnen des Chats:", error);
+      toast.error("Fehler beim Öffnen des Chats");
+    }
   };
 
   const getRoleBadgeStyle = (role: string) => {
@@ -144,9 +155,10 @@ export const MemberCard = ({
                 variant="glassy" 
                 size="sm" 
                 onClick={handleChatClick}
+                disabled={addParticipant.isPending}
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
-                Nachricht senden
+                {addParticipant.isPending ? "Wird geöffnet..." : "Nachricht senden"}
               </Button>
             </div>
           )}
