@@ -3,56 +3,82 @@ import { create } from "zustand";
 
 interface TeamChatStore {
   isOpen: boolean;
+  selectedTeamId: string | null;
   selectedUserId: string | null;
   lastTeamId: string | null;
-  lastMessageSenderId: string | null;
-  unreadMessagesByUser: Record<string, number>;
+  unreadMessagesByTeam: Record<string, {
+    totalCount: number;
+    userCounts: Record<string, number>;
+  }>;
   setOpen: (isOpen: boolean) => void;
+  setSelectedTeamId: (teamId: string | null) => void;
   setSelectedUserId: (userId: string | null) => void;
   setLastTeamId: (teamId: string | null) => void;
-  setLastMessageSenderId: (userId: string | null) => void;
-  setUnreadMessageCount: (userId: string, count: number) => void;
-  clearUnreadMessages: (userId: string) => void;
-  // Helper function to open chat with a specific user in a specific team
-  openChatWithUser: (userId: string, teamId: string) => void;
+  setUnreadMessageCount: (teamId: string, userId: string, count: number) => void;
+  clearUnreadMessages: (teamId: string, userId: string) => void;
+  // Helper function to open chat with team context
+  openTeamChat: (teamId: string, userId?: string) => void;
 }
 
 export const useTeamChatStore = create<TeamChatStore>((set) => ({
   isOpen: false,
+  selectedTeamId: null,
   selectedUserId: null,
   lastTeamId: null,
-  lastMessageSenderId: null,
-  unreadMessagesByUser: {},
+  unreadMessagesByTeam: {},
   
   setOpen: (isOpen) => set({ isOpen }),
+  
+  setSelectedTeamId: (teamId) => set({ selectedTeamId: teamId }),
   
   setSelectedUserId: (userId) => set({ selectedUserId: userId }),
   
   setLastTeamId: (teamId) => set({ lastTeamId: teamId }),
   
-  setLastMessageSenderId: (userId) => set({ lastMessageSenderId: userId }),
-  
-  setUnreadMessageCount: (userId, count) => 
-    set((state) => ({
-      unreadMessagesByUser: {
-        ...state.unreadMessagesByUser,
-        [userId]: count,
-      },
-    })),
-  
-  clearUnreadMessages: (userId) =>
+  setUnreadMessageCount: (teamId, userId, count) => 
     set((state) => {
-      const { [userId]: _, ...rest } = state.unreadMessagesByUser;
-      return { unreadMessagesByUser: rest };
+      const teamCounts = state.unreadMessagesByTeam[teamId] || { totalCount: 0, userCounts: {} };
+      const oldUserCount = teamCounts.userCounts[userId] || 0;
+      const diff = count - oldUserCount;
+      
+      return {
+        unreadMessagesByTeam: {
+          ...state.unreadMessagesByTeam,
+          [teamId]: {
+            totalCount: teamCounts.totalCount + diff,
+            userCounts: {
+              ...teamCounts.userCounts,
+              [userId]: count,
+            },
+          },
+        },
+      };
     }),
   
-  // Helper function to handle opening chat with specific user
-  openChatWithUser: (userId, teamId) =>
+  clearUnreadMessages: (teamId, userId) =>
+    set((state) => {
+      const teamCounts = state.unreadMessagesByTeam[teamId];
+      if (!teamCounts) return state;
+
+      const oldUserCount = teamCounts.userCounts[userId] || 0;
+      const { [userId]: _, ...remainingUserCounts } = teamCounts.userCounts;
+
+      return {
+        unreadMessagesByTeam: {
+          ...state.unreadMessagesByTeam,
+          [teamId]: {
+            totalCount: teamCounts.totalCount - oldUserCount,
+            userCounts: remainingUserCounts,
+          },
+        },
+      };
+    }),
+  
+  openTeamChat: (teamId, userId) =>
     set({
       isOpen: true,
-      selectedUserId: userId,
+      selectedTeamId: teamId,
+      selectedUserId: userId || null,
       lastTeamId: teamId,
-      lastMessageSenderId: userId,
     }),
 }));
-

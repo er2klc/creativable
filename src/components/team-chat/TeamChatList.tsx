@@ -89,15 +89,15 @@ export const TeamChatList = ({
                 <span className="text-xs text-muted-foreground">
                   Level {member.level}
                 </span>
-                {unreadCount > 0 && (
-                  <Badge 
-                    variant="destructive" 
-                    className="mt-1 text-xs h-5 min-w-[20px] flex items-center justify-center"
-                  >
-                    {unreadCount}
-                  </Badge>
-                )}
               </div>
+              {unreadCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="ml-2"
+                >
+                  {unreadCount}
+                </Badge>
+              )}
             </button>
           );
         })}

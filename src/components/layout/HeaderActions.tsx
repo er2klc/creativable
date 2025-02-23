@@ -31,6 +31,11 @@ interface TeamWithUnreadCount {
   slug: string;
   logo_url?: string;
   unread_count: number;
+  unread_by_user: Record<string, {
+    count: number;
+    display_name: string;
+    avatar_url?: string;
+  }>;
 }
 
 export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
@@ -39,6 +44,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const { data: profile } = useProfile();
   const teamChatOpen = useTeamChatStore((state) => state.isOpen);
   const setTeamChatOpen = useTeamChatStore((state) => state.setOpen);
+  const openTeamChat = useTeamChatStore((state) => state.openTeamChat);
 
   const { data: unreadCount = 0 } = useQuery({
     queryKey: ['unread-notifications'],
@@ -60,30 +66,56 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      const { data, error } = await supabase
-        .from('teams')
+      const { data: messages, error } = await supabase
+        .from('team_direct_messages')
         .select(`
-          id,
-          name,
-          slug,
-          logo_url,
-          unread_count:team_direct_messages!inner(count)
+          team_id,
+          sender:sender_id (
+            id,
+            display_name,
+            avatar_url
+          ),
+          teams!inner (
+            id,
+            name,
+            slug,
+            logo_url
+          )
         `)
-        .eq('team_direct_messages.receiver_id', user.id)
-        .eq('team_direct_messages.read', false)
-        .order('name');
+        .eq('receiver_id', user.id)
+        .eq('read', false);
 
       if (error) throw error;
 
-      const formattedData = (data || []).map(team => ({
-        id: team.id,
-        name: team.name,
-        slug: team.slug,
-        logo_url: team.logo_url,
-        unread_count: parseInt(team.unread_count)
-      })).sort((a, b) => b.unread_count - a.unread_count);
+      const teamMessages = messages.reduce((acc, msg) => {
+        const team = msg.teams;
+        if (!acc[team.id]) {
+          acc[team.id] = {
+            id: team.id,
+            name: team.name,
+            slug: team.slug,
+            logo_url: team.logo_url,
+            unread_count: 0,
+            unread_by_user: {}
+          };
+        }
+        
+        const sender = msg.sender;
+        if (!acc[team.id].unread_by_user[sender.id]) {
+          acc[team.id].unread_by_user[sender.id] = {
+            count: 0,
+            display_name: sender.display_name,
+            avatar_url: sender.avatar_url
+          };
+        }
+        
+        acc[team.id].unread_count++;
+        acc[team.id].unread_by_user[sender.id].count++;
+        
+        return acc;
+      }, {} as Record<string, TeamWithUnreadCount>);
 
-      return formattedData as TeamWithUnreadCount[];
+      return Object.values(teamMessages).sort((a, b) => b.unread_count - a.unread_count);
     },
     refetchInterval: 10000
   });
@@ -91,24 +123,16 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
   const handleChatClick = (team?: TeamWithUnreadCount) => {
     if (team) {
       navigate(getTeamUrl(team.slug));
-      setTeamChatOpen(true);
+      openTeamChat(team.id);
     } else {
       setTeamChatOpen(true);
     }
   };
 
-  const avatarUrl = getAvatarUrl(profile?.avatar_url, userEmail);
-  const displayName = profile?.display_name || userEmail?.split('@')[0] || "U";
-
   const totalUnreadMessages = teamsWithUnreadMessages.reduce(
     (sum, team) => sum + team.unread_count, 
     0
   );
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/auth");
-  };
 
   return (
     <>
