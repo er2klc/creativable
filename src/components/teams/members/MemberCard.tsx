@@ -1,4 +1,3 @@
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +13,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useTeamChatStore } from "@/store/useTeamChatStore";
 import { useUser } from "@supabase/auth-helpers-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useChatParticipants } from "@/components/team-chat/hooks/useChatParticipants";
 
 interface MemberCardProps {
   member: Tables<"team_members"> & {
@@ -42,6 +42,7 @@ export const MemberCard = ({
   const canChat = !isCurrentUser && currentUserLevel >= 3 && member.points?.level >= 3;
   const memberIsOnline = isOnline(member.user_id);
   const lastSeen = member.profile?.last_seen;
+  const { addParticipant } = useChatParticipants(member.team_id);
 
   const handleCardClick = () => {
     if (member.profile?.slug) {
@@ -51,16 +52,12 @@ export const MemberCard = ({
 
   const handleChatClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!member.team_id) return;
     
-    const { data: team } = await supabase
-      .from('teams')
-      .select('id')
-      .eq('slug', teamSlug)
-      .single();
-    
-    if (team) {
-      openTeamChat(team.id, member.user_id);
-    }
+    addParticipant.mutate({
+      teamId: member.team_id,
+      participantId: member.user_id
+    });
   };
 
   const getRoleBadgeStyle = (role: string) => {
@@ -140,25 +137,19 @@ export const MemberCard = ({
               </span>}
           </div>
 
-          <div className="flex gap-2 mt-4">
-            {canChat && <Button className="w-full bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-200" size="sm" onClick={handleChatClick}>
+          {canChat && (
+            <div className="flex gap-2 mt-4">
+              <Button 
+                className="w-full" 
+                variant="glassy" 
+                size="sm" 
+                onClick={handleChatClick}
+              >
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Nachricht senden
-              </Button>}
-            {!canChat && currentUserLevel < 3 && !isCurrentUser && <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>
-                    <Button className="w-full bg-[#1A1F2C]/60 hover:bg-[#2A2F3C]/60 text-white border border-white/10 shadow-lg backdrop-blur-sm transition-all duration-200" size="sm" disabled onClick={e => e.stopPropagation()}>
-                      <MessageSquare className="h-4 w-4 mr-2" />
-                      Nachricht senden
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    Du brauchst Level 3 um Nachrichten zu senden
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>}
-          </div>
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </Card>;

@@ -2662,6 +2662,38 @@ export type Database = {
           },
         ]
       }
+      team_chat_participants: {
+        Row: {
+          created_at: string | null
+          id: string
+          participant_id: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          participant_id: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          participant_id?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_chat_participants_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_direct_messages: {
         Row: {
           content: string

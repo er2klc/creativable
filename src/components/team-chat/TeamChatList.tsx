@@ -5,66 +5,61 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { useTeamPresence } from "@/components/teams/context/TeamPresenceContext";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import { useChatParticipants } from "./hooks/useChatParticipants";
 
 interface TeamChatListProps {
-  members: TeamMember[];
+  teamId?: string;
   selectedUserId?: string;
   onSelectUser: (member: TeamMember) => void;
-  currentUserLevel?: number;
   unreadMessagesByUser: Record<string, number>;
 }
 
 export const TeamChatList = ({ 
-  members, 
+  teamId,
   selectedUserId, 
-  onSelectUser, 
-  currentUserLevel,
+  onSelectUser,
   unreadMessagesByUser = {}
 }: TeamChatListProps) => {
   const { isOnline } = useTeamPresence();
+  const { participants, removeParticipant } = useChatParticipants(teamId);
 
-  if (!currentUserLevel || currentUserLevel < 3) {
+  if (!teamId) {
     return (
       <div className="w-[300px] border-r p-4 flex items-center justify-center text-center">
         <p className="text-muted-foreground text-sm">
-          Du benötigst Level 3 um den Chat zu nutzen
+          Wähle ein Team aus
         </p>
       </div>
     );
   }
 
-  // Sortiere Mitglieder nach:
-  // 1. Ungelesene Nachrichten
-  // 2. Online Status
-  // 3. Level
-  // 4. Name
-  const sortedMembers = [...members].sort((a, b) => {
-    const aUnread = unreadMessagesByUser[a.id] || 0;
-    const bUnread = unreadMessagesByUser[b.id] || 0;
-    
-    if (aUnread !== bUnread) return bUnread - aUnread;
-    
-    const aOnline = isOnline(a.id);
-    const bOnline = isOnline(b.id);
-    if (aOnline !== bOnline) return bOnline ? 1 : -1;
-    
-    if (a.level !== b.level) return b.level - a.level;
-    
-    return (a.display_name || '').localeCompare(b.display_name || '');
-  });
+  if (participants.length === 0) {
+    return (
+      <div className="w-[300px] border-r p-4 flex items-center justify-center text-center">
+        <p className="text-muted-foreground text-sm">
+          Keine aktiven Chats. Klicke auf "Nachricht senden" bei einem Teammitglied um einen Chat zu starten.
+        </p>
+      </div>
+    );
+  }
+
+  const handleRemoveParticipant = (participantId: string) => {
+    removeParticipant.mutate({ teamId, participantId });
+  };
 
   return (
     <ScrollArea className="w-[300px] border-r">
       <div className="p-2 space-y-2">
-        {sortedMembers.map((member) => {
+        {participants.map((member) => {
           const unreadCount = unreadMessagesByUser[member.id] || 0;
           
           return (
-            <button
+            <div
               key={member.id}
-              onClick={() => onSelectUser(member)}
               className={cn(
-                "w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors relative",
+                "w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent transition-colors relative group",
                 selectedUserId === member.id && "bg-accent"
               )}
             >
@@ -82,14 +77,14 @@ export const TeamChatList = ({
                   </span>
                 )}
               </div>
-              <div className="flex flex-col items-start flex-1">
+              <button
+                onClick={() => onSelectUser(member)}
+                className="flex flex-col items-start flex-1 text-left"
+              >
                 <span className="text-sm font-medium">
                   {member.display_name}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  Level {member.level}
-                </span>
-              </div>
+              </button>
               {unreadCount > 0 && (
                 <Badge 
                   variant="destructive" 
@@ -98,7 +93,15 @@ export const TeamChatList = ({
                   {unreadCount}
                 </Badge>
               )}
-            </button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
+                onClick={() => handleRemoveParticipant(member.id)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           );
         })}
       </div>
