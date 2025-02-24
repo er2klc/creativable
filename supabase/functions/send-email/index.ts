@@ -1,110 +1,119 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import nodemailer from "npm:nodemailer@6.9.7";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.38.4";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface EmailPayload {
+interface EmailRequest {
   to: string;
   subject: string;
   html: string;
   lead_id?: string;
-  attachments?: Array<{
-    filename: string;
-    path: string;
-  }>;
 }
 
 serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
-      req.headers.get("Authorization")?.split(" ")[1] ?? ""
-    );
-
+    // Get the authenticated user
+    const authHeader = req.headers.get('Authorization')!;
+    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.split(' ')[1]);
+    
     if (authError || !user) {
-      throw new Error("Unauthorized");
+      throw new Error('Unauthorized');
     }
 
     // Get SMTP settings for the user
-    const { data: smtpSettings, error: smtpError } = await supabaseClient
-      .from("smtp_settings")
-      .select("*")
-      .eq("user_id", user.id)
+    const { data: smtpSettings, error: settingsError } = await supabase
+      .from('smtp_settings')
+      .select('*')
+      .eq('user_id', user.id)
       .single();
 
-    if (smtpError || !smtpSettings) {
-      throw new Error("SMTP settings not found");
+    if (settingsError || !smtpSettings) {
+      throw new Error('SMTP settings not found');
     }
 
-    const payload: EmailPayload = await req.json();
+    const { to, subject, html, lead_id }: EmailRequest = await req.json();
 
-    // Create mail transporter
-    const transporter = nodemailer.createTransport({
-      host: smtpSettings.host,
-      port: smtpSettings.port,
-      secure: smtpSettings.secure,
-      auth: {
-        user: smtpSettings.username,
-        pass: smtpSettings.password,
+    if (!to || !subject || !html) {
+      throw new Error('Missing required fields');
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(to)) {
+      throw new Error('Invalid email address');
+    }
+
+    // Create SMTP client
+    const client = new SMTPClient({
+      connection: {
+        hostname: smtpSettings.host,
+        port: smtpSettings.port,
+        tls: smtpSettings.secure,
+        auth: {
+          username: smtpSettings.username,
+          password: smtpSettings.password,
+        },
       },
     });
 
-    // Send mail
-    const info = await transporter.sendMail({
-      from: `"${smtpSettings.from_name}" <${smtpSettings.from_email}>`,
-      to: payload.to,
-      subject: payload.subject,
-      html: payload.html,
-      attachments: payload.attachments,
+    // Send email
+    await client.send({
+      from: `${smtpSettings.from_name} <${smtpSettings.from_email}>`,
+      to: to,
+      subject: subject,
+      html: html,
     });
 
-    // Save email record
-    const { error: emailError } = await supabaseClient
-      .from("emails")
-      .insert([
-        {
-          user_id: user.id,
-          lead_id: payload.lead_id,
-          subject: payload.subject,
-          body: payload.html,
-          from_email: smtpSettings.from_email,
-          to_email: payload.to,
-          direction: "outgoing",
-          status: "sent",
-          sent_at: new Date().toISOString(),
-        },
-      ]);
+    // Close connection
+    await client.close();
 
-    if (emailError) {
-      console.error("Error saving email record:", emailError);
+    // If this was sent to a lead, create a message record
+    if (lead_id) {
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          lead_id: lead_id,
+          user_id: user.id,
+          content: html,
+          subject: subject,
+          type: 'email',
+          metadata: { to, from: smtpSettings.from_email }
+        });
+
+      if (messageError) {
+        console.error('Error saving message:', messageError);
+      }
     }
 
-    return new Response(
-      JSON.stringify({ success: true, messageId: info.messageId }),
-      {
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      }
-    );
+    return new Response(JSON.stringify({ success: true }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      status: 200,
+    });
+
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error('Error in send-email function:', error);
+    
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message || 'An error occurred while sending the email' 
+      }),
       {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 400,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
   }
