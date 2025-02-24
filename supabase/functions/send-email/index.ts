@@ -8,6 +8,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Helper function to ensure proper HTML email structure
+function formatEmailContent(content: string): string {
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      </head>
+      <body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; line-height: 1.6;">
+        ${content}
+      </body>
+    </html>
+  `.trim();
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -61,7 +77,7 @@ serve(async (req) => {
     }
 
     try {
-      // Create SMTP client
+      // Create SMTP client with proper SSL/TLS configuration
       const client = new SMTPClient({
         connection: {
           hostname: smtpSettings.host,
@@ -71,17 +87,29 @@ serve(async (req) => {
             username: smtpSettings.username,
             password: smtpSettings.password,
           },
+          // Add specific TLS options
+          tlsOptions: {
+            rejectUnauthorized: false // Only for development/testing
+          }
         },
       });
 
       console.log('Attempting to send email to:', to);
 
-      // Send email
+      // Format the HTML content properly
+      const formattedHtml = formatEmailContent(html);
+      console.log('Formatted email content:', formattedHtml);
+
+      // Send email with content-type headers
       const emailResult = await client.send({
         from: `${smtpSettings.from_name} <${smtpSettings.from_email}>`,
         to: to,
         subject: subject,
-        html: html,
+        content: formattedHtml,
+        html: formattedHtml,
+        headers: {
+          "Content-Type": "text/html; charset=UTF-8"
+        }
       });
 
       console.log('Email sent successfully:', emailResult);
