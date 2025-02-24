@@ -1,8 +1,7 @@
-
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,9 @@ import {
   SendHorizonal,
   Inbox,
   MailX,
-  Search
+  Search,
+  Check,
+  Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type EmailFolder = "inbox" | "drafts" | "outbox" | "sent" | "archive";
 
@@ -53,11 +55,22 @@ interface EmailTableProps {
   onMatchContact?: (emailId: string) => void;
 }
 
-const EmailTable = ({ emails, onMatchContact }: EmailTableProps) => {
+const EmailTable = ({ 
+  emails, 
+  onMatchContact,
+  selectedEmails,
+  onSelectEmail 
+}: EmailTableProps & { 
+  selectedEmails: string[];
+  onSelectEmail: (emailId: string, isSelected: boolean) => void;
+}) => {
   return (
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead className="w-[30px]">
+            <Checkbox />
+          </TableHead>
           <TableHead className="w-[300px]">Von</TableHead>
           <TableHead>Betreff</TableHead>
           <TableHead>Empfangen</TableHead>
@@ -67,7 +80,13 @@ const EmailTable = ({ emails, onMatchContact }: EmailTableProps) => {
       </TableHeader>
       <TableBody>
         {emails.map((email) => (
-          <TableRow key={email.id}>
+          <TableRow key={email.id} className={selectedEmails.includes(email.id) ? "bg-muted" : ""}>
+            <TableCell>
+              <Checkbox 
+                checked={selectedEmails.includes(email.id)}
+                onCheckedChange={(checked) => onSelectEmail(email.id, checked as boolean)}
+              />
+            </TableCell>
             <TableCell className="font-medium">
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />
@@ -203,6 +222,7 @@ const Messages = () => {
   const [selectedFolder, setSelectedFolder] = useState<EmailFolder>("inbox");
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
 
   const { data: allEmails = [], isLoading } = useQuery({
     queryKey: ['emails', selectedFolder],
@@ -242,6 +262,14 @@ const Messages = () => {
     toast.info("Kontakt-Matching wird implementiert...");
   };
 
+  const handleSelectEmail = (emailId: string, isSelected: boolean) => {
+    setSelectedEmails(prev => 
+      isSelected 
+        ? [...prev, emailId]
+        : prev.filter(id => id !== emailId)
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -251,61 +279,93 @@ const Messages = () => {
   }
 
   return (
-    <div className="flex h-full">
-      <div className="w-64 border-r p-4 space-y-4">
-        <Button 
-          className="w-full bg-green-600 hover:bg-green-700"
-          onClick={() => setIsComposeOpen(true)}
-        >
-          + Neue E-Mail
-        </Button>
-        
-        <div className="space-y-1">
-          {folders.map((folder) => (
-            <Button
-              key={folder.id}
-              variant={selectedFolder === folder.id ? "secondary" : "ghost"}
-              className="w-full justify-start"
-              onClick={() => setSelectedFolder(folder.id)}
-            >
-              <folder.icon className="h-4 w-4 mr-2" />
-              {folder.name}
-            </Button>
-          ))}
+    <div className="flex flex-col h-full">
+      <div className="border-b p-4 flex items-center gap-4">
+        <div className="relative flex-1 max-w-xl">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+          <Input
+            placeholder="E-Mails durchsuchen..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
         </div>
       </div>
 
-      <div className="flex-1 p-6">
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold">
-              {folders.find(f => f.id === selectedFolder)?.name}
-            </h1>
-            <div className="flex gap-4 items-center">
-              <div className="relative w-64">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-                <Input
-                  placeholder="E-Mails durchsuchen..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-              <Button variant="outline">
-                <Tag className="h-4 w-4 mr-2" />
-                Labels
+      <div className="flex flex-1">
+        <div className="w-64 bg-gray-100 p-4 space-y-4">
+          <Button 
+            className="w-full bg-green-600 hover:bg-green-700"
+            onClick={() => setIsComposeOpen(true)}
+          >
+            + Neue E-Mail
+          </Button>
+          
+          <div className="space-y-1">
+            {folders.map((folder) => (
+              <Button
+                key={folder.id}
+                variant={selectedFolder === folder.id ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => setSelectedFolder(folder.id)}
+              >
+                <folder.icon className="h-4 w-4 mr-2" />
+                {folder.name}
               </Button>
-            </div>
+            ))}
           </div>
+        </div>
 
-          <Card>
-            <CardContent className="pt-6">
-              <EmailTable 
-                emails={filteredEmails} 
-                onMatchContact={handleMatchContact}
-              />
-            </CardContent>
-          </Card>
+        <div className="flex-1 p-6">
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold">
+                {folders.find(f => f.id === selectedFolder)?.name}
+              </h1>
+              
+              <div className="flex items-center gap-2">
+                {selectedEmails.length > 0 ? (
+                  <>
+                    <span className="text-sm text-muted-foreground">
+                      {selectedEmails.length} ausgewählt
+                    </span>
+                    <Button variant="outline" size="sm">
+                      <Check className="h-4 w-4 mr-2" />
+                      Als gelesen markieren
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Tag className="h-4 w-4 mr-2" />
+                      Label verwalten
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Archive className="h-4 w-4 mr-2" />
+                      Archivieren
+                    </Button>
+                    <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Löschen
+                    </Button>
+                  </>
+                ) : (
+                  <Button variant="outline">
+                    <Tag className="h-4 w-4 mr-2" />
+                    Labels
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            <Card>
+              <CardContent className="pt-6">
+                <EmailTable 
+                  emails={filteredEmails}
+                  onMatchContact={handleMatchContact}
+                  selectedEmails={selectedEmails}
+                  onSelectEmail={handleSelectEmail}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
 
