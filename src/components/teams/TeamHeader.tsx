@@ -8,7 +8,11 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
-import { MEMBERS_QUERY, transformMemberData } from "./detail/snap-cards/MembersCard";
+import { 
+  MEMBERS_QUERY, 
+  transformMemberData, 
+  fetchTeamMembers 
+} from "./detail/snap-cards/MembersCard";
 
 interface TeamHeaderProps {
   team: {
@@ -58,30 +62,16 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
   const isAdmin = memberRole === 'admin' || memberRole === 'owner';
   const isOwner = team.created_by === user?.id;
 
+  // Use the same fetchTeamMembers function as in MembersCard
   const { data: members = [] } = useQuery({
     queryKey: ['team-members', team.id],
-    queryFn: async () => {
-      const { data: teamMembers, error: membersError } = await supabase
-        .from('team_members')
-        .select(MEMBERS_QUERY)
-        .eq('team_id', team.id);
-
-      if (membersError) {
-        console.error('Error fetching team members:', membersError);
-        return [];
-      }
-
-      return teamMembers.map(transformMemberData);
-    },
+    queryFn: () => fetchTeamMembers(team.id),
     enabled: !!team.id,
   });
 
   const adminMembers = members.filter(member => 
     member.role === 'admin' || member.role === 'owner'
   );
-
-  const membersCount = members.length;
-  const adminsCount = adminMembers.length;
 
   return (
     <div className={cn(
@@ -99,8 +89,6 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
           <TeamHeaderTitle 
             team={team}
             isAdmin={isAdmin}
-            membersCount={membersCount}
-            adminsCount={adminsCount}
             members={members}
             adminMembers={adminMembers}
           />
