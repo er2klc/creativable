@@ -8,15 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface EmailRequest {
-  to: string;
-  subject: string;
-  html: string;
-  lead_id?: string;
-  from_email?: string;  // Optional, for backward compatibility
-  from_name?: string;   // Optional, for backward compatibility
-}
-
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -34,7 +25,19 @@ serve(async (req) => {
     const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.split(' ')[1]);
     
     if (authError || !user) {
+      console.error('Authentication error:', authError);
       throw new Error('Unauthorized');
+    }
+
+    // Get request body
+    const requestBody = await req.json();
+    console.log('Received request body:', requestBody);
+
+    const { to, subject, html, lead_id } = requestBody;
+
+    if (!to || !subject || !html) {
+      console.error('Missing required fields:', { to, subject, html: !!html });
+      throw new Error('Missing required fields: to, subject, and html are required');
     }
 
     // Get SMTP settings for the user
@@ -45,87 +48,88 @@ serve(async (req) => {
       .single();
 
     if (settingsError || !smtpSettings) {
-      throw new Error('SMTP settings not found');
+      console.error('SMTP settings error:', settingsError);
+      throw new Error('SMTP settings not found. Please configure your SMTP settings first.');
     }
 
-    const { to, subject, html, lead_id }: EmailRequest = await req.json();
-
-    if (!to || !subject || !html) {
-      throw new Error('Missing required fields');
-    }
+    console.log('Retrieved SMTP settings for user:', user.id);
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(to)) {
-      throw new Error('Invalid email address');
+      throw new Error('Invalid recipient email address format');
     }
 
-    console.log('Creating SMTP client with settings:', {
-      host: smtpSettings.host,
-      port: smtpSettings.port,
-      secure: smtpSettings.secure,
-      username: smtpSettings.username
-    });
-
-    // Create SMTP client
-    const client = new SMTPClient({
-      connection: {
-        hostname: smtpSettings.host,
-        port: smtpSettings.port,
-        tls: smtpSettings.secure,
-        auth: {
-          username: smtpSettings.username,
-          password: smtpSettings.password,
+    try {
+      // Create SMTP client
+      const client = new SMTPClient({
+        connection: {
+          hostname: smtpSettings.host,
+          port: smtpSettings.port,
+          tls: smtpSettings.secure,
+          auth: {
+            username: smtpSettings.username,
+            password: smtpSettings.password,
+          },
         },
-      },
-    });
+      });
 
-    console.log('Sending email to:', to);
+      console.log('Attempting to send email to:', to);
 
-    // Send email
-    await client.send({
-      from: `${smtpSettings.from_name} <${smtpSettings.from_email}>`,
-      to: to,
-      subject: subject,
-      html: html,
-    });
+      // Send email
+      const emailResult = await client.send({
+        from: `${smtpSettings.from_name} <${smtpSettings.from_email}>`,
+        to: to,
+        subject: subject,
+        html: html,
+      });
 
-    // Close connection
-    await client.close();
+      console.log('Email sent successfully:', emailResult);
 
-    console.log('Email sent successfully');
+      // Close connection
+      await client.close();
 
-    // If this was sent to a lead, create a message record
-    if (lead_id) {
-      const { error: messageError } = await supabase
-        .from('messages')
-        .insert({
-          lead_id: lead_id,
-          user_id: user.id,
-          content: html,
-          subject: subject,
-          type: 'email',
-          metadata: { 
-            to, 
-            from: smtpSettings.from_email 
-          }
-        });
+      // If this was sent to a lead, create a message record
+      if (lead_id) {
+        const { error: messageError } = await supabase
+          .from('messages')
+          .insert({
+            lead_id: lead_id,
+            user_id: user.id,
+            content: html,
+            subject: subject,
+            type: 'email',
+            metadata: { 
+              to, 
+              from: smtpSettings.from_email 
+            }
+          });
 
-      if (messageError) {
-        console.error('Error saving message:', messageError);
+        if (messageError) {
+          console.error('Error saving message record:', messageError);
+          // Don't throw here as the email was sent successfully
+        }
       }
-    }
 
-    return new Response(JSON.stringify({ success: true }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 200,
-    });
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: 'Email sent successfully'
+      }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        status: 200,
+      });
+
+    } catch (smtpError) {
+      console.error('SMTP Error:', smtpError);
+      throw new Error(`SMTP Error: ${smtpError.message}`);
+    }
 
   } catch (error) {
     console.error('Error in send-email function:', error);
     
     return new Response(
       JSON.stringify({ 
+        success: false,
         error: error.message || 'An error occurred while sending the email' 
       }),
       {
