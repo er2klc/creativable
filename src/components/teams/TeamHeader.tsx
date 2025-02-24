@@ -8,7 +8,7 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
-import { MEMBERS_QUERY, transformMemberData } from "./detail/snap-cards/MembersCard";
+import { MEMBERS_QUERY } from "./detail/snap-cards/MembersCard";
 
 interface TeamHeaderProps {
   team: {
@@ -63,7 +63,20 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
     queryFn: async () => {
       const { data: teamMembers, error: membersError } = await supabase
         .from('team_members')
-        .select(MEMBERS_QUERY)
+        .select(`
+          id,
+          user_id,
+          role,
+          profile:profiles (
+            id,
+            display_name,
+            avatar_url
+          ),
+          points:team_member_points (
+            level,
+            points
+          )
+        `)
         .eq('team_id', team.id);
 
       if (membersError) {
@@ -71,7 +84,17 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
         return [];
       }
 
-      return teamMembers.map(transformMemberData);
+      return teamMembers.map(member => ({
+        ...member,
+        points: {
+          level: Array.isArray(member.points) 
+            ? member.points[0]?.level || 0 
+            : member.points?.level || 0,
+          points: Array.isArray(member.points)
+            ? member.points[0]?.points || 0
+            : member.points?.points || 0
+        }
+      }));
     },
     enabled: !!team.id,
   });
