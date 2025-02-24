@@ -598,6 +598,205 @@ export type Database = {
           },
         ]
       }
+      email_attachments: {
+        Row: {
+          created_at: string | null
+          email_id: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_id: string
+          file_name: string
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          email_id?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_attachments_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "emails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_label_assignments: {
+        Row: {
+          created_at: string | null
+          email_id: string
+          id: string
+          label_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_id: string
+          id?: string
+          label_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_id?: string
+          id?: string
+          label_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_label_assignments_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "emails"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "email_label_assignments_label_id_fkey"
+            columns: ["label_id"]
+            isOneToOne: false
+            referencedRelation: "email_labels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_labels: {
+        Row: {
+          color: string
+          created_at: string | null
+          id: string
+          name: string
+          user_id: string
+        }
+        Insert: {
+          color: string
+          created_at?: string | null
+          id?: string
+          name: string
+          user_id: string
+        }
+        Update: {
+          color?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_templates: {
+        Row: {
+          body: string
+          created_at: string | null
+          id: string
+          name: string
+          subject: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string | null
+          id?: string
+          name: string
+          subject: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+          subject?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      emails: {
+        Row: {
+          archived: boolean | null
+          bcc: string[] | null
+          body: string
+          cc: string[] | null
+          created_at: string | null
+          direction: string
+          error_message: string | null
+          from_email: string
+          id: string
+          in_reply_to: string | null
+          lead_id: string | null
+          read: boolean | null
+          sent_at: string | null
+          status: string
+          subject: string
+          thread_id: string | null
+          to_email: string
+          user_id: string
+        }
+        Insert: {
+          archived?: boolean | null
+          bcc?: string[] | null
+          body: string
+          cc?: string[] | null
+          created_at?: string | null
+          direction: string
+          error_message?: string | null
+          from_email: string
+          id?: string
+          in_reply_to?: string | null
+          lead_id?: string | null
+          read?: boolean | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          thread_id?: string | null
+          to_email: string
+          user_id: string
+        }
+        Update: {
+          archived?: boolean | null
+          bcc?: string[] | null
+          body?: string
+          cc?: string[] | null
+          created_at?: string | null
+          direction?: string
+          error_message?: string | null
+          from_email?: string
+          id?: string
+          in_reply_to?: string | null
+          lead_id?: string | null
+          read?: boolean | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          thread_id?: string | null
+          to_email?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emails_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       embedding_processing_status: {
         Row: {
           content_type: string
@@ -2067,6 +2266,54 @@ export type Database = {
           usp?: string | null
           whatsapp_number?: string | null
           whatsapp_verified?: boolean | null
+        }
+        Relationships: []
+      }
+      smtp_settings: {
+        Row: {
+          created_at: string | null
+          from_email: string
+          from_name: string | null
+          host: string
+          id: string
+          is_verified: boolean | null
+          last_verified_at: string | null
+          password: string
+          port: number
+          secure: boolean | null
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          from_email: string
+          from_name?: string | null
+          host: string
+          id?: string
+          is_verified?: boolean | null
+          last_verified_at?: string | null
+          password: string
+          port: number
+          secure?: boolean | null
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          from_email?: string
+          from_name?: string | null
+          host?: string
+          id?: string
+          is_verified?: boolean | null
+          last_verified_at?: string | null
+          password?: string
+          port?: number
+          secure?: boolean | null
+          updated_at?: string | null
+          user_id?: string
+          username?: string
         }
         Relationships: []
       }
