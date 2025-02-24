@@ -8,11 +8,6 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
-import { 
-  MEMBERS_QUERY, 
-  transformMemberData, 
-  fetchTeamMembers 
-} from "./detail/snap-cards/MembersCard";
 
 interface TeamHeaderProps {
   team: {
@@ -62,10 +57,48 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
   const isAdmin = memberRole === 'admin' || memberRole === 'owner';
   const isOwner = team.created_by === user?.id;
 
-  // Use the same fetchTeamMembers function as in MembersCard
   const { data: members = [] } = useQuery({
     queryKey: ['team-members', team.id],
-    queryFn: () => fetchTeamMembers(team.id),
+    queryFn: async () => {
+      const { data: teamMembers, error } = await supabase
+        .from('team_members')
+        .select(`
+          id,
+          user_id,
+          role,
+          profile:profiles (
+            id,
+            display_name,
+            avatar_url,
+            bio,
+            status,
+            last_seen,
+            slug
+          ),
+          points:team_member_points (
+            level,
+            points
+          )
+        `)
+        .eq('team_id', team.id);
+
+      if (error) {
+        console.error('Error fetching team members:', error);
+        return [];
+      }
+
+      return teamMembers.map((member: any) => ({
+        ...member,
+        points: {
+          level: Array.isArray(member.points) 
+            ? member.points[0]?.level || 0 
+            : member.points?.level || 0,
+          points: Array.isArray(member.points)
+            ? member.points[0]?.points || 0
+            : member.points?.points || 0
+        }
+      }));
+    },
     enabled: !!team.id,
   });
 
