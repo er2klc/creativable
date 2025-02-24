@@ -21,7 +21,7 @@ import {
   MEMBERS_FULL_QUERY_KEY,
   transformMemberData,
   fetchTeamMembers 
-} from "@/components/teams/detail/snap-cards/MembersCard";
+} from "@/hooks/use-team-members";
 
 const MEMBERS_PER_PAGE = 50;
 
