@@ -1,13 +1,14 @@
 
 import { useState } from "react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { Platform } from "@/config/platforms";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 
 interface MessageTabProps {
   leadId: string;
@@ -17,12 +18,31 @@ interface MessageTabProps {
 export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   const { settings } = useSettings();
   const { user } = useAuth();
-  const [newMessage, setNewMessage] = useState("");
   const [subject, setSubject] = useState("");
+  const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
 
+  // SMTP Settings laden
+  const { data: smtpSettings } = useQuery({
+    queryKey: ['smtp-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('smtp_settings')
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+  });
+
   const handleSendEmail = async () => {
-    if (!newMessage || !subject) {
+    if (!smtpSettings) {
+      toast.error("Bitte zuerst SMTP-Einstellungen konfigurieren");
+      return;
+    }
+
+    if (!subject || !content) {
       toast.error("Bitte Betreff und Nachricht eingeben");
       return;
     }
@@ -33,15 +53,17 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
         body: {
           to: platform.toString(),
           subject: subject,
-          html: newMessage,
+          html: content,
           lead_id: leadId,
+          from_email: smtpSettings.from_email,
+          from_name: smtpSettings.from_name
         },
       });
 
       if (error) throw error;
 
-      setNewMessage("");
       setSubject("");
+      setContent("");
       toast.success("E-Mail wurde erfolgreich gesendet");
     } catch (error) {
       console.error("Error sending email:", error);
@@ -53,6 +75,11 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
 
   return (
     <div className="space-y-4">
+      <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
+        <span>Von:</span>
+        <span>{smtpSettings?.from_email}</span>
+      </div>
+
       <div>
         <Label>Betreff</Label>
         <Input
@@ -65,18 +92,25 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
       
       <div>
         <Label>Nachricht</Label>
-        <div className="flex flex-col gap-2 mt-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+        <div className="mt-2 border rounded-lg">
+          <TiptapEditor
+            content={content}
+            onChange={setContent}
             placeholder="Nachricht eingeben..."
-            className="min-h-[100px]"
+            editorProps={{
+              attributes: {
+                class: "min-h-[300px] p-4"
+              }
+            }}
           />
+        </div>
+
+        <div className="flex justify-end mt-4">
           <Button 
             onClick={handleSendEmail}
-            disabled={isSending}
+            disabled={isSending || !smtpSettings}
           >
-            {isSending ? "Sendet..." : "Senden"}
+            {isSending ? "Wird gesendet..." : "Senden"}
           </Button>
         </div>
       </div>
