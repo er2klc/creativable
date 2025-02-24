@@ -2,7 +2,7 @@
 import { 
   LayoutGrid, 
   Users, 
-  MessageSquare, 
+  Mail, 
   Calendar, 
   CheckSquare, 
   BarChart, 
@@ -21,7 +21,7 @@ export const personalItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutGrid },
   { name: "Kontakte", path: "/leads", icon: Users },
   { name: "Pool", path: "/pool", icon: Waves },
-  { name: "Nachrichten", path: "/messages", icon: MessageSquare },
+  { name: "E-Mail", path: "/messages", icon: Mail },
   { name: "Kalender", path: "/calendar", icon: Calendar },
   { name: "Todo Liste", path: "/todo", icon: CheckSquare },
   { name: "Links", path: "/links", icon: Link2 },

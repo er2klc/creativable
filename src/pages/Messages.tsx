@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { 
   MoreHorizontal, 
   Mail, 
@@ -33,6 +34,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { HeaderActions } from "@/components/layout/HeaderActions";
+import { useAuth } from "@/hooks/use-auth";
 
 type EmailFolder = "inbox" | "drafts" | "outbox" | "sent" | "archive";
 
@@ -216,13 +219,63 @@ const ComposeDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   );
 };
 
+const NoSmtpWarning = () => {
+  return (
+    <Card className="border-yellow-200 bg-yellow-50 mb-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <Mail className="h-5 w-5" />
+          SMTP-Einstellungen erforderlich
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="mb-4">
+          Um E-Mails senden und empfangen zu können, müssen Sie zuerst Ihre SMTP-Einstellungen konfigurieren.
+        </p>
+        <div className="space-y-2">
+          <p className="text-sm">Sie benötigen folgende Informationen:</p>
+          <ul className="list-disc list-inside text-sm">
+            <li>SMTP-Server-Adresse</li>
+            <li>Port-Nummer</li>
+            <li>Benutzername</li>
+            <li>Passwort</li>
+            <li>Absender E-Mail-Adresse</li>
+          </ul>
+        </div>
+        <Button 
+          className="mt-4"
+          asChild
+        >
+          <Link to="/settings?tab=smtp">
+            SMTP-Einstellungen konfigurieren
+          </Link>
+        </Button>
+      </CardContent>
+    </Card>
+  );
+};
+
 const Messages = () => {
   const { settings } = useSettings();
+  const { user } = useAuth();
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<EmailFolder>("inbox");
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+
+  const { data: smtpSettings } = useQuery({
+    queryKey: ['smtp-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('smtp_settings')
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+  });
 
   const { data: allEmails = [], isLoading } = useQuery({
     queryKey: ['emails', selectedFolder],
@@ -280,23 +333,39 @@ const Messages = () => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="border-b p-4 flex items-center gap-4">
-        <div className="relative flex-1 max-w-xl">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
-          <Input
-            placeholder="E-Mails durchsuchen..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
+      <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+        <div className="h-16 px-4 flex items-center">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
+            <div className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                E-Mail
+              </h1>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="w-[300px]">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="E-Mails durchsuchen..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+            <HeaderActions profile={null} userEmail={user?.email} />
+          </div>
         </div>
       </div>
 
-      <div className="flex flex-1">
+      <div className="flex flex-1 pt-16">
         <div className="w-64 bg-gray-100 p-4 space-y-4">
           <Button 
             className="w-full bg-green-600 hover:bg-green-700"
             onClick={() => setIsComposeOpen(true)}
+            disabled={!smtpSettings}
           >
             + Neue E-Mail
           </Button>
@@ -317,6 +386,8 @@ const Messages = () => {
         </div>
 
         <div className="flex-1 p-6">
+          {!smtpSettings && <NoSmtpWarning />}
+
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h1 className="text-xl font-semibold">

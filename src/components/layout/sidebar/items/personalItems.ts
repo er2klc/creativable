@@ -1,5 +1,5 @@
 
-import { LayoutGrid, Users, Calendar, CheckSquare, MessageSquare, Waves, Link2 } from "lucide-react";
+import { LayoutGrid, Users, Calendar, CheckSquare, Mail, Waves, Link2 } from "lucide-react";
 import { useTaskCount } from "../hooks/useTaskCount";
 import { useAppointmentCount } from "../hooks/useAppointmentCount";
 import { useElevateProgress } from "../hooks/useElevateProgress";
@@ -26,8 +26,8 @@ export const usePersonalItems = () => {
       badge: taskCount > 0 ? taskCount : undefined
     },
     {
-      title: "Nachrichten",
-      icon: MessageSquare,
+      title: "E-Mail",
+      icon: Mail,
       url: "/messages"
     },
     {
