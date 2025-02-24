@@ -8,7 +8,7 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
-import { MEMBERS_QUERY, transformMemberData } from "./detail/snap-cards/MembersCard";
+import { MEMBERS_QUERY, transformMemberData } from "@/types/team-member";
 
 interface TeamHeaderProps {
   team: {
