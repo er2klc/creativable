@@ -89,7 +89,6 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
   return (
     <div className="mt-4 space-y-4">
       {members?.map((member) => {
-        // Ensure points has default values if undefined
         const points = member.points || { level: 0, points: 0 };
         
         return (
