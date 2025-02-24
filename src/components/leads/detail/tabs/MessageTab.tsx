@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
 import { Platform } from "@/config/platforms";
 import { TiptapEditor } from "@/components/ui/tiptap-editor";
+import { getLeadWithRelations } from "@/utils/query-helpers";
 
 interface MessageTabProps {
   leadId: string;
@@ -22,6 +23,12 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
+
+  // Lead Daten laden
+  const { data: lead } = useQuery({
+    queryKey: ['lead', leadId],
+    queryFn: () => getLeadWithRelations(leadId),
+  });
 
   // SMTP Settings laden
   const { data: smtpSettings } = useQuery({
@@ -43,6 +50,11 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
       return;
     }
 
+    if (!lead?.email) {
+      toast.error("Keine E-Mail-Adresse für diesen Lead vorhanden");
+      return;
+    }
+
     if (!subject || !content) {
       toast.error("Bitte Betreff und Nachricht eingeben");
       return;
@@ -52,7 +64,7 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
     try {
       const { error } = await supabase.functions.invoke("send-email", {
         body: {
-          to: platform.toString(),
+          to: lead.email,
           subject: subject,
           html: content,
           lead_id: leadId,
@@ -76,9 +88,15 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center space-x-2 text-sm text-muted-foreground mb-4">
-        <span>Von:</span>
-        <span>{smtpSettings?.from_email}</span>
+      <div className="flex flex-col space-y-2 text-sm text-muted-foreground mb-4">
+        <div className="flex items-center space-x-2">
+          <span>Von:</span>
+          <span>{smtpSettings?.from_email}</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <span>An:</span>
+          <span>{lead?.email || "Keine E-Mail-Adresse vorhanden"}</span>
+        </div>
       </div>
 
       <div>
@@ -109,7 +127,7 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
         <div className="flex justify-end mt-4">
           <Button 
             onClick={handleSendEmail}
-            disabled={isSending || !smtpSettings}
+            disabled={isSending || !smtpSettings || !lead?.email}
           >
             {isSending ? "Wird gesendet..." : "Senden"}
           </Button>
