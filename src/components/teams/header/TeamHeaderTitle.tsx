@@ -18,8 +18,6 @@ interface TeamHeaderTitleProps {
     logo_url?: string;
   };
   isAdmin: boolean;
-  membersCount: number;
-  adminsCount: number;
   members: any[];
   adminMembers: any[];
 }
@@ -31,9 +29,7 @@ interface OnlineMember {
 
 export function TeamHeaderTitle({ 
   team, 
-  isAdmin, 
-  membersCount = 0,
-  adminsCount = 0,
+  isAdmin,
   members = [],
   adminMembers = []
 }: TeamHeaderTitleProps) {
@@ -46,7 +42,6 @@ export function TeamHeaderTitle({
         const state = channel.presenceState();
         const online: OnlineMember[] = [];
         
-        // Convert presence state to array of online members
         Object.values(state).forEach((presences: any) => {
           presences.forEach((presence: any) => {
             online.push(presence);
@@ -57,7 +52,6 @@ export function TeamHeaderTitle({
       })
       .subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-          // Track this user's presence
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             await channel.track({
@@ -124,7 +118,7 @@ export function TeamHeaderTitle({
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                <span>{members?.length || 0} Mitglieder</span>
+                <span>{members.length || 0} Mitglieder</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -141,7 +135,7 @@ export function TeamHeaderTitle({
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Crown className="h-4 w-4" />
-                <span>{adminMembers?.length || 0} Admins</span>
+                <span>{adminMembers.length || 0} Admins</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
