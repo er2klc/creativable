@@ -67,9 +67,7 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
           to: lead.email,
           subject: subject,
           html: content,
-          lead_id: leadId,
-          from_email: smtpSettings.from_email,
-          from_name: smtpSettings.from_name
+          lead_id: leadId
         },
       });
 
