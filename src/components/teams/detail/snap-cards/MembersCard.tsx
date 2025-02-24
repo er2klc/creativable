@@ -1,9 +1,29 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+
+interface TeamMemberData {
+  id: string;
+  user_id: string;
+  role: 'owner' | 'admin' | 'member';
+  profile?: {
+    id: string;
+    display_name: string | null;
+    avatar_url: string | null;
+    bio: string | null;
+    status: string;
+    last_seen: string | null;
+    slug: string | null;
+  };
+  points?: {
+    level: number;
+    points: number;
+  }[];
+}
 
 interface MembersCardProps {
   teamId: string;
@@ -17,7 +37,7 @@ export const MEMBERS_QUERY = `
   id,
   user_id,
   role,
-  profile:profiles(
+  profiles:profiles(
     id,
     display_name,
     avatar_url,
@@ -26,57 +46,77 @@ export const MEMBERS_QUERY = `
     last_seen,
     slug
   ),
-  points:team_member_points(
+  team_member_points(
     level,
     points
   )
 `;
 
-export const transformMemberData = (member: any) => ({
-  ...member,
-  profile: member.profile || {},
-  points: {
-    level: member.points?.[0]?.level || 0,
-    points: member.points?.[0]?.points || 0
-  }
-});
+export const transformMemberData = (member: TeamMemberData & { profiles?: any, team_member_points?: any }) => {
+  // Debugging
+  console.log('Raw member data:', member);
+  
+  const transformed = {
+    ...member,
+    profile: member.profiles || {},
+    points: {
+      level: member.team_member_points?.[0]?.level || 0,
+      points: member.team_member_points?.[0]?.points || 0
+    }
+  };
+  
+  // Debugging
+  console.log('Transformed member data:', transformed);
+  
+  return transformed;
+};
 
 export const fetchTeamMembers = async (teamId: string, limit?: number) => {
-  let query = supabase
-    .from('team_members')
-    .select(MEMBERS_QUERY)
-    .eq('team_id', teamId);
+  try {
+    let query = supabase
+      .from('team_members')
+      .select(MEMBERS_QUERY)
+      .eq('team_id', teamId);
 
-  if (limit) {
-    query = query.limit(limit);
-  }
+    if (limit) {
+      query = query.limit(limit);
+    }
 
-  const { data: teamMembers, error } = await query;
+    const { data: teamMembers, error } = await query;
 
-  if (error) {
-    console.error('Error fetching team members:', error);
+    if (error) {
+      console.error('Error fetching team members:', error);
+      return [];
+    }
+
+    // Debugging
+    console.log('Raw team members:', teamMembers);
+
+    const transformedData = (teamMembers || []).map(transformMemberData);
+
+    // Debugging
+    console.log('Transformed team members:', transformedData);
+
+    return transformedData.sort((a, b) => {
+      const roleOrder = { owner: 0, admin: 1, member: 2 };
+      const roleCompare = (roleOrder[a.role as keyof typeof roleOrder] || 2) - 
+                         (roleOrder[b.role as keyof typeof roleOrder] || 2);
+      
+      if (roleCompare !== 0) return roleCompare;
+      
+      return (b.points.points || 0) - (a.points.points || 0);
+    });
+  } catch (error) {
+    console.error('Error in fetchTeamMembers:', error);
     return [];
   }
-
-  const transformedData = (teamMembers || []).map(transformMemberData);
-  return transformedData.sort((a, b) => {
-    // Sortiere zuerst nach Rolle
-    const roleOrder = { owner: 0, admin: 1, member: 2 };
-    const roleCompare = (roleOrder[a.role as keyof typeof roleOrder] || 2) - 
-                       (roleOrder[b.role as keyof typeof roleOrder] || 2);
-    
-    if (roleCompare !== 0) return roleCompare;
-    
-    // Dann nach Punkten
-    return (b.points.points || 0) - (a.points.points || 0);
-  });
 };
 
 export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: members } = useQuery({
+  const { data: members = [], isLoading } = useQuery({
     queryKey: MEMBERS_SNAP_QUERY_KEY(teamId),
     queryFn: () => fetchTeamMembers(teamId, 6),
     staleTime: 1000 * 60 * 5,
