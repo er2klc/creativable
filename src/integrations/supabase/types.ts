@@ -735,6 +735,7 @@ export type Database = {
           created_at: string | null
           direction: string
           error_message: string | null
+          folder: string
           from_email: string
           id: string
           in_reply_to: string | null
@@ -755,6 +756,7 @@ export type Database = {
           created_at?: string | null
           direction: string
           error_message?: string | null
+          folder?: string
           from_email: string
           id?: string
           in_reply_to?: string | null
@@ -775,6 +777,7 @@ export type Database = {
           created_at?: string | null
           direction?: string
           error_message?: string | null
+          folder?: string
           from_email?: string
           id?: string
           in_reply_to?: string | null
