@@ -10,16 +10,14 @@ interface MembersCardProps {
   teamSlug: string;
 }
 
-// Separate query keys for snap and full view
 export const MEMBERS_SNAP_QUERY_KEY = (teamId: string) => ['team-members-snap', teamId];
 export const MEMBERS_FULL_QUERY_KEY = (teamId: string) => ['team-members-full', teamId];
 
-// Standardisierte Query für Team-Mitglieder
 export const MEMBERS_QUERY = `
   id,
   user_id,
   role,
-  profile:profiles!user_id (
+  profile:profiles(
     id,
     display_name,
     avatar_url,
@@ -28,19 +26,18 @@ export const MEMBERS_QUERY = `
     last_seen,
     slug
   ),
-  points:team_member_points!inner (
+  points:team_member_points(
     level,
     points
   )
 `;
 
-// Verbesserte Transformation mit expliziter Typprüfung
 export const transformMemberData = (member: any) => ({
   ...member,
   profile: member.profile || {},
   points: {
-    level: member.points?.level || 0,
-    points: member.points?.points || 0
+    level: member.points?.[0]?.level || 0,
+    points: member.points?.[0]?.points || 0
   }
 });
 
@@ -48,8 +45,7 @@ export const fetchTeamMembers = async (teamId: string, limit?: number) => {
   let query = supabase
     .from('team_members')
     .select(MEMBERS_QUERY)
-    .eq('team_id', teamId)
-    .order('role', { ascending: false });
+    .eq('team_id', teamId);
 
   if (limit) {
     query = query.limit(limit);
@@ -72,7 +68,7 @@ export const fetchTeamMembers = async (teamId: string, limit?: number) => {
     if (roleCompare !== 0) return roleCompare;
     
     // Dann nach Punkten
-    return (b.points?.points || 0) - (a.points?.points || 0);
+    return (b.points.points || 0) - (a.points.points || 0);
   });
 };
 
@@ -87,7 +83,6 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
     cacheTime: 1000 * 60 * 30,
   });
 
-  // Prefetch function for full members list
   const prefetchFullMembers = async () => {
     await queryClient.prefetchQuery({
       queryKey: MEMBERS_FULL_QUERY_KEY(teamId),
@@ -101,7 +96,6 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
   };
 
   const handleClick = async () => {
-    // Ensure data is prefetched before navigation
     await prefetchFullMembers();
     navigate(`/unity/team/${teamSlug}/members`);
   };

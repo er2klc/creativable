@@ -9,25 +9,25 @@ interface TeamMemberListProps {
 }
 
 export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
-  // Gruppiere Mitglieder nach Rolle mit der verbesserten Transformation
-  const groupedMembers = members.reduce((acc, member) => {
+  // Gruppiere Mitglieder nach Rolle mit verbesserter Fehlerbehandlung
+  const groupedMembers = members.reduce((acc: { owners: any[], admins: any[], members: any[] }, member) => {
     const roleGroup = member.role === 'owner' ? 'owners' : 
                      member.role === 'admin' ? 'admins' : 'members';
     if (!acc[roleGroup]) acc[roleGroup] = [];
     acc[roleGroup].push(member);
     return acc;
-  }, {} as { owners: any[], admins: any[], members: any[] });
+  }, { owners: [], admins: [], members: [] });
 
-  // Sortiere jede Gruppe nach Punkten
+  // Sortiere jede Gruppe nach Punkten mit Null-Check
   const sortByPoints = (a: any, b: any) => {
     const aPoints = a.points?.points || 0;
     const bPoints = b.points?.points || 0;
     return bPoints - aPoints;
   };
 
-  const owners = (groupedMembers.owners || []).sort(sortByPoints);
-  const admins = (groupedMembers.admins || []).sort(sortByPoints);
-  const regularMembers = (groupedMembers.members || []).sort(sortByPoints);
+  const owners = groupedMembers.owners.sort(sortByPoints);
+  const admins = groupedMembers.admins.sort(sortByPoints);
+  const regularMembers = groupedMembers.members.sort(sortByPoints);
 
   const MemberGroup = ({ title, members, icon }: { title: string, members: any[], icon: JSX.Element }) => (
     <div className="space-y-2">
