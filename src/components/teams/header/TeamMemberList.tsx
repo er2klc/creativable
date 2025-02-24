@@ -118,9 +118,9 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Star className="h-3.5 w-3.5" />
-                  <span>Level {member.points?.level || 0}</span>
+                  <span>Level {member.points.level}</span>
                   <span>•</span>
-                  <span>{member.points?.points || 0} Punkte</span>
+                  <span>{member.points.points} Punkte</span>
                 </div>
               </div>
             </div>

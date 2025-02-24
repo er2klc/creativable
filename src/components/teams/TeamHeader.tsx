@@ -8,25 +8,7 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
-
-const MEMBERS_QUERY = `
-  id,
-  user_id,
-  role,
-  profiles:profiles (
-    id,
-    display_name,
-    avatar_url,
-    bio,
-    status,
-    last_seen,
-    slug
-  ),
-  points:team_member_points (
-    level,
-    points
-  )
-`;
+import { MEMBERS_QUERY, transformMemberData } from "./detail/snap-cards/MembersCard";
 
 interface TeamHeaderProps {
   team: {
@@ -89,14 +71,7 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
         return [];
       }
 
-      return teamMembers.map(member => ({
-        ...member,
-        profile: member.profiles,
-        points: {
-          level: Array.isArray(member.points) ? member.points[0]?.level || 0 : member.points?.level || 0,
-          points: Array.isArray(member.points) ? member.points[0]?.points || 0 : member.points?.points || 0
-        }
-      }));
+      return teamMembers.map(transformMemberData);
     },
     enabled: !!team.id,
   });
