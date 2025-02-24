@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +16,8 @@ import {
   FileText,
   SendHorizonal,
   Inbox,
-  MailX
+  MailX,
+  Search
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
@@ -200,8 +202,9 @@ const Messages = () => {
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<EmailFolder>("inbox");
   const [isComposeOpen, setIsComposeOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const { data: emails = [], isLoading } = useQuery({
+  const { data: allEmails = [], isLoading } = useQuery({
     queryKey: ['emails', selectedFolder],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -224,6 +227,15 @@ const Messages = () => {
       if (error) throw error;
       return data;
     },
+  });
+
+  const filteredEmails = allEmails.filter(email => {
+    const searchLower = searchQuery.toLowerCase();
+    return (
+      email.from_email.toLowerCase().includes(searchLower) ||
+      email.subject.toLowerCase().includes(searchLower) ||
+      email.content?.toLowerCase().includes(searchLower)
+    );
   });
 
   const handleMatchContact = async (emailId: string) => {
@@ -269,7 +281,16 @@ const Messages = () => {
             <h1 className="text-3xl font-bold">
               {folders.find(f => f.id === selectedFolder)?.name}
             </h1>
-            <div className="flex gap-2">
+            <div className="flex gap-4 items-center">
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-500" />
+                <Input
+                  placeholder="E-Mails durchsuchen..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
               <Button variant="outline">
                 <Tag className="h-4 w-4 mr-2" />
                 Labels
@@ -280,7 +301,7 @@ const Messages = () => {
           <Card>
             <CardContent className="pt-6">
               <EmailTable 
-                emails={emails} 
+                emails={filteredEmails} 
                 onMatchContact={handleMatchContact}
               />
             </CardContent>
