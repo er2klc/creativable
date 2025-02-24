@@ -32,10 +32,10 @@ interface OnlineMember {
 export function TeamHeaderTitle({ 
   team, 
   isAdmin, 
-  membersCount, 
-  adminsCount,
-  members,
-  adminMembers 
+  membersCount = 0,
+  adminsCount = 0,
+  members = [],
+  adminMembers = []
 }: TeamHeaderTitleProps) {
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
 
@@ -124,7 +124,7 @@ export function TeamHeaderTitle({
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                <span>{membersCount} Mitglieder</span>
+                <span>{members?.length || 0} Mitglieder</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -141,7 +141,7 @@ export function TeamHeaderTitle({
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Crown className="h-4 w-4" />
-                <span>{adminsCount} Admins</span>
+                <span>{adminMembers?.length || 0} Admins</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -175,14 +175,14 @@ export function TeamHeaderTitle({
                   <div key={member.id} className="flex items-center justify-between p-2 border rounded">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={member.profiles?.avatar_url} alt={member.profiles?.display_name || 'Avatar'} />
+                        <AvatarImage src={member.profile?.avatar_url} alt={member.profile?.display_name || 'Avatar'} />
                         <AvatarFallback>
-                          {member.profiles?.display_name?.substring(0, 2).toUpperCase() || '??'}
+                          {member.profile?.display_name?.substring(0, 2).toUpperCase() || '??'}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">
-                          {member.profiles?.display_name || 'Kein Name angegeben'}
+                          {member.profile?.display_name || 'Kein Name angegeben'}
                         </span>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="mt-1">
