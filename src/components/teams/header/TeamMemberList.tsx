@@ -88,55 +88,60 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
 
   return (
     <div className="mt-4 space-y-4">
-      {members?.map((member) => (
-        <div key={member.id} className="flex flex-col p-2 border rounded hover:bg-accent/5">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-12 w-12">
-              <AvatarImage src={member.profile?.avatar_url} alt={member.profile?.display_name || 'Avatar'} />
-              <AvatarFallback>
-                {member.profile?.display_name?.substring(0, 2).toUpperCase() || '??'}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium">
-                {member.profile?.display_name || 'Kein Name angegeben'}
-              </span>
-              <div className="flex items-center gap-2">
-                <Badge 
-                  variant={getRoleBadgeVariant(member.role)} 
-                  className="px-3 py-1 flex items-center gap-2"
-                  style={{
-                    backgroundColor: member.role === 'owner' ? '#FDE1D3' : 
-                                  member.role === 'admin' ? '#E5DEFF' : 
-                                  '#F1F0FB',
-                    color: '#1F2937',
-                    border: 'none'
-                  }}
-                >
-                  {getRoleIcon(member.role)}
-                  <span className="font-medium">{getRoleLabel(member.role)}</span>
-                </Badge>
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Star className="h-3.5 w-3.5" />
-                  <span>Level {member.points.level}</span>
-                  <span>•</span>
-                  <span>{member.points.points} Punkte</span>
+      {members?.map((member) => {
+        // Ensure points has default values if undefined
+        const points = member.points || { level: 0, points: 0 };
+        
+        return (
+          <div key={member.id} className="flex flex-col p-2 border rounded hover:bg-accent/5">
+            <div className="flex items-center gap-3">
+              <Avatar className="h-12 w-12">
+                <AvatarImage src={member.profile?.avatar_url} alt={member.profile?.display_name || 'Avatar'} />
+                <AvatarFallback>
+                  {member.profile?.display_name?.substring(0, 2).toUpperCase() || '??'}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium">
+                  {member.profile?.display_name || 'Kein Name angegeben'}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Badge 
+                    variant={getRoleBadgeVariant(member.role)} 
+                    className="px-3 py-1 flex items-center gap-2"
+                    style={{
+                      backgroundColor: member.role === 'owner' ? '#FDE1D3' : 
+                                    member.role === 'admin' ? '#E5DEFF' : 
+                                    '#F1F0FB',
+                      color: '#1F2937',
+                      border: 'none'
+                    }}
+                  >
+                    {getRoleIcon(member.role)}
+                    <span className="font-medium">{getRoleLabel(member.role)}</span>
+                  </Badge>
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Star className="h-3.5 w-3.5" />
+                    <span>Level {points.level}</span>
+                    <span>•</span>
+                    <span>{points.points} Punkte</span>
+                  </div>
                 </div>
               </div>
             </div>
+            {member.role !== 'owner' && isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleRoleChange(member.id, member.role)}
+                className="mt-3 w-full flex items-center justify-center"
+              >
+                {getButtonContent(member.role)}
+              </Button>
+            )}
           </div>
-          {member.role !== 'owner' && isAdmin && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleRoleChange(member.id, member.role)}
-              className="mt-3 w-full flex items-center justify-center"
-            >
-              {getButtonContent(member.role)}
-            </Button>
-          )}
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }
