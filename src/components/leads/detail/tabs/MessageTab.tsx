@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -17,40 +18,65 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   const { settings } = useSettings();
   const { user } = useAuth();
   const [newMessage, setNewMessage] = useState("");
+  const [subject, setSubject] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
-  const handleAddMessage = async () => {
-    const { error } = await supabase
-      .from("messages")
-      .insert({
-        lead_id: leadId,
-        content: newMessage,
-        platform,
-        user_id: user?.id,
-      });
-
-    if (error) {
-      console.error("Error adding message:", error);
+  const handleSendEmail = async () => {
+    if (!newMessage || !subject) {
+      toast.error("Bitte Betreff und Nachricht eingeben");
       return;
     }
 
-    setNewMessage("");
-    toast.success(settings?.language === "en" ? "Message added" : "Nachricht hinzugefügt");
+    setIsSending(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-email", {
+        body: {
+          to: platform.toString(),
+          subject: subject,
+          html: newMessage,
+          lead_id: leadId,
+        },
+      });
+
+      if (error) throw error;
+
+      setNewMessage("");
+      setSubject("");
+      toast.success("E-Mail wurde erfolgreich gesendet");
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error("Fehler beim Senden der E-Mail");
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
     <div className="space-y-4">
       <div>
-        <Label>
-          {settings?.language === "en" ? "Add Message" : "Nachricht hinzufügen"}
-        </Label>
-        <div className="flex gap-2 mt-2">
+        <Label>Betreff</Label>
+        <Input
+          value={subject}
+          onChange={(e) => setSubject(e.target.value)}
+          placeholder="E-Mail Betreff eingeben..."
+          className="mt-2"
+        />
+      </div>
+      
+      <div>
+        <Label>Nachricht</Label>
+        <div className="flex flex-col gap-2 mt-2">
           <Input
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={settings?.language === "en" ? "Enter message..." : "Nachricht eingeben..."}
+            placeholder="Nachricht eingeben..."
+            className="min-h-[100px]"
           />
-          <Button onClick={handleAddMessage}>
-            {settings?.language === "en" ? "Add" : "Hinzufügen"}
+          <Button 
+            onClick={handleSendEmail}
+            disabled={isSending}
+          >
+            {isSending ? "Sendet..." : "Senden"}
           </Button>
         </div>
       </div>
