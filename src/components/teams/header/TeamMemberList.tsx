@@ -6,7 +6,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { Star, Crown, Shield, User } from "lucide-react";
-import { transformMemberData } from "@/components/teams/detail/snap-cards/MembersCard";
 
 interface TeamMemberListProps {
   members: any[];
@@ -87,12 +86,9 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
     );
   };
 
-  // Transform members data to ensure consistent format
-  const transformedMembers = members.map(transformMemberData);
-
   return (
     <div className="mt-4 space-y-4">
-      {transformedMembers?.map((member) => (
+      {members?.map((member) => (
         <div key={member.id} className="flex flex-col p-2 border rounded hover:bg-accent/5">
           <div className="flex items-center gap-3">
             <Avatar className="h-12 w-12">
@@ -122,9 +118,9 @@ export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
                 </Badge>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Star className="h-3.5 w-3.5" />
-                  <span>Level {member.points.level}</span>
+                  <span>Level {member.points?.level || 0}</span>
                   <span>•</span>
-                  <span>{member.points.points} Punkte</span>
+                  <span>{member.points?.points || 0} Punkte</span>
                 </div>
               </div>
             </div>
