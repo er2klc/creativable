@@ -1,42 +1,70 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSettings } from "@/hooks/use-settings";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, Mail } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { smtpSettingsSchema } from "./schemas/smtp-settings-schema";
 import { supabase } from "@/integrations/supabase/client";
-
-interface SmtpFormData {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  from_email: string;
-  from_name: string;
-  secure: boolean;
-}
+import type { SmtpSettingsFormData } from "./schemas/smtp-settings-schema";
 
 export function SmtpSettings() {
   const [isTestingConnection, setIsTestingConnection] = useState(false);
-  const { settings } = useSettings();
   const [isVerified, setIsVerified] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { register, handleSubmit, formState: { errors }, watch } = useForm<SmtpFormData>({
+  const { register, handleSubmit, formState: { errors }, watch, reset } = useForm<SmtpSettingsFormData>({
     resolver: zodResolver(smtpSettingsSchema),
     defaultValues: {
       secure: true
     }
   });
 
-  const onSubmit = async (data: SmtpFormData) => {
+  // Lade existierende SMTP Einstellungen
+  useEffect(() => {
+    async function loadSmtpSettings() {
+      try {
+        const { data: settings, error } = await supabase
+          .from('smtp_settings')
+          .select('*')
+          .single();
+
+        if (error && error.code !== 'PGRST116') {
+          throw error;
+        }
+
+        if (settings) {
+          reset(settings);
+        }
+      } catch (error) {
+        console.error('Error loading SMTP settings:', error);
+        toast.error("Fehler beim Laden der SMTP-Einstellungen");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    loadSmtpSettings();
+  }, [reset]);
+
+  const onSubmit = async (formData: SmtpSettingsFormData) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+
+      const dataWithUserId = {
+        ...formData,
+        user_id: user.id
+      };
+
       const { data: existingSettings } = await supabase
         .from('smtp_settings')
         .select('id')
@@ -45,7 +73,7 @@ export function SmtpSettings() {
       if (existingSettings) {
         const { error } = await supabase
           .from('smtp_settings')
-          .update(data)
+          .update(dataWithUserId)
           .eq('id', existingSettings.id);
 
         if (error) throw error;
@@ -53,7 +81,7 @@ export function SmtpSettings() {
       } else {
         const { error } = await supabase
           .from('smtp_settings')
-          .insert([data]);
+          .insert([dataWithUserId]);
 
         if (error) throw error;
         toast.success("SMTP-Einstellungen wurden gespeichert");
@@ -67,13 +95,20 @@ export function SmtpSettings() {
   const testConnection = async () => {
     setIsTestingConnection(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+
       const { error } = await supabase.functions.invoke('test-smtp-connection', {
         body: {
           host: watch('host'),
           port: watch('port'),
           username: watch('username'),
           password: watch('password'),
-          secure: watch('secure')
+          secure: watch('secure'),
+          user_id: user.id
         }
       });
 
@@ -88,6 +123,19 @@ export function SmtpSettings() {
       setIsTestingConnection(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span className="ml-2">Lade Einstellungen...</span>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
