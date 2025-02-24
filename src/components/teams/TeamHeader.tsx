@@ -8,7 +8,7 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
-import { useTeamMembers, MEMBERS_QUERY } from "@/hooks/use-team-members";
+import { MEMBERS_QUERY, transformMemberData } from "@/hooks/use-team-members";
 
 interface TeamHeaderProps {
   team: {
@@ -71,7 +71,8 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
         return [];
       }
 
-      return data;
+      // Transform the data before returning
+      return data.map(transformMemberData);
     },
     enabled: !!team.id
   });
