@@ -9,7 +9,7 @@ interface TeamMemberListProps {
 }
 
 export function TeamMemberList({ members, isAdmin }: TeamMemberListProps) {
-  // Gruppiere Mitglieder nach Rolle
+  // Gruppiere Mitglieder nach Rolle mit der verbesserten Transformation
   const groupedMembers = members.reduce((acc, member) => {
     const roleGroup = member.role === 'owner' ? 'owners' : 
                      member.role === 'admin' ? 'admins' : 'members';

@@ -1,4 +1,3 @@
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
@@ -15,11 +14,12 @@ interface MembersCardProps {
 export const MEMBERS_SNAP_QUERY_KEY = (teamId: string) => ['team-members-snap', teamId];
 export const MEMBERS_FULL_QUERY_KEY = (teamId: string) => ['team-members-full', teamId];
 
+// Standardisierte Query für Team-Mitglieder
 export const MEMBERS_QUERY = `
   id,
   user_id,
   role,
-  profile:profiles (
+  profile:profiles!user_id (
     id,
     display_name,
     avatar_url,
@@ -28,21 +28,19 @@ export const MEMBERS_QUERY = `
     last_seen,
     slug
   ),
-  points:team_member_points (
+  points:team_member_points!inner (
     level,
     points
   )
 `;
 
+// Verbesserte Transformation mit expliziter Typprüfung
 export const transformMemberData = (member: any) => ({
   ...member,
+  profile: member.profile || {},
   points: {
-    level: Array.isArray(member.points) 
-      ? member.points[0]?.level || 0 
-      : member.points?.level || 0,
-    points: Array.isArray(member.points)
-      ? member.points[0]?.points || 0
-      : member.points?.points || 0
+    level: member.points?.level || 0,
+    points: member.points?.points || 0
   }
 });
 
@@ -50,7 +48,8 @@ export const fetchTeamMembers = async (teamId: string, limit?: number) => {
   let query = supabase
     .from('team_members')
     .select(MEMBERS_QUERY)
-    .eq('team_id', teamId);
+    .eq('team_id', teamId)
+    .order('role', { ascending: false });
 
   if (limit) {
     query = query.limit(limit);
@@ -63,10 +62,18 @@ export const fetchTeamMembers = async (teamId: string, limit?: number) => {
     return [];
   }
 
-  const transformedData = teamMembers.map(transformMemberData);
-  
-  // Sort by points regardless of limit
-  return transformedData.sort((a, b) => b.points.points - a.points.points);
+  const transformedData = (teamMembers || []).map(transformMemberData);
+  return transformedData.sort((a, b) => {
+    // Sortiere zuerst nach Rolle
+    const roleOrder = { owner: 0, admin: 1, member: 2 };
+    const roleCompare = (roleOrder[a.role as keyof typeof roleOrder] || 2) - 
+                       (roleOrder[b.role as keyof typeof roleOrder] || 2);
+    
+    if (roleCompare !== 0) return roleCompare;
+    
+    // Dann nach Punkten
+    return (b.points?.points || 0) - (a.points?.points || 0);
+  });
 };
 
 export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
