@@ -13,9 +13,12 @@ interface EmailRequest {
   subject: string;
   html: string;
   lead_id?: string;
+  from_email?: string;  // Optional, for backward compatibility
+  from_name?: string;   // Optional, for backward compatibility
 }
 
 serve(async (req) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -57,6 +60,13 @@ serve(async (req) => {
       throw new Error('Invalid email address');
     }
 
+    console.log('Creating SMTP client with settings:', {
+      host: smtpSettings.host,
+      port: smtpSettings.port,
+      secure: smtpSettings.secure,
+      username: smtpSettings.username
+    });
+
     // Create SMTP client
     const client = new SMTPClient({
       connection: {
@@ -70,6 +80,8 @@ serve(async (req) => {
       },
     });
 
+    console.log('Sending email to:', to);
+
     // Send email
     await client.send({
       from: `${smtpSettings.from_name} <${smtpSettings.from_email}>`,
@@ -81,6 +93,8 @@ serve(async (req) => {
     // Close connection
     await client.close();
 
+    console.log('Email sent successfully');
+
     // If this was sent to a lead, create a message record
     if (lead_id) {
       const { error: messageError } = await supabase
@@ -91,7 +105,10 @@ serve(async (req) => {
           content: html,
           subject: subject,
           type: 'email',
-          metadata: { to, from: smtpSettings.from_email }
+          metadata: { 
+            to, 
+            from: smtpSettings.from_email 
+          }
         });
 
       if (messageError) {
