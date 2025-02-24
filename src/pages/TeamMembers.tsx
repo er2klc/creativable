@@ -1,13 +1,12 @@
-
-import { useState, useCallback } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { MemberCard } from "@/components/teams/members/MemberCard";
 import { useProfile } from "@/hooks/use-profile";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card } from "@/components/ui/card";
-import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceContext";
+import { TeamPresenceProvider, useTeamPresence } from "@/components/teams/context/TeamPresenceContext";
 import { Users } from "lucide-react";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -15,10 +14,14 @@ import { SearchBar } from "@/components/dashboard/SearchBar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { 
+  MEMBERS_QUERY, 
+  MEMBERS_SNAP_QUERY_KEY,
   MEMBERS_FULL_QUERY_KEY,
+  transformMemberData,
   fetchTeamMembers 
-} from "@/hooks/use-team-members";
+} from "@/components/teams/detail/snap-cards/MembersCard";
 
 const MEMBERS_PER_PAGE = 50;
 
@@ -87,28 +90,34 @@ const TeamMembers = () => {
     enabled: !!teamData?.id,
     staleTime: 1000 * 60 * 5,
     cacheTime: 1000 * 60 * 30,
+    retry: 3,
+    refetchOnMount: true,
+    keepPreviousData: true
   });
 
-  const sortMembers = useCallback((membersList: typeof members) => {
-    return [...membersList].sort((a, b) => {
+  const sortedMembers = useMemo(() => {
+    if (!members.length) return [];
+    
+    return members.sort((a, b) => {
       if (a.user_id === user?.id) return -1;
       if (b.user_id === user?.id) return 1;
 
-      // Zuerst nach Rolle sortieren
-      const roleOrder = { owner: 0, admin: 1, member: 2 };
-      const roleCompare = (roleOrder[a.role] || 2) - (roleOrder[b.role] || 2);
-      
-      if (roleCompare !== 0) return roleCompare;
-      
-      // Bei gleicher Rolle nach Punkten sortieren
-      return (b.points?.points || 0) - (a.points?.points || 0);
+      const isOnline = useTeamPresence().isOnline;
+      const aIsOnline = isOnline(a.user_id);
+      const bIsOnline = isOnline(b.user_id);
+      if (aIsOnline && !bIsOnline) return -1;
+      if (!aIsOnline && bIsOnline) return 1;
+
+      return (b.points?.level || 0) - (a.points?.level || 0);
     });
-  }, [user?.id]);
+  }, [members, user?.id]);
 
-  const sortedMembers = sortMembers(members);
-  const currentUserMember = members.find(member => member.user_id === user?.id);
+  const currentUserMember = sortedMembers.find(member => member.user_id === user?.id);
 
-  const totalPages = Math.ceil((sortedMembers.length - (currentUserMember ? 1 : 0)) / MEMBERS_PER_PAGE);
+  const totalPages = useMemo(() => {
+    const totalMembers = sortedMembers.filter(member => member.user_id !== user?.id).length;
+    return Math.ceil(totalMembers / MEMBERS_PER_PAGE);
+  }, [sortedMembers, user?.id]);
 
   const isLoading = isTeamLoading || isLoadingMembers;
   const hasCachedData = members.length > 0;
