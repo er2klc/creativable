@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -32,7 +33,7 @@ import {
   DialogTitle 
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { Checkbox } from "@/components/ui/checkbox";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useAuth } from "@/hooks/use-auth";
@@ -141,6 +142,65 @@ const ComposeDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   const [to, setTo] = useState("");
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
+  const [isSending, setIsSending] = useState(false);
+
+  // SMTP Settings laden
+  const { data: smtpSettings } = useQuery({
+    queryKey: ['smtp-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('smtp_settings')
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+  });
+
+  useEffect(() => {
+    if (smtpSettings) {
+      setFrom(smtpSettings.from_email);
+    }
+  }, [smtpSettings]);
+
+  const handleSendEmail = async () => {
+    if (!smtpSettings) {
+      toast.error("Bitte zuerst SMTP-Einstellungen konfigurieren");
+      return;
+    }
+
+    if (!to || !subject || !content) {
+      toast.error("Bitte alle Pflichtfelder ausfüllen");
+      return;
+    }
+
+    setIsSending(true);
+    try {
+      const { error } = await supabase.functions.invoke("send-email", {
+        body: {
+          to: to,
+          subject: subject,
+          html: content,
+          from_email: smtpSettings.from_email,
+          from_name: smtpSettings.from_name
+        },
+      });
+
+      if (error) throw error;
+
+      setTo("");
+      setSubject("");
+      setContent("");
+      toast.success("E-Mail wurde erfolgreich gesendet");
+      onClose();
+    } catch (error) {
+      console.error("Error sending email:", error);
+      toast.error("Fehler beim Senden der E-Mail");
+    } finally {
+      setIsSending(false);
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -153,8 +213,8 @@ const ComposeDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             <label className="w-20">Von:</label>
             <Input 
               value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              placeholder="Ihre E-Mail-Adresse"
+              readOnly
+              className="bg-gray-50"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -188,12 +248,18 @@ const ComposeDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
                 <ChevronDown className="ml-2 h-4 w-4" />
               </Button>
             </div>
-            <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="E-Mail Inhalt..."
-              className="min-h-[300px]"
-            />
+            <div className="border rounded-lg">
+              <TiptapEditor
+                content={content}
+                onChange={setContent}
+                placeholder="E-Mail Inhalt..."
+                editorProps={{
+                  attributes: {
+                    class: "min-h-[300px] p-4"
+                  }
+                }}
+              />
+            </div>
           </div>
         </div>
         <div className="flex justify-between">
@@ -209,8 +275,11 @@ const ComposeDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
             <Button variant="outline" onClick={onClose}>
               Abbrechen
             </Button>
-            <Button>
-              Senden
+            <Button 
+              onClick={handleSendEmail}
+              disabled={isSending || !smtpSettings}
+            >
+              {isSending ? "Wird gesendet..." : "Senden"}
             </Button>
           </div>
         </div>
