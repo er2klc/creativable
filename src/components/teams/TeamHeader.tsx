@@ -8,7 +8,7 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
-import { useTeamMembers } from "@/hooks/use-team-members";
+import { useTeamMembers, MEMBERS_QUERY } from "@/hooks/use-team-members";
 
 interface TeamHeaderProps {
   team: {
@@ -58,7 +58,23 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
   const isAdmin = memberRole === 'admin' || memberRole === 'owner';
   const isOwner = team.created_by === user?.id;
 
-  const { data: members = [] } = useTeamMembers(team.id);
+  const { data: members = [] } = useQuery({
+    queryKey: ['team-members', team.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('team_members')
+        .select(MEMBERS_QUERY)
+        .eq('team_id', team.id);
+
+      if (error) {
+        console.error('Error fetching team members:', error);
+        return [];
+      }
+
+      return data;
+    },
+    enabled: !!team.id
+  });
 
   const adminMembers = members.filter(member => 
     member.role === 'admin' || member.role === 'owner'
