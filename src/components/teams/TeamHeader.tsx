@@ -1,4 +1,3 @@
-
 import { Separator } from "@/components/ui/separator";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +7,8 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
-import { MEMBERS_QUERY, transformMemberData } from "@/types/team-member";
+import { transformMemberData } from "@/types/team-member";
+import { MEMBERS_QUERY } from "@/hooks/use-team-members";
 
 interface TeamHeaderProps {
   team: {
