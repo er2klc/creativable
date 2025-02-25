@@ -1,7 +1,11 @@
 
--- First create the profile slug generation function
-CREATE OR REPLACE FUNCTION public.generate_profile_slug(display_name character varying, email character varying)
-RETURNS character varying
+-- First drop existing conflicting functions
+DROP FUNCTION IF EXISTS public.generate_profile_slug(character varying, character varying);
+DROP FUNCTION IF EXISTS public.generate_profile_slug(text, text);
+
+-- Create a single, clean version of the function with text type
+CREATE OR REPLACE FUNCTION public.generate_profile_slug(display_name text, email text)
+RETURNS text
 LANGUAGE plpgsql
 AS $$
 DECLARE
@@ -32,7 +36,7 @@ BEGIN
 END;
 $$;
 
--- Then create the handle_new_user function
+-- Then create the handle_new_user function with correct type casting
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -65,8 +69,8 @@ BEGIN
       ELSE '/lovable-uploads/16a38ed9-b681-4f77-9bf8-8ca9f8439556.png'
     END,
     generate_profile_slug(
-      COALESCE(new.raw_user_meta_data->>'display_name', new.email)::character varying,
-      new.email::character varying
+      COALESCE(new.raw_user_meta_data->>'display_name', new.email)::text,
+      new.email::text
     )
   );
 
