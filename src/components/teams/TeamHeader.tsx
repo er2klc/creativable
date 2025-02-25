@@ -30,12 +30,9 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const user = useUser();
 
+  // Update collapsed state based on snap view
   useEffect(() => {
-    if (isInSnapView) {
-      setIsCollapsed(true);
-    } else {
-      setIsCollapsed(false);
-    }
+    setIsCollapsed(isInSnapView);
   }, [isInSnapView]);
 
   // Fetch member role for current user
@@ -83,7 +80,7 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
     enabled: !!team.id
   });
 
-  // Calculate stats from the members data
+  // Calculate team stats
   const stats: TeamStats = {
     totalMembers: members.length,
     admins: members.filter(member => 
