@@ -6,7 +6,6 @@ import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
-import { useTeamStats } from "@/hooks/useTeamStats";
 
 interface TeamHeaderProps {
   team: {
@@ -15,6 +14,24 @@ interface TeamHeaderProps {
     logo_url?: string;
     created_by: string;
     slug: string;
+    members: any[];
+    adminMembers: any[];
+    stats: {
+      totalMembers: number;
+      admins: number;
+      onlineCount: number;
+      memberProgress: number;
+      levelStats: {
+        averageLevel: number;
+        highestLevel: number;
+        totalPoints: number;
+      };
+      roles: {
+        owners: number;
+        admins: number;
+        members: number;
+      };
+    };
   };
   isInSnapView?: boolean;
 }
@@ -22,14 +39,6 @@ interface TeamHeaderProps {
 export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const user = useUser();
-  
-  // Use the centralized useTeamStats hook
-  const { 
-    stats, 
-    members, 
-    adminMembers, 
-    isLoading 
-  } = useTeamStats(team.id);
 
   // Update collapsed state based on snap view
   useEffect(() => {
@@ -38,16 +47,10 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
 
   const isAdmin = user?.id && (
     team.created_by === user.id ||
-    adminMembers.some(member => member.user_id === user.id)
+    team.adminMembers.some(member => member.user_id === user.id)
   );
   
   const isOwner = team.created_by === user?.id;
-
-  if (isLoading) {
-    return (
-      <div className="bg-background border-b h-[200px] animate-pulse" />
-    );
-  }
 
   return (
     <div className={cn(
@@ -63,14 +66,21 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
           isCollapsed ? "opacity-0" : "opacity-100"
         )}>
           <TeamHeaderTitle 
-            team={team}
+            team={{
+              id: team.id,
+              name: team.name,
+              logo_url: team.logo_url
+            }}
+            members={team.members}
+            adminMembers={team.adminMembers}
+            stats={team.stats}
             isAdmin={isAdmin}
           />
           <TeamActions 
             teamId={team.id}
             isAdmin={isAdmin}
             isOwner={isOwner}
-            members={members}
+            members={team.members}
           />
         </div>
         

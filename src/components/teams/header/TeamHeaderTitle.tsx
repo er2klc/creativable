@@ -1,3 +1,4 @@
+
 import { Crown, Image, Users, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
@@ -7,15 +8,21 @@ import { TeamAdminList } from "./TeamAdminList";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { getAvatarUrl } from "@/lib/supabase-utils";
-import { useTeamStats } from "@/hooks/useTeamStats";
 import { ErrorBoundary } from "react-error-boundary";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface TeamHeaderTitleProps {
   team: {
     id: string;
     name: string;
     logo_url?: string;
+  };
+  members: any[];
+  adminMembers: any[];
+  stats: {
+    totalMembers: number;
+    admins: number;
+    onlineCount: number;
   };
   isAdmin: boolean;
 }
@@ -28,36 +35,13 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetError
   );
 }
 
-export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
+export function TeamHeaderTitle({ team, members, adminMembers, stats, isAdmin }: TeamHeaderTitleProps) {
   const [isRefetching, setIsRefetching] = useState(false);
-  
-  const { 
-    stats, 
-    members, 
-    adminMembers, 
-    onlineMembers,
-    refetch,
-    error 
-  } = useTeamStats(team.id);
-
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      setIsRefetching(true);
-      await refetch();
-      setIsRefetching(false);
-    }, 30000);
-
-    return () => clearInterval(interval);
-  }, [refetch]);
-
-  const onlineMembersList = members.filter(member => 
-    onlineMembers.some(online => online.user_id === member.user_id)
-  );
 
   return (
     <ErrorBoundary
       FallbackComponent={ErrorFallback}
-      onReset={() => refetch()}
+      onReset={() => window.location.reload()}
     >
       <div className="flex items-center gap-6 justify-center w-full">
         <Sheet>
@@ -147,34 +131,36 @@ export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
                   <SheetDescription>Aktuell aktive Mitglieder in diesem Team</SheetDescription>
                 </SheetHeader>
                 <div className="mt-4 space-y-4">
-                  {onlineMembersList.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-2 border rounded">
-                      <div className="flex items-center gap-2">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage 
-                            src={member.profile?.avatar_url ? getAvatarUrl(member.profile.avatar_url) : undefined} 
-                            alt={member.profile?.display_name || 'Avatar'} 
-                          />
-                          <AvatarFallback>
-                            {member.profile?.display_name?.substring(0, 2).toUpperCase() || '??'}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">
-                            {member.profile?.display_name || 'Unbekannt'}
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline" className="mt-1">
-                              {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
-                            </Badge>
-                            <Badge variant="default" className="bg-green-500 mt-1">
-                              Level {member.points?.level || 0}
-                            </Badge>
+                  {members
+                    .filter(member => member.online)
+                    .map((member) => (
+                      <div key={member.id} className="flex items-center justify-between p-2 border rounded">
+                        <div className="flex items-center gap-2">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage 
+                              src={member.profile?.avatar_url ? getAvatarUrl(member.profile.avatar_url) : undefined} 
+                              alt={member.profile?.display_name || 'Avatar'} 
+                            />
+                            <AvatarFallback>
+                              {member.profile?.display_name?.substring(0, 2).toUpperCase() || '??'}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                              {member.profile?.display_name || 'Unbekannt'}
+                            </span>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline" className="mt-1">
+                                {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
+                              </Badge>
+                              <Badge variant="default" className="bg-green-500 mt-1">
+                                Level {member.points?.level || 0}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </SheetContent>
             </Sheet>

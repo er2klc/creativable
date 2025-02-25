@@ -15,6 +15,7 @@ import { TeamSnaps } from "@/components/teams/detail/TeamSnaps";
 import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
+import { toast } from "sonner";
 
 const TeamDetail = () => {
   const { teamSlug } = useParams();
@@ -31,8 +32,8 @@ const TeamDetail = () => {
     }
   }, [navigate]);
 
-  const { data: team, isLoading: isTeamLoading } = useQuery({
-    queryKey: ["team", teamSlug],
+  const { data: teamData, isLoading: isTeamLoading } = useQuery({
+    queryKey: ["team-with-stats", teamSlug],
     queryFn: async () => {
       if (!user?.id || !teamSlug) return null;
 
@@ -43,44 +44,78 @@ const TeamDetail = () => {
         .eq('slug', teamSlug)
         .single();
 
-      if (!directError && directTeam) {
-        return directTeam;
+      let team = directTeam;
+
+      if (!directTeam && !directError) {
+        // Fallback to get_user_teams RPC if direct access fails
+        const { data: userTeams, error: userTeamsError } = await supabase
+          .rpc("get_user_teams", { uid: user.id });
+
+        if (userTeamsError) {
+          console.error("Error fetching user teams:", userTeamsError);
+          toast.error("Fehler beim Laden des Teams");
+          return null;
+        }
+
+        team = userTeams?.find((t) => t.slug === teamSlug);
       }
 
-      // Fallback to get_user_teams RPC if direct access fails
-      const { data: userTeams, error: userTeamsError } = await supabase
-        .rpc("get_user_teams", { uid: user.id });
-
-      if (userTeamsError) {
-        console.error("Error fetching user teams:", userTeamsError);
+      if (!team) {
+        toast.error("Team nicht gefunden");
         return null;
       }
 
-      const team = userTeams?.find((t) => t.slug === teamSlug);
-      return team || null;
+      // Fetch members and calculate stats in one go
+      const { data: members, error: membersError } = await supabase
+        .from('team_members')
+        .select(`
+          id,
+          user_id,
+          role,
+          profile:profiles!team_members_user_id_fkey (
+            display_name,
+            avatar_url
+          ),
+          points:team_member_points!inner (
+            level,
+            points
+          )
+        `)
+        .eq('team_id', team.id);
+
+      if (membersError) {
+        console.error("Error fetching team members:", membersError);
+        toast.error("Fehler beim Laden der Team-Mitglieder");
+        return null;
+      }
+
+      // Calculate stats directly
+      const stats = {
+        totalMembers: members.length,
+        admins: members.filter(m => m.role === 'admin' || m.role === 'owner').length,
+        onlineCount: 0, // This will be updated by the presence channel
+        memberProgress: Math.min((members.length / 100) * 100, 100),
+        levelStats: {
+          averageLevel: members.reduce((acc, m) => acc + (m.points?.[0]?.level || 0), 0) / members.length || 0,
+          highestLevel: Math.max(...members.map(m => m.points?.[0]?.level || 0)),
+          totalPoints: members.reduce((acc, m) => acc + (m.points?.[0]?.points || 0), 0)
+        },
+        roles: {
+          owners: members.filter(m => m.role === 'owner').length,
+          admins: members.filter(m => m.role === 'admin').length,
+          members: members.filter(m => m.role === 'member').length
+        }
+      };
+
+      return {
+        ...team,
+        members,
+        adminMembers: members.filter(m => m.role === 'admin' || m.role === 'owner'),
+        stats
+      };
     },
     enabled: !!teamSlug && !!user?.id,
   });
-
-  const { data: teamMember } = useQuery({
-    queryKey: ["team-member", team?.id],
-    queryFn: async () => {
-      if (!user?.id || !team?.id) return null;
-
-      const { data, error } = await supabase
-        .from("team_members")
-        .select("role")
-        .eq("team_id", team.id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) return null;
-      return data;
-    },
-    enabled: !!user?.id && !!team?.id,
-  });
-
-  const isAdmin = teamMember?.role === "admin" || teamMember?.role === "owner";
 
   if (isTeamLoading) {
     return (
@@ -90,7 +125,7 @@ const TeamDetail = () => {
     );
   }
 
-  if (!team) {
+  if (!teamData) {
     return (
       <Card>
         <CardContent className="p-6">
@@ -99,6 +134,8 @@ const TeamDetail = () => {
       </Card>
     );
   }
+
+  const isAdmin = teamData.adminMembers.some(member => member.user_id === user?.id);
 
   return (
     <div className="space-y-6">
@@ -110,7 +147,7 @@ const TeamDetail = () => {
                 <div className="flex items-center gap-2">
                   <Grid className="h-5 w-5" />
                   <h1 className="text-lg md:text-xl font-semibold text-foreground">
-                    {team.name}
+                    {teamData.name}
                   </h1>
                 </div>
                 {isAdmin && (
@@ -139,7 +176,10 @@ const TeamDetail = () => {
         activeSnapView ? "h-0 overflow-hidden" : "h-auto"
       )}>
         <div className="container py-4">
-          <TeamHeader team={team} isInSnapView={!!activeSnapView} />
+          <TeamHeader 
+            team={teamData} 
+            isInSnapView={!!activeSnapView} 
+          />
         </div>
       </div>
 
@@ -148,9 +188,9 @@ const TeamDetail = () => {
           <TeamSnaps 
             isAdmin={isAdmin}
             isManaging={isManaging}
-            teamId={team.id}
-            teamSlug={team.slug}
-            onCalendarClick={() => navigate(`/unity/team/${team.slug}/calendar`)}
+            teamId={teamData.id}
+            teamSlug={teamData.slug}
+            onCalendarClick={() => navigate(`/unity/team/${teamData.slug}/calendar`)}
             onSnapClick={(snapId) => setActiveSnapView(snapId)}
             onBack={() => setActiveSnapView(null)}
             activeSnapView={activeSnapView}
@@ -160,10 +200,10 @@ const TeamDetail = () => {
             <div className="space-y-6">
               {isAdmin && (
                 <div className="flex justify-end">
-                  <CreateNewsDialog teamId={team.id} />
+                  <CreateNewsDialog teamId={teamData.id} />
                 </div>
               )}
-              <NewsList teamId={team.id} />
+              <NewsList teamId={teamData.id} />
             </div>
           </TabsContent>
 
