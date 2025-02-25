@@ -1,12 +1,18 @@
 
--- First drop existing conflicting functions
+-- First, ensure we're executing as the postgres role
+SET ROLE postgres;
+
+-- Drop existing functions to avoid conflicts
 DROP FUNCTION IF EXISTS public.generate_profile_slug(character varying, character varying);
 DROP FUNCTION IF EXISTS public.generate_profile_slug(text, text);
+DROP FUNCTION IF EXISTS public.handle_new_user();
 
--- Create a single, clean version of the function with text type
+-- Create the profile slug generator with proper security
 CREATE OR REPLACE FUNCTION public.generate_profile_slug(display_name text, email text)
 RETURNS text
 LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
     base_slug TEXT;
@@ -36,11 +42,18 @@ BEGIN
 END;
 $$;
 
--- Then create the handle_new_user function with correct type casting
+-- Ensure proper ownership and permissions for the slug generator
+ALTER FUNCTION public.generate_profile_slug(text, text) OWNER TO postgres;
+GRANT EXECUTE ON FUNCTION public.generate_profile_slug(text, text) TO postgres;
+GRANT EXECUTE ON FUNCTION public.generate_profile_slug(text, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.generate_profile_slug(text, text) TO service_role;
+
+-- Create the user handler with proper security
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   pipeline_id uuid;
@@ -92,9 +105,23 @@ BEGIN
 END;
 $$;
 
--- Finally, ensure the trigger exists
+-- Ensure proper ownership and permissions for the handler
+ALTER FUNCTION public.handle_new_user() OWNER TO postgres;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO postgres;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.handle_new_user() TO service_role;
+
+-- Ensure proper permissions on required tables
+GRANT ALL ON public.profiles TO postgres, authenticated, service_role;
+GRANT ALL ON public.pipelines TO postgres, authenticated, service_role;
+GRANT ALL ON public.pipeline_phases TO postgres, authenticated, service_role;
+
+-- Drop and recreate the trigger with proper ownership
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+  FOR EACH ROW
+  EXECUTE FUNCTION handle_new_user();
 
+-- Reset role
+RESET ROLE;
