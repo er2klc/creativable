@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MEMBERS_QUERY, transformMemberData } from "./use-team-members";
 import type { TransformedTeamMember } from "./use-team-members";
@@ -42,7 +42,7 @@ export function useTeamStats(teamId: string): UseTeamStatsResult {
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
   const [error, setError] = useState<Error | null>(null);
 
-  // Reduzierte staleTime auf 10 Sekunden für schnellere Updates
+  // Fetch members data using React Query
   const { 
     data: members = [], 
     isLoading, 
@@ -75,22 +75,65 @@ export function useTeamStats(teamId: string): UseTeamStatsResult {
       }
     },
     enabled: Boolean(teamId),
-    staleTime: 1000 * 10, // 10 Sekunden statt 5 Minuten
-    cacheTime: 1000 * 60 * 5, // 5 Minuten statt 30 Minuten
-    refetchInterval: 1000 * 30, // Automatisches Refetch alle 30 Sekunden
+    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
+    cacheTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
   });
 
-  // Memoize adminMembers
-  const adminMembers = useMemo(() => 
-    members.filter(m => m.role === 'admin' || m.role === 'owner')
-  , [members]);
+  // Track online presence with error handling
+  useEffect(() => {
+    if (!teamId) return;
 
-  // Memoize stats calculation
-  const stats: TeamStats = useMemo(() => ({
+    const channel = supabase.channel(`team_${teamId}`)
+      .on('presence', { event: 'sync' }, () => {
+        try {
+          const state = channel.presenceState();
+          const online: OnlineMember[] = [];
+          
+          Object.values(state).forEach((presences: any) => {
+            presences.forEach((presence: any) => {
+              if (presence.user_id && presence.online_at) {
+                online.push({
+                  user_id: presence.user_id,
+                  online_at: presence.online_at
+                });
+              }
+            });
+          });
+          
+          setOnlineMembers(online);
+        } catch (err) {
+          console.error('Error processing presence sync:', err);
+          setError(err instanceof Error ? err : new Error('Presence sync error'));
+        }
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              await channel.track({
+                user_id: session.user.id,
+                online_at: new Date().toISOString(),
+              });
+            }
+          } catch (err) {
+            console.error('Error tracking presence:', err);
+            setError(err instanceof Error ? err : new Error('Presence tracking error'));
+          }
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [teamId]);
+
+  // Calculate all stats from members data with error handling
+  const stats: TeamStats = {
     totalMembers: members.length,
-    admins: adminMembers.length,
+    admins: members.filter(m => m.role === 'admin' || m.role === 'owner').length,
     onlineCount: onlineMembers.length,
-    memberProgress: Math.min((members.length / 100) * 100, 100),
+    memberProgress: Math.min((members.length / 100) * 100, 100), // Assuming max 100 members
     levelStats: {
       averageLevel: members.reduce((acc, m) => acc + (m.points?.level || 0), 0) / members.length || 0,
       highestLevel: Math.max(...members.map(m => m.points?.level || 0)),
@@ -101,76 +144,12 @@ export function useTeamStats(teamId: string): UseTeamStatsResult {
       admins: members.filter(m => m.role === 'admin').length,
       members: members.filter(m => m.role === 'member').length
     }
-  }), [members, onlineMembers, adminMembers]);
+  };
 
-  // Presence Channel mit Error Recovery
-  useEffect(() => {
-    if (!teamId) return;
-
-    let retryCount = 0;
-    const MAX_RETRIES = 3;
-    const RETRY_DELAY = 2000;
-
-    const setupPresenceChannel = async () => {
-      try {
-        const channel = supabase.channel(`team_${teamId}`)
-          .on('presence', { event: 'sync' }, () => {
-            try {
-              const state = channel.presenceState();
-              const online: OnlineMember[] = [];
-              
-              Object.values(state).forEach((presences: any) => {
-                presences.forEach((presence: any) => {
-                  if (presence.user_id && presence.online_at) {
-                    online.push({
-                      user_id: presence.user_id,
-                      online_at: presence.online_at
-                    });
-                  }
-                });
-              });
-              
-              setOnlineMembers(online);
-              retryCount = 0; // Reset retry count on successful sync
-            } catch (err) {
-              console.error('Error processing presence sync:', err);
-              handlePresenceError();
-            }
-          });
-
-        const status = await channel.subscribe(async (status) => {
-          if (status === 'SUBSCRIBED') {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-              await channel.track({
-                user_id: session.user.id,
-                online_at: new Date().toISOString(),
-              });
-            }
-          }
-        });
-
-        return () => {
-          supabase.removeChannel(channel);
-        };
-      } catch (err) {
-        console.error('Error in presence channel setup:', err);
-        handlePresenceError();
-      }
-    };
-
-    const handlePresenceError = () => {
-      if (retryCount < MAX_RETRIES) {
-        retryCount++;
-        console.log(`Retrying presence channel setup (${retryCount}/${MAX_RETRIES})...`);
-        setTimeout(setupPresenceChannel, RETRY_DELAY);
-      } else {
-        setError(new Error('Failed to establish presence channel after multiple attempts'));
-      }
-    };
-
-    return setupPresenceChannel();
-  }, [teamId]);
+  // Filter admin members
+  const adminMembers = members.filter(m => 
+    m.role === 'admin' || m.role === 'owner'
+  );
 
   return {
     stats,
