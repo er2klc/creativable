@@ -42,6 +42,11 @@ const Register = () => {
       const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
+        options: {
+          data: {
+            display_name: formData.name
+          }
+        }
       });
 
       if (error) {
@@ -142,4 +147,3 @@ const Register = () => {
 };
 
 export default Register;
-
