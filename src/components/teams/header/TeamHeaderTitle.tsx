@@ -1,4 +1,3 @@
-
 import { Crown, Image, Users, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
@@ -10,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAvatarUrl } from "@/lib/supabase-utils";
 import { useTeamStats } from "@/hooks/useTeamStats";
 import { ErrorBoundary } from "react-error-boundary";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface TeamHeaderTitleProps {
   team: {
@@ -41,7 +40,6 @@ export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
     error 
   } = useTeamStats(team.id);
 
-  // Background refetch every 30 seconds
   useEffect(() => {
     const interval = setInterval(async () => {
       setIsRefetching(true);
