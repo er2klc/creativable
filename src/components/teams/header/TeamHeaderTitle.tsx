@@ -55,34 +55,43 @@ export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
 
   // Fetch all team members with their profiles and points
-  const { data: members = [] } = useQuery({
-    queryKey: ['team-members', team.id],
-    queryFn: async () => {
-      const { data: teamMembers, error } = await supabase
-        .from('team_members')
-        .select(MEMBERS_QUERY)
-        .eq('team_id', team.id);
+  const { data: teamMembers = [] } = useQuery({
+  queryKey: ['team-members', team.id],
+  queryFn: async () => {
+    const { data, error } = await supabase
+      .from('team_members')
+      .select(`
+        id,
+        user_id,
+        role,
+        profile:profiles (
+          id,
+          display_name,
+          avatar_url
+        ),
+        points:team_member_points (
+          level,
+          points
+        )
+      `)
+      .eq('team_id', team.id);
 
-      if (error) {
-        console.error('Error fetching team members:', error);
-        return [];
+    if (error) {
+      console.error('Fehler beim Laden der Teammitglieder:', error);
+      return [];
+    }
+
+    return data.map(member => ({
+      ...member,
+      profile: member.profile || { display_name: 'Unbekannt', avatar_url: null },
+      points: {
+        level: member.points?.level || 0,
+        points: member.points?.points || 0
       }
-
-      return teamMembers.map((member) => ({
-        ...member,
-        profile: member.profile || {
-          id: member.user_id,
-          display_name: 'Unbekannt',
-          avatar_url: null
-        },
-        points: {
-          level: member.team_member_points?.[0]?.level ?? 0,
-          points: member.team_member_points?.[0]?.points ?? 0
-        }
-      }));
-    },
-    enabled: !!team.id
-  });
+    }));
+  },
+  enabled: !!team.id,
+});
 
   // Calculate stats
   const stats: TeamStats = {
