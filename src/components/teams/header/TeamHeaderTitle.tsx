@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { getAvatarUrl } from "@/lib/supabase-utils";
+import { useQuery } from "@tanstack/react-query";
 import type { TransformedTeamMember } from "@/hooks/use-team-members";
 
 interface TeamStats {
@@ -24,9 +25,6 @@ interface TeamHeaderTitleProps {
     logo_url?: string;
   };
   isAdmin: boolean;
-  members: TransformedTeamMember[];
-  adminMembers: TransformedTeamMember[];
-  stats: TeamStats;
 }
 
 interface OnlineMember {
@@ -34,14 +32,70 @@ interface OnlineMember {
   online_at: string;
 }
 
-export function TeamHeaderTitle({ 
-  team, 
-  isAdmin,
-  members = [],
-  adminMembers = [],
-  stats
-}: TeamHeaderTitleProps) {
+const MEMBERS_QUERY = `
+  id,
+  user_id,
+  role,
+  profile:profiles!user_id(
+    id,
+    display_name,
+    avatar_url,
+    bio,
+    status,
+    last_seen,
+    slug
+  ),
+  team_member_points!inner(
+    level,
+    points
+  )
+`;
+
+export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
+
+  // Fetch all team members with their profiles and points
+  const { data: members = [] } = useQuery({
+    queryKey: ['team-members', team.id],
+    queryFn: async () => {
+      const { data: teamMembers, error } = await supabase
+        .from('team_members')
+        .select(MEMBERS_QUERY)
+        .eq('team_id', team.id);
+
+      if (error) {
+        console.error('Error fetching team members:', error);
+        return [];
+      }
+
+      return teamMembers.map((member) => ({
+        ...member,
+        profile: member.profile || {
+          id: member.user_id,
+          display_name: 'Unbekannt',
+          avatar_url: null
+        },
+        points: {
+          level: member.team_member_points?.[0]?.level ?? 0,
+          points: member.team_member_points?.[0]?.points ?? 0
+        }
+      }));
+    },
+    enabled: !!team.id
+  });
+
+  // Calculate stats
+  const stats: TeamStats = {
+    totalMembers: members.length,
+    admins: members.filter(member => 
+      member.role === 'admin' || member.role === 'owner'
+    ).length
+  };
+
+  // Filter admin members
+  const adminMembers = members.filter(member => 
+    member.role === 'admin' || member.role === 'owner'
+  );
 
   useEffect(() => {
     const channel = supabase.channel(`team_${team.id}`)
@@ -187,13 +241,15 @@ export function TeamHeaderTitle({
                       </Avatar>
                       <div className="flex flex-col">
                         <span className="text-sm font-medium">
-                          {member.profile?.display_name || 'Kein Name angegeben'}
+                          {member.profile?.display_name || 'Unbekannt'}
                         </span>
                         <div className="flex items-center gap-2">
                           <Badge variant="outline" className="mt-1">
                             {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
                           </Badge>
-                          <Badge variant="default" className="bg-green-500 mt-1">LIVE</Badge>
+                          <Badge variant="default" className="bg-green-500 mt-1">
+                            Level {member.points?.level || 0}
+                          </Badge>
                         </div>
                       </div>
                     </div>
