@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { toast } from "sonner";
+import { TeamPresenceProvider } from "@/components/teams/context/TeamPresenceContext";
 
 const TeamDetail = () => {
   const { teamSlug } = useParams();
@@ -138,87 +139,89 @@ const TeamDetail = () => {
   const isAdmin = teamData.adminMembers.some(member => member.user_id === user?.id);
 
   return (
-    <div className="space-y-6">
-      <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
-        <div className="w-full">
-          <div className="h-16 px-4 flex items-center">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
-              <div className="flex items-center gap-2">
+    <TeamPresenceProvider teamId={teamData.id}>
+      <div className="space-y-6">
+        <div className="fixed top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+          <div className="w-full">
+            <div className="h-16 px-4 flex items-center">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
                 <div className="flex items-center gap-2">
-                  <Grid className="h-5 w-5" />
-                  <h1 className="text-lg md:text-xl font-semibold text-foreground">
-                    {teamData.name}
-                  </h1>
+                  <div className="flex items-center gap-2">
+                    <Grid className="h-5 w-5" />
+                    <h1 className="text-lg md:text-xl font-semibold text-foreground">
+                      {teamData.name}
+                    </h1>
+                  </div>
+                  {isAdmin && (
+                    <Button
+                      variant={isManaging ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setIsManaging(!isManaging)}
+                      className="ml-4"
+                    >
+                      <Grid className="h-4 w-4 mr-2" />
+                      {isManaging ? "Bearbeitung beenden" : "Snaps verwalten"}
+                    </Button>
+                  )}
                 </div>
-                {isAdmin && (
-                  <Button
-                    variant={isManaging ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setIsManaging(!isManaging)}
-                    className="ml-4"
-                  >
-                    <Grid className="h-4 w-4 mr-2" />
-                    {isManaging ? "Bearbeitung beenden" : "Snaps verwalten"}
-                  </Button>
-                )}
+                <div className="w-[300px]">
+                  <SearchBar />
+                </div>
+                <HeaderActions profile={null} userEmail={user?.email} />
               </div>
-              <div className="w-[300px]">
-                <SearchBar />
-              </div>
-              <HeaderActions profile={null} userEmail={user?.email} />
             </div>
           </div>
         </div>
-      </div>
 
-      <div className={cn(
-        "bg-background border-b transition-all duration-300",
-        activeSnapView ? "h-0 overflow-hidden" : "h-auto"
-      )}>
-        <div className="container py-4">
-          <TeamHeader 
-            team={teamData} 
-            isInSnapView={!!activeSnapView} 
-          />
+        <div className={cn(
+          "bg-background border-b transition-all duration-300",
+          activeSnapView ? "h-0 overflow-hidden" : "h-auto"
+        )}>
+          <div className="container py-4">
+            <TeamHeader 
+              team={teamData} 
+              isInSnapView={!!activeSnapView} 
+            />
+          </div>
+        </div>
+
+        <div className="container pt-4">
+          <Tabs defaultValue="posts">
+            <TeamSnaps 
+              isAdmin={isAdmin}
+              isManaging={isManaging}
+              teamId={teamData.id}
+              teamSlug={teamData.slug}
+              onCalendarClick={() => navigate(`/unity/team/${teamData.slug}/calendar`)}
+              onSnapClick={(snapId) => setActiveSnapView(snapId)}
+              onBack={() => setActiveSnapView(null)}
+              activeSnapView={activeSnapView}
+            />
+
+            <TabsContent value="news" className="mt-6">
+              <div className="space-y-6">
+                {isAdmin && (
+                  <div className="flex justify-end">
+                    <CreateNewsDialog teamId={teamData.id} />
+                  </div>
+                )}
+                <NewsList teamId={teamData.id} />
+              </div>
+            </TabsContent>
+
+            <TabsContent value="files" className="mt-6">
+              <Card>
+                <CardContent className="p-6">
+                  <p className="text-center text-muted-foreground">
+                    Keine Dateien vorhanden
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
-
-      <div className="container pt-4">
-        <Tabs defaultValue="posts">
-          <TeamSnaps 
-            isAdmin={isAdmin}
-            isManaging={isManaging}
-            teamId={teamData.id}
-            teamSlug={teamData.slug}
-            onCalendarClick={() => navigate(`/unity/team/${teamData.slug}/calendar`)}
-            onSnapClick={(snapId) => setActiveSnapView(snapId)}
-            onBack={() => setActiveSnapView(null)}
-            activeSnapView={activeSnapView}
-          />
-
-          <TabsContent value="news" className="mt-6">
-            <div className="space-y-6">
-              {isAdmin && (
-                <div className="flex justify-end">
-                  <CreateNewsDialog teamId={teamData.id} />
-                </div>
-              )}
-              <NewsList teamId={teamData.id} />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="files" className="mt-6">
-            <Card>
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground">
-                  Keine Dateien vorhanden
-                </p>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </div>
+    </TeamPresenceProvider>
   );
 };
 
