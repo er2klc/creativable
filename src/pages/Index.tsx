@@ -12,8 +12,9 @@ const Index = () => {
   const [isScrolled, setIsScrolled] = useState(false);
 
   useEffect(() => {
+    // Only redirect if user is authenticated
     if (user) {
-      navigate("/dashboard");
+      navigate("/dashboard", { replace: true });
     }
 
     const handleScroll = () => {

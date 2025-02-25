@@ -17,7 +17,11 @@ const AppRoutes = () => {
   const showChat = useChatVisibility(publicPaths);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
   }
 
   return (
@@ -43,23 +47,12 @@ const AppRoutes = () => {
           ))}
         </Route>
 
-        {/* Root Route */}
-        <Route
-          path="/"
-          element={
-            <Navigate
-              to={isAuthenticated ? "/dashboard" : "/auth"}
-              replace
-            />
-          }
-        />
-
         {/* Catch-all - This should be last */}
         <Route
           path="*"
           element={
             <Navigate
-              to={isAuthenticated ? "/dashboard" : "/auth"}
+              to={isAuthenticated ? "/dashboard" : "/"}
               replace
             />
           }
@@ -81,3 +74,4 @@ const App = () => {
 };
 
 export default App;
+
