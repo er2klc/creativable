@@ -7,7 +7,7 @@ export const MEMBERS_QUERY = `
   user_id,
   role,
   joined_at,
-  profile:profiles (
+  profile:profiles!user_id(
     id,
     display_name,
     avatar_url,
@@ -16,7 +16,7 @@ export const MEMBERS_QUERY = `
     last_seen,
     slug
   ),
-  points:team_member_points (
+  team_member_points!inner(
     level,
     points
   )
@@ -36,13 +36,20 @@ interface TeamMember {
     last_seen?: string;
     slug?: string;
   };
+  team_member_points: Array<{
+    level: number;
+    points: number;
+  }>;
+}
+
+interface TransformedTeamMember extends Omit<TeamMember, 'team_member_points'> {
   points: {
     level: number;
     points: number;
   };
 }
 
-export const transformMemberData = (member: any): TeamMember => ({
+export const transformMemberData = (member: TeamMember): TransformedTeamMember => ({
   ...member,
   profile: member.profile || {
     id: member.user_id,
@@ -50,13 +57,12 @@ export const transformMemberData = (member: any): TeamMember => ({
     avatar_url: null
   },
   points: {
-    // Points data always comes as an array from the database
-    level: member.points?.[0]?.level ?? 0,
-    points: member.points?.[0]?.points ?? 0
+    level: member.team_member_points?.[0]?.level ?? 0,
+    points: member.team_member_points?.[0]?.points ?? 0
   }
 });
 
-export const fetchTeamMembers = async (teamId: string, limit?: number): Promise<TeamMember[]> => {
+export const fetchTeamMembers = async (teamId: string, limit?: number): Promise<TransformedTeamMember[]> => {
   let query = supabase
     .from('team_members')
     .select(MEMBERS_QUERY)
