@@ -70,7 +70,7 @@ const MemberProfile = () => {
         .select(`
           role,
           joined_at,
-          team_member_points!inner (
+          team_member_points (
             points,
             level
           )
@@ -171,8 +171,9 @@ const MemberProfile = () => {
         })) || []),
       ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      const points = membershipData.team_member_points?.points ?? 0;
-      const level = membershipData.team_member_points?.level ?? 0;
+      // Safely extract points and level with fallbacks
+      const points = membershipData.team_member_points?.[0]?.points ?? 0;
+      const level = membershipData.team_member_points?.[0]?.level ?? 0;
 
       return {
         ...profileData,
