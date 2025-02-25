@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +36,20 @@ const TeamDetail = () => {
     queryFn: async () => {
       if (!user?.id || !teamSlug) return null;
 
-      const { data: userTeams, error: userTeamsError } = await supabase.rpc("get_user_teams", { uid: user.id });
+      // First try direct table access (this will work for super admins due to RLS)
+      const { data: directTeam, error: directError } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('slug', teamSlug)
+        .single();
+
+      if (!directError && directTeam) {
+        return directTeam;
+      }
+
+      // Fallback to get_user_teams RPC if direct access fails
+      const { data: userTeams, error: userTeamsError } = await supabase
+        .rpc("get_user_teams", { uid: user.id });
 
       if (userTeamsError) {
         console.error("Error fetching user teams:", userTeamsError);
