@@ -69,6 +69,7 @@ BEGIN
   VALUES (
     new.id,
     COALESCE(
+      new.raw_user_meta_data->>'name',
       new.raw_user_meta_data->>'display_name',
       new.email
     ),
@@ -82,7 +83,11 @@ BEGIN
       ELSE '/lovable-uploads/16a38ed9-b681-4f77-9bf8-8ca9f8439556.png'
     END,
     generate_profile_slug(
-      COALESCE(new.raw_user_meta_data->>'display_name', new.email)::text,
+      COALESCE(
+        new.raw_user_meta_data->>'name',
+        new.raw_user_meta_data->>'display_name',
+        new.email
+      )::text,
       new.email::text
     )
   );

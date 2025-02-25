@@ -1,4 +1,3 @@
-
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/button";
 import { useState, useTransition } from "react";
@@ -33,10 +32,9 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      console.log("Starting basic registration process with email:", formData.email);
-      console.log("Registration request details:", {
+      console.log("Starting registration process with:", {
         email: formData.email,
-        hasPassword: !!formData.password
+        name: formData.name
       });
       
       const { data, error } = await supabase.auth.signUp({
@@ -44,7 +42,7 @@ const Register = () => {
         password: formData.password,
         options: {
           data: {
-            display_name: formData.name
+            name: formData.name // Pass name directly in user metadata
           }
         }
       });
