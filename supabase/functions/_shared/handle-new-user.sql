@@ -1,5 +1,38 @@
 
--- First, create or replace the function
+-- First create the profile slug generation function
+CREATE OR REPLACE FUNCTION public.generate_profile_slug(display_name character varying, email character varying)
+RETURNS character varying
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    base_slug TEXT;
+    new_slug TEXT;
+    counter INTEGER := 0;
+BEGIN
+    -- Create base slug from display name or email
+    base_slug := LOWER(REGEXP_REPLACE(
+        COALESCE(display_name, SPLIT_PART(email, '@', 1)),
+        '[^a-zA-Z0-9]+',
+        '-',
+        'g'
+    ));
+    
+    new_slug := base_slug;
+    
+    -- Check if slug exists and generate a new one if it does
+    WHILE EXISTS (
+        SELECT 1 FROM profiles 
+        WHERE slug = new_slug
+    ) LOOP
+        counter := counter + 1;
+        new_slug := base_slug || '-' || counter;
+    END LOOP;
+    
+    RETURN new_slug;
+END;
+$$;
+
+-- Then create the handle_new_user function
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -13,7 +46,8 @@ BEGIN
     id,
     display_name,
     email,
-    avatar_url
+    avatar_url,
+    slug
   )
   VALUES (
     new.id,
@@ -29,7 +63,11 @@ BEGIN
       WHEN 3 THEN '/lovable-uploads/02298249-f2cc-496d-8eb3-e214b1fa2a25.png'
       WHEN 4 THEN '/lovable-uploads/bb1acf4a-fd2c-4afe-b89d-b8924a83944c.png'
       ELSE '/lovable-uploads/16a38ed9-b681-4f77-9bf8-8ca9f8439556.png'
-    END
+    END,
+    generate_profile_slug(
+      COALESCE(new.raw_user_meta_data->>'display_name', new.email)::character varying,
+      new.email::character varying
+    )
   );
 
   -- Then create the pipeline and store its ID
@@ -50,7 +88,7 @@ BEGIN
 END;
 $$;
 
--- Then, create the trigger if it doesn't exist
+-- Finally, ensure the trigger exists
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
