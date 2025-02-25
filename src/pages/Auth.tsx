@@ -2,22 +2,25 @@
 import { AuthCard } from "@/components/auth/AuthCard";
 import { AuthFormContent } from "@/components/auth/AuthFormContent";
 import { useAuth } from "@/hooks/use-auth";
-import { useEffect } from "react";
+import { useEffect, useTransition } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Auth = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [isPending, startTransition] = useTransition();
   const state = location.state as { sessionExpired?: boolean; returnTo?: string } | null;
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
-      navigate(state?.returnTo || "/dashboard");
+      startTransition(() => {
+        navigate(state?.returnTo || "/dashboard");
+      });
     }
   }, [isAuthenticated, isLoading, navigate, state?.returnTo]);
 
-  if (isLoading) {
+  if (isLoading || isPending) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0A0A0A]">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />

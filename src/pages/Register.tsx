@@ -1,6 +1,7 @@
+
 import { AuthCard } from "@/components/auth/AuthCard";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,7 @@ const Register = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [showLoginDialog, setShowLoginDialog] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -56,7 +58,9 @@ const Register = () => {
       }
 
       toast.success("Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.");
-      navigate("/auth");
+      startTransition(() => {
+        navigate("/auth");
+      });
     } catch (error: any) {
       console.error('Registration error:', error);
       toast.error(error.message || "Ein unerwarteter Fehler ist aufgetreten");
@@ -81,19 +85,25 @@ const Register = () => {
         <Button
           type="submit"
           className="w-full bg-white/10 hover:bg-white/20 text-white border border-white/20 shadow-lg backdrop-blur-sm relative after:absolute after:bottom-0 after:left-0 after:h-[1px] after:w-full after:bg-gradient-to-r after:from-red-500 after:via-yellow-500 after:to-blue-500"
-          disabled={isLoading}
+          disabled={isLoading || isPending}
         >
           {isLoading ? "Laden..." : "Registrieren"}
         </Button>
 
         <div className="mt-4 text-center">
-          <button
+          <Button
             type="button"
-            onClick={() => navigate("/auth")}
+            variant="link"
             className="text-sm text-gray-400 hover:text-white hover:underline"
+            onClick={() => {
+              startTransition(() => {
+                navigate("/auth");
+              });
+            }}
+            disabled={isLoading || isPending}
           >
             Bereits registriert? Hier anmelden
-          </button>
+          </Button>
         </div>
       </form>
 
@@ -116,7 +126,9 @@ const Register = () => {
             <Button
               onClick={() => {
                 setShowLoginDialog(false);
-                navigate("/auth", { state: { initialEmail: formData.email } });
+                startTransition(() => {
+                  navigate("/auth", { state: { initialEmail: formData.email } });
+                });
               }}
               className="bg-white/10 hover:bg-white/20 text-white border border-white/20"
             >
@@ -130,3 +142,4 @@ const Register = () => {
 };
 
 export default Register;
+
