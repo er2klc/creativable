@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { getAvatarUrl } from "@/lib/supabase-utils";
 import { ErrorBoundary } from "react-error-boundary";
 import { useState } from "react";
+import { useTeamPresence } from "../context/TeamPresenceContext";
 
 interface TeamHeaderTitleProps {
   team: {
@@ -37,6 +38,10 @@ function ErrorFallback({ error, resetErrorBoundary }: { error: Error; resetError
 
 export function TeamHeaderTitle({ team, members, adminMembers, stats, isAdmin }: TeamHeaderTitleProps) {
   const [isRefetching, setIsRefetching] = useState(false);
+  const { onlineMembers, isOnline } = useTeamPresence();
+  
+  // Filter members who are currently online based on presence data
+  const onlineMembersList = members.filter(member => isOnline(member.user_id));
 
   return (
     <ErrorBoundary
@@ -122,7 +127,7 @@ export function TeamHeaderTitle({ team, members, adminMembers, stats, isAdmin }:
               <SheetTrigger asChild>
                 <Button variant="ghost" size="sm" className="flex items-center gap-1">
                   <Radio className="h-4 w-4 text-green-500 animate-pulse" />
-                  <span>{stats.onlineCount} LIVE</span>
+                  <span>{onlineMembersList.length} LIVE</span>
                 </Button>
               </SheetTrigger>
               <SheetContent>
@@ -131,36 +136,34 @@ export function TeamHeaderTitle({ team, members, adminMembers, stats, isAdmin }:
                   <SheetDescription>Aktuell aktive Mitglieder in diesem Team</SheetDescription>
                 </SheetHeader>
                 <div className="mt-4 space-y-4">
-                  {members
-                    .filter(member => member.online)
-                    .map((member) => (
-                      <div key={member.id} className="flex items-center justify-between p-2 border rounded">
-                        <div className="flex items-center gap-2">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage 
-                              src={member.profile?.avatar_url ? getAvatarUrl(member.profile.avatar_url) : undefined} 
-                              alt={member.profile?.display_name || 'Avatar'} 
-                            />
-                            <AvatarFallback>
-                              {member.profile?.display_name?.substring(0, 2).toUpperCase() || '??'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex flex-col">
-                            <span className="text-sm font-medium">
-                              {member.profile?.display_name || 'Unbekannt'}
-                            </span>
-                            <div className="flex items-center gap-2">
-                              <Badge variant="outline" className="mt-1">
-                                {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
-                              </Badge>
-                              <Badge variant="default" className="bg-green-500 mt-1">
-                                Level {member.points?.level || 0}
-                              </Badge>
-                            </div>
+                  {onlineMembersList.map((member) => (
+                    <div key={member.id} className="flex items-center justify-between p-2 border rounded">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-12 w-12">
+                          <AvatarImage 
+                            src={member.profile?.avatar_url ? getAvatarUrl(member.profile.avatar_url) : undefined} 
+                            alt={member.profile?.display_name || 'Avatar'} 
+                          />
+                          <AvatarFallback>
+                            {member.profile?.display_name?.substring(0, 2).toUpperCase() || '??'}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex flex-col">
+                          <span className="text-sm font-medium">
+                            {member.profile?.display_name || 'Unbekannt'}
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className="mt-1">
+                              {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
+                            </Badge>
+                            <Badge variant="default" className="bg-green-500 mt-1">
+                              Level {member.points?.[0]?.level || 0}
+                            </Badge>
                           </div>
                         </div>
                       </div>
-                    ))}
+                    </div>
+                  ))}
                 </div>
               </SheetContent>
             </Sheet>
