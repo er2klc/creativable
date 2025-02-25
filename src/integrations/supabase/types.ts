@@ -4641,13 +4641,21 @@ export type Database = {
         }
         Returns: string
       }
-      generate_profile_slug: {
-        Args: {
-          display_name: string
-          email: string
-        }
-        Returns: string
-      }
+      generate_profile_slug:
+        | {
+            Args: {
+              display_name: string
+              email: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              display_name: string
+              email: string
+            }
+            Returns: string
+          }
       generate_unique_slug: {
         Args: {
           base_slug: string
