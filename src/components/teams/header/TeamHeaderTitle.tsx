@@ -44,7 +44,6 @@ export function TeamHeaderTitle({
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
 
   useEffect(() => {
-    // Subscribe to presence updates for this team
     const channel = supabase.channel(`team_${team.id}`)
       .on('presence', { event: 'sync' }, () => {
         const state = channel.presenceState();
@@ -52,7 +51,10 @@ export function TeamHeaderTitle({
         
         Object.values(state).forEach((presences: any) => {
           presences.forEach((presence: any) => {
-            online.push(presence);
+            online.push({
+              user_id: presence.user_id,
+              online_at: presence.online_at
+            });
           });
         });
         
@@ -74,6 +76,10 @@ export function TeamHeaderTitle({
       supabase.removeChannel(channel);
     };
   }, [team.id]);
+
+  const onlineMembersList = members.filter(member => 
+    onlineMembers.some(online => online.user_id === member.user_id)
+  );
 
   return (
     <div className="flex items-center gap-6 justify-center w-full">
@@ -167,9 +173,7 @@ export function TeamHeaderTitle({
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-4 space-y-4">
-                {members.filter(member => 
-                  onlineMembers.some(online => online.user_id === member.user_id)
-                ).map((member) => (
+                {onlineMembersList.map((member) => (
                   <div key={member.id} className="flex items-center justify-between p-2 border rounded">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-12 w-12">
