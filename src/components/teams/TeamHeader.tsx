@@ -10,6 +10,11 @@ import { cn } from "@/lib/utils";
 import { NextTeamEvent } from "./events/NextTeamEvent";
 import { MEMBERS_QUERY, transformMemberData } from "@/hooks/use-team-members";
 
+interface TeamStats {
+  totalMembers: number;
+  admins: number;
+}
+
 interface TeamHeaderProps {
   team: {
     id: string;
@@ -33,6 +38,7 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
     }
   }, [isInSnapView]);
 
+  // Fetch member role for current user
   const { data: memberRole } = useQuery({
     queryKey: ['team-member-role', team.id],
     queryFn: async () => {
@@ -58,6 +64,7 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
   const isAdmin = memberRole === 'admin' || memberRole === 'owner';
   const isOwner = team.created_by === user?.id;
 
+  // Fetch all team members with their profile and points data
   const { data: members = [] } = useQuery({
     queryKey: ['team-members', team.id],
     queryFn: async () => {
@@ -71,12 +78,20 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
         return [];
       }
 
-      // Transform the data before returning
       return data.map(transformMemberData);
     },
     enabled: !!team.id
   });
 
+  // Calculate stats from the members data
+  const stats: TeamStats = {
+    totalMembers: members.length,
+    admins: members.filter(member => 
+      member.role === 'admin' || member.role === 'owner'
+    ).length
+  };
+
+  // Filter admin members
   const adminMembers = members.filter(member => 
     member.role === 'admin' || member.role === 'owner'
   );
@@ -99,6 +114,7 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
             isAdmin={isAdmin}
             members={members}
             adminMembers={adminMembers}
+            stats={stats}
           />
           <TeamActions 
             teamId={team.id}
