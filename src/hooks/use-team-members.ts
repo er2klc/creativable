@@ -36,7 +36,7 @@ interface TeamMember {
     last_seen?: string;
     slug?: string;
   };
-  points?: {
+  points: {
     level: number;
     points: number;
   };
@@ -50,12 +50,9 @@ export const transformMemberData = (member: any): TeamMember => ({
     avatar_url: null
   },
   points: {
-    level: Array.isArray(member.points) 
-      ? member.points[0]?.level || 0 
-      : member.points?.level || 0,
-    points: Array.isArray(member.points)
-      ? member.points[0]?.points || 0
-      : member.points?.points || 0
+    // Points data always comes as an array from the database
+    level: member.points?.[0]?.level ?? 0,
+    points: member.points?.[0]?.points ?? 0
   }
 });
 
