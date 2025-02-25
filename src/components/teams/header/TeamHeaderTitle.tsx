@@ -10,6 +10,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { getAvatarUrl } from "@/lib/supabase-utils";
+import type { TransformedTeamMember } from "@/hooks/use-team-members";
+
+interface TeamStats {
+  totalMembers: number;
+  admins: number;
+}
 
 interface TeamHeaderTitleProps {
   team: {
@@ -18,8 +24,9 @@ interface TeamHeaderTitleProps {
     logo_url?: string;
   };
   isAdmin: boolean;
-  members: any[];
-  adminMembers: any[];
+  members: TransformedTeamMember[];
+  adminMembers: TransformedTeamMember[];
+  stats: TeamStats;
 }
 
 interface OnlineMember {
@@ -31,7 +38,8 @@ export function TeamHeaderTitle({
   team, 
   isAdmin,
   members = [],
-  adminMembers = []
+  adminMembers = [],
+  stats
 }: TeamHeaderTitleProps) {
   const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
 
@@ -72,20 +80,16 @@ export function TeamHeaderTitle({
       <Sheet>
         <SheetTrigger asChild>
           <button className="relative group">
-            {team.logo_url ? (
-              <Avatar className="h-32 w-32 cursor-pointer border-2 border-primary/20">
-                <AvatarImage src={getAvatarUrl(team.logo_url)} alt={team.name} className="object-cover" />
-                <AvatarFallback className="text-2xl bg-primary/5">
-                  {team.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            ) : (
-              <Avatar className="h-32 w-32 cursor-pointer border-2 border-primary/20">
-                <AvatarFallback className="text-2xl bg-primary/5">
-                  {team.name.substring(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            )}
+            <Avatar className="h-32 w-32 cursor-pointer border-2 border-primary/20">
+              <AvatarImage 
+                src={team.logo_url ? getAvatarUrl(team.logo_url) : undefined} 
+                alt={team.name} 
+                className="object-cover" 
+              />
+              <AvatarFallback className="text-2xl bg-primary/5">
+                {team.name.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             {isAdmin && (
               <div className="absolute inset-0 bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 <Image className="h-8 w-8 text-white" />
@@ -118,7 +122,7 @@ export function TeamHeaderTitle({
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                <span>{members.length || 0} Mitglieder</span>
+                <span>{stats.totalMembers || 0} Mitglieder</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -135,7 +139,7 @@ export function TeamHeaderTitle({
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Crown className="h-4 w-4" />
-                <span>{adminMembers.length || 0} Admins</span>
+                <span>{stats.admins || 0} Admins</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -169,7 +173,10 @@ export function TeamHeaderTitle({
                   <div key={member.id} className="flex items-center justify-between p-2 border rounded">
                     <div className="flex items-center gap-2">
                       <Avatar className="h-12 w-12">
-                        <AvatarImage src={member.profile?.avatar_url} alt={member.profile?.display_name || 'Avatar'} />
+                        <AvatarImage 
+                          src={member.profile?.avatar_url ? getAvatarUrl(member.profile.avatar_url) : undefined} 
+                          alt={member.profile?.display_name || 'Avatar'} 
+                        />
                         <AvatarFallback>
                           {member.profile?.display_name?.substring(0, 2).toUpperCase() || '??'}
                         </AvatarFallback>
