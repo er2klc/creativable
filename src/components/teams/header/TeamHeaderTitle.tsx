@@ -1,3 +1,4 @@
+
 import { Crown, Image, Users, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TeamLogoUpload } from "@/components/teams/TeamLogoUpload";
@@ -5,16 +6,9 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { TeamMemberList } from "./TeamMemberList";
 import { TeamAdminList } from "./TeamAdminList";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { getAvatarUrl } from "@/lib/supabase-utils";
-import { useQuery } from "@tanstack/react-query";
-
-interface TeamStats {
-  totalMembers: number;
-  admins: number;
-}
+import { useTeamStats } from "@/hooks/useTeamStats";
 
 interface TeamHeaderTitleProps {
   team: {
@@ -25,93 +19,15 @@ interface TeamHeaderTitleProps {
   isAdmin: boolean;
 }
 
-interface OnlineMember {
-  user_id: string;
-  online_at: string;
-}
-
 export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
-  const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
+  const { 
+    stats, 
+    members, 
+    adminMembers, 
+    onlineMembers 
+  } = useTeamStats(team.id);
 
-  // Fetch all team members with profiles and points
-  const { data: teamMembers = [] } = useQuery({
-    queryKey: ['team-members', team.id],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('team_members')
-        .select(`
-          id,
-          user_id,
-          role,
-          profile:profiles (
-            id,
-            display_name,
-            avatar_url
-          ),
-          points:team_member_points (
-            level,
-            points
-          )
-        `)
-        .eq('team_id', team.id);
-
-      if (error) {
-        console.error('Fehler beim Laden der Teammitglieder:', error);
-        return [];
-      }
-
-      return data.map(member => ({
-        ...member,
-        profile: member.profile || { display_name: 'Unbekannt', avatar_url: null },
-        points: {
-          level: member.points?.level || 0,
-          points: member.points?.points || 0
-        }
-      }));
-    },
-    enabled: !!team.id,
-  });
-
-  // Berechnung der Statistiken (Mitglieder & Admins)
-  const totalMembers = teamMembers.length;
-  const adminMembers = teamMembers.filter(m => m.role === 'admin' || m.role === 'owner');
-  const adminCount = adminMembers.length;
-
-  useEffect(() => {
-    const channel = supabase.channel(`team_${team.id}`)
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState();
-        const online: OnlineMember[] = [];
-        
-        Object.values(state).forEach((presences: any) => {
-          presences.forEach((presence: any) => {
-            online.push({
-              user_id: presence.user_id,
-              online_at: presence.online_at
-            });
-          });
-        });
-        
-        setOnlineMembers(online);
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session?.user) {
-            await channel.track({
-              user_id: session.user.id,
-              online_at: new Date().toISOString(),
-            });
-          }
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [team.id]);
-
-  const onlineMembersList = teamMembers.filter(member => 
+  const onlineMembersList = members.filter(member => 
     onlineMembers.some(online => online.user_id === member.user_id)
   );
 
@@ -137,6 +53,19 @@ export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
             )}
           </button>
         </SheetTrigger>
+        {isAdmin && (
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Team Logo ändern</SheetTitle>
+              <SheetDescription>
+                Laden Sie ein neues Logo für Ihr Team hoch
+              </SheetDescription>
+            </SheetHeader>
+            <div className="mt-6">
+              <TeamLogoUpload currentLogoUrl={team.logo_url} />
+            </div>
+          </SheetContent>
+        )}
       </Sheet>
       <div>
         <div className="flex items-center gap-2">
@@ -147,7 +76,7 @@ export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
-                <span>{totalMembers} Mitglieder</span>
+                <span>{stats.totalMembers} Mitglieder</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -155,14 +84,14 @@ export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
                 <SheetTitle>Team Mitglieder</SheetTitle>
                 <SheetDescription>Übersicht aller Mitglieder in diesem Team</SheetDescription>
               </SheetHeader>
-              <TeamMemberList members={teamMembers} isAdmin={isAdmin} />
+              <TeamMemberList members={members} isAdmin={isAdmin} />
             </SheetContent>
           </Sheet>
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Crown className="h-4 w-4" />
-                <span>{adminCount} Admins</span>
+                <span>{stats.admins} Admins</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -177,7 +106,7 @@ export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
             <SheetTrigger asChild>
               <Button variant="ghost" size="sm" className="flex items-center gap-1">
                 <Radio className="h-4 w-4 text-green-500 animate-pulse" />
-                <span>{onlineMembers.length} LIVE</span>
+                <span>{stats.onlineCount} LIVE</span>
               </Button>
             </SheetTrigger>
             <SheetContent>
@@ -191,7 +120,7 @@ export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
                     <div className="flex items-center gap-2">
                       <Avatar className="h-12 w-12">
                         <AvatarImage 
-                          src={member.profile?.avatar_url ? getAvatarUrl(member.profile.avatar_url) : '/default-avatar.png'} 
+                          src={member.profile?.avatar_url ? getAvatarUrl(member.profile.avatar_url) : undefined} 
                           alt={member.profile?.display_name || 'Avatar'} 
                         />
                         <AvatarFallback>
@@ -199,8 +128,17 @@ export function TeamHeaderTitle({ team, isAdmin }: TeamHeaderTitleProps) {
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex flex-col">
-                        <span className="text-sm font-medium">{member.profile?.display_name || 'Unbekannt'}</span>
-                        <Badge variant="default" className="bg-green-500 mt-1">Level {member.points.level}</Badge>
+                        <span className="text-sm font-medium">
+                          {member.profile?.display_name || 'Unbekannt'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="mt-1">
+                            {member.role === 'owner' ? 'Owner' : member.role === 'admin' ? 'Admin' : 'Mitglied'}
+                          </Badge>
+                          <Badge variant="default" className="bg-green-500 mt-1">
+                            Level {member.points?.level || 0}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </div>
