@@ -1,6 +1,5 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { MEMBERS_QUERY, transformMemberData } from "./use-team-members";
 import type { TransformedTeamMember } from "./use-team-members";
@@ -23,26 +22,16 @@ interface TeamStats {
   };
 }
 
-interface OnlineMember {
-  user_id: string;
-  online_at: string;
-}
-
 interface UseTeamStatsResult {
   stats: TeamStats;
   members: TransformedTeamMember[];
   adminMembers: TransformedTeamMember[];
-  onlineMembers: OnlineMember[];
   isLoading: boolean;
   error: Error | null;
   refetch: () => Promise<void>;
 }
 
 export function useTeamStats(teamId: string): UseTeamStatsResult {
-  const [onlineMembers, setOnlineMembers] = useState<OnlineMember[]>([]);
-  const [error, setError] = useState<Error | null>(null);
-
-  // Fetch members data using React Query
   const { 
     data: members = [], 
     isLoading, 
@@ -70,70 +59,24 @@ export function useTeamStats(teamId: string): UseTeamStatsResult {
         return teamMembers.map(transformMemberData);
       } catch (err) {
         console.error('Error in team members query:', err);
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-        return [];
+        throw err instanceof Error ? err : new Error('Unknown error');
       }
     },
-    enabled: Boolean(teamId),
-    staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    cacheTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+    staleTime: 1000 * 30, // 30 Sekunden
+    cacheTime: 1000 * 60 * 5, // 5 Minuten
   });
 
-  // Track online presence with error handling
-  useEffect(() => {
-    if (!teamId) return;
+  // Filter admin members
+  const adminMembers = members.filter(m => 
+    m.role === 'admin' || m.role === 'owner'
+  );
 
-    const channel = supabase.channel(`team_${teamId}`)
-      .on('presence', { event: 'sync' }, () => {
-        try {
-          const state = channel.presenceState();
-          const online: OnlineMember[] = [];
-          
-          Object.values(state).forEach((presences: any) => {
-            presences.forEach((presence: any) => {
-              if (presence.user_id && presence.online_at) {
-                online.push({
-                  user_id: presence.user_id,
-                  online_at: presence.online_at
-                });
-              }
-            });
-          });
-          
-          setOnlineMembers(online);
-        } catch (err) {
-          console.error('Error processing presence sync:', err);
-          setError(err instanceof Error ? err : new Error('Presence sync error'));
-        }
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED') {
-          try {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (session?.user) {
-              await channel.track({
-                user_id: session.user.id,
-                online_at: new Date().toISOString(),
-              });
-            }
-          } catch (err) {
-            console.error('Error tracking presence:', err);
-            setError(err instanceof Error ? err : new Error('Presence tracking error'));
-          }
-        }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [teamId]);
-
-  // Calculate all stats from members data with error handling
+  // Calculate stats directly from members data
   const stats: TeamStats = {
     totalMembers: members.length,
-    admins: members.filter(m => m.role === 'admin' || m.role === 'owner').length,
-    onlineCount: onlineMembers.length,
-    memberProgress: Math.min((members.length / 100) * 100, 100), // Assuming max 100 members
+    admins: adminMembers.length,
+    onlineCount: 0, // Online count ist jetzt nicht mehr relevant
+    memberProgress: Math.min((members.length / 100) * 100, 100),
     levelStats: {
       averageLevel: members.reduce((acc, m) => acc + (m.points?.level || 0), 0) / members.length || 0,
       highestLevel: Math.max(...members.map(m => m.points?.level || 0)),
@@ -146,24 +89,18 @@ export function useTeamStats(teamId: string): UseTeamStatsResult {
     }
   };
 
-  // Filter admin members
-  const adminMembers = members.filter(m => 
-    m.role === 'admin' || m.role === 'owner'
-  );
-
   return {
     stats,
     members,
     adminMembers,
-    onlineMembers,
     isLoading,
-    error: error || (queryError instanceof Error ? queryError : null),
+    error: queryError instanceof Error ? queryError : null,
     refetch: async () => {
       try {
         await refetch();
       } catch (err) {
         console.error('Error refetching data:', err);
-        setError(err instanceof Error ? err : new Error('Refetch error'));
+        throw err instanceof Error ? err : new Error('Refetch error');
       }
     }
   };
