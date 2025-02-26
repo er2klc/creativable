@@ -28,9 +28,11 @@ export const useLeadPhaseMutation = () => {
       return updateLeadPhase(leadId, phaseId, oldPhaseName, newPhaseName, user.id);
     },
     onSuccess: (data, variables) => {
+      // Invalidieren aller relevanten Queries
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
       queryClient.invalidateQueries({ queryKey: ["lead-with-relations", variables.leadId] });
+      queryClient.invalidateQueries({ queryKey: ["lead-timeline", variables.leadId] }); // Wichtig für Timeline Updates
       
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",

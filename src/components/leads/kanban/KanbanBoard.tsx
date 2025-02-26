@@ -41,7 +41,11 @@ export const KanbanBoard = ({
       return;
     }
     
-    if (newPhaseId) {
+    // Get old and new phase names for the note
+    const oldPhase = phases.find(p => p.id === lead?.phase_id)?.name || '';
+    const newPhase = phases.find(p => p.id === newPhaseId)?.name || '';
+
+    if (newPhaseId && oldPhase && newPhase) {
       await onUpdatePhase(leadId, newPhaseId);
     }
   };

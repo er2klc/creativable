@@ -36,7 +36,7 @@ export const useLeadSubscription = (leadId: string | null) => {
         },
         handleLeadChange
       )
-      // Notes changes
+      // Notes changes (including phase changes)
       .on(
         'postgres_changes',
         {
@@ -45,7 +45,12 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'notes',
           filter: `lead_id=eq.${leadId}`
         },
-        handleNotesChange
+        (payload) => {
+          console.log('Notes changed:', payload);
+          handleNotesChange(payload);
+          // Explicitly invalidate timeline queries
+          queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+        }
       )
       // Tasks changes
       .on(
