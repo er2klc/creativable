@@ -55,7 +55,7 @@ export const PhaseColumn = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-[5] border-b shadow-sm min-h-[5rem]">
+      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-[5] border-b shadow-sm min-h-[3rem]">
         <PhaseHeader
           name={phase.name}
           isEditMode={isEditMode}

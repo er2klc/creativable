@@ -46,17 +46,11 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
   };
 
   const style: CSSProperties | undefined = transform ? {
-    transform: CSS.Transform.toString({
-      ...transform,
-      x: transform.x,
-      y: transform.y,
-      scaleX: 1.02,
-      scaleY: 1.02,
-    }),
+    transform: CSS.Transform.toString(transform),
     zIndex: isDragging ? 1000 : 1,
     position: isDragging ? 'absolute' : 'relative',
     width: '100%',
-    transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+    transition: 'box-shadow 0.2s ease',
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
   } : undefined;
 
@@ -72,4 +66,3 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
     }
   };
 };
-
