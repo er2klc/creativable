@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
-import { useRouter } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface PhaseAnalysisButtonProps {
   isLoading: boolean;
@@ -24,7 +24,7 @@ export const PhaseAnalysisButton = ({
   const { user } = useAuth();
   const { settings } = useSettings();
   const { apiKey } = useOpenAIKey();
-  const router = useRouter();
+  const navigate = useNavigate();
   const [isLoadingKey, setIsLoadingKey] = useState(false);
 
   const handleGenerateClick = async () => {
@@ -36,7 +36,7 @@ export const PhaseAnalysisButton = ({
         {
           action: {
             label: settings?.language === "en" ? "Go to Settings" : "Zu Einstellungen",
-            onClick: () => router.navigate("/settings")
+            onClick: () => navigate("/settings")
           }
         }
       );
@@ -71,3 +71,4 @@ export const PhaseAnalysisButton = ({
     </Button>
   );
 };
+
