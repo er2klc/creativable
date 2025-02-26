@@ -1,8 +1,10 @@
 
-import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, closestCenter, DragStartEvent, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tables } from "@/integrations/supabase/types";
 import { PhaseColumn } from "./PhaseColumn";
 import { AddPhaseButton } from "./AddPhaseButton";
+import { useState } from "react";
+import { SortableLeadItem } from "./SortableLeadItem";
 
 interface KanbanBoardProps {
   phases: Tables<"pipeline_phases">[];
@@ -27,14 +29,35 @@ export const KanbanBoard = ({
   onUpdatePhaseName,
   onMovePhase,
 }: KanbanBoardProps) => {
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [initialWidth, setInitialWidth] = useState<number>(0);
+
+  // Optimierte Sensor-Konfiguration für stabileres Drag & Drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+    // Spaltenbreite beim Start des Drags speichern
+    const columnElement = document.querySelector('.phase-column');
+    if (columnElement) {
+      setInitialWidth(columnElement.getBoundingClientRect().width);
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveId(null);
     const { active, over } = event;
     if (!over || !active || isEditMode) return;
 
     const leadId = active.id as string;
     const newPhaseId = over.id as string;
     
-    // Get old and new phase names for the note
     const lead = leads.find(l => l.id === leadId);
     const oldPhase = phases.find(p => p.id === lead?.phase_id)?.name || '';
     const newPhase = phases.find(p => p.id === newPhaseId)?.name || '';
@@ -50,15 +73,34 @@ export const KanbanBoard = ({
     }
   };
 
+  // Aktivierter Lead für Overlay
+  const activeLead = leads.find(lead => lead.id === activeId);
+
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext 
+      sensors={sensors}
+      collisionDetection={closestCenter} 
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
       <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
         <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh)]">
-          <div className="flex gap-4 px-4 h-full" style={{ minWidth: 'fit-content' }}>
+          <div 
+            className="flex gap-4 px-4 h-full" 
+            style={{ minWidth: 'fit-content' }}
+          >
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 
             {phases.map((phase, index) => (
-              <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
+              <div 
+                key={phase.id} 
+                className="phase-column"
+                style={{
+                  width: initialWidth || `${100 / phases.length}%`,
+                  minWidth: '190px',
+                  flexShrink: 0,
+                }}
+              >
                 <PhaseColumn
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase_id === phase.id)}
@@ -86,6 +128,20 @@ export const KanbanBoard = ({
           </div>
         </div>
       </div>
+
+      <DragOverlay>
+        {activeId && activeLead ? (
+          <div style={{ width: initialWidth ? `${initialWidth - 32}px` : 'auto' }}>
+            <SortableLeadItem
+              lead={activeLead}
+              onLeadClick={onLeadClick}
+              disabled={false}
+              isDragging
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 };
+
