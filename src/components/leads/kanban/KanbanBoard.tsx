@@ -49,8 +49,8 @@ export const KanbanBoard = ({
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
-        <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh)]">
-          <div className="flex gap-2.5 h-full px-4" style={{ 
+        <div className="flex-1 relative h-[calc(100vh)] overflow-visible">
+          <div className="flex gap-2.5 h-full px-4 overflow-x-auto" style={{ 
             minWidth: 'fit-content'
           }}>
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
@@ -96,3 +96,4 @@ export const KanbanBoard = ({
     </DndContext>
   );
 };
+
