@@ -1,13 +1,11 @@
 
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadInfoCard } from "../LeadInfoCard";
-import { CompactPhaseSelector } from "../CompactPhaseSelector";
-import { ContactFieldManager } from "../contact-info/ContactFieldManager";
+import { LeadInfoCard } from "./LeadInfoCard";
+import { LeadTimeline } from "./LeadTimeline";
+import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { LeadWithRelations } from "@/types/leads";
-import { LeadDetailTabs } from "../LeadDetailTabs";
-import { LeadTimeline } from "../LeadTimeline";
-import { LeadSummary } from "../LeadSummary";
+import { LeadDetailTabs } from "./LeadDetailTabs";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
@@ -25,36 +23,16 @@ export const LeadDetailContent = ({
   onDeletePhaseChange
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
-  
-  // Only hide phase selector if lead has a status other than 'lead'
-  const showPhaseSelector = !lead.status || lead.status === 'lead';
 
   if (isLoading) {
     return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
   }
 
-  console.log('LeadDetailContent rendering with lead:', {
-    id: lead.id,
-    phase_id: lead.phase_id,
-    status: lead.status,
-    timestamp: new Date().toISOString()
-  });
-
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="grid grid-cols-12 gap-6 p-6 bg-gray-50 min-h-[calc(100vh-10rem)] mt-32">
-        {/* Left Column - 8/12 */}
-        <div className="col-span-8 space-y-6">
-          {showPhaseSelector && (
-            <CompactPhaseSelector
-              lead={lead}
-              onUpdateLead={onUpdateLead}
-            />
-          )}
-          
-          {/* AI Analysis Section */}
-          <LeadSummary lead={lead} />
-          
+        {/* Left Column - 4/12 */}
+        <div className="col-span-4 space-y-6">
           <LeadInfoCard 
             lead={lead} 
             onUpdate={(updates) => {
@@ -68,17 +46,16 @@ export const LeadDetailContent = ({
             }} 
             onDelete={onDeleteClick}
           />
+        </div>
 
+        {/* Right Column - 8/12 */}
+        <div className="col-span-8 space-y-6">
+          <ContactFieldManager />
+          <LeadDetailTabs lead={lead} />
           <LeadTimeline 
             lead={lead} 
             onDeletePhaseChange={onDeletePhaseChange}
           />
-        </div>
-
-        {/* Right Column - 4/12 */}
-        <div className="col-span-4 space-y-6">
-          <ContactFieldManager />
-          <LeadDetailTabs lead={lead} />
         </div>
       </div>
     </div>
