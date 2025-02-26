@@ -40,7 +40,7 @@ export const LeadDetailContent = ({
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="grid grid-cols-12 gap-6 p-6 bg-gray-50 min-h-[calc(100vh-10rem)] mt-32">
+      <div className="grid grid-cols-12 gap-6 p-6 bg-white min-h-[calc(100vh-10rem)] mt-32">
         {/* Linke Spalte - 4 Cols */}
         <div className="col-span-4 space-y-6">
           <LeadSummary lead={lead} />
