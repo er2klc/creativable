@@ -9,11 +9,19 @@ interface UseDragAndDropProps {
   lead: Tables<"leads">;
   disabled?: boolean;
   onLeadClick: (id: string) => void;
+  forceDragging?: boolean;
 }
 
-export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseDragAndDropProps) => {
+export const useDragAndDrop = ({ 
+  id, 
+  lead, 
+  disabled = false, 
+  onLeadClick,
+  forceDragging = false 
+}: UseDragAndDropProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const dragTimeoutRef = useRef<number | null>(null);
+  const dragStartTimeRef = useRef<number>(0);
 
   const {
     attributes,
@@ -26,20 +34,24 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
     disabled,
   });
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     if (disabled) return;
     
+    dragStartTimeRef.current = Date.now();
     dragTimeoutRef.current = window.setTimeout(() => {
       setIsDragging(true);
     }, 150);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current);
     }
 
-    if (!isDragging) {
+    const dragDuration = Date.now() - dragStartTimeRef.current;
+    
+    // Wenn der Klick kürzer als 200ms war und wir nicht ziehen, behandeln wir es als Klick
+    if (dragDuration < 200 && !isDragging) {
       onLeadClick(id);
     }
     setIsDragging(false);
@@ -53,15 +65,15 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
       scaleX: 1.02,
       scaleY: 1.02,
     }),
-    zIndex: isDragging ? 1000 : 1,
-    position: isDragging ? 'absolute' : 'relative',
+    zIndex: isDragging || forceDragging ? 1000 : 1,
+    position: isDragging || forceDragging ? 'relative' : 'relative',
     width: '100%',
     transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+    cursor: disabled ? 'default' : (isDragging || forceDragging ? 'grabbing' : 'grab'),
   } : undefined;
 
   return {
-    isDragging,
+    isDragging: isDragging || forceDragging,
     style,
     dragHandlers: {
       ref: setNodeRef,
@@ -72,4 +84,3 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
     }
   };
 };
-
