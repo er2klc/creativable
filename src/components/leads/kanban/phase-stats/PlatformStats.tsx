@@ -1,19 +1,17 @@
-
 import { Instagram, Linkedin, Facebook, Video, Users } from "lucide-react";
 import { Tables } from "@/integrations/supabase/types";
-
 interface PlatformStatsProps {
   leads: Tables<"leads">[];
 }
-
-export const PlatformStats = ({ leads }: PlatformStatsProps) => {
+export const PlatformStats = ({
+  leads
+}: PlatformStatsProps) => {
   // Group leads by platform and count them
   const platformCounts = leads.reduce((acc, lead) => {
     const platform = lead.platform.toLowerCase();
     acc[platform] = (acc[platform] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
-
   const getPlatformIcon = (platform: string) => {
     switch (platform) {
       case "instagram":
@@ -30,7 +28,6 @@ export const PlatformStats = ({ leads }: PlatformStatsProps) => {
         return null;
     }
   };
-
   const getPlatformColor = (platform: string) => {
     switch (platform) {
       case "instagram":
@@ -47,20 +44,12 @@ export const PlatformStats = ({ leads }: PlatformStatsProps) => {
         return "text-gray-500";
     }
   };
-
-  return (
-    <div className="flex flex-wrap gap-2">
-      {Object.entries(platformCounts).map(([platform, count]) => (
-        <div 
-          key={platform}
-          className="flex items-center gap-1 text-xs"
-        >
+  return <div className="flex flex-wrap gap-2m">
+      {Object.entries(platformCounts).map(([platform, count]) => <div key={platform} className="flex items-center gap-1 text-xs">
           <span className={getPlatformColor(platform)}>
             {getPlatformIcon(platform)}
           </span>
           <span className="font-medium">{count}</span>
-        </div>
-      ))}
-    </div>
-  );
+        </div>)}
+    </div>;
 };
