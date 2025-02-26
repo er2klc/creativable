@@ -1136,6 +1136,7 @@ export type Database = {
           pipeline_id: string
           platform: string
           position: string | null
+          processing_status: string | null
           region: string | null
           slug: string | null
           social_media_bio: string | null
@@ -1191,6 +1192,7 @@ export type Database = {
           pipeline_id: string
           platform: string
           position?: string | null
+          processing_status?: string | null
           region?: string | null
           slug?: string | null
           social_media_bio?: string | null
@@ -1246,6 +1248,7 @@ export type Database = {
           pipeline_id?: string
           platform?: string
           position?: string | null
+          processing_status?: string | null
           region?: string | null
           slug?: string | null
           social_media_bio?: string | null
@@ -4977,6 +4980,10 @@ export type Database = {
           metadata: Json
           content_type: string
         }[]
+      }
+      retry_failed_embeddings: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
       }
       set_limit: {
         Args: {
