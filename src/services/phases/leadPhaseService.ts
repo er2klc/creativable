@@ -29,7 +29,8 @@ const getPhaseChangeMessage = (
 
 const generateUniqueId = (leadId: string, timestamp: string, oldPhase: string, newPhase: string): string => {
   const rand = Math.random().toString(36).substring(2, 8);
-  return `${leadId}-${timestamp}-${oldPhase}-${newPhase}-${rand}`;
+  const milliseconds = new Date().getMilliseconds();
+  return `${leadId}-${timestamp}-${oldPhase}-${newPhase}-${rand}-${milliseconds}`;
 };
 
 export const updateLeadPhase = async (
@@ -40,6 +41,7 @@ export const updateLeadPhase = async (
   userId: string
 ) => {
   const timestamp = new Date().toISOString();
+  console.log('Starting phase update:', { leadId, phaseId, oldPhaseName, newPhaseName, timestamp });
 
   try {
     // Erst prüfen ob sich die Phase tatsächlich geändert hat!
@@ -71,6 +73,8 @@ export const updateLeadPhase = async (
     const message = getPhaseChangeMessage(oldPhaseName, newPhaseName);
     const uniqueId = generateUniqueId(leadId, timestamp, oldPhaseName, newPhaseName);
     
+    console.log('Creating phase change note:', { message, uniqueId });
+    
     const { error: noteError } = await supabase
       .from("notes")
       .insert({
@@ -89,6 +93,7 @@ export const updateLeadPhase = async (
 
     if (noteError) throw noteError;
 
+    console.log('Phase update completed successfully');
     return { success: true };
   } catch (error) {
     console.error("Error updating lead phase:", error);
