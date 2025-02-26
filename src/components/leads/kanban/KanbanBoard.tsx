@@ -114,7 +114,7 @@ export const KanbanBoard = ({
 
       <DragOverlay>
         {activeLead ? (
-          <div style={{ width: '240px' }}>
+          <div style={{ width: '100%', maxWidth: '240px' }}>
             <SortableLeadItem
               lead={activeLead}
               onLeadClick={onLeadClick}
