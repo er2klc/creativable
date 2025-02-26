@@ -129,9 +129,13 @@ export const KanbanBoard = ({
         </div>
       </div>
 
-      <DragOverlay>
+      <DragOverlay dropAnimation={null}>
         {activeId && activeLead ? (
-          <div style={{ width: initialWidth ? `${initialWidth - 32}px` : 'auto' }}>
+          <div style={{ 
+            width: initialWidth ? `${initialWidth - 32}px` : 'auto',
+            transform: 'translate3d(0, 0, 0)',
+            position: 'relative',
+          }}>
             <SortableLeadItem
               lead={activeLead}
               onLeadClick={onLeadClick}
@@ -144,4 +148,3 @@ export const KanbanBoard = ({
     </DndContext>
   );
 };
-
