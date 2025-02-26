@@ -6,6 +6,11 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 BEGIN
+    -- Skip embedding creation for phase change notes
+    IF NEW.metadata->>'type' = 'phase_change' THEN
+        RETURN NEW;
+    END IF;
+
     -- Only process if content is not empty and status is pending
     IF NEW.content IS NOT NULL AND NEW.processing_status = 'pending' THEN
         -- Set status to processing to prevent double processing
