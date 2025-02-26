@@ -1,12 +1,10 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { randomBytes } from 'crypto';
 
 const getPhaseChangeMessage = (
   oldPhaseName: string | null, 
   newPhaseName: string
 ): { content: string; emoji: string } => {
-  // Standard-Emojis für verschiedene Phasen
   const phaseEmojis: { [key: string]: string } = {
     "Erstkontakt": "👋",
     "Erstgespräch": "🗣️",
@@ -18,10 +16,8 @@ const getPhaseChangeMessage = (
     "Nachfassen": "✍️"
   };
 
-  // Emoji für die neue Phase bestimmen
   const emoji = phaseEmojis[newPhaseName] || "✨";
 
-  // Einheitlicher Text für alle Phasenänderungen
   return {
     content: `Kontakt ist jetzt in Phase "${newPhaseName}"`,
     emoji
@@ -30,9 +26,10 @@ const getPhaseChangeMessage = (
 
 const generateUniqueId = (leadId: string, oldPhase: string, newPhase: string): string => {
   const timestamp = Date.now();
-  const microseconds = process.hrtime()[1];
-  const random = randomBytes(4).toString('hex');
-  return `${leadId}-${timestamp}-${microseconds}-${random}`;
+  const array = new Uint8Array(4);
+  window.crypto.getRandomValues(array);
+  const random = Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
+  return `${leadId}-${timestamp}-${random}`;
 };
 
 export const updateLeadPhase = async (
@@ -133,3 +130,4 @@ export const updateLeadPhase = async (
     throw error;
   }
 };
+
