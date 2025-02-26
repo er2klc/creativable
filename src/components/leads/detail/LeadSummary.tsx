@@ -14,10 +14,13 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showButton, setShowButton] = useState(true);
 
-  console.log("LeadSummary initializing with props:", {
+  console.log("LeadSummary mounting with props:", {
     leadId: lead?.id,
     phaseId: lead?.phase_id,
     hasUser: !!user,
+    hasMessages: Array.isArray(lead?.messages),
+    hasTasks: Array.isArray(lead?.tasks),
+    route: window.location.pathname,
     timestamp: new Date().toISOString()
   });
 
@@ -101,6 +104,11 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
   // Check if analysis already exists for this phase
   const checkExistingAnalysis = async () => {
+    if (!lead?.id || !lead?.phase_id) {
+      console.log("Missing required lead data:", { lead });
+      return;
+    }
+
     try {
       console.log("Checking for existing analysis:", {
         leadId: lead.id,
@@ -122,14 +130,9 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         error: error
       });
 
-      if (existingAnalysis) {
-        setShowButton(false);
-      } else {
-        setShowButton(true);
-      }
+      setShowButton(!existingAnalysis);
     } catch (error) {
       console.error("Error checking existing analysis:", error);
-      // If there's an error checking, we'll show the button by default
       setShowButton(true);
     }
   };
@@ -137,12 +140,20 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   // Check for existing analysis on component mount and phase change
   useEffect(() => {
     console.log("LeadSummary useEffect triggered:", {
-      leadId: lead.id,
-      phaseId: lead.phase_id,
+      leadId: lead?.id,
+      phaseId: lead?.phase_id,
       timestamp: new Date().toISOString()
     });
-    checkExistingAnalysis();
-  }, [lead.id, lead.phase_id]);
+    if (lead?.id && lead?.phase_id) {
+      checkExistingAnalysis();
+    }
+  }, [lead?.id, lead?.phase_id]);
+
+  // Early return if no lead data
+  if (!lead?.id || !lead?.phase_id) {
+    console.log("LeadSummary: Missing required lead data");
+    return null;
+  }
 
   console.log("LeadSummary render state:", {
     showButton,
