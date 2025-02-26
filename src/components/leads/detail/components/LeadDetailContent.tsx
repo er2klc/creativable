@@ -66,7 +66,7 @@ export const LeadDetailContent = ({
             onDelete={onDeleteClick}
           />
 
-          {/* AI Analysis Section - Moved after LeadInfoCard */}
+          {/* AI Analysis Section */}
           <LeadSummary lead={lead} />
 
           <LeadTimeline 
