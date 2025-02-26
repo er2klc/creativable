@@ -25,6 +25,7 @@ export const useLeadSubscription = (leadId: string | null) => {
 
     const channel = supabase
       .channel(`lead-details-${leadId}`)
+      // Lead changes
       .on(
         'postgres_changes',
         {
@@ -33,23 +34,9 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'leads',
           filter: `id=eq.${leadId}`
         },
-        async (payload) => {
-          console.log('Lead changed:', payload);
-          
-          // Nur wenn sich tatsächlich die Phase geändert hat
-          const hasPhaseChanged = payload.new?.phase_id !== payload.old?.phase_id;
-          
-          if (hasPhaseChanged) {
-            console.log('Phase changed, updating data and timeline');
-            await handleLeadChange(payload);
-            await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
-            queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
-          } else {
-            // Für andere Änderungen am Lead, aber nicht Phase
-            await handleLeadChange(payload);
-          }
-        }
+        handleLeadChange
       )
+      // Notes changes
       .on(
         'postgres_changes',
         {
@@ -58,13 +45,9 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'notes',
           filter: `lead_id=eq.${leadId}`
         },
-        async (payload) => {
-          console.log('Notes changed:', payload);
-          await handleNotesChange(payload);
-          await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
-          queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
-        }
+        handleNotesChange
       )
+      // Tasks changes
       .on(
         'postgres_changes',
         {
@@ -73,13 +56,9 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'tasks',
           filter: `lead_id=eq.${leadId}`
         },
-        async (payload) => {
-          console.log('Tasks changed:', payload);
-          await handleTasksChange(payload);
-          await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
-          queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
-        }
+        handleTasksChange
       )
+      // Messages changes
       .on(
         'postgres_changes',
         {
@@ -88,13 +67,9 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'messages',
           filter: `lead_id=eq.${leadId}`
         },
-        async (payload) => {
-          console.log('Messages changed:', payload);
-          await handleMessagesChange(payload);
-          await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
-          queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
-        }
+        handleMessagesChange
       )
+      // Files changes
       .on(
         'postgres_changes',
         {
@@ -103,14 +78,10 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'lead_files',
           filter: `lead_id=eq.${leadId}`
         },
-        async (payload) => {
-          console.log('Files changed:', payload);
-          await handleFilesChange(payload);
-          await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
-          queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
-        }
+        handleFilesChange
       );
 
+    // Subscribe to the channel
     const subscription = channel.subscribe((status) => {
       console.log('Subscription status:', status);
       

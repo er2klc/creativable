@@ -50,16 +50,12 @@ export const PhaseColumn = ({
     <Card
       ref={setNodeRef}
       className={`h-full flex flex-col bg-muted/50 rounded-lg relative transition-colors duration-200 ${
-        isOver && !isEditMode ? 'ring-2 ring-primary/50 bg-primary/5' : ''
+        isOver && !isEditMode ? 'ring-2 ring-primary/50 bg-primary/5 shadow-[0_-2px_4px_rgba(0,0,0,0.15)]' : ''
       }`}
-      style={{
-        willChange: 'transform',
-        transform: 'translate3d(0, 0, 0)',
-      }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-[5] border-b">
+      <CardHeader className="p-2 space-y-0 sticky top-0 bg-muted/50 backdrop-blur-sm z-[5] border-b shadow-sm">
         <PhaseHeader
           name={phase.name}
           isEditMode={isEditMode}

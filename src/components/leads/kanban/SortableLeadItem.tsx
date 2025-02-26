@@ -11,22 +11,15 @@ interface SortableLeadItemProps {
   lead: Tables<"leads">;
   onLeadClick: (id: string) => void;
   disabled?: boolean;
-  isDragging?: boolean;
 }
 
-export const SortableLeadItem = ({ 
-  lead, 
-  onLeadClick, 
-  disabled = false,
-  isDragging: forceDragging = false 
-}: SortableLeadItemProps) => {
+export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: SortableLeadItemProps) => {
   const { toggleFavorite } = useFavorite();
   const { isDragging, style, dragHandlers } = useDragAndDrop({
     id: lead.id,
     lead,
     disabled,
-    onLeadClick,
-    forceDragging
+    onLeadClick
   });
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
@@ -57,7 +50,7 @@ export const SortableLeadItem = ({
       className={cn(
         "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative",
         getBackgroundStyle(),
-        isDragging && "shadow-lg ring-1 ring-primary/10",
+        isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
         !isDragging && !disabled && "cursor-grab",
         disabled && "cursor-default"
       )}
@@ -89,3 +82,4 @@ export const SortableLeadItem = ({
     </div>
   );
 };
+

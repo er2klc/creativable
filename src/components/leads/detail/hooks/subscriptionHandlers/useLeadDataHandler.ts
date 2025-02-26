@@ -1,4 +1,3 @@
-
 import { QueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Platform } from "@/config/platforms";
@@ -23,19 +22,13 @@ export const useLeadDataHandler = (
         messages: data.messages?.length || 0,
         tasks: data.tasks?.length || 0,
         notes: data.notes?.length || 0,
-        phase_id: data.phase_id,
         timestamp: new Date().toISOString()
       });
 
-      // Invalidate queries to force a refresh
-      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
-      
-      // Update the cache with new data
       queryClient.setQueryData<LeadWithRelations>(
-        ["lead", leadId],
+        ["lead-with-relations", leadId],
         (old) => {
-          if (!old) return data;
+          if (!old) return old;
           return {
             ...old,
             ...data,
@@ -43,8 +36,6 @@ export const useLeadDataHandler = (
             messages: data.messages || old.messages,
             tasks: data.tasks || old.tasks,
             notes: data.notes || old.notes,
-            phase_id: data.phase_id,
-            nexus_analyses: data.nexus_analyses || old.nexus_analyses
           };
         }
       );

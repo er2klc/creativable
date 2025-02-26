@@ -1,194 +1,234 @@
 
-import { serve } from 'https://deno.fresh.run/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.3.0'
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
+
+interface PhaseAnalysisRequest {
+  leadId: string;
+  phaseId: string;
+  userId: string;
 }
 
-interface RequestBody {
-  leadId: string
-  phaseId: string
-  userId: string
-}
-
-serve(async (req: Request) => {
+serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
-    const supabaseClient = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
+    const { leadId, phaseId, userId } = await req.json() as PhaseAnalysisRequest;
 
-    // Get request body
-    if (!req.body) {
-      throw new Error('Request body is required')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    console.log('Starting analysis generation for:', { leadId, phaseId, userId });
+
+    // Check if analysis already exists
+    const { data: existingAnalysis, error: existingError } = await supabase
+      .from('lead_phase_analyses')
+      .select('*')
+      .eq('lead_id', leadId)
+      .eq('phase_id', phaseId)
+      .single();
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      console.error('Error checking existing analysis:', existingError);
+      throw existingError;
     }
 
-    const { leadId, phaseId, userId } = await req.json() as RequestBody
-    
-    if (!leadId || !phaseId || !userId) {
-      throw new Error('Missing required fields: leadId, phaseId, or userId')
+    if (existingAnalysis) {
+      console.log('Found existing analysis:', existingAnalysis.id);
+      return new Response(
+        JSON.stringify({
+          analysis: existingAnalysis,
+          message: "Existierende Analyse geladen"
+        }),
+        {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
     }
 
-    console.log('Starting analysis generation for:', { leadId, phaseId, userId })
-
-    // Get user's OpenAI API key from settings
-    const { data: settings, error: settingsError } = await supabaseClient
+    // Get business context from settings
+    const { data: settings } = await supabase
       .from('settings')
-      .select('openai_api_key')
+      .select('*')
       .eq('user_id', userId)
-      .single()
+      .single();
 
-    if (settingsError) {
-      console.error('Error fetching settings:', settingsError)
-      throw new Error('Could not fetch user settings')
-    }
-
-    if (!settings?.openai_api_key) {
-      throw new Error('OpenAI API key not found in user settings')
-    }
-
-    // Initialize OpenAI with user's API key
-    const configuration = new Configuration({
-      apiKey: settings.openai_api_key,
-    })
-    const openai = new OpenAIApi(configuration)
-
-    // Fetch lead data
-    const { data: lead, error: leadError } = await supabaseClient
+    // Fetch lead data with all necessary information
+    const { data: lead } = await supabase
       .from('leads')
       .select(`
         *,
-        notes (*),
-        messages (*),
-        tasks (*),
-        phase:pipeline_phases!inner (
-          id,
-          name,
-          pipeline:pipelines!inner (
-            id,
-            name
-          )
+        social_media_posts (
+          *
+        ),
+        linkedin_posts (
+          *
+        ),
+        notes (
+          *
+        ),
+        messages (
+          *
         )
       `)
       .eq('id', leadId)
-      .single()
+      .single();
 
-    if (leadError) {
-      console.error('Error fetching lead:', leadError)
-      throw new Error(`Error fetching lead data: ${leadError.message}`)
-    }
+    if (!lead) throw new Error('Lead not found');
 
-    if (!lead) {
-      throw new Error(`No lead found with ID ${leadId}`)
-    }
+    // Get phase information
+    const { data: phaseData } = await supabase
+      .from('phase_rules')
+      .select(`
+        *,
+        pipeline_phases (
+          name
+        )
+      `)
+      .eq('phase_id', phaseId)
+      .single();
 
-    // Generate analysis prompt
-    const prompt = `Analyze this contact based on the following information:
-Name: ${lead.name}
-Current Phase: ${lead?.phase?.name || 'Unknown'}
-Platform: ${lead.platform || 'Unknown'}
-Bio: ${lead.social_media_bio || 'No bio available'}
+    if (!phaseData) throw new Error('Phase rules not found');
 
-Recent Activities:
-${lead.notes?.map(n => `- Note: ${n.content}`).join('\n') || 'No notes'}
-${lead.messages?.map(m => `- Message: ${m.content}`).join('\n') || 'No messages'}
-${lead.tasks?.map(t => `- Task: ${t.title}`).join('\n') || 'No tasks'}
+    // Prepare social media insights
+    const instagramData = lead.apify_instagram_data || {};
+    const socialMediaPosts = lead.social_media_posts || [];
+    const linkedinPosts = lead.linkedin_posts || [];
 
-Please provide:
-1. A brief summary
-2. Key points about this contact
-3. Recommendations for next steps
+    // Create enhanced business context
+    const businessContext = {
+      companyName: settings?.company_name || '',
+      productsServices: settings?.products_services || '',
+      targetAudience: settings?.target_audience || '',
+      usp: settings?.usp || '',
+      businessDescription: settings?.business_description || ''
+    };
 
-Format the response in JSON with these fields: summary, key_points (array), recommendations (array)`
+    let systemPrompt = `Du bist ein hochspezialisierter Business Development Assistent für ${businessContext.companyName}. 
+Deine Aufgabe ist es, Social Media Profile zu analysieren und konkrete Handlungsempfehlungen zu geben.
 
-    // Generate analysis with OpenAI
-    let completion
-    try {
-      completion = await openai.createChatCompletion({
-        model: "gpt-3.5-turbo",
+Nutze diese Informationen über uns:
+🏢 Unternehmen: ${businessContext.businessDescription}
+🎯 Zielgruppe: ${businessContext.targetAudience}
+💫 USP: ${businessContext.usp}
+🛍️ Produkte/Services: ${businessContext.productsServices}
+
+Analysiere das Profil und erstelle einen strukturierten Bericht, der uns hilft, diesen Kontakt optimal anzusprechen.
+Formatiere die Ausgabe mit Markdown und passenden Emojis.
+
+Strukturiere die Analyse in:
+1. 👤 Profil & Reichweite
+2. 📊 Engagement & Aktivität
+3. 🎯 Relevanz für uns
+4. 💡 Ansprache-Strategie
+5. ⚡️ Quick-Wins & nächste Schritte`;
+
+    let userPrompt = `Analysiere dieses Profil für die Phase "${phaseData.pipeline_phases.name}":
+      
+Profil Basics:
+- Name: ${lead.name}
+- Bio: ${lead.social_media_bio || 'Nicht angegeben'}
+- Followers: ${lead.social_media_followers || instagramData.followersCount || 'Unbekannt'}
+- Following: ${lead.social_media_following || instagramData.followsCount || 'Unbekannt'}
+- Engagement Rate: ${lead.social_media_engagement_rate || 'Unbekannt'}
+- Interessen: ${lead.social_media_interests?.join(', ') || 'Keine angegeben'}
+- Branche: ${lead.industry || 'Nicht angegeben'}
+- Position: ${lead.position || 'Nicht angegeben'}
+- Unternehmen: ${lead.company_name || 'Nicht angegeben'}
+
+Instagram Posts (${socialMediaPosts.length}):
+${socialMediaPosts.slice(0, 5).map((post: any) => `- ${post.content || 'Visueller Post'} (Likes: ${post.likes_count}, Kommentare: ${post.comments_count})`).join('\n')}
+
+LinkedIn Posts (${linkedinPosts.length}):
+${linkedinPosts.slice(0, 5).map((post: any) => `- ${post.content || 'LinkedIn Update'} (Reaktionen: ${post.reactions?.count || 0})`).join('\n')}
+
+Letzte Aktivitäten:
+${lead.notes?.map((note: any) => `- ${note.content}`).join('\n') || 'Keine Aktivitäten'}
+
+Phasen-Kontext: ${phaseData.pipeline_phases.name}
+
+Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, umsetzbare Empfehlungen.`;
+
+    console.log('Generating analysis with OpenAI...');
+
+    // Generate analysis using OpenAI
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${Deno.env.get('OPENAI_API_KEY')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4-0125-preview',
         messages: [
-          {
-            role: "system",
-            content: "You are a helpful assistant analyzing contact information. Provide concise, actionable insights."
-          },
-          {
-            role: "user",
-            content: prompt
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    const openAIData = await openAIResponse.json();
+    const analysis = openAIData.choices[0].message.content;
+
+    console.log('Analysis generated, storing in database...');
+
+    // Store analysis using the new database function
+    const { data: savedAnalysis, error: saveError } = await supabase.rpc(
+      'create_phase_analysis',
+      {
+        p_lead_id: leadId,
+        p_phase_id: phaseId,
+        p_user_id: userId,
+        p_analysis_type: phaseData.action_type,
+        p_content: analysis,
+        p_metadata: {
+          context: {
+            phase_name: phaseData.pipeline_phases.name,
+            generated_at: new Date().toISOString(),
+            user_id: userId,
+            business_context: businessContext
           }
-        ]
-      })
-    } catch (openAiError: any) {
-      console.error('OpenAI API error:', openAiError)
-      // Check for specific OpenAI error types
-      if (openAiError.response?.status === 401) {
-        throw new Error('Invalid OpenAI API key. Please check your API key in settings.')
+        }
       }
-      throw new Error(`OpenAI API error: ${openAiError.message}`)
+    );
+
+    if (saveError) {
+      console.error('Error saving analysis:', saveError);
+      throw saveError;
     }
 
-    if (!completion?.data?.choices?.[0]?.message?.content) {
-      throw new Error('No response received from OpenAI')
-    }
-
-    // Parse OpenAI response
-    let analysis
-    try {
-      analysis = JSON.parse(completion.data.choices[0].message.content)
-    } catch (parseError) {
-      console.error('Error parsing OpenAI response:', parseError)
-      throw new Error('Invalid response format from OpenAI')
-    }
-
-    // Store analysis in database
-    const { data: savedAnalysis, error: analysisError } = await supabaseClient
-      .from('phase_based_analyses')
-      .upsert({
-        lead_id: leadId,
-        phase_id: phaseId,
-        created_by: userId,
-        content: `Analysis for contact ${lead.name} in phase ${lead.phase?.name || 'Unknown'}`,
-        metadata: {
-          type: 'phase_analysis',
-          analysis: analysis,
-          generated_at: new Date().toISOString(),
-          summary: analysis.summary,
-          key_points: analysis.key_points,
-          recommendations: analysis.recommendations
-        },
-        completed: true,
-        completed_at: new Date().toISOString()
-      })
-      .select()
-      .single()
-
-    if (analysisError) {
-      console.error('Error saving analysis:', analysisError)
-      throw new Error(`Error saving analysis: ${analysisError.message}`)
-    }
+    console.log('Analysis saved successfully:', savedAnalysis?.id);
 
     return new Response(
-      JSON.stringify({ data: savedAnalysis, error: null }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-
-  } catch (error: any) {
-    console.error('Error in generate-phase-analysis:', error)
+      JSON.stringify({
+        analysis: savedAnalysis,
+        message: "Phasenanalyse erfolgreich erstellt"
+      }),
+      {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      },
+    );
+  } catch (err) {
+    console.error('Error in phase analysis:', err);
     return new Response(
       JSON.stringify({ 
-        error: error.message,
-        details: error.stack 
-      }),
-      { 
-        status: error.message.includes('API key') ? 401 : 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        error: err.message,
+        details: err
+      }), 
+      {
+        status: err.status || 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
-    )
+    );
   }
-})
+});

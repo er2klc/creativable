@@ -7,18 +7,12 @@ import { LeadSummaryProps } from "./types/summary";
 import { NexusTimelineCard } from "./timeline/cards/NexusTimelineCard";
 import { useAuth } from "@/hooks/use-auth";
 import { PhaseAnalysisButton } from "./components/PhaseAnalysisButton";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [existingAnalysis, setExistingAnalysis] = useState<{
-    id: string;
-    content: string;
-    metadata: any;
-  } | null>(null);
-  const queryClient = useQueryClient();
+  const [showButton, setShowButton] = useState(true);
 
   console.log("LeadSummary mounting with props:", {
     leadId: lead?.id,
@@ -28,41 +22,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     route: window.location.pathname,
     timestamp: new Date().toISOString()
   });
-
-  const checkExistingAnalysis = async () => {
-    if (!lead?.id || !lead?.phase_id || !user) {
-      console.log("Missing required data for analysis check:", { 
-        leadId: lead?.id, 
-        phaseId: lead?.phase_id,
-        userId: user?.id
-      });
-      return;
-    }
-
-    try {
-      const { data: analysis, error } = await supabase
-        .from("phase_based_analyses")
-        .select("id, content, metadata")
-        .eq("lead_id", lead.id)
-        .eq("phase_id", lead.phase_id)
-        .eq("created_by", user.id)
-        .maybeSingle();
-
-      console.log("Existing analysis query result:", {
-        leadId: lead.id,
-        phaseId: lead.phase_id,
-        phaseName: lead.phase?.name,
-        hasAnalysis: !!analysis,
-        error: error
-      });
-
-      if (error) throw error;
-      setExistingAnalysis(analysis);
-    } catch (error) {
-      console.error("Error checking existing analysis:", error);
-      setExistingAnalysis(null);
-    }
-  };
 
   const generateAnalysis = async () => {
     if (!user) {
@@ -93,7 +52,28 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         phaseName: lead.phase?.name,
         userId: user.id
       });
+      
+      // Check if analysis exists for this phase
+      const { data: existingAnalysis, error: queryError } = await supabase
+        .from("phase_based_analyses")
+        .select("id, content")
+        .eq("lead_id", lead.id)
+        .eq("phase_id", lead.phase_id)
+        .maybeSingle();
 
+      console.log("Existing analysis check:", {
+        leadId: lead.id,
+        phaseId: lead.phase_id,
+        exists: !!existingAnalysis,
+        error: queryError
+      });
+
+      if (existingAnalysis) {
+        setShowButton(false);
+        return;
+      }
+
+      // Generate new analysis
       const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
         body: {
           leadId: lead.id,
@@ -117,13 +97,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         return;
       }
 
-      // Nach erfolgreicher Generierung alle relevanten Queries invalidieren
-      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
-      queryClient.invalidateQueries({ queryKey: ["lead-timeline", lead.id] });
-      
-      // Analyse direkt neu laden
-      await checkExistingAnalysis();
-      
+      setShowButton(false);
       toast.success(
         settings?.language === "en"
           ? "Analysis generated successfully"
@@ -141,10 +115,43 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  // Analyse bei Mount und wenn sich lead oder phase ändert prüfen
+  const checkExistingAnalysis = async () => {
+    if (!lead?.id || !lead?.phase_id) {
+      console.log("Missing required lead data for analysis check:", { 
+        leadId: lead?.id, 
+        phaseId: lead?.phase_id 
+      });
+      return;
+    }
+
+    try {
+      const { data: existingAnalysis, error } = await supabase
+        .from("phase_based_analyses")
+        .select("id")
+        .eq("lead_id", lead.id)
+        .eq("phase_id", lead.phase_id)
+        .maybeSingle();
+
+      console.log("Existing analysis query result:", {
+        leadId: lead.id,
+        phaseId: lead.phase_id,
+        phaseName: lead.phase?.name,
+        hasAnalysis: !!existingAnalysis,
+        error: error
+      });
+
+      setShowButton(!existingAnalysis);
+    } catch (error) {
+      console.error("Error checking existing analysis:", error);
+      setShowButton(true);
+    }
+  };
+
   useEffect(() => {
-    checkExistingAnalysis();
-  }, [lead?.id, lead?.phase_id, user?.id]);
+    if (lead?.id && lead?.phase_id) {
+      checkExistingAnalysis();
+    }
+  }, [lead?.id, lead?.phase_id]);
 
   // Early return if missing required data
   if (!lead?.id) {
@@ -166,7 +173,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   }
 
   console.log("LeadSummary render state:", {
-    hasExistingAnalysis: !!existingAnalysis,
+    showButton,
     isLoading,
     leadId: lead.id,
     phaseId: lead.phase_id,
@@ -174,26 +181,21 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     hasUser: !!user
   });
 
-  // Wenn eine Analyse existiert, zeige die NexusTimelineCard
-  if (existingAnalysis) {
-    return (
-      <div className="space-y-4">
-        <NexusTimelineCard 
-          content={`${settings?.language === "en" ? "Analysis for phase" : "Analyse für Phase"} "${lead.phase?.name || 'Unknown'}"`}
-          metadata={{
-            type: 'phase_analysis',
-            timestamp: new Date().toISOString(),
-            phase_name: lead.phase?.name,
-            analysis: existingAnalysis.metadata?.analysis || {}
-          }}
-          onRegenerate={generateAnalysis}
-          isRegenerating={isLoading}
-        />
-      </div>
-    );
+  if (!showButton) {
+    return <NexusTimelineCard 
+      content={settings?.language === "en" 
+        ? `Analysis for phase "${lead.phase?.name || 'Unknown'}" already generated` 
+        : `Analyse für Phase "${lead.phase?.name || 'Unbekannt'}" bereits generiert`}
+      metadata={{
+        type: 'phase_analysis',
+        timestamp: new Date().toISOString(),
+        phase_name: lead.phase?.name
+      }}
+      onRegenerate={generateAnalysis}
+      isRegenerating={isLoading}
+    />;
   }
 
-  // Wenn keine Analyse existiert, zeige den Generate-Button
   return (
     <PhaseAnalysisButton 
       isLoading={isLoading}

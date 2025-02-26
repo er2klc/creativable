@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";

@@ -16,7 +16,6 @@ export default function LeadDetail() {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   
-  // Enable suspense for better loading states
   const { data: lead, isLoading } = useLeadData(leadId);
   const { updateLeadMutation, deleteLeadMutation } = useLeadMutations(leadId, () => {
     window.history.back();
@@ -24,7 +23,9 @@ export default function LeadDetail() {
 
   const deletePhaseChangeMutation = useMutation({
     mutationFn: async (noteId: string) => {
+      // Check if this is a status change entry
       if (noteId.startsWith('status-')) {
+        // For status changes, we update the lead status back to 'lead'
         const { error } = await supabase
           .from("leads")
           .update({ status: 'lead' })
@@ -32,6 +33,7 @@ export default function LeadDetail() {
 
         if (error) throw error;
       } else {
+        // For regular notes, delete from notes table
         const { error } = await supabase
           .from("notes")
           .delete()
@@ -42,7 +44,7 @@ export default function LeadDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["lead-with-relations", leadId] });
       toast.success(
         settings?.language === "en"
           ? "Entry deleted successfully"
@@ -59,7 +61,6 @@ export default function LeadDetail() {
     },
   });
 
-  // Set up subscription after initial data load
   useLeadSubscription(leadId);
 
   if (isLoading || !lead) {

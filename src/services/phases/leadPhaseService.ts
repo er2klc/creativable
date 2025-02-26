@@ -5,6 +5,7 @@ const getPhaseChangeMessage = (
   oldPhaseName: string | null, 
   newPhaseName: string
 ): { content: string; emoji: string } => {
+  // Standard-Emojis für verschiedene Phasen
   const phaseEmojis: { [key: string]: string } = {
     "Erstkontakt": "👋",
     "Erstgespräch": "🗣️",
@@ -16,20 +17,14 @@ const getPhaseChangeMessage = (
     "Nachfassen": "✍️"
   };
 
+  // Emoji für die neue Phase bestimmen
   const emoji = phaseEmojis[newPhaseName] || "✨";
 
+  // Einheitlicher Text für alle Phasenänderungen
   return {
     content: `Kontakt ist jetzt in Phase "${newPhaseName}"`,
     emoji
   };
-};
-
-const generateUniqueId = (leadId: string, oldPhase: string, newPhase: string): string => {
-  const timestamp = Date.now();
-  const array = new Uint8Array(4);
-  window.crypto.getRandomValues(array);
-  const random = Array.from(array).map(b => b.toString(16).padStart(2, '0')).join('');
-  return `${leadId}-${timestamp}-${random}`;
 };
 
 export const updateLeadPhase = async (
@@ -40,48 +35,47 @@ export const updateLeadPhase = async (
   userId: string
 ) => {
   const timestamp = new Date().toISOString();
-  console.log('Starting phase update transaction:', { leadId, phaseId, oldPhaseName, newPhaseName, timestamp });
 
-  try {
-    // Überprüfen, ob sich die Phase tatsächlich ändert
-    const { data: currentLead } = await supabase
-      .from("leads")
-      .select("phase_id")
-      .eq("id", leadId)
-      .single();
+  // WICHTIG: Erst prüfen ob sich die Phase tatsächlich geändert hat!
+  const { data: currentLead } = await supabase
+    .from("leads")
+    .select("phase_id")
+    .eq("id", leadId)
+    .single();
 
-    if (currentLead?.phase_id === phaseId) {
-      console.log('Phase has not changed, skipping update');
-      return {
-        success: true,
-        noChange: true
-      };
-    }
+  // Wenn die Phase identisch ist, early return ohne Änderungen
+  if (currentLead?.phase_id === phaseId) {
+    console.log("Phase unchanged, skipping update");
+    return null;
+  }
 
-    // Generate unique IDs and metadata for tracking
-    const transactionId = generateUniqueId(leadId, oldPhaseName, newPhaseName);
+  // Phase hat sich geändert - Update durchführen
+  const { error: updateError } = await supabase
+    .from("leads")
+    .update({
+      phase_id: phaseId,
+      last_action: "Phase changed",
+      last_action_date: timestamp,
+    })
+    .eq("id", leadId);
+
+  if (updateError) throw updateError;
+
+  // Prüfen ob bereits eine Notiz für diese spezifische Änderung in den letzten 5 Sekunden existiert
+  const fiveSecondsAgo = new Date(Date.now() - 5000).toISOString();
+  const { data: existingNotes } = await supabase
+    .from("notes")
+    .select("id")
+    .eq("lead_id", leadId)
+    .eq("metadata->type", "phase_change")
+    .eq("metadata->oldPhase", oldPhaseName)
+    .eq("metadata->newPhase", newPhaseName)
+    .gte("created_at", fiveSecondsAgo);
+
+  // Nur eine neue Notiz erstellen, wenn keine kürzlich erstellte existiert
+  if (!existingNotes || existingNotes.length === 0) {
     const message = getPhaseChangeMessage(oldPhaseName, newPhaseName);
     
-    console.log('Starting database transaction with ID:', transactionId);
-
-    // Update lead phase first
-    const { error: updateError } = await supabase
-      .from("leads")
-      .update({
-        phase_id: phaseId,
-        last_action: "Phase changed",
-        last_action_date: timestamp,
-      })
-      .eq("id", leadId);
-
-    if (updateError) {
-      console.error("Error updating lead phase:", updateError);
-      throw updateError;
-    }
-
-    console.log('Lead phase updated successfully, creating note...');
-
-    // Create phase change note with extended metadata
     const { error: noteError } = await supabase
       .from("notes")
       .insert({
@@ -93,40 +87,14 @@ export const updateLeadPhase = async (
           oldPhase: oldPhaseName,
           newPhase: newPhaseName,
           timestamp,
-          emoji: message.emoji,
-          transactionId,
-          version: '2',
-          source: 'kanban'
+          emoji: message.emoji
         }
       });
 
-    if (noteError) {
-      console.error("Error creating phase change note:", noteError);
-      throw noteError;
-    }
-
-    console.log('Phase change transaction completed successfully:', {
-      transactionId,
-      leadId,
-      oldPhase: oldPhaseName,
-      newPhase: newPhaseName,
-      timestamp
-    });
-
-    return {
-      success: true,
-      metadata: {
-        transactionId,
-        timestamp,
-        phaseChange: {
-          from: oldPhaseName,
-          to: newPhaseName
-        }
-      }
-    };
-
-  } catch (error) {
-    console.error("Error in phase update transaction:", error);
-    throw error;
+    if (noteError) throw noteError;
+  } else {
+    console.log("Skipping note creation - similar note exists within last 5 seconds");
   }
+
+  return { success: true };
 };

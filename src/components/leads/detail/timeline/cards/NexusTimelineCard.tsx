@@ -9,7 +9,6 @@ interface NexusTimelineCardProps {
   metadata: {
     type: string;
     timestamp: string;
-    phase_name?: string;
     analysis?: {
       summary?: string;
       key_points?: string[];

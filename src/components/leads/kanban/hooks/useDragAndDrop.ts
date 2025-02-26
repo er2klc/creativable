@@ -9,68 +9,59 @@ interface UseDragAndDropProps {
   lead: Tables<"leads">;
   disabled?: boolean;
   onLeadClick: (id: string) => void;
-  forceDragging?: boolean;
 }
 
-export const useDragAndDrop = ({ 
-  id, 
-  lead, 
-  disabled = false, 
-  onLeadClick,
-  forceDragging = false 
-}: UseDragAndDropProps) => {
+export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseDragAndDropProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const dragTimeoutRef = useRef<number | null>(null);
-  const dragStartTimeRef = useRef<number>(0);
 
   const {
     attributes,
     listeners,
     setNodeRef,
     transform,
-    isDragging: isDraggingDndKit,
   } = useDraggable({
     id,
     data: lead,
     disabled,
   });
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = () => {
     if (disabled) return;
     
-    dragStartTimeRef.current = Date.now();
     dragTimeoutRef.current = window.setTimeout(() => {
       setIsDragging(true);
     }, 150);
   };
 
-  const handleMouseUp = (e: React.MouseEvent) => {
+  const handleMouseUp = () => {
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current);
     }
 
-    const dragDuration = Date.now() - dragStartTimeRef.current;
-    
-    if (dragDuration < 200 && !isDragging) {
+    if (!isDragging) {
       onLeadClick(id);
     }
     setIsDragging(false);
   };
 
-  const isCurrentlyDragging = isDragging || isDraggingDndKit || forceDragging;
-
-  const style: CSSProperties = {
-    opacity: isCurrentlyDragging ? 0 : 1,
-    transform: CSS.Translate.toString(transform || { x: 0, y: 0 }),
-    transition: 'opacity 0.2s ease',
-    position: 'relative',
+  const style: CSSProperties | undefined = transform ? {
+    transform: CSS.Transform.toString({
+      ...transform,
+      x: transform.x,
+      y: transform.y,
+      scaleX: 1.02,
+      scaleY: 1.02,
+    }),
+    zIndex: isDragging ? 1000 : 1,
+    position: isDragging ? 'absolute' : 'relative',
     width: '100%',
-    cursor: disabled ? 'default' : (isCurrentlyDragging ? 'grabbing' : 'grab'),
-    zIndex: isCurrentlyDragging ? 0 : 1,
-  };
+    transition: 'transform 0.1s ease, box-shadow 0.1s ease',
+    cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
+  } : undefined;
 
   return {
-    isDragging: isCurrentlyDragging,
+    isDragging,
     style,
     dragHandlers: {
       ref: setNodeRef,
@@ -81,3 +72,4 @@ export const useDragAndDrop = ({
     }
   };
 };
+

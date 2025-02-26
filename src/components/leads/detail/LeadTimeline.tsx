@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "@/types/leads";
@@ -12,8 +11,7 @@ import {
   mapMessageToTimelineItem, 
   mapFileToTimelineItem,
   createContactCreationItem,
-  createStatusChangeItem,
-  deduplicateTimelineItems 
+  createStatusChangeItem 
 } from "./timeline/utils/timelineMappers";
 
 interface LeadTimelineProps {
@@ -44,11 +42,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
 
   const statusChangeItem = createStatusChangeItem(
     lead.status || 'lead',
-    lead.updated_at || lead.created_at || new Date().toISOString(),
-    lead.name
+    lead.updated_at || lead.created_at || new Date().toISOString()
   );
 
-  // Create timeline items and deduplicate them
   const allActivities = [
     ...(statusChangeItem ? [statusChangeItem] : []),
     ...(lead.notes || []).map(mapNoteToTimelineItem),
@@ -58,8 +54,9 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     createContactCreationItem(lead.name, lead.created_at)
   ];
 
-  // Deduplicate and sort timeline items
-  const timelineItems = deduplicateTimelineItems(allActivities);
+  const timelineItems = allActivities.sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 
   return (
     <div className="space-y-4">
