@@ -47,7 +47,10 @@ export const KanbanBoard = ({
   };
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext 
+      collisionDetection={closestCenter} 
+      onDragEnd={handleDragEnd}
+    >
       <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
         <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh)]">
           <div className="flex gap-2.5 h-full px-4" style={{ 
@@ -96,3 +99,4 @@ export const KanbanBoard = ({
     </DndContext>
   );
 };
+
