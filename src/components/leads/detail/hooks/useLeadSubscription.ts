@@ -35,12 +35,18 @@ export const useLeadSubscription = (leadId: string | null) => {
         },
         async (payload) => {
           console.log('Lead changed:', payload);
-          await handleLeadChange(payload);
           
-          if (payload.new.phase_id !== payload.old?.phase_id) {
-            console.log('Phase changed, forcing timeline refresh');
+          // Nur wenn sich tatsächlich die Phase geändert hat
+          const hasPhaseChanged = payload.new?.phase_id !== payload.old?.phase_id;
+          
+          if (hasPhaseChanged) {
+            console.log('Phase changed, updating data and timeline');
+            await handleLeadChange(payload);
             await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
             queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
+          } else {
+            // Für andere Änderungen am Lead, aber nicht Phase
+            await handleLeadChange(payload);
           }
         }
       )
@@ -110,8 +116,6 @@ export const useLeadSubscription = (leadId: string | null) => {
       
       if (status === 'SUBSCRIBED') {
         console.log('Successfully subscribed to changes');
-        queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
-        queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
       } else if (status === 'CHANNEL_ERROR') {
         console.error('Failed to subscribe to changes');
       }
