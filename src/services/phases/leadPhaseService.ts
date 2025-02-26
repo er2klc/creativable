@@ -27,6 +27,11 @@ const getPhaseChangeMessage = (
   };
 };
 
+const generateUniqueId = (leadId: string, timestamp: string, oldPhase: string, newPhase: string): string => {
+  const rand = Math.random().toString(36).substring(2, 8);
+  return `${leadId}-${timestamp}-${oldPhase}-${newPhase}-${rand}`;
+};
+
 export const updateLeadPhase = async (
   leadId: string,
   phaseId: string,
@@ -64,6 +69,7 @@ export const updateLeadPhase = async (
 
     // Eine neue Notiz für die Phasenänderung erstellen
     const message = getPhaseChangeMessage(oldPhaseName, newPhaseName);
+    const uniqueId = generateUniqueId(leadId, timestamp, oldPhaseName, newPhaseName);
     
     const { error: noteError } = await supabase
       .from("notes")
@@ -77,7 +83,7 @@ export const updateLeadPhase = async (
           newPhase: newPhaseName,
           timestamp,
           emoji: message.emoji,
-          unique_id: `${leadId}-${timestamp}` // Eindeutige ID für das Löschen
+          unique_id: uniqueId
         }
       });
 
