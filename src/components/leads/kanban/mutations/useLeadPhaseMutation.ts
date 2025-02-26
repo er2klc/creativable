@@ -22,24 +22,29 @@ export const useLeadPhaseMutation = () => {
       oldPhaseName: string;
       newPhaseName: string;
     }) => {
+      console.log('Starting phase mutation for lead:', leadId);
+      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
       
       const result = await updateLeadPhase(leadId, phaseId, oldPhaseName, newPhaseName, user.id);
-      
-      // Force immediate cache update
-      await queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      await queryClient.invalidateQueries({ queryKey: ["lead-with-relations", leadId] });
-      await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+      console.log('Phase update completed:', result);
       
       return result;
     },
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches to avoid optimistic update conflicts
+      await queryClient.cancelQueries({ queryKey: ["lead-timeline", variables.leadId] });
+      await queryClient.cancelQueries({ queryKey: ["lead", variables.leadId] });
+    },
     onSuccess: (data, variables) => {
-      // Invalidieren aller relevanten Queries
+      console.log('Phase mutation successful, invalidating queries');
+      
+      // Invalidate all relevant queries in the correct order
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
       queryClient.invalidateQueries({ queryKey: ["lead-with-relations", variables.leadId] });
-      queryClient.invalidateQueries({ queryKey: ["lead-timeline", variables.leadId] }); 
+      queryClient.invalidateQueries({ queryKey: ["lead-timeline", variables.leadId] });
       
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",

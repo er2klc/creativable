@@ -38,14 +38,15 @@ export const useLeadSubscription = (leadId: string | null) => {
           console.log('Lead changed:', payload);
           await handleLeadChange(payload);
           
-          // Explicitly invalidate timeline when phase changes
+          // Force timeline refresh on phase changes
           if (payload.new.phase_id !== payload.old?.phase_id) {
-            console.log('Phase changed, invalidating timeline');
-            queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+            console.log('Phase changed, forcing timeline refresh');
+            await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+            queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
           }
         }
       )
-      // Notes changes (including phase changes)
+      // Notes changes
       .on(
         'postgres_changes',
         {
@@ -57,8 +58,9 @@ export const useLeadSubscription = (leadId: string | null) => {
         async (payload) => {
           console.log('Notes changed:', payload);
           await handleNotesChange(payload);
-          // Always invalidate timeline for note changes
-          queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+          // Force timeline refresh for note changes
+          await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+          queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
         }
       )
       // Tasks changes
@@ -70,7 +72,12 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'tasks',
           filter: `lead_id=eq.${leadId}`
         },
-        handleTasksChange
+        async (payload) => {
+          console.log('Tasks changed:', payload);
+          await handleTasksChange(payload);
+          await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+          queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
+        }
       )
       // Messages changes
       .on(
@@ -81,7 +88,12 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'messages',
           filter: `lead_id=eq.${leadId}`
         },
-        handleMessagesChange
+        async (payload) => {
+          console.log('Messages changed:', payload);
+          await handleMessagesChange(payload);
+          await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+          queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
+        }
       )
       // Files changes
       .on(
@@ -92,7 +104,12 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'lead_files',
           filter: `lead_id=eq.${leadId}`
         },
-        handleFilesChange
+        async (payload) => {
+          console.log('Files changed:', payload);
+          await handleFilesChange(payload);
+          await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+          queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
+        }
       );
 
     // Subscribe to the channel
@@ -101,8 +118,9 @@ export const useLeadSubscription = (leadId: string | null) => {
       
       if (status === 'SUBSCRIBED') {
         console.log('Successfully subscribed to changes');
-        // Force a refetch of timeline data when subscription is established
+        // Force initial timeline data fetch when subscription is established
         queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+        queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
       } else if (status === 'CHANNEL_ERROR') {
         console.error('Failed to subscribe to changes');
       }
