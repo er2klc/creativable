@@ -45,7 +45,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         .select("id, content, metadata")
         .eq("lead_id", lead.id)
         .eq("phase_id", lead.phase_id)
-        .eq("user_id", user.id)
+        .eq("created_by", user.id)
         .maybeSingle();
 
       console.log("Existing analysis query result:", {
