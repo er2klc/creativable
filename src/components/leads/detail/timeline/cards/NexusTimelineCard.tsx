@@ -1,160 +1,94 @@
 
-import { cn } from "@/lib/utils";
-import { Bot, Copy, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Bot, RotateCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
-import ReactMarkdown from 'react-markdown';
+import { formatDateTime } from "../utils/dateUtils";
 
 interface NexusTimelineCardProps {
   content: string;
   metadata: {
     type: string;
-    analysis_type?: string;
-    completed?: boolean;
-    completed_at?: string;
-    phase?: {
-      id: string;
-      name: string;
-    };
-    timestamp?: string;
+    timestamp: string;
     analysis?: {
-      social_media_bio?: string;
-      hashtags?: string[];
-      engagement_metrics?: {
-        followers?: number;
-        engagement_rate?: number;
-      };
+      summary?: string;
+      key_points?: string[];
+      recommendations?: string[];
     };
   };
-  onDelete?: () => void;
   onRegenerate?: () => void;
   isRegenerating?: boolean;
 }
 
-export const NexusTimelineCard = ({ 
-  content, 
-  metadata, 
+export function NexusTimelineCard({
+  content,
+  metadata,
   onRegenerate,
-  isRegenerating 
-}: NexusTimelineCardProps) => {
-  const [isExpanded, setIsExpanded] = useState(false);
+  isRegenerating
+}: NexusTimelineCardProps) {
   const { settings } = useSettings();
-  const maxPreviewLength = 300;
-
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(content);
-      toast.success(
-        settings?.language === "en"
-          ? "Analysis copied to clipboard"
-          : "Analyse in die Zwischenablage kopiert"
-      );
-    } catch (err) {
-      toast.error(
-        settings?.language === "en"
-          ? "Error copying analysis"
-          : "Fehler beim Kopieren der Analyse"
-      );
-    }
-  };
-
-  const shouldTruncate = content.length > maxPreviewLength;
-  const displayContent = isExpanded ? content : content.slice(0, maxPreviewLength) + (shouldTruncate ? '...' : '');
 
   return (
-    <div className="rounded-lg relative">
-      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500" />
-      <div className="relative m-[1px] bg-white rounded-[7px] p-4 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Bot className="h-4 w-4" />
-            <span>Nexus AI</span>
-            {metadata.phase?.name && (
-              <>
-                <span>•</span>
-                <span>{metadata.phase.name}</span>
-              </>
-            )}
-            {metadata.completed && (
-              <>
-                <span>•</span>
-                <span className="text-green-500">
-                  {settings?.language === "en" ? "Completed" : "Abgeschlossen"}
-                </span>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            {onRegenerate && (
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                onClick={onRegenerate}
-                disabled={isRegenerating}
-              >
-                <RefreshCw className={cn("h-4 w-4", isRegenerating && "animate-spin")} />
-              </Button>
-            )}
-            <Button variant="ghost" size="icon" onClick={copyToClipboard}>
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-
-        <div className="prose prose-sm max-w-none dark:prose-invert">
-          <ReactMarkdown>{displayContent}</ReactMarkdown>
-        </div>
-
-        {shouldTruncate && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setIsExpanded(!isExpanded)}
-            className="w-full"
-          >
-            {isExpanded ? (
-              <>
-                <ChevronUp className="h-4 w-4 mr-2" />
-                {settings?.language === "en" ? "Show less" : "Weniger anzeigen"}
-              </>
-            ) : (
-              <>
-                <ChevronDown className="h-4 w-4 mr-2" />
-                {settings?.language === "en" ? "Show more" : "Mehr anzeigen"}
-              </>
-            )}
-          </Button>
-        )}
-
-        {metadata.analysis && (
-          <div className="pt-4 border-t">
-            <div className="space-y-2 text-xs text-muted-foreground">
-              {metadata.analysis.social_media_bio && (
-                <div>
-                  <strong>Bio:</strong> {metadata.analysis.social_media_bio}
-                </div>
-              )}
-              {metadata.analysis.hashtags && metadata.analysis.hashtags.length > 0 && (
-                <div>
-                  <strong>Hashtags:</strong> {metadata.analysis.hashtags.join(", ")}
-                </div>
-              )}
-              {metadata.analysis.engagement_metrics && (
-                <div className="flex gap-4">
-                  {metadata.analysis.engagement_metrics.followers && (
-                    <span><strong>Followers:</strong> {metadata.analysis.engagement_metrics.followers}</span>
+    <div className="rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 p-4 shadow-sm border border-blue-100">
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-2">
+          <Bot className="h-5 w-5 text-blue-500 mt-1" />
+          <div className="space-y-1">
+            <p className="text-sm text-gray-600">
+              {formatDateTime(metadata.timestamp, settings?.language)}
+            </p>
+            <div className="prose prose-sm max-w-none">
+              <p className="text-gray-900">{content}</p>
+              {metadata.analysis && (
+                <div className="mt-4 space-y-4">
+                  {metadata.analysis.summary && (
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        {settings?.language === "en" ? "Summary" : "Zusammenfassung"}
+                      </h4>
+                      <p className="text-gray-700">{metadata.analysis.summary}</p>
+                    </div>
                   )}
-                  {metadata.analysis.engagement_metrics.engagement_rate && (
-                    <span><strong>Engagement:</strong> {(metadata.analysis.engagement_metrics.engagement_rate * 100).toFixed(1)}%</span>
+                  {metadata.analysis.key_points && metadata.analysis.key_points.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        {settings?.language === "en" ? "Key Points" : "Kernpunkte"}
+                      </h4>
+                      <ul className="list-disc pl-4 text-gray-700">
+                        {metadata.analysis.key_points.map((point, index) => (
+                          <li key={index}>{point}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {metadata.analysis.recommendations && metadata.analysis.recommendations.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-900">
+                        {settings?.language === "en" ? "Recommendations" : "Empfehlungen"}
+                      </h4>
+                      <ul className="list-disc pl-4 text-gray-700">
+                        {metadata.analysis.recommendations.map((rec, index) => (
+                          <li key={index}>{rec}</li>
+                        ))}
+                      </ul>
+                    </div>
                   )}
                 </div>
               )}
             </div>
           </div>
+        </div>
+        {onRegenerate && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRegenerate}
+            disabled={isRegenerating}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            <RotateCw className={`h-4 w-4 ${isRegenerating ? 'animate-spin' : ''}`} />
+          </Button>
         )}
       </div>
     </div>
   );
-};
+}

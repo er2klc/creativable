@@ -27,15 +27,16 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     try {
       setIsLoading(true);
       
-      // Erst prüfen ob eine Analyse existiert
+      // Erst prüfen ob eine Analyse für diese Phase existiert
       const { data: existingAnalysis } = await supabase
         .from("phase_based_analyses")
-        .select("id")
+        .select("id, content")
         .eq("lead_id", lead.id)
         .eq("phase_id", lead.phase_id)
         .maybeSingle();
 
       if (existingAnalysis) {
+        // Wenn eine Analyse existiert, zeigen wir sie direkt an
         setShowButton(false);
         return;
       }
@@ -74,9 +75,32 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
+  // Prüfen ob bereits eine Analyse für diese Phase existiert
+  const checkExistingAnalysis = async () => {
+    try {
+      const { data: existingAnalysis } = await supabase
+        .from("phase_based_analyses")
+        .select("id")
+        .eq("lead_id", lead.id)
+        .eq("phase_id", lead.phase_id)
+        .maybeSingle();
+
+      if (existingAnalysis) {
+        setShowButton(false);
+      }
+    } catch (error) {
+      console.error("Error checking existing analysis:", error);
+    }
+  };
+
+  // Bei Komponenten-Mount und Phase-Änderung prüfen
+  React.useEffect(() => {
+    checkExistingAnalysis();
+  }, [lead.id, lead.phase_id]);
+
   if (!showButton) {
     return <NexusTimelineCard 
-      content="Analyse bereits generiert"
+      content={settings?.language === "en" ? "Analysis already generated" : "Analyse bereits generiert"}
       metadata={{
         type: 'phase_analysis',
         timestamp: new Date().toISOString()
