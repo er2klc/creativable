@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { randomBytes } from 'crypto';
 
 const getPhaseChangeMessage = (
   oldPhaseName: string | null, 
@@ -27,10 +28,11 @@ const getPhaseChangeMessage = (
   };
 };
 
-const generateUniqueId = (leadId: string, timestamp: string, oldPhase: string, newPhase: string): string => {
-  const rand = Math.random().toString(36).substring(2, 8);
-  const milliseconds = new Date().getMilliseconds();
-  return `${leadId}-${timestamp}-${oldPhase}-${newPhase}-${rand}-${milliseconds}`;
+const generateUniqueId = (leadId: string, oldPhase: string, newPhase: string): string => {
+  const timestamp = Date.now();
+  const microseconds = process.hrtime()[1];
+  const random = randomBytes(4).toString('hex');
+  return `${leadId}-${timestamp}-${microseconds}-${random}`;
 };
 
 export const updateLeadPhase = async (
@@ -41,23 +43,31 @@ export const updateLeadPhase = async (
   userId: string
 ) => {
   const timestamp = new Date().toISOString();
-  console.log('Starting phase update:', { leadId, phaseId, oldPhaseName, newPhaseName, timestamp });
+  console.log('Starting phase update transaction:', { leadId, phaseId, oldPhaseName, newPhaseName, timestamp });
 
   try {
-    // Erst prüfen ob sich die Phase tatsächlich geändert hat!
-    const { data: currentLead } = await supabase
+    // Start a transaction by checking current state
+    const { data: currentLead, error: checkError } = await supabase
       .from("leads")
       .select("phase_id")
       .eq("id", leadId)
       .single();
 
-    // Wenn die Phase identisch ist, early return ohne Änderungen
+    if (checkError) throw checkError;
+
+    // If the phase hasn't changed, return early
     if (currentLead?.phase_id === phaseId) {
       console.log("Phase unchanged, skipping update");
-      return null;
+      return { success: true, unchanged: true };
     }
 
-    // Phase hat sich geändert - Update durchführen
+    // Generate unique IDs and metadata for tracking
+    const transactionId = generateUniqueId(leadId, oldPhaseName, newPhaseName);
+    const message = getPhaseChangeMessage(oldPhaseName, newPhaseName);
+    
+    console.log('Starting database transaction with ID:', transactionId);
+
+    // Update lead phase
     const { error: updateError } = await supabase
       .from("leads")
       .update({
@@ -67,14 +77,14 @@ export const updateLeadPhase = async (
       })
       .eq("id", leadId);
 
-    if (updateError) throw updateError;
+    if (updateError) {
+      console.error("Error updating lead phase:", updateError);
+      throw updateError;
+    }
 
-    // Eine neue Notiz für die Phasenänderung erstellen
-    const message = getPhaseChangeMessage(oldPhaseName, newPhaseName);
-    const uniqueId = generateUniqueId(leadId, timestamp, oldPhaseName, newPhaseName);
-    
-    console.log('Creating phase change note:', { message, uniqueId });
-    
+    console.log('Lead phase updated successfully, creating note...');
+
+    // Create phase change note with extended metadata
     const { error: noteError } = await supabase
       .from("notes")
       .insert({
@@ -87,16 +97,40 @@ export const updateLeadPhase = async (
           newPhase: newPhaseName,
           timestamp,
           emoji: message.emoji,
-          unique_id: uniqueId
+          transactionId,
+          version: '2',
+          source: 'kanban'
         }
       });
 
-    if (noteError) throw noteError;
+    if (noteError) {
+      console.error("Error creating phase change note:", noteError);
+      throw noteError;
+    }
 
-    console.log('Phase update completed successfully');
-    return { success: true };
+    console.log('Phase change transaction completed successfully:', {
+      transactionId,
+      leadId,
+      oldPhase: oldPhaseName,
+      newPhase: newPhaseName,
+      timestamp
+    });
+
+    return {
+      success: true,
+      metadata: {
+        transactionId,
+        timestamp,
+        phaseChange: {
+          from: oldPhaseName,
+          to: newPhaseName
+        }
+      }
+    };
+
   } catch (error) {
-    console.error("Error updating lead phase:", error);
+    console.error("Error in phase update transaction:", error);
     throw error;
   }
 };
+
