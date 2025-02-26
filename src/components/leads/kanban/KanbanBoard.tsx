@@ -46,7 +46,13 @@ export const KanbanBoard = ({
     const newPhase = phases.find(p => p.id === newPhaseId)?.name || '';
 
     if (newPhaseId && oldPhase && newPhase) {
-      await onUpdatePhase(leadId, newPhaseId);
+      try {
+        console.log('Starting phase update:', { leadId, newPhaseId, oldPhase, newPhase });
+        await onUpdatePhase(leadId, newPhaseId);
+        console.log('Phase update completed successfully');
+      } catch (error) {
+        console.error('Error updating phase:', error);
+      }
     }
   };
 
