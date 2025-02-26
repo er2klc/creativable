@@ -53,15 +53,11 @@ export const SortableLeadItem = ({
   return (
     <div
       {...(disabled ? {} : dragHandlers)}
-      style={{
-        ...style,
-        opacity: isDragging ? 0 : 1,
-        transition: 'opacity 0.2s'
-      }}
+      style={style}
       className={cn(
         "p-3 rounded-lg border shadow-sm hover:shadow-md transition-all duration-200 relative",
         getBackgroundStyle(),
-        isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
+        isDragging && "shadow-lg ring-1 ring-primary/10",
         !isDragging && !disabled && "cursor-grab",
         disabled && "cursor-default"
       )}

@@ -28,6 +28,7 @@ export const useDragAndDrop = ({
     listeners,
     setNodeRef,
     transform,
+    isDragging: isDraggingDndKit,
   } = useDraggable({
     id,
     data: lead,
@@ -50,30 +51,26 @@ export const useDragAndDrop = ({
 
     const dragDuration = Date.now() - dragStartTimeRef.current;
     
-    // Wenn der Klick kürzer als 200ms war und wir nicht ziehen, behandeln wir es als Klick
     if (dragDuration < 200 && !isDragging) {
       onLeadClick(id);
     }
     setIsDragging(false);
   };
 
-  const style: CSSProperties | undefined = transform ? {
-    transform: CSS.Transform.toString({
-      ...transform,
-      x: transform.x,
-      y: transform.y,
-      scaleX: 1.02,
-      scaleY: 1.02,
-    }),
-    zIndex: isDragging || forceDragging ? 1000 : 1,
-    position: isDragging || forceDragging ? 'relative' : 'relative',
+  const isCurrentlyDragging = isDragging || isDraggingDndKit || forceDragging;
+
+  const style: CSSProperties = {
+    opacity: isCurrentlyDragging ? 0 : 1,
+    transform: CSS.Translate.toString(transform || { x: 0, y: 0 }),
+    transition: 'opacity 0.2s ease',
+    position: 'relative',
     width: '100%',
-    transition: 'transform 0.1s ease, box-shadow 0.1s ease',
-    cursor: disabled ? 'default' : (isDragging || forceDragging ? 'grabbing' : 'grab'),
-  } : undefined;
+    cursor: disabled ? 'default' : (isCurrentlyDragging ? 'grabbing' : 'grab'),
+    zIndex: isCurrentlyDragging ? 0 : 1,
+  };
 
   return {
-    isDragging: isDragging || forceDragging,
+    isDragging: isCurrentlyDragging,
     style,
     dragHandlers: {
       ref: setNodeRef,

@@ -32,7 +32,6 @@ export const KanbanBoard = ({
   const [activeId, setActiveId] = useState<string | null>(null);
   const [initialWidth, setInitialWidth] = useState<number>(0);
 
-  // Optimierte Sensor-Konfiguration für stabileres Drag & Drop
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -43,7 +42,6 @@ export const KanbanBoard = ({
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
-    // Spaltenbreite beim Start des Drags speichern
     const columnElement = document.querySelector('.phase-column');
     if (columnElement) {
       setInitialWidth(columnElement.getBoundingClientRect().width);
@@ -51,9 +49,12 @@ export const KanbanBoard = ({
   };
 
   const handleDragEnd = async (event: DragEndEvent) => {
-    setActiveId(null);
     const { active, over } = event;
-    if (!over || !active || isEditMode) return;
+    
+    if (!over || !active || isEditMode) {
+      setActiveId(null);
+      return;
+    }
 
     const leadId = active.id as string;
     const newPhaseId = over.id as string;
@@ -71,9 +72,10 @@ export const KanbanBoard = ({
         console.error('Error updating phase:', error);
       }
     }
+    
+    setActiveId(null);
   };
 
-  // Aktivierter Lead für Overlay
   const activeLead = leads.find(lead => lead.id === activeId);
 
   return (
@@ -130,12 +132,14 @@ export const KanbanBoard = ({
       </div>
 
       <DragOverlay dropAnimation={null}>
-        {activeId && activeLead ? (
-          <div style={{ 
-            width: initialWidth ? `${initialWidth - 32}px` : 'auto',
-            transform: 'translate3d(0, 0, 0)',
-            position: 'relative',
-          }}>
+        {activeId && activeLead && (
+          <div 
+            style={{
+              width: initialWidth ? `${initialWidth - 32}px` : 'auto',
+              position: 'relative',
+              zIndex: 50,
+            }}
+          >
             <SortableLeadItem
               lead={activeLead}
               onLeadClick={onLeadClick}
@@ -143,7 +147,7 @@ export const KanbanBoard = ({
               isDragging
             />
           </div>
-        ) : null}
+        )}
       </DragOverlay>
     </DndContext>
   );
