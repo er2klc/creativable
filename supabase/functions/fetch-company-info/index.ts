@@ -1,5 +1,7 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,56 +20,99 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { companyName, userId, isRegistration } = await req.json()
+    const { companyName } = await req.json()
+
+    if (!companyName) {
+      throw new Error('Company name is required')
+    }
 
     console.log('Fetching company info for:', {
       companyName,
-      userId,
-      isRegistration,
       timestamp: new Date().toISOString()
     })
 
-    if (!companyName || !userId) {
-      throw new Error('Missing required parameters')
+    // OpenAI API Key überprüfen
+    const openaiKey = Deno.env.get('OPENAI_API_KEY')
+    if (!openaiKey) {
+      console.error('OpenAI API key not configured')
+      return new Response(
+        JSON.stringify({ 
+          error: 'OpenAI API key not configured',
+          details: 'Please configure OpenAI API key in Supabase settings'
+        }),
+        { 
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            'Content-Type': 'application/json'
+          }
+        }
+      )
     }
 
-    // Get user's language preference
-    const { data: settings } = await supabaseClient
-      .from('settings')
-      .select('language')
-      .eq('user_id', userId)
-      .single()
+    // OpenAI API aufrufen für Firmenanalyse
+    const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Du bist ein Business Analyst. Analysiere das Unternehmen "${companyName}" und erstelle eine strukturierte Analyse mit folgenden Aspekten:
+              - Produkte und Dienstleistungen
+              - Zielgruppe
+              - Alleinstellungsmerkmal (USP)
+              - Geschäftsbeschreibung`
+          }
+        ],
+        temperature: 0.7
+      })
+    })
 
-    const language = settings?.language || 'de'
-    const systemPrompt = language === 'en' 
-      ? "You are a helpful business analyst. Analyze the company and provide key business insights."
-      : "Du bist ein hilfreicher Business Analyst. Analysiere das Unternehmen und liefere wichtige geschäftliche Erkenntnisse."
+    if (!openAIResponse.ok) {
+      console.error('OpenAI API error:', await openAIResponse.text())
+      throw new Error('Failed to analyze company info')
+    }
 
-    // Simulate company info analysis
-    const companyInfo = {
+    const openAIData = await openAIResponse.json()
+    const analysis = openAIData.choices[0].message.content
+
+    // Analysieren und strukturieren der OpenAI-Antwort
+    const lines = analysis.split('\n')
+    let section = ''
+    const result = {
       companyName,
-      productsServices: language === 'en' 
-        ? "Products and services analysis based on company profile"
-        : "Produkt- und Dienstleistungsanalyse basierend auf Unternehmensprofil",
-      targetAudience: language === 'en'
-        ? "Target audience analysis"
-        : "Zielgruppenanalyse",
-      usp: language === 'en'
-        ? "Unique selling proposition analysis"
-        : "Alleinstellungsmerkmal-Analyse",
-      businessDescription: language === 'en'
-        ? "Detailed business description and analysis"
-        : "Detaillierte Geschäftsbeschreibung und Analyse"
+      productsServices: '',
+      targetAudience: '',
+      usp: '',
+      businessDescription: ''
+    }
+
+    for (const line of lines) {
+      if (line.includes('Produkte und Dienstleistungen')) {
+        section = 'productsServices'
+      } else if (line.includes('Zielgruppe')) {
+        section = 'targetAudience'
+      } else if (line.includes('Alleinstellungsmerkmal') || line.includes('USP')) {
+        section = 'usp'
+      } else if (line.includes('Geschäftsbeschreibung')) {
+        section = 'businessDescription'
+      } else if (line.trim() && section) {
+        result[section] += (result[section] ? '\n' : '') + line.trim()
+      }
     }
 
     console.log('Successfully generated company info:', {
       company: companyName,
-      userId,
       timestamp: new Date().toISOString()
     })
 
     return new Response(
-      JSON.stringify(companyInfo),
+      JSON.stringify(result),
       { 
         headers: { 
           ...corsHeaders,
@@ -79,7 +124,10 @@ serve(async (req) => {
     console.error('Error in fetch-company-info:', error)
     
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error.message,
+        details: 'Failed to fetch and analyze company information'
+      }),
       { 
         status: 500,
         headers: {
