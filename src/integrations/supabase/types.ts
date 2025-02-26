@@ -4620,6 +4620,72 @@ export type Database = {
           updated_at: string | null
         }
       }
+      create_unique_lead: {
+        Args: {
+          p_user_id: string
+          p_name: string
+          p_platform: string
+          p_username: string
+          p_pipeline_id: string
+          p_phase_id: string
+        }
+        Returns: {
+          apify_instagram_data: Json | null
+          archive_reason: string | null
+          birth_date: string | null
+          city: string | null
+          company_name: string | null
+          contact_type: string | null
+          created_at: string | null
+          current_company_name: string | null
+          education_summary: string | null
+          email: string | null
+          experience: Json | null
+          follow_up_date: string | null
+          id: string
+          industry: string
+          is_favorite: boolean | null
+          languages: string[] | null
+          last_action: string | null
+          last_action_date: string | null
+          last_interaction_date: string | null
+          last_social_media_scan: string | null
+          level: number | null
+          linkedin_id: string | null
+          name: string
+          network_marketing_id: string | null
+          next_steps: Json | null
+          onboarding_progress: Json | null
+          parent_id: string | null
+          phase_id: string
+          phone_number: string | null
+          pipeline_id: string
+          platform: string
+          position: string | null
+          processing_status: string | null
+          region: string | null
+          slug: string | null
+          social_media_bio: string | null
+          social_media_categories: string[] | null
+          social_media_engagement_rate: number | null
+          social_media_followers: number | null
+          social_media_following: number | null
+          social_media_interests: string[] | null
+          social_media_last_post_date: string | null
+          social_media_mentioned_users: Json | null
+          social_media_posts_count: number | null
+          social_media_profile_image_url: string | null
+          social_media_stats: Json | null
+          social_media_tagged_users: Json | null
+          social_media_username: string | null
+          social_media_verified: boolean | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          usp: string | null
+          website: string | null
+        }
+      }
       create_youtube_metadata: {
         Args: {
           title: string
