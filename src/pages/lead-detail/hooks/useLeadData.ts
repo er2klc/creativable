@@ -28,18 +28,12 @@ export const useLeadData = (leadId: string | null) => {
           *,
           messages (*),
           tasks (*),
-          phase:phase_id (
-            id,
-            name,
-            order_index
-          ),
-          pipeline:pipeline_id (
-            id,
-            name
-          )
+          notes (*),
+          lead_files (*),
+          linkedin_posts (*)
         `)
         .eq("id", leadId)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Error fetching lead:", error);
@@ -52,8 +46,6 @@ export const useLeadData = (leadId: string | null) => {
 
       console.log("Lead data fetched successfully:", {
         id: data.id,
-        phase_id: data.phase_id,
-        pipeline_id: data.pipeline_id,
         notesCount: data.notes?.length || 0,
         messagesCount: data.messages?.length || 0,
         tasksCount: data.tasks?.length || 0
@@ -62,5 +54,7 @@ export const useLeadData = (leadId: string | null) => {
       return data as LeadWithRelations;
     },
     enabled: !!leadId && isValidUUID(leadId),
+    staleTime: 0, // Immer neu laden
+    cacheTime: 5 * 60 * 1000, // 5 Minuten im Cache behalten
   });
 };
