@@ -43,10 +43,17 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     return "bg-white";
   };
 
+  const style = {
+    ...dragStyle,
+    boxSizing: 'border-box' as const,
+    width: '100%',
+    position: 'relative' as const,
+  };
+
   return (
     <div
       {...(disabled ? {} : dragHandlers)}
-      style={dragStyle}
+      style={style}
       className={cn(
         "p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200",
         getBackgroundStyle(),
