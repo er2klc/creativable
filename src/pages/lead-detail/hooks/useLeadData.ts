@@ -28,6 +28,9 @@ export const useLeadData = (leadId: string | null) => {
           *,
           messages (*),
           tasks (*),
+          notes (*),
+          lead_files (*),
+          linkedin_posts (*),
           phase:phase_id (
             id,
             name,

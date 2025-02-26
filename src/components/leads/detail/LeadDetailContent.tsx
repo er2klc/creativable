@@ -30,6 +30,15 @@ export const LeadDetailContent = ({
     return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
   }
 
+  console.log("Rendering LeadDetailContent:", {
+    leadId: lead.id,
+    hasNotes: lead.notes?.length || 0,
+    hasTasks: lead.tasks?.length || 0,
+    hasMessages: lead.messages?.length || 0,
+    hasLinkedInPosts: lead.linkedin_posts?.length || 0,
+    timestamp: new Date().toISOString()
+  });
+
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50">
       <div className="p-6 space-y-6 mt-32">
