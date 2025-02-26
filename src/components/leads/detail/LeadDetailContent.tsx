@@ -8,10 +8,6 @@ import { LeadTimeline } from "./LeadTimeline";
 import { LeadSummary } from "./LeadSummary";
 import { LeadAvatar } from "./card/LeadAvatar";
 import { LeadSocialStats } from "./card/LeadSocialStats";
-import { RefreshCw, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useState } from "react";
-import { toast } from "sonner";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
@@ -29,34 +25,6 @@ export const LeadDetailContent = ({
   onDeletePhaseChange
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
-  const [isScanning, setIsScanning] = useState(false);
-
-  const handleScanProfile = async () => {
-    if (!lead.social_media_username) {
-      toast.error(settings?.language === "en" 
-        ? "No social media username found"
-        : "Kein Social Media Benutzername gefunden"
-      );
-      return;
-    }
-
-    setIsScanning(true);
-    try {
-      // API-Aufruf hier...
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Simuliert API-Aufruf
-      toast.success(settings?.language === "en"
-        ? "Profile updated successfully"
-        : "Profil erfolgreich aktualisiert"
-      );
-    } catch (error) {
-      toast.error(settings?.language === "en"
-        ? "Error updating profile"
-        : "Fehler beim Aktualisieren des Profils"
-      );
-    } finally {
-      setIsScanning(false);
-    }
-  };
 
   if (isLoading) {
     return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
@@ -80,23 +48,11 @@ export const LeadDetailContent = ({
                     imageUrl={lead.social_media_profile_image_url}
                     name={lead.name}
                     platform={lead.platform}
-                    avatarSize="xl"
+                    avatarSize="lg"
                   />
                   <div className="flex-1 pt-2">
-                    <div className="font-medium text-lg flex items-center justify-between">
+                    <div className="font-medium text-lg">
                       <span>{lead.social_media_username || lead.name}</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleScanProfile}
-                        disabled={isScanning}
-                      >
-                        {isScanning ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <RefreshCw className="h-4 w-4" />
-                        )}
-                      </Button>
                     </div>
                     <LeadSocialStats
                       followers={lead.social_media_followers}
