@@ -1,16 +1,64 @@
+import { LeadWithRelations } from "@/types/leads";
 
-import { TimelineItem } from "../TimelineUtils";
-import { Tables } from "@/integrations/supabase/types";
+export interface TimelineItem {
+  id: string;
+  type: string;
+  content: string;
+  timestamp: string;
+  metadata?: {
+    dueDate?: string;
+    fileName?: string;
+    fileType?: string;
+    fileSize?: number;
+    filePath?: string;
+    status?: "completed" | "cancelled" | "outdated";
+    completedAt?: string;
+    cancelledAt?: string;
+    updatedAt?: string;
+    oldDate?: string;
+    newDate?: string;
+    type?: string;
+    oldStatus?: string;
+    newStatus?: string;
+    last_edited_at?: string;
+    meetingType?: string;
+    color?: string;
+    oldPhase?: string;
+    newPhase?: string;
+    emoji?: string;
+    unique_id?: string;
+  };
+  created_at?: string;
+}
 
-export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
-  id: note.id,
-  type: note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
-  content: note.content,
-  created_at: note.created_at,
-  timestamp: note.metadata?.timestamp || note.created_at,
-  metadata: note.metadata,
-  status: note.status
-});
+export const mapNoteToTimelineItem = (note: any): TimelineItem => {
+  // Special handling for phase change notes
+  if (note.metadata?.type === 'phase_change') {
+    return {
+      id: note.id,
+      type: 'phase_change',
+      content: note.content,
+      timestamp: note.metadata?.timestamp || note.created_at,
+      metadata: {
+        ...note.metadata,
+        oldPhase: note.metadata?.oldPhase,
+        newPhase: note.metadata?.newPhase,
+        emoji: note.metadata?.emoji || "✨",
+        unique_id: note.metadata?.unique_id
+      },
+      created_at: note.created_at
+    };
+  }
+
+  return {
+    id: note.id,
+    type: note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
+    content: note.content,
+    timestamp: note.metadata?.timestamp || note.created_at,
+    metadata: note.metadata,
+    created_at: note.created_at
+  };
+};
 
 export const mapTaskToTimelineItem = (task: any): TimelineItem => ({
   id: task.id,
@@ -108,8 +156,8 @@ export const deduplicateTimelineItems = (items: TimelineItem[]): TimelineItem[] 
   items.forEach(item => {
     // Für Phasenänderungen einen spezifischen Schlüssel erstellen
     const key = item.type === 'phase_change' 
-      ? `${item.metadata?.oldPhase}-${item.metadata?.newPhase}-${item.timestamp}`
-      : item.content;
+      ? `${item.metadata?.oldPhase}-${item.metadata?.newPhase}-${item.metadata?.unique_id}`
+      : item.id;
       
     const existingItem = uniqueItems.get(key);
     

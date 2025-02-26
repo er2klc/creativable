@@ -25,6 +25,7 @@ export const useRelatedDataHandler = (
       .maybeSingle();
 
     if (data) {
+      // Update lead cache
       queryClient.setQueryData<LeadWithRelations>(
         ["lead", leadId],
         (old) => {
@@ -32,7 +33,6 @@ export const useRelatedDataHandler = (
           return {
             ...old,
             ...data,
-            platform: old.platform,
             notes: data.notes || [],
             messages: data.messages || [],
             tasks: data.tasks || [],
@@ -41,7 +41,8 @@ export const useRelatedDataHandler = (
           };
         }
       );
-      // Auch den lead-with-relations Query aktualisieren
+
+      // Update lead-with-relations cache
       queryClient.setQueryData<LeadWithRelations>(
         ["lead-with-relations", leadId],
         (old) => {
@@ -49,7 +50,6 @@ export const useRelatedDataHandler = (
           return {
             ...old,
             ...data,
-            platform: old.platform,
             notes: data.notes || [],
             messages: data.messages || [],
             tasks: data.tasks || [],
@@ -58,6 +58,9 @@ export const useRelatedDataHandler = (
           };
         }
       );
+
+      // Explicitly invalidate timeline
+      queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
     }
   };
 
