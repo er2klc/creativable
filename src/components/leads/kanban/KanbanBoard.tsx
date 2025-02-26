@@ -59,9 +59,9 @@ export const KanbanBoard = ({
               <div 
                 key={phase.id} 
                 style={{ 
-                  width: '320px',
-                  minWidth: '280px',
-                  maxWidth: '400px',
+                  width: '290px',
+                  minWidth: '270px',
+                  maxWidth: '310px',
                   flexShrink: 0,
                   flexGrow: 0
                 }}
