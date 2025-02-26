@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -6,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import { InstagramScanAnimation } from "./InstagramScanAnimation";
 import { InstagramScanForm } from "./components/InstagramScanForm";
 import { useInstagramScan } from "./hooks/useInstagramScan";
+import { ExistingContactAlert } from "../shared/ExistingContactAlert";
+import { LeadWithRelations } from "@/types/leads";
 
 interface CreateInstagramContactDialogProps {
   open: boolean;
@@ -22,6 +25,7 @@ export function CreateInstagramContactDialog({
 }: CreateInstagramContactDialogProps) {
   const [username, setUsername] = useState("");
   const scanState = useInstagramScan();
+  const [existingContact, setExistingContact] = useState<LeadWithRelations | null>(null);
 
   // Close dialog when scan reaches 100%
   useEffect(() => {
@@ -71,6 +75,29 @@ export function CreateInstagramContactDialog({
     enabled: !!(pipelineId || defaultPipeline?.id)
   });
 
+  const checkExistingContact = async (username: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data: contact } = await supabase
+      .from("leads")
+      .select(`
+        *,
+        pipeline:pipeline_id (
+          name
+        ),
+        phase:phase_id (
+          name
+        )
+      `)
+      .eq("user_id", user.id)
+      .eq("social_media_username", username)
+      .eq("platform", "Instagram")
+      .maybeSingle();
+
+    return contact as LeadWithRelations | null;
+  };
+
   const handleSubmit = async () => {
     if (!username) {
       toast.error("Bitte gib einen Instagram Benutzernamen ein");
@@ -78,6 +105,13 @@ export function CreateInstagramContactDialog({
     }
 
     try {
+      // Check for existing contact first
+      const existing = await checkExistingContact(username);
+      if (existing) {
+        setExistingContact(existing);
+        return;
+      }
+
       scanState.setIsLoading(true);
       scanState.setScanProgress(0);
       scanState.setCurrentFile(undefined);
@@ -169,7 +203,15 @@ export function CreateInstagramContactDialog({
           e.preventDefault();
         }}
       >
-        {scanState.isLoading ? (
+        {existingContact ? (
+          <ExistingContactAlert
+            contact={existingContact}
+            onClose={() => {
+              setExistingContact(null);
+              onOpenChange(false);
+            }}
+          />
+        ) : scanState.isLoading ? (
           <InstagramScanAnimation 
             scanProgress={scanState.scanProgress} 
             currentFile={scanState.currentFile}

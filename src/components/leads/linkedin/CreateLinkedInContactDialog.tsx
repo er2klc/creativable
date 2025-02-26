@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSettings } from "@/hooks/use-settings";
@@ -7,6 +8,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useLinkedInScan } from "./hooks/useLinkedInScan";
 import { LinkedInScanAnimation } from "./components/LinkedInScanAnimation";
 import { LinkedInScanForm } from "./components/LinkedInScanForm";
+import { ExistingContactAlert } from "../shared/ExistingContactAlert";
+import { LeadWithRelations } from "@/types/leads";
 
 interface CreateLinkedInContactDialogProps {
   open: boolean;
@@ -23,19 +26,8 @@ export function CreateLinkedInContactDialog({
 }: CreateLinkedInContactDialogProps) {
   const [username, setUsername] = useState("");
   const scanState = useLinkedInScan();
-  const { settings } = useSettings();
+  const [existingContact, setExistingContact] = useState<LeadWithRelations | null>(null);
 
-  // Close dialog when scan reaches 100%
-  useEffect(() => {
-    if (scanState.scanProgress === 100) {
-      setTimeout(() => {
-        onOpenChange(false);
-        toast.success("Kontakt erfolgreich erstellt");
-      }, 500); // Small delay to show 100%
-    }
-  }, [scanState.scanProgress, onOpenChange]);
-
-  // Fetch default pipeline if none provided
   const { data: defaultPipeline } = useQuery({
     queryKey: ["default-pipeline"],
     queryFn: async () => {
@@ -47,14 +39,13 @@ export function CreateLinkedInContactDialog({
         .eq("user_id", (await supabase.auth.getUser()).data.user?.id)
         .order("order_index")
         .limit(1)
-        .single();
+        .maybeSingle();
       
       return pipeline;
     },
     enabled: !pipelineId
   });
 
-  // Fetch first phase of pipeline
   const { data: firstPhase } = useQuery({
     queryKey: ["first-phase", pipelineId || defaultPipeline?.id],
     queryFn: async () => {
@@ -67,12 +58,35 @@ export function CreateLinkedInContactDialog({
         .eq("pipeline_id", targetPipelineId)
         .order("order_index")
         .limit(1)
-        .single();
+        .maybeSingle();
       
       return phase;
     },
     enabled: !!(pipelineId || defaultPipeline?.id)
   });
+
+  const checkExistingContact = async (username: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
+
+    const { data: contact } = await supabase
+      .from("leads")
+      .select(`
+        *,
+        pipeline:pipeline_id (
+          name
+        ),
+        phase:phase_id (
+          name
+        )
+      `)
+      .eq("user_id", user.id)
+      .eq("social_media_username", username)
+      .eq("platform", "LinkedIn")
+      .maybeSingle();
+
+    return contact as LeadWithRelations | null;
+  };
 
   const handleSubmit = async () => {
     if (!username) {
@@ -81,18 +95,17 @@ export function CreateLinkedInContactDialog({
     }
 
     try {
-      scanState.setIsLoading(true);
-      scanState.setScanProgress(0);
-      scanState.setCurrentFile(undefined);
-      scanState.setIsSuccess(false);
-
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("No user found");
-
-      if (!settings?.apify_api_key) {
-        toast.error("Bitte füge einen Apify API Key in den Einstellungen hinzu");
+      // Check for existing contact first
+      const existing = await checkExistingContact(username);
+      if (existing) {
+        setExistingContact(existing);
         return;
       }
+
+      scanState.setIsLoading(true);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("No user found");
 
       const targetPipelineId = pipelineId || defaultPipeline?.id;
       const targetPhaseId = defaultPhase || firstPhase?.id;
@@ -151,10 +164,15 @@ export function CreateLinkedInContactDialog({
         <DialogHeader>
           <DialogTitle>LinkedIn Kontakt hinzufügen</DialogTitle>
         </DialogHeader>
-        <div id="linkedin-scan-description" className="sr-only">
-          Dialog für das Hinzufügen eines neuen LinkedIn Kontakts. Gib den Benutzernamen ein, um das Profil zu scannen.
-        </div>
-        {scanState.isLoading ? (
+        {existingContact ? (
+          <ExistingContactAlert
+            contact={existingContact}
+            onClose={() => {
+              setExistingContact(null);
+              onOpenChange(false);
+            }}
+          />
+        ) : scanState.isLoading ? (
           <LinkedInScanAnimation 
             scanProgress={scanState.scanProgress} 
             currentFile={scanState.currentFile}
