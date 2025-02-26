@@ -16,21 +16,26 @@ serve(async (req) => {
 
   try {
     const { leadId, phaseId, userId } = await req.json();
-    const openAiKey = Deno.env.get('OPENAI_API_KEY');
+    console.log("Received request params:", { leadId, phaseId, userId });
     
+    if (!leadId || !phaseId || !userId) {
+      throw new Error("Missing required parameters");
+    }
+
+    const openAiKey = Deno.env.get('OPENAI_API_KEY');
     if (!openAiKey) {
       console.error("OpenAI API key not found");
       throw new Error("OpenAI API key not configured");
     }
 
-    // Supabase client initialisieren
+    // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log("Starting analysis generation for:", { leadId, phaseId, userId });
 
-    // Lead Daten abrufen
+    // Fetch lead data
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select(`
@@ -52,11 +57,11 @@ serve(async (req) => {
       throw new Error("Lead not found");
     }
 
-    // OpenAI Konfiguration
+    // OpenAI configuration
     const configuration = new Configuration({ apiKey: openAiKey });
     const openai = new OpenAIApi(configuration);
 
-    // Kontext für die Analyse aufbauen
+    // Build context for analysis
     const context = {
       name: lead.name,
       phase: lead.phase?.name,
@@ -67,13 +72,18 @@ serve(async (req) => {
       industry: lead.industry
     };
 
-    // Analyse generieren
+    // Generate analysis
     const completion = await openai.createChatCompletion({
       model: "gpt-4",
       messages: [
         {
           role: "system",
-          content: "Du bist ein KI-Assistent, der Kontaktanalysen erstellt. Fasse die wichtigsten Informationen zusammen und gib Handlungsempfehlungen."
+          content: `Du bist ein KI-Assistent, der Kontaktanalysen erstellt. 
+          Analysiere die gegebenen Informationen und erstelle:
+          1. Eine kurze Zusammenfassung
+          2. 3-5 Kernpunkte
+          3. 2-3 konkrete Handlungsempfehlungen
+          Formatiere die Ausgabe strukturiert mit den Überschriften "Zusammenfassung:", "Kernpunkte:" und "Empfehlungen:"`
         },
         {
           role: "user",
@@ -90,19 +100,34 @@ serve(async (req) => {
       throw new Error("No analysis generated");
     }
 
-    // Analyse in der Datenbank speichern
-    const { error: insertError } = await supabase
+    // Extract sections
+    const sections = {
+      summary: "",
+      keyPoints: [] as string[],
+      recommendations: [] as string[]
+    };
+
+    // Simple parsing of the sections
+    const parts = analysis.split(/(?:Zusammenfassung:|Kernpunkte:|Empfehlungen:)/g).filter(Boolean);
+    if (parts.length >= 1) sections.summary = parts[0].trim();
+    if (parts.length >= 2) sections.keyPoints = parts[1].trim().split('\n').filter(p => p.trim()).map(p => p.replace(/^[•-]\s*/, ''));
+    if (parts.length >= 3) sections.recommendations = parts[2].trim().split('\n').filter(p => p.trim()).map(p => p.replace(/^[•-]\s*/, ''));
+
+    console.log("Generated analysis sections:", sections);
+
+    // Save analysis in database
+    const { data: insertData, error: insertError } = await supabase
       .from('phase_based_analyses')
       .upsert({
         lead_id: leadId,
         phase_id: phaseId,
-        user_id: userId,
+        created_by: userId,  // Using created_by instead of user_id
         content: analysis,
         metadata: {
           analysis: {
-            summary: analysis,
-            key_points: [], // TODO: Extrahiere Key Points
-            recommendations: [] // TODO: Extrahiere Empfehlungen
+            summary: sections.summary,
+            key_points: sections.keyPoints,
+            recommendations: sections.recommendations
           }
         }
       });
@@ -115,7 +140,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        message: "Analysis generated successfully" 
+        message: "Analysis generated successfully",
+        data: insertData
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       }
