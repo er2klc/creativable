@@ -25,7 +25,6 @@ export const useLeadSubscription = (leadId: string | null) => {
 
     const channel = supabase
       .channel(`lead-details-${leadId}`)
-      // Lead changes
       .on(
         'postgres_changes',
         {
@@ -38,7 +37,6 @@ export const useLeadSubscription = (leadId: string | null) => {
           console.log('Lead changed:', payload);
           await handleLeadChange(payload);
           
-          // Force timeline refresh on phase changes
           if (payload.new.phase_id !== payload.old?.phase_id) {
             console.log('Phase changed, forcing timeline refresh');
             await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
@@ -46,7 +44,6 @@ export const useLeadSubscription = (leadId: string | null) => {
           }
         }
       )
-      // Notes changes
       .on(
         'postgres_changes',
         {
@@ -58,12 +55,10 @@ export const useLeadSubscription = (leadId: string | null) => {
         async (payload) => {
           console.log('Notes changed:', payload);
           await handleNotesChange(payload);
-          // Force timeline refresh for note changes
           await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
           queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
         }
       )
-      // Tasks changes
       .on(
         'postgres_changes',
         {
@@ -79,7 +74,6 @@ export const useLeadSubscription = (leadId: string | null) => {
           queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
         }
       )
-      // Messages changes
       .on(
         'postgres_changes',
         {
@@ -95,7 +89,6 @@ export const useLeadSubscription = (leadId: string | null) => {
           queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
         }
       )
-      // Files changes
       .on(
         'postgres_changes',
         {
@@ -112,13 +105,11 @@ export const useLeadSubscription = (leadId: string | null) => {
         }
       );
 
-    // Subscribe to the channel
     const subscription = channel.subscribe((status) => {
       console.log('Subscription status:', status);
       
       if (status === 'SUBSCRIBED') {
         console.log('Successfully subscribed to changes');
-        // Force initial timeline data fetch when subscription is established
         queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
         queryClient.refetchQueries({ queryKey: ["lead-timeline", leadId] });
       } else if (status === 'CHANNEL_ERROR') {
