@@ -13,7 +13,7 @@ interface UseDragAndDropProps {
 export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseDragAndDropProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const dragTimeoutRef = useRef<number | null>(null);
-  const mouseDownTimeRef = useRef<number>(0);
+  const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
 
   const {
     attributes,
@@ -26,29 +26,35 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
     disabled,
   });
 
-  const handleMouseDown = () => {
+  const handleMouseDown = (e: React.MouseEvent) => {
     if (disabled) return;
     
-    mouseDownTimeRef.current = Date.now();
+    mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
     dragTimeoutRef.current = window.setTimeout(() => {
       setIsDragging(true);
     }, 150);
   };
 
-  const handleMouseUp = () => {
+  const handleMouseUp = (e: React.MouseEvent) => {
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current);
     }
 
-    const mouseUpTime = Date.now();
-    const clickDuration = mouseUpTime - mouseDownTimeRef.current;
+    if (mouseDownPosRef.current) {
+      const moveDistance = Math.sqrt(
+        Math.pow(e.clientX - mouseDownPosRef.current.x, 2) +
+        Math.pow(e.clientY - mouseDownPosRef.current.y, 2)
+      );
 
-    // Wenn der Klick kürzer als 150ms war oder wir nicht im Drag-Modus sind,
-    // behandeln wir es als normalen Klick
-    if (clickDuration < 150 || !isDragging) {
-      onLeadClick(id);
+      // Wenn die Maus sich kaum bewegt hat, behandeln wir es als Klick
+      if (moveDistance < 5 && !isDragging) {
+        // Wir lassen den tatsächlichen Klick vom onClick-Handler der Karte behandeln
+        mouseDownPosRef.current = null;
+        return;
+      }
     }
 
+    mouseDownPosRef.current = null;
     setIsDragging(false);
   };
 
@@ -73,4 +79,3 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
     }
   };
 };
-
