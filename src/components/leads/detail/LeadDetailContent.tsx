@@ -35,8 +35,8 @@ export const LeadDetailContent = ({
       <div className="p-6 space-y-6 mt-32">
         {/* Content Grid */}
         <div className="grid grid-cols-12 gap-6">
-          {/* Linke Spalte - 4 Cols */}
-          <div className="col-span-4 space-y-6">
+          {/* Linke Spalte - 5 Cols */}
+          <div className="col-span-5 space-y-6">
             <div className="bg-white rounded-lg shadow">
               <LeadSummary lead={lead} />
             </div>
@@ -81,8 +81,8 @@ export const LeadDetailContent = ({
             </div>
           </div>
 
-          {/* Rechte Spalte - 8 Cols */}
-          <div className="col-span-8 space-y-6">
+          {/* Rechte Spalte - 7 Cols */}
+          <div className="col-span-7 space-y-6">
             <div className="bg-white rounded-lg shadow">
               <LeadDetailTabs lead={lead} />
             </div>

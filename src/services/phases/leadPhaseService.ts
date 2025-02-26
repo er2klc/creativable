@@ -22,7 +22,7 @@ const getPhaseChangeMessage = (
 
   // Einheitlicher Text für alle Phasenänderungen
   return {
-    content: `Kontakt ist jetzt in Phase "${newPhaseName}"`,
+    content: `Phase wurde zu "${newPhaseName}" geändert`,
     emoji
   };
 };
@@ -36,7 +36,7 @@ export const updateLeadPhase = async (
 ) => {
   const timestamp = new Date().toISOString();
 
-  // WICHTIG: Erst prüfen ob sich die Phase tatsächlich geändert hat!
+  // Erst prüfen ob sich die Phase tatsächlich geändert hat!
   const { data: currentLead } = await supabase
     .from("leads")
     .select("phase_id")

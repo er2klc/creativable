@@ -30,6 +30,7 @@ export const useLeadDataHandler = (
       // Invalidate queries to force a refresh
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
       queryClient.invalidateQueries({ queryKey: ["lead-with-relations", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
       
       // Update the cache with new data
       queryClient.setQueryData<LeadWithRelations>(
@@ -43,7 +44,8 @@ export const useLeadDataHandler = (
             messages: data.messages || old.messages,
             tasks: data.tasks || old.tasks,
             notes: data.notes || old.notes,
-            phase_id: data.phase_id // Ensure phase_id is updated
+            phase_id: data.phase_id,
+            nexus_analyses: data.nexus_analyses || old.nexus_analyses
           };
         }
       );
