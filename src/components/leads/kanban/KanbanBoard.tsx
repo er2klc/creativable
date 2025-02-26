@@ -1,5 +1,5 @@
 
-import { DndContext, DragEndEvent, closestCenter, DragOverlay } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, closestCenter, DragOverlay, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { Tables } from "@/integrations/supabase/types";
 import { PhaseColumn } from "./PhaseColumn";
 import { AddPhaseButton } from "./AddPhaseButton";
@@ -31,6 +31,15 @@ export const KanbanBoard = ({
 }: KanbanBoardProps) => {
   const [activeLead, setActiveLead] = useState<Tables<"leads"> | null>(null);
 
+  // Configure the PointerSensor with activation constraints
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8, // Drag starts after 8px movement
+      },
+    })
+  );
+
   const handleDragStart = (event: any) => {
     const { active } = event;
     const draggedLead = leads.find(lead => lead.id === active.id);
@@ -61,6 +70,7 @@ export const KanbanBoard = ({
 
   return (
     <DndContext 
+      sensors={sensors}
       collisionDetection={closestCenter} 
       onDragEnd={handleDragEnd}
       onDragStart={handleDragStart}
@@ -126,4 +136,3 @@ export const KanbanBoard = ({
     </DndContext>
   );
 };
-

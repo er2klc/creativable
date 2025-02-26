@@ -28,6 +28,12 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     await toggleFavorite(lead.id, lead.is_favorite);
   };
 
+  const handleClick = () => {
+    if (!isDragging && !disabled) {
+      onLeadClick(lead.id);
+    }
+  };
+
   const getBackgroundStyle = () => {
     const types = lead.contact_type?.split(",").map(type => type.trim()) || [];
     const isPartner = types.includes("Likely Partner");
@@ -54,6 +60,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     <div
       {...dragHandlers}
       style={style}
+      onClick={handleClick}
       className={cn(
         "p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200",
         getBackgroundStyle(),
