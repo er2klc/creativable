@@ -16,6 +16,7 @@ export default function LeadDetail() {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   
+  // Enable suspense for better loading states
   const { data: lead, isLoading } = useLeadData(leadId);
   const { updateLeadMutation, deleteLeadMutation } = useLeadMutations(leadId, () => {
     window.history.back();
@@ -41,7 +42,7 @@ export default function LeadDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      queryClient.invalidateQueries({ queryKey: ["lead-with-relations", leadId] });
+      queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
       toast.success(
         settings?.language === "en"
           ? "Entry deleted successfully"
@@ -58,6 +59,7 @@ export default function LeadDetail() {
     },
   });
 
+  // Set up subscription after initial data load
   useLeadSubscription(leadId);
 
   if (isLoading || !lead) {

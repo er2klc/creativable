@@ -29,14 +29,13 @@ export const useLeadDataHandler = (
 
       // Invalidate queries to force a refresh
       queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
-      queryClient.invalidateQueries({ queryKey: ["lead-with-relations", leadId] });
       queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
       
       // Update the cache with new data
       queryClient.setQueryData<LeadWithRelations>(
-        ["lead-with-relations", leadId],
+        ["lead", leadId],
         (old) => {
-          if (!old) return old;
+          if (!old) return data;
           return {
             ...old,
             ...data,

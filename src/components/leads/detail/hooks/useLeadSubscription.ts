@@ -34,7 +34,10 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'leads',
           filter: `id=eq.${leadId}`
         },
-        handleLeadChange
+        (payload) => {
+          console.log('Lead changed:', payload);
+          handleLeadChange(payload);
+        }
       )
       // Notes changes (including phase changes)
       .on(
@@ -92,6 +95,8 @@ export const useLeadSubscription = (leadId: string | null) => {
       
       if (status === 'SUBSCRIBED') {
         console.log('Successfully subscribed to changes');
+        // Force a refetch of timeline data when subscription is established
+        queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
       } else if (status === 'CHANNEL_ERROR') {
         console.error('Failed to subscribe to changes');
       }
