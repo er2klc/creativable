@@ -34,7 +34,6 @@ export const KanbanBoard = ({
     const leadId = active.id as string;
     const newPhaseId = over.id as string;
     
-    // Prüfen ob sich die Phase wirklich geändert hat
     const lead = leads.find(l => l.id === leadId);
     if (lead?.phase_id === newPhaseId) {
       console.log("Phase unchanged, skipping update");
@@ -49,11 +48,13 @@ export const KanbanBoard = ({
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
-        <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh)]">
+        <div className="flex-1 overflow-visible relative h-[calc(100vh)]">
           <div className="flex gap-2.5 h-full px-4" style={{ 
-            minWidth: 'fit-content'
+            minWidth: 'fit-content',
+            position: 'relative',
+            zIndex: 0
           }}>
-            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
+            <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none" style={{ zIndex: 1 }} />
 
             {phases.map((phase, index) => (
               <div 
@@ -63,7 +64,9 @@ export const KanbanBoard = ({
                   minWidth: '240px',
                   maxWidth: '280px',
                   flexShrink: 0,
-                  flexGrow: 0
+                  flexGrow: 0,
+                  position: 'relative',
+                  zIndex: 0
                 }}
               >
                 <PhaseColumn
@@ -89,10 +92,11 @@ export const KanbanBoard = ({
               <AddPhaseButton pipelineId={selectedPipelineId} />
             )}
 
-            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none z-10" />
+            <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent pointer-events-none" style={{ zIndex: 1 }} />
           </div>
         </div>
       </div>
     </DndContext>
   );
 };
+
