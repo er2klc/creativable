@@ -50,17 +50,10 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     position: 'relative' as const,
   };
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    if (!isDragging && !disabled) {
-      onLeadClick(lead.id);
-    }
-  };
-
   return (
     <div
       {...dragHandlers}
       style={style}
-      onClick={handleCardClick}
       className={cn(
         "p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200",
         getBackgroundStyle(),

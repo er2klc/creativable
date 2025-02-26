@@ -13,7 +13,8 @@ interface UseDragAndDropProps {
 export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseDragAndDropProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const dragTimeoutRef = useRef<number | null>(null);
-  const mouseDownPosRef = useRef<{ x: number; y: number } | null>(null);
+  const mouseDownTimeRef = useRef<number>(0);
+  const clickAllowedRef = useRef(true);
 
   const {
     attributes,
@@ -26,36 +27,34 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
     disabled,
   });
 
-  const handleMouseDown = (e: React.MouseEvent) => {
+  const handleMouseDown = () => {
     if (disabled) return;
     
-    mouseDownPosRef.current = { x: e.clientX, y: e.clientY };
+    mouseDownTimeRef.current = Date.now();
+    clickAllowedRef.current = true;
+    
     dragTimeoutRef.current = window.setTimeout(() => {
+      clickAllowedRef.current = false;
       setIsDragging(true);
     }, 150);
   };
 
-  const handleMouseUp = (e: React.MouseEvent) => {
+  const handleMouseUp = () => {
     if (dragTimeoutRef.current) {
       clearTimeout(dragTimeoutRef.current);
     }
 
-    if (mouseDownPosRef.current) {
-      const moveDistance = Math.sqrt(
-        Math.pow(e.clientX - mouseDownPosRef.current.x, 2) +
-        Math.pow(e.clientY - mouseDownPosRef.current.y, 2)
-      );
+    const mouseUpTime = Date.now();
+    const clickDuration = mouseUpTime - mouseDownTimeRef.current;
 
-      // Wenn die Maus sich kaum bewegt hat, behandeln wir es als Klick
-      if (moveDistance < 5 && !isDragging) {
-        // Wir lassen den tatsächlichen Klick vom onClick-Handler der Karte behandeln
-        mouseDownPosRef.current = null;
-        return;
-      }
+    // Wenn der Klick kürzer als 150ms war und wir noch im Click-Modus sind,
+    // behandeln wir es als normalen Klick
+    if (clickDuration < 150 && clickAllowedRef.current && !isDragging) {
+      onLeadClick(id);
     }
 
-    mouseDownPosRef.current = null;
     setIsDragging(false);
+    clickAllowedRef.current = true;
   };
 
   const style: CSSProperties | undefined = transform ? {
