@@ -1,162 +1,152 @@
 
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
-import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.1.0';
+import { serve } from 'https://deno.fresh.run/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.3.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+}
 
-serve(async (req) => {
-  // Handle CORS
+interface RequestBody {
+  leadId: string
+  phaseId: string
+  userId: string
+}
+
+serve(async (req: Request) => {
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: corsHeaders })
   }
 
   try {
-    const { leadId, phaseId, userId } = await req.json();
-    console.log("Received request params:", { leadId, phaseId, userId });
-    
-    if (!leadId || !phaseId || !userId) {
-      throw new Error("Missing required parameters");
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    )
+
+    // Initialize OpenAI
+    const configuration = new Configuration({
+      apiKey: Deno.env.get('OPENAI_API_KEY'),
+    })
+    const openai = new OpenAIApi(configuration)
+
+    // Validate request
+    if (!req.body) {
+      throw new Error('Request body is required')
     }
 
-    const openAiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openAiKey) {
-      console.error("OpenAI API key not found");
-      throw new Error("OpenAI API key not configured");
-    }
+    const { leadId, phaseId, userId } = await req.json() as RequestBody
 
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? '';
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '';
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    console.log("Starting analysis generation for:", { leadId, phaseId, userId });
+    console.log('Starting analysis generation for:', { leadId, phaseId, userId })
 
     // Fetch lead data
-    const { data: lead, error: leadError } = await supabase
+    const { data: lead, error: leadError } = await supabaseClient
       .from('leads')
       .select(`
         *,
-        notes (content, created_at),
-        messages (content, created_at),
-        tasks (title, created_at),
-        phase:phase_id (name)
+        notes (*),
+        messages (*),
+        tasks (*),
+        phase:pipeline_phases!inner (
+          id,
+          name,
+          pipeline:pipelines!inner (
+            id,
+            name
+          )
+        )
       `)
       .eq('id', leadId)
-      .single();
+      .single()
 
     if (leadError) {
-      console.error("Error fetching lead data:", leadError);
-      throw leadError;
+      console.error('Error fetching lead:', leadError)
+      throw new Error('Error fetching lead data')
     }
 
-    if (!lead) {
-      throw new Error("Lead not found");
-    }
+    // Generate analysis prompt
+    const prompt = `Analyze this contact based on the following information:
+Name: ${lead.name}
+Current Phase: ${lead.phase.name}
+Platform: ${lead.platform}
+Bio: ${lead.social_media_bio || 'No bio available'}
 
-    // OpenAI configuration
-    const configuration = new Configuration({ apiKey: openAiKey });
-    const openai = new OpenAIApi(configuration);
+Recent Activities:
+${lead.notes?.map(n => `- Note: ${n.content}`).join('\n') || 'No notes'}
+${lead.messages?.map(m => `- Message: ${m.content}`).join('\n') || 'No messages'}
+${lead.tasks?.map(t => `- Task: ${t.title}`).join('\n') || 'No tasks'}
 
-    // Build context for analysis
-    const context = {
-      name: lead.name,
-      phase: lead.phase?.name,
-      notes: lead.notes?.map(n => n.content).join('\n'),
-      messages: lead.messages?.map(m => m.content).join('\n'),
-      tasks: lead.tasks?.map(t => t.title).join('\n'),
-      socialMediaBio: lead.social_media_bio,
-      industry: lead.industry
-    };
+Please provide:
+1. A brief summary
+2. Key points about this contact
+3. Recommendations for next steps
 
-    // Generate analysis
+Format the response in JSON with these fields: summary, key_points (array), recommendations (array)`
+
+    // Generate analysis with OpenAI
     const completion = await openai.createChatCompletion({
-      model: "gpt-4",
+      model: "gpt-3.5-turbo",
       messages: [
         {
           role: "system",
-          content: `Du bist ein KI-Assistent, der Kontaktanalysen erstellt. 
-          Analysiere die gegebenen Informationen und erstelle:
-          1. Eine kurze Zusammenfassung
-          2. 3-5 Kernpunkte
-          3. 2-3 konkrete Handlungsempfehlungen
-          Formatiere die Ausgabe strukturiert mit den Überschriften "Zusammenfassung:", "Kernpunkte:" und "Empfehlungen:"`
+          content: "You are a helpful assistant analyzing contact information. Provide concise, actionable insights."
         },
         {
           role: "user",
-          content: `Analysiere diesen Kontakt in Phase "${context.phase}". Kontaktinformationen: ${JSON.stringify(context)}`
+          content: prompt
         }
-      ],
-      temperature: 0.7,
-      max_tokens: 1500
-    });
+      ]
+    })
 
-    const analysis = completion.data.choices[0]?.message?.content;
-    
-    if (!analysis) {
-      throw new Error("No analysis generated");
+    if (!completion.data.choices[0]?.message?.content) {
+      throw new Error('No response from OpenAI')
     }
 
-    // Extract sections
-    const sections = {
-      summary: "",
-      keyPoints: [] as string[],
-      recommendations: [] as string[]
-    };
+    // Parse OpenAI response
+    const analysis = JSON.parse(completion.data.choices[0].message.content)
 
-    // Simple parsing of the sections
-    const parts = analysis.split(/(?:Zusammenfassung:|Kernpunkte:|Empfehlungen:)/g).filter(Boolean);
-    if (parts.length >= 1) sections.summary = parts[0].trim();
-    if (parts.length >= 2) sections.keyPoints = parts[1].trim().split('\n').filter(p => p.trim()).map(p => p.replace(/^[•-]\s*/, ''));
-    if (parts.length >= 3) sections.recommendations = parts[2].trim().split('\n').filter(p => p.trim()).map(p => p.replace(/^[•-]\s*/, ''));
-
-    console.log("Generated analysis sections:", sections);
-
-    // Save analysis in database
-    const { data: insertData, error: insertError } = await supabase
+    // Store analysis in database
+    const { data: savedAnalysis, error: analysisError } = await supabaseClient
       .from('phase_based_analyses')
       .upsert({
         lead_id: leadId,
         phase_id: phaseId,
-        created_by: userId,  // Using created_by instead of user_id
-        content: analysis,
+        created_by: userId,
+        content: `Analysis for contact ${lead.name} in phase ${lead.phase.name}`,
         metadata: {
-          analysis: {
-            summary: sections.summary,
-            key_points: sections.keyPoints,
-            recommendations: sections.recommendations
-          }
-        }
-      });
+          type: 'phase_analysis',
+          analysis: analysis,
+          generated_at: new Date().toISOString(),
+          summary: analysis.summary,
+          key_points: analysis.key_points,
+          recommendations: analysis.recommendations
+        },
+        completed: true,
+        completed_at: new Date().toISOString()
+      })
+      .select()
+      .single()
 
-    if (insertError) {
-      console.error("Error saving analysis:", insertError);
-      throw insertError;
+    if (analysisError) {
+      console.error('Error saving analysis:', analysisError)
+      throw new Error('Error saving analysis')
     }
 
     return new Response(
-      JSON.stringify({ 
-        success: true,
-        message: "Analysis generated successfully",
-        data: insertData
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
-    
+      JSON.stringify({ data: savedAnalysis, error: null }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+
   } catch (error) {
-    console.error('Error in generate-phase-analysis:', error);
-    
+    console.error('Error in generate-phase-analysis:', error)
     return new Response(
-      JSON.stringify({ 
-        error: error.message 
-      }), {
+      JSON.stringify({ data: null, error: error.message }),
+      { 
         status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
-    );
+    )
   }
-});
+})
