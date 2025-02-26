@@ -52,9 +52,6 @@ export const LeadDetailContent = ({
             />
           )}
           
-          {/* AI Analysis Section */}
-          <LeadSummary lead={lead} />
-          
           <LeadInfoCard 
             lead={lead} 
             onUpdate={(updates) => {
@@ -68,6 +65,9 @@ export const LeadDetailContent = ({
             }} 
             onDelete={onDeleteClick}
           />
+
+          {/* AI Analysis Section - Moved after LeadInfoCard */}
+          <LeadSummary lead={lead} />
 
           <LeadTimeline 
             lead={lead} 
