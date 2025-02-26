@@ -6,6 +6,7 @@ import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { LeadWithRelations } from "@/types/leads";
 import { LeadDetailTabs } from "./LeadDetailTabs";
+import { LeadSummary } from "./LeadSummary";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
@@ -46,6 +47,7 @@ export const LeadDetailContent = ({
             }} 
             onDelete={onDeleteClick}
           />
+          <LeadSummary lead={lead} />
         </div>
 
         {/* Right Column - 8/12 */}
