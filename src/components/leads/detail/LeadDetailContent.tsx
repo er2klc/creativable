@@ -1,7 +1,7 @@
 
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
-import { ContactFieldManager } from "./contact-info/ContactFieldManager";
+import { BasicInformationFields } from "./contact-info/BasicInformationFields";
 import { LeadWithRelations } from "@/types/leads";
 import { LeadDetailTabs } from "./LeadDetailTabs";
 import { LeadTimeline } from "./LeadTimeline";
@@ -44,7 +44,10 @@ export const LeadDetailContent = ({
         {/* Linke Spalte - 4 Cols */}
         <div className="col-span-4 space-y-6">
           <LeadSummary lead={lead} />
-          <ContactFieldManager />
+          <BasicInformationFields 
+            lead={lead}
+            onUpdate={onUpdateLead}
+          />
         </div>
 
         {/* Rechte Spalte - 8 Cols */}
