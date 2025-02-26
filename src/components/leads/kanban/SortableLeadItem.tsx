@@ -47,6 +47,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     ...dragStyle,
     boxSizing: 'border-box' as const,
     width: '100%',
+    position: 'relative' as const,
   };
 
   return (
@@ -56,7 +57,7 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       className={cn(
         "p-3 rounded-lg border shadow-sm hover:shadow-md transition-shadow duration-200",
         getBackgroundStyle(),
-        isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing z-[9999]",
+        isDragging && "shadow-lg ring-1 ring-primary/10 cursor-grabbing",
         !isDragging && !disabled && "cursor-grab",
         disabled && "cursor-default"
       )}

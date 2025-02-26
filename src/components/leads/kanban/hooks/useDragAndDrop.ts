@@ -1,5 +1,6 @@
 
 import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
 import { useState, useRef, CSSProperties } from "react";
 import { Tables } from "@/integrations/supabase/types";
 
@@ -46,7 +47,7 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
 
   const style: CSSProperties | undefined = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-    zIndex: isDragging ? 9999 : 1,
+    zIndex: isDragging ? 1000 : 1,
     boxSizing: 'border-box',
     width: '100%',
     transition: 'box-shadow 0.2s ease',
