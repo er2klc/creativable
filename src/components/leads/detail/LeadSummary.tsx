@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,7 +27,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     try {
       setIsLoading(true);
       
-      // Erst prüfen ob eine Analyse für diese Phase existiert
+      // Check if analysis exists for this phase
       const { data: existingAnalysis } = await supabase
         .from("phase_based_analyses")
         .select("id, content")
@@ -35,13 +35,19 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         .eq("phase_id", lead.phase_id)
         .maybeSingle();
 
+      console.log("Existing analysis check:", {
+        leadId: lead.id,
+        phaseId: lead.phase_id,
+        exists: !!existingAnalysis
+      });
+
       if (existingAnalysis) {
-        // Wenn eine Analyse existiert, zeigen wir sie direkt an
+        // If analysis exists, hide button and show existing analysis
         setShowButton(false);
         return;
       }
 
-      // Wenn keine Analyse existiert, generiere eine neue
+      // If no analysis exists, generate a new one
       const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
         body: {
           leadId: lead.id,
@@ -75,28 +81,51 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  // Prüfen ob bereits eine Analyse für diese Phase existiert
+  // Check if analysis already exists for this phase
   const checkExistingAnalysis = async () => {
     try {
-      const { data: existingAnalysis } = await supabase
+      const { data: existingAnalysis, error } = await supabase
         .from("phase_based_analyses")
         .select("id")
         .eq("lead_id", lead.id)
         .eq("phase_id", lead.phase_id)
         .maybeSingle();
 
+      console.log("Checking existing analysis:", {
+        leadId: lead.id,
+        phaseId: lead.phase_id,
+        hasAnalysis: !!existingAnalysis,
+        error: error
+      });
+
       if (existingAnalysis) {
         setShowButton(false);
+      } else {
+        setShowButton(true);
       }
     } catch (error) {
       console.error("Error checking existing analysis:", error);
+      // If there's an error checking, we'll show the button by default
+      setShowButton(true);
     }
   };
 
-  // Bei Komponenten-Mount und Phase-Änderung prüfen
-  React.useEffect(() => {
+  // Check for existing analysis on component mount and phase change
+  useEffect(() => {
+    console.log("LeadSummary mounted/updated:", {
+      leadId: lead.id,
+      phaseId: lead.phase_id,
+      timestamp: new Date().toISOString()
+    });
     checkExistingAnalysis();
   }, [lead.id, lead.phase_id]);
+
+  console.log("LeadSummary render state:", {
+    showButton,
+    isLoading,
+    leadId: lead.id,
+    phaseId: lead.phase_id
+  });
 
   if (!showButton) {
     return <NexusTimelineCard 
