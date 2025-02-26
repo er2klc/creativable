@@ -14,8 +14,16 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [showButton, setShowButton] = useState(true);
 
+  console.log("LeadSummary initializing with props:", {
+    leadId: lead?.id,
+    phaseId: lead?.phase_id,
+    hasUser: !!user,
+    timestamp: new Date().toISOString()
+  });
+
   const generateAnalysis = async () => {
     if (!user) {
+      console.log("Generate analysis attempted without user");
       toast.error(
         settings?.language === "en"
           ? "You must be logged in"
@@ -26,9 +34,14 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
     try {
       setIsLoading(true);
+      console.log("Starting analysis generation for:", {
+        leadId: lead.id,
+        phaseId: lead.phase_id,
+        userId: user.id
+      });
       
       // Check if analysis exists for this phase
-      const { data: existingAnalysis } = await supabase
+      const { data: existingAnalysis, error: queryError } = await supabase
         .from("phase_based_analyses")
         .select("id, content")
         .eq("lead_id", lead.id)
@@ -38,7 +51,8 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       console.log("Existing analysis check:", {
         leadId: lead.id,
         phaseId: lead.phase_id,
-        exists: !!existingAnalysis
+        exists: !!existingAnalysis,
+        error: queryError
       });
 
       if (existingAnalysis) {
@@ -56,9 +70,13 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error in edge function call:", error);
+        throw error;
+      }
       
       if (data.error) {
+        console.error("Error in analysis generation:", data.error);
         toast.error(data.error);
         return;
       }
@@ -84,6 +102,12 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   // Check if analysis already exists for this phase
   const checkExistingAnalysis = async () => {
     try {
+      console.log("Checking for existing analysis:", {
+        leadId: lead.id,
+        phaseId: lead.phase_id,
+        timestamp: new Date().toISOString()
+      });
+
       const { data: existingAnalysis, error } = await supabase
         .from("phase_based_analyses")
         .select("id")
@@ -91,7 +115,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         .eq("phase_id", lead.phase_id)
         .maybeSingle();
 
-      console.log("Checking existing analysis:", {
+      console.log("Existing analysis query result:", {
         leadId: lead.id,
         phaseId: lead.phase_id,
         hasAnalysis: !!existingAnalysis,
@@ -112,7 +136,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
 
   // Check for existing analysis on component mount and phase change
   useEffect(() => {
-    console.log("LeadSummary mounted/updated:", {
+    console.log("LeadSummary useEffect triggered:", {
       leadId: lead.id,
       phaseId: lead.phase_id,
       timestamp: new Date().toISOString()
@@ -124,7 +148,8 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     showButton,
     isLoading,
     leadId: lead.id,
-    phaseId: lead.phase_id
+    phaseId: lead.phase_id,
+    hasUser: !!user
   });
 
   if (!showButton) {
