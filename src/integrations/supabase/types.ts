@@ -145,11 +145,13 @@ export type Database = {
           chunk_index: number | null
           content: string
           content_type: string
+          context_type: string | null
           created_at: string | null
           embedding: string | null
           id: string
           last_processed_at: string | null
           metadata: Json | null
+          priority: number | null
           processed_at: string | null
           processing_error: string | null
           processing_status: string | null
@@ -165,11 +167,13 @@ export type Database = {
           chunk_index?: number | null
           content: string
           content_type: string
+          context_type?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
           last_processed_at?: string | null
           metadata?: Json | null
+          priority?: number | null
           processed_at?: string | null
           processing_error?: string | null
           processing_status?: string | null
@@ -185,11 +189,13 @@ export type Database = {
           chunk_index?: number | null
           content?: string
           content_type?: string
+          context_type?: string | null
           created_at?: string | null
           embedding?: string | null
           id?: string
           last_processed_at?: string | null
           metadata?: Json | null
+          priority?: number | null
           processed_at?: string | null
           processing_error?: string | null
           processing_status?: string | null
@@ -1489,9 +1495,11 @@ export type Database = {
         Row: {
           content: string
           content_type: string
+          context_relevance: number | null
           created_at: string | null
           embedding: string | null
           id: string
+          last_accessed: string | null
           metadata: Json | null
           source_id: string | null
           updated_at: string | null
@@ -1500,9 +1508,11 @@ export type Database = {
         Insert: {
           content: string
           content_type: string
+          context_relevance?: number | null
           created_at?: string | null
           embedding?: string | null
           id?: string
+          last_accessed?: string | null
           metadata?: Json | null
           source_id?: string | null
           updated_at?: string | null
@@ -1511,9 +1521,11 @@ export type Database = {
         Update: {
           content?: string
           content_type?: string
+          context_relevance?: number | null
           created_at?: string | null
           embedding?: string | null
           id?: string
+          last_accessed?: string | null
           metadata?: Json | null
           source_id?: string | null
           updated_at?: string | null
