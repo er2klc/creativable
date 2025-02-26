@@ -1,18 +1,19 @@
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Database } from "@/integrations/supabase/types";
+import { useNavigate } from "react-router-dom";
+import { Tables } from "@/integrations/supabase/types";
 
 export const useLeadMutations = (leadId: string | null, onClose: () => void) => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { settings } = useSettings();
 
   const updateLeadMutation = useMutation({
-    mutationFn: async (updates: Partial<Database['public']['Tables']['leads']['Row']>) => {
-      if (!leadId) {
-        throw new Error("No lead ID provided");
-      }
+    mutationFn: async (updates: Partial<Tables<"leads">>) => {
+      if (!leadId) throw new Error("Invalid lead ID");
 
       const { data, error } = await supabase
         .from("leads")
@@ -39,24 +40,45 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
           ? "Error updating contact"
           : "Fehler beim Aktualisieren des Kontakts"
       );
-    },
+    }
   });
 
   const deleteLeadMutation = useMutation({
     mutationFn: async () => {
       if (!leadId) return;
 
+      console.log('Starting deletion process for lead:', leadId);
+
+      // Get pipeline ID before deletion
+      const { data: lead } = await supabase
+        .from('leads')
+        .select('pipeline_id')
+        .eq('id', leadId)
+        .single();
+
+      if (!lead) {
+        throw new Error('Lead not found');
+      }
+
+      // Delete related records first
       const relatedTables = [
-        'messages',
-        'tasks',
-        'notes',
-        'lead_files',
+        'presentation_pages',
+        'presentation_views',
         'contact_group_states',
         'social_media_scan_history',
-        'lead_subscriptions'
+        'lead_files',
+        'lead_subscriptions',
+        'messages',
+        'notes',
+        'tasks',
+        'lead_tags',
+        'lead_summaries',
+        'social_media_posts'
       ] as const;
 
+      // Delete all related records
       for (const table of relatedTables) {
+        console.log(`Deleting related records from ${table}`);
         const { error } = await supabase
           .from(table)
           .delete()
@@ -68,20 +90,36 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         }
       }
 
+      // Finally delete the lead
+      console.log('Deleting lead record');
       const { error } = await supabase
         .from('leads')
         .delete()
         .eq('id', leadId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error deleting lead:", error);
+        throw error;
+      }
+
+      return { pipelineId: lead.pipeline_id };
     },
     onSuccess: () => {
+      // First close the dialog
+      onClose();
+      
+      // Force a complete cache clear and reload
+      queryClient.clear();
+      
+      // Show success message
       toast.success(
         settings?.language === "en"
           ? "Contact deleted successfully"
           : "Kontakt erfolgreich gelöscht"
       );
-      onClose();
+
+      // Force a complete page reload to refresh all data
+      window.location.href = '/contacts';
     },
     onError: (error) => {
       console.error("Error deleting lead:", error);
@@ -90,7 +128,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
           ? "Error deleting contact"
           : "Fehler beim Löschen des Kontakts"
       );
-    },
+    }
   });
 
   return {
