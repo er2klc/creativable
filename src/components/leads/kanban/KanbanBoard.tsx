@@ -34,14 +34,8 @@ export const KanbanBoard = ({
     const leadId = active.id as string;
     const newPhaseId = over.id as string;
     
-    // Prüfen ob sich die Phase wirklich geändert hat
-    const lead = leads.find(l => l.id === leadId);
-    if (lead?.phase_id === newPhaseId) {
-      console.log("Phase unchanged, skipping update");
-      return;
-    }
-    
     // Get old and new phase names for the note
+    const lead = leads.find(l => l.id === leadId);
     const oldPhase = phases.find(p => p.id === lead?.phase_id)?.name || '';
     const newPhase = phases.find(p => p.id === newPhaseId)?.name || '';
 

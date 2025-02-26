@@ -43,28 +43,13 @@ export const updateLeadPhase = async (
   console.log('Starting phase update transaction:', { leadId, phaseId, oldPhaseName, newPhaseName, timestamp });
 
   try {
-    // Start a transaction by checking current state
-    const { data: currentLead, error: checkError } = await supabase
-      .from("leads")
-      .select("phase_id")
-      .eq("id", leadId)
-      .single();
-
-    if (checkError) throw checkError;
-
-    // If the phase hasn't changed, return early
-    if (currentLead?.phase_id === phaseId) {
-      console.log("Phase unchanged, skipping update");
-      return { success: true, unchanged: true };
-    }
-
     // Generate unique IDs and metadata for tracking
     const transactionId = generateUniqueId(leadId, oldPhaseName, newPhaseName);
     const message = getPhaseChangeMessage(oldPhaseName, newPhaseName);
     
     console.log('Starting database transaction with ID:', transactionId);
 
-    // Update lead phase
+    // Update lead phase first
     const { error: updateError } = await supabase
       .from("leads")
       .update({
@@ -130,4 +115,3 @@ export const updateLeadPhase = async (
     throw error;
   }
 };
-
