@@ -34,9 +34,15 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'leads',
           filter: `id=eq.${leadId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Lead changed:', payload);
-          handleLeadChange(payload);
+          await handleLeadChange(payload);
+          
+          // Explicitly invalidate timeline when phase changes
+          if (payload.new.phase_id !== payload.old?.phase_id) {
+            console.log('Phase changed, invalidating timeline');
+            queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+          }
         }
       )
       // Notes changes (including phase changes)
@@ -48,10 +54,10 @@ export const useLeadSubscription = (leadId: string | null) => {
           table: 'notes',
           filter: `lead_id=eq.${leadId}`
         },
-        (payload) => {
+        async (payload) => {
           console.log('Notes changed:', payload);
-          handleNotesChange(payload);
-          // Explicitly invalidate timeline queries
+          await handleNotesChange(payload);
+          // Always invalidate timeline for note changes
           queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
         }
       )

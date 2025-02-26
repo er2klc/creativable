@@ -25,14 +25,21 @@ export const useLeadPhaseMutation = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No authenticated user");
       
-      return updateLeadPhase(leadId, phaseId, oldPhaseName, newPhaseName, user.id);
+      const result = await updateLeadPhase(leadId, phaseId, oldPhaseName, newPhaseName, user.id);
+      
+      // Force immediate cache update
+      await queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      await queryClient.invalidateQueries({ queryKey: ["lead-with-relations", leadId] });
+      await queryClient.invalidateQueries({ queryKey: ["lead-timeline", leadId] });
+      
+      return result;
     },
     onSuccess: (data, variables) => {
       // Invalidieren aller relevanten Queries
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["lead", variables.leadId] });
       queryClient.invalidateQueries({ queryKey: ["lead-with-relations", variables.leadId] });
-      queryClient.invalidateQueries({ queryKey: ["lead-timeline", variables.leadId] }); // Wichtig für Timeline Updates
+      queryClient.invalidateQueries({ queryKey: ["lead-timeline", variables.leadId] }); 
       
       toast({
         title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
