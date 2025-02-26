@@ -17,9 +17,8 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   console.log("LeadSummary mounting with props:", {
     leadId: lead?.id,
     phaseId: lead?.phase_id,
+    phaseName: lead?.phase?.name,
     hasUser: !!user,
-    hasMessages: Array.isArray(lead?.messages),
-    hasTasks: Array.isArray(lead?.tasks),
     route: window.location.pathname,
     timestamp: new Date().toISOString()
   });
@@ -35,11 +34,22 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       return;
     }
 
+    if (!lead.phase_id) {
+      console.log("Generate analysis attempted without phase");
+      toast.error(
+        settings?.language === "en"
+          ? "No phase selected"
+          : "Keine Phase ausgewählt"
+      );
+      return;
+    }
+
     try {
       setIsLoading(true);
       console.log("Starting analysis generation for:", {
         leadId: lead.id,
         phaseId: lead.phase_id,
+        phaseName: lead.phase?.name,
         userId: user.id
       });
       
@@ -59,12 +69,11 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       });
 
       if (existingAnalysis) {
-        // If analysis exists, hide button and show existing analysis
         setShowButton(false);
         return;
       }
 
-      // If no analysis exists, generate a new one
+      // Generate new analysis
       const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
         body: {
           leadId: lead.id,
@@ -80,7 +89,11 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       
       if (data.error) {
         console.error("Error in analysis generation:", data.error);
-        toast.error(data.error);
+        toast.error(
+          settings?.language === "en"
+            ? "Error generating analysis: " + data.error
+            : "Fehler bei der Analyse-Generierung: " + data.error
+        );
         return;
       }
 
@@ -102,20 +115,16 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  // Check if analysis already exists for this phase
   const checkExistingAnalysis = async () => {
     if (!lead?.id || !lead?.phase_id) {
-      console.log("Missing required lead data:", { lead });
+      console.log("Missing required lead data for analysis check:", { 
+        leadId: lead?.id, 
+        phaseId: lead?.phase_id 
+      });
       return;
     }
 
     try {
-      console.log("Checking for existing analysis:", {
-        leadId: lead.id,
-        phaseId: lead.phase_id,
-        timestamp: new Date().toISOString()
-      });
-
       const { data: existingAnalysis, error } = await supabase
         .from("phase_based_analyses")
         .select("id")
@@ -126,6 +135,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       console.log("Existing analysis query result:", {
         leadId: lead.id,
         phaseId: lead.phase_id,
+        phaseName: lead.phase?.name,
         hasAnalysis: !!existingAnalysis,
         error: error
       });
@@ -137,22 +147,29 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  // Check for existing analysis on component mount and phase change
   useEffect(() => {
-    console.log("LeadSummary useEffect triggered:", {
-      leadId: lead?.id,
-      phaseId: lead?.phase_id,
-      timestamp: new Date().toISOString()
-    });
     if (lead?.id && lead?.phase_id) {
       checkExistingAnalysis();
     }
   }, [lead?.id, lead?.phase_id]);
 
-  // Early return if no lead data
-  if (!lead?.id || !lead?.phase_id) {
-    console.log("LeadSummary: Missing required lead data");
+  // Early return if missing required data
+  if (!lead?.id) {
+    console.log("LeadSummary: Missing lead ID");
     return null;
+  }
+
+  if (!lead?.phase_id) {
+    console.log("LeadSummary: No phase selected");
+    return (
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <p className="text-yellow-800">
+          {settings?.language === "en" 
+            ? "Please select a phase to generate an analysis" 
+            : "Bitte wählen Sie eine Phase aus, um eine Analyse zu generieren"}
+        </p>
+      </div>
+    );
   }
 
   console.log("LeadSummary render state:", {
@@ -160,15 +177,19 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     isLoading,
     leadId: lead.id,
     phaseId: lead.phase_id,
+    phaseName: lead.phase?.name,
     hasUser: !!user
   });
 
   if (!showButton) {
     return <NexusTimelineCard 
-      content={settings?.language === "en" ? "Analysis already generated" : "Analyse bereits generiert"}
+      content={settings?.language === "en" 
+        ? `Analysis for phase "${lead.phase?.name || 'Unknown'}" already generated` 
+        : `Analyse für Phase "${lead.phase?.name || 'Unbekannt'}" bereits generiert`}
       metadata={{
         type: 'phase_analysis',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        phase_name: lead.phase?.name
       }}
       onRegenerate={generateAnalysis}
       isRegenerating={isLoading}
