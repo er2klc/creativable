@@ -65,46 +65,6 @@ export const LeadDetailContent = ({
   return (
     <div className="flex-1 overflow-y-auto bg-gray-50">
       <div className="p-6 space-y-6 mt-32">
-        {/* Social Media Header Card */}
-        <div className="bg-white rounded-lg shadow p-6 space-y-4">
-          <div className="flex items-start gap-4">
-            <LeadAvatar
-              imageUrl={lead.social_media_profile_image_url}
-              name={lead.name}
-              platform={lead.platform}
-              avatarSize="xl"
-            />
-            <div className="flex-1 pt-2">
-              <div className="font-medium text-lg flex items-center justify-between">
-                <span>{lead.social_media_username || lead.name}</span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleScanProfile}
-                  disabled={isScanning}
-                >
-                  {isScanning ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-4 w-4" />
-                  )}
-                </Button>
-              </div>
-              <LeadSocialStats
-                followers={lead.social_media_followers}
-                following={lead.social_media_following}
-                engagement_rate={lead.social_media_engagement_rate}
-                isTeamOwner={true}
-              />
-            </div>
-          </div>
-          {lead.social_media_bio && (
-            <div className="text-sm text-gray-600 leading-relaxed border-t pt-4">
-              {lead.social_media_bio}
-            </div>
-          )}
-        </div>
-
         {/* Content Grid */}
         <div className="grid grid-cols-12 gap-6">
           {/* Linke Spalte - 4 Cols */}
@@ -113,6 +73,47 @@ export const LeadDetailContent = ({
               <LeadSummary lead={lead} />
             </div>
             <div className="bg-white rounded-lg shadow p-6">
+              {/* Social Media Header */}
+              <div className="space-y-4 mb-6 pb-6 border-b">
+                <div className="flex items-start gap-4">
+                  <LeadAvatar
+                    imageUrl={lead.social_media_profile_image_url}
+                    name={lead.name}
+                    platform={lead.platform}
+                    avatarSize="xl"
+                  />
+                  <div className="flex-1 pt-2">
+                    <div className="font-medium text-lg flex items-center justify-between">
+                      <span>{lead.social_media_username || lead.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleScanProfile}
+                        disabled={isScanning}
+                      >
+                        {isScanning ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <RefreshCw className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                    <LeadSocialStats
+                      followers={lead.social_media_followers}
+                      following={lead.social_media_following}
+                      engagement_rate={lead.social_media_engagement_rate}
+                      isTeamOwner={true}
+                    />
+                  </div>
+                </div>
+                {lead.social_media_bio && (
+                  <div className="text-sm text-gray-600 leading-relaxed">
+                    {lead.social_media_bio}
+                  </div>
+                )}
+              </div>
+
+              {/* Basic Information Fields */}
               <BasicInformationFields 
                 lead={lead}
                 onUpdate={onUpdateLead}
@@ -125,12 +126,11 @@ export const LeadDetailContent = ({
             <div className="bg-white rounded-lg shadow">
               <LeadDetailTabs lead={lead} />
             </div>
-            <div className="bg-white rounded-lg shadow">
-              <LeadTimeline 
-                lead={lead} 
-                onDeletePhaseChange={onDeletePhaseChange}
-              />
-            </div>
+            {/* Timeline ohne weißen Hintergrund */}
+            <LeadTimeline 
+              lead={lead} 
+              onDeletePhaseChange={onDeletePhaseChange}
+            />
           </div>
         </div>
       </div>
