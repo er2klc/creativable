@@ -66,26 +66,39 @@ export function CreateLinkedInContactDialog({
   });
 
   const checkExistingContact = async (username: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
 
-    const { data: contact } = await supabase
-      .from("leads")
-      .select(`
-        *,
-        pipeline:pipeline_id (
-          name
-        ),
-        phase:phase_id (
-          name
-        )
-      `)
-      .eq("user_id", user.id)
-      .eq("social_media_username", username)
-      .eq("platform", "LinkedIn")
-      .maybeSingle();
+      // Normalize username to lowercase for consistent comparison
+      const normalizedUsername = username.toLowerCase();
 
-    return contact as LeadWithRelations | null;
+      const { data: contact, error } = await supabase
+        .from("leads")
+        .select(`
+          *,
+          pipeline:pipeline_id (
+            name
+          ),
+          phase:phase_id (
+            name
+          )
+        `)
+        .eq("user_id", user.id)
+        .ilike("social_media_username", normalizedUsername)
+        .eq("platform", "LinkedIn")
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking for existing contact:", error);
+        return null;
+      }
+
+      return contact as LeadWithRelations | null;
+    } catch (error) {
+      console.error("Error in checkExistingContact:", error);
+      return null;
+    }
   };
 
   const handleSubmit = async () => {
@@ -95,15 +108,16 @@ export function CreateLinkedInContactDialog({
     }
 
     try {
+      // Normalize username
+      const normalizedUsername = username.toLowerCase().trim();
+
       // Check for existing contact first
-      const existing = await checkExistingContact(username);
+      const existing = await checkExistingContact(normalizedUsername);
       if (existing) {
         setExistingContact(existing);
         return;
       }
 
-      scanState.setIsLoading(true);
-      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -115,27 +129,35 @@ export function CreateLinkedInContactDialog({
         return;
       }
 
+      // Use a transaction to ensure atomicity
       const { data: lead, error: leadError } = await supabase
-        .from("leads")
-        .insert({
-          user_id: user.id,
-          name: username,
-          platform: "LinkedIn",
-          social_media_username: username,
-          pipeline_id: targetPipelineId,
-          phase_id: targetPhaseId,
-          industry: "Not Specified"
-        })
-        .select()
-        .single();
+        .rpc('create_unique_lead', {
+          p_user_id: user.id,
+          p_name: normalizedUsername,
+          p_platform: "LinkedIn",
+          p_username: normalizedUsername,
+          p_pipeline_id: targetPipelineId,
+          p_phase_id: targetPhaseId
+        });
 
-      if (leadError) throw leadError;
+      if (leadError) {
+        if (leadError.code === '23505') { // Unique violation
+          const existing = await checkExistingContact(normalizedUsername);
+          if (existing) {
+            setExistingContact(existing);
+            return;
+          }
+        }
+        throw leadError;
+      }
+
+      scanState.setIsLoading(true);
 
       scanState.pollProgress(lead.id);
 
       const { error } = await supabase.functions.invoke('scan-linkedin-profile', {
         body: {
-          username: username,
+          username: normalizedUsername,
           leadId: lead.id
         }
       });

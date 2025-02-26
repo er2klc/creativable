@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
@@ -27,7 +26,6 @@ export function CreateInstagramContactDialog({
   const scanState = useInstagramScan();
   const [existingContact, setExistingContact] = useState<LeadWithRelations | null>(null);
 
-  // Close dialog when scan reaches 100%
   useEffect(() => {
     if (scanState.scanProgress === 100 && scanState.isSuccess) {
       const timer = setTimeout(() => {
@@ -76,26 +74,38 @@ export function CreateInstagramContactDialog({
   });
 
   const checkExistingContact = async (username: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
 
-    const { data: contact } = await supabase
-      .from("leads")
-      .select(`
-        *,
-        pipeline:pipeline_id (
-          name
-        ),
-        phase:phase_id (
-          name
-        )
-      `)
-      .eq("user_id", user.id)
-      .eq("social_media_username", username)
-      .eq("platform", "Instagram")
-      .maybeSingle();
+      const normalizedUsername = username.toLowerCase().trim();
 
-    return contact as LeadWithRelations | null;
+      const { data: contact, error } = await supabase
+        .from("leads")
+        .select(`
+          *,
+          pipeline:pipeline_id (
+            name
+          ),
+          phase:phase_id (
+            name
+          )
+        `)
+        .eq("user_id", user.id)
+        .ilike("social_media_username", normalizedUsername)
+        .eq("platform", "Instagram")
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking for existing contact:", error);
+        return null;
+      }
+
+      return contact as LeadWithRelations | null;
+    } catch (error) {
+      console.error("Error in checkExistingContact:", error);
+      return null;
+    }
   };
 
   const handleSubmit = async () => {
@@ -105,18 +115,14 @@ export function CreateInstagramContactDialog({
     }
 
     try {
-      // Check for existing contact first
-      const existing = await checkExistingContact(username);
+      const normalizedUsername = username.toLowerCase().trim();
+
+      const existing = await checkExistingContact(normalizedUsername);
       if (existing) {
         setExistingContact(existing);
         return;
       }
 
-      scanState.setIsLoading(true);
-      scanState.setScanProgress(0);
-      scanState.setCurrentFile(undefined);
-      scanState.setIsSuccess(false);
-      
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
@@ -134,36 +140,42 @@ export function CreateInstagramContactDialog({
       }
 
       const { data: lead, error: leadError } = await supabase
-        .from("leads")
-        .insert({
-          user_id: user.id,
-          name: username,
-          platform: "Instagram",
-          social_media_username: username,
-          pipeline_id: targetPipelineId,
-          phase_id: targetPhaseId,
-          industry: "Not Specified"
-        })
-        .select()
-        .single();
+        .rpc('create_unique_lead', {
+          p_user_id: user.id,
+          p_name: normalizedUsername,
+          p_platform: "Instagram",
+          p_username: normalizedUsername,
+          p_pipeline_id: targetPipelineId,
+          p_phase_id: targetPhaseId
+        });
 
-      if (leadError) throw leadError;
+      if (leadError) {
+        if (leadError.code === '23505') {
+          const existing = await checkExistingContact(normalizedUsername);
+          if (existing) {
+            setExistingContact(existing);
+            return;
+          }
+        }
+        throw leadError;
+      }
 
-      // Start progress simulation with slower progression at higher percentages
+      scanState.setIsLoading(true);
+      scanState.setScanProgress(0);
+      scanState.setCurrentFile(undefined);
+      scanState.setIsSuccess(false);
+      
       let progress = 5;
       scanState.setScanProgress(progress);
       
       const progressInterval = setInterval(() => {
-        // Slower progression after 85%
         const increment = progress > 85 ? 0.5 : 1;
         progress = Math.min(progress + increment, 90);
         scanState.setScanProgress(progress);
       }, 200);
 
-      // Start the actual scan process in the background
       scanState.pollProgress(lead.id);
 
-      // Call scan-social-profile
       const { error: scanError } = await supabase.functions.invoke('scan-social-profile', {
         body: {
           platform: 'instagram',
@@ -174,12 +186,10 @@ export function CreateInstagramContactDialog({
 
       if (scanError) throw scanError;
 
-      // Call process-social-media and don't wait for completion
       supabase.functions.invoke('process-social-media', {
         body: { leadId: lead.id }
       });
 
-      // Clear simulation and set final progress
       clearInterval(progressInterval);
       scanState.setScanProgress(100);
       scanState.setIsSuccess(true);
