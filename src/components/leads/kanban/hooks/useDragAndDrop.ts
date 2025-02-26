@@ -13,6 +13,7 @@ interface UseDragAndDropProps {
 export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseDragAndDropProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const dragTimeoutRef = useRef<number | null>(null);
+  const mouseDownTimeRef = useRef<number>(0);
 
   const {
     attributes,
@@ -28,6 +29,7 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
   const handleMouseDown = () => {
     if (disabled) return;
     
+    mouseDownTimeRef.current = Date.now();
     dragTimeoutRef.current = window.setTimeout(() => {
       setIsDragging(true);
     }, 150);
@@ -38,9 +40,15 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
       clearTimeout(dragTimeoutRef.current);
     }
 
-    if (!isDragging) {
+    const mouseUpTime = Date.now();
+    const clickDuration = mouseUpTime - mouseDownTimeRef.current;
+
+    // Wenn der Klick kürzer als 150ms war oder wir nicht im Drag-Modus sind,
+    // behandeln wir es als normalen Klick
+    if (clickDuration < 150 || !isDragging) {
       onLeadClick(id);
     }
+
     setIsDragging(false);
   };
 
