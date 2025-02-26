@@ -42,15 +42,15 @@ export const LeadDetailContent = ({
             </div>
             <div className="bg-white rounded-lg shadow p-6">
               {/* Social Media Header */}
-              <div className="space-y-4 mb-6 pb-6 border-b">
-                <div className="flex items-start gap-4">
+              <div className="space-y-4">
+                <div className="flex items-center gap-4">
                   <LeadAvatar
                     imageUrl={lead.social_media_profile_image_url}
                     name={lead.name}
                     platform={lead.platform}
                     avatarSize="lg"
                   />
-                  <div className="flex-1 pt-2">
+                  <div className="flex-1">
                     <div className="font-medium text-lg">
                       <span>{lead.social_media_username || lead.name}</span>
                     </div>
@@ -63,10 +63,14 @@ export const LeadDetailContent = ({
                   </div>
                 </div>
                 {lead.social_media_bio && (
-                  <div className="text-sm text-gray-600 leading-relaxed">
-                    {lead.social_media_bio}
-                  </div>
+                  <>
+                    <div className="h-px w-full bg-gray-200 my-4" />
+                    <div className="text-sm text-gray-600 leading-relaxed">
+                      {lead.social_media_bio}
+                    </div>
+                  </>
                 )}
+                <div className="h-px w-full bg-gray-200" />
               </div>
 
               {/* Basic Information Fields */}
