@@ -78,8 +78,8 @@ export const KanbanBoard = ({
               <div 
                 key={phase.id} 
                 style={{ 
-                  width: '260px',
-                  minWidth: '240px',
+                  width: '240px',
+                  minWidth: '200px',
                   flex: '1 1 auto',
                   position: 'relative',
                 }}
@@ -114,7 +114,7 @@ export const KanbanBoard = ({
 
       <DragOverlay>
         {activeLead ? (
-          <div style={{ width: '260px' }}>
+          <div style={{ width: '240px' }}>
             <SortableLeadItem
               lead={activeLead}
               onLeadClick={onLeadClick}
