@@ -46,11 +46,15 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
   };
 
   const style: CSSProperties | undefined = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     position: isDragging ? 'fixed' : 'relative',
-    zIndex: isDragging ? 9999 : 1,
+    top: isDragging ? `${transform.y}px` : 'auto',
+    left: isDragging ? `${transform.x}px` : 'auto',
+    transform: isDragging ? 'none' : `translate(${transform.x}px, ${transform.y}px)`,
+    zIndex: isDragging ? 99999 : 1,
     boxSizing: 'border-box',
-    width: '100%',
+    width: isDragging ? '260px' : '100%', // Fixed width during dragging
+    pointerEvents: isDragging ? 'none' : 'auto',
+    willChange: isDragging ? 'transform' : 'auto',
     transition: 'box-shadow 0.2s ease',
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
   } : undefined;
