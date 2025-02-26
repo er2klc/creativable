@@ -1,8 +1,10 @@
 
-import { DndContext, DragEndEvent, closestCenter } from "@dnd-kit/core";
+import { DndContext, DragEndEvent, closestCenter, DragOverlay } from "@dnd-kit/core";
 import { Tables } from "@/integrations/supabase/types";
 import { PhaseColumn } from "./PhaseColumn";
 import { AddPhaseButton } from "./AddPhaseButton";
+import { SortableLeadItem } from "./SortableLeadItem";
+import { useState } from "react";
 
 interface KanbanBoardProps {
   phases: Tables<"pipeline_phases">[];
@@ -27,8 +29,20 @@ export const KanbanBoard = ({
   onUpdatePhaseName,
   onMovePhase,
 }: KanbanBoardProps) => {
+  const [activeLead, setActiveLead] = useState<Tables<"leads"> | null>(null);
+
+  const handleDragStart = (event: any) => {
+    const { active } = event;
+    const draggedLead = leads.find(lead => lead.id === active.id);
+    if (draggedLead) {
+      setActiveLead(draggedLead);
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
+    setActiveLead(null);
+    
     if (!over || !active || isEditMode) return;
 
     const leadId = active.id as string;
@@ -46,7 +60,11 @@ export const KanbanBoard = ({
   };
 
   return (
-    <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+    <DndContext 
+      collisionDetection={closestCenter} 
+      onDragEnd={handleDragEnd}
+      onDragStart={handleDragStart}
+    >
       <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
         <div className="flex-1 overflow-visible relative h-[calc(100vh)]">
           <div className="flex gap-2.5 h-full px-4" style={{ 
@@ -62,11 +80,8 @@ export const KanbanBoard = ({
                 style={{ 
                   width: '260px',
                   minWidth: '240px',
-                  maxWidth: '280px',
-                  flexShrink: 0,
-                  flexGrow: 0,
+                  flex: '1 1 auto',
                   position: 'relative',
-                  zIndex: -1
                 }}
               >
                 <PhaseColumn
@@ -96,6 +111,18 @@ export const KanbanBoard = ({
           </div>
         </div>
       </div>
+
+      <DragOverlay>
+        {activeLead ? (
+          <div style={{ width: '260px' }}>
+            <SortableLeadItem
+              lead={activeLead}
+              onLeadClick={onLeadClick}
+              disabled={true}
+            />
+          </div>
+        ) : null}
+      </DragOverlay>
     </DndContext>
   );
 };
