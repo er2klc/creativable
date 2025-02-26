@@ -7,6 +7,7 @@ import { LeadSummaryProps } from "./types/summary";
 import { NexusTimelineCard } from "./timeline/cards/NexusTimelineCard";
 import { useAuth } from "@/hooks/use-auth";
 import { PhaseAnalysisButton } from "./components/PhaseAnalysisButton";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
@@ -17,6 +18,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     content: string;
     metadata: any;
   } | null>(null);
+  const queryClient = useQueryClient();
 
   console.log("LeadSummary mounting with props:", {
     leadId: lead?.id,
@@ -54,6 +56,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         error: error
       });
 
+      if (error) throw error;
       setExistingAnalysis(analysis);
     } catch (error) {
       console.error("Error checking existing analysis:", error);
@@ -114,7 +117,11 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         return;
       }
 
-      // Nach erfolgreicher Generierung Analyse neu laden
+      // Nach erfolgreicher Generierung alle relevanten Queries invalidieren
+      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
+      queryClient.invalidateQueries({ queryKey: ["lead-timeline", lead.id] });
+      
+      // Analyse direkt neu laden
       await checkExistingAnalysis();
       
       toast.success(
@@ -134,10 +141,9 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
+  // Analyse bei Mount und wenn sich lead oder phase ändert prüfen
   useEffect(() => {
-    if (lead?.id && lead?.phase_id && user?.id) {
-      checkExistingAnalysis();
-    }
+    checkExistingAnalysis();
   }, [lead?.id, lead?.phase_id, user?.id]);
 
   // Early return if missing required data
@@ -168,20 +174,26 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     hasUser: !!user
   });
 
+  // Wenn eine Analyse existiert, zeige die NexusTimelineCard
   if (existingAnalysis) {
-    return <NexusTimelineCard 
-      content={`Analysis for phase "${lead.phase?.name || 'Unknown'}":`}
-      metadata={{
-        type: 'phase_analysis',
-        timestamp: new Date().toISOString(),
-        phase_name: lead.phase?.name,
-        analysis: existingAnalysis.metadata?.analysis || {}
-      }}
-      onRegenerate={generateAnalysis}
-      isRegenerating={isLoading}
-    />;
+    return (
+      <div className="space-y-4">
+        <NexusTimelineCard 
+          content={`${settings?.language === "en" ? "Analysis for phase" : "Analyse für Phase"} "${lead.phase?.name || 'Unknown'}"`}
+          metadata={{
+            type: 'phase_analysis',
+            timestamp: new Date().toISOString(),
+            phase_name: lead.phase?.name,
+            analysis: existingAnalysis.metadata?.analysis || {}
+          }}
+          onRegenerate={generateAnalysis}
+          isRegenerating={isLoading}
+        />
+      </div>
+    );
   }
 
+  // Wenn keine Analyse existiert, zeige den Generate-Button
   return (
     <PhaseAnalysisButton 
       isLoading={isLoading}
