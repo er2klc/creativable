@@ -48,7 +48,7 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
   const style: CSSProperties | undefined = transform ? {
     transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
     position: isDragging ? 'fixed' : 'relative',
-    zIndex: isDragging ? 9999 : 'auto',
+    zIndex: isDragging ? 99999 : undefined,
     boxSizing: 'border-box',
     width: isDragging ? '260px' : '100%',
     transition: 'box-shadow 0.2s ease',
