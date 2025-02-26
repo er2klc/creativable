@@ -43,12 +43,18 @@ export const PhaseAnalysisButton = ({
       return;
     }
 
+    console.log("Starting analysis generation with:", {
+      leadId,
+      phaseId,
+      hasApiKey: !!apiKey
+    });
+
     onGenerateAnalysis();
   };
 
   if (isLoadingKey) {
     return (
-      <Button disabled>
+      <Button variant="secondary" disabled>
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         {settings?.language === "en" ? "Loading..." : "Lädt..."}
       </Button>
@@ -57,8 +63,10 @@ export const PhaseAnalysisButton = ({
 
   return (
     <Button
+      variant="secondary"
       onClick={handleGenerateClick}
       disabled={isLoading || !user || !phaseId}
+      className="bg-blue-500 hover:bg-blue-600 text-white"
     >
       {isLoading ? (
         <>
@@ -71,4 +79,3 @@ export const PhaseAnalysisButton = ({
     </Button>
   );
 };
-
