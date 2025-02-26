@@ -15,21 +15,8 @@ interface RequestBody {
 }
 
 serve(async (req: Request) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
-  }
-
-  const openAIApiKey = Deno.env.get('OPENAI_API_KEY')
-  if (!openAIApiKey) {
-    console.error('OpenAI API key is not configured')
-    return new Response(
-      JSON.stringify({ error: 'OpenAI API key is not configured' }),
-      { 
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
   }
 
   try {
@@ -38,13 +25,7 @@ serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    // Initialize OpenAI
-    const configuration = new Configuration({
-      apiKey: openAIApiKey,
-    })
-    const openai = new OpenAIApi(configuration)
-
-    // Validate request body
+    // Get request body
     if (!req.body) {
       throw new Error('Request body is required')
     }
@@ -57,7 +38,29 @@ serve(async (req: Request) => {
 
     console.log('Starting analysis generation for:', { leadId, phaseId, userId })
 
-    // Fetch lead data with error handling
+    // Get user's OpenAI API key from settings
+    const { data: settings, error: settingsError } = await supabaseClient
+      .from('settings')
+      .select('openai_api_key')
+      .eq('user_id', userId)
+      .single()
+
+    if (settingsError) {
+      console.error('Error fetching settings:', settingsError)
+      throw new Error('Could not fetch user settings')
+    }
+
+    if (!settings?.openai_api_key) {
+      throw new Error('OpenAI API key not found in user settings')
+    }
+
+    // Initialize OpenAI with user's API key
+    const configuration = new Configuration({
+      apiKey: settings.openai_api_key,
+    })
+    const openai = new OpenAIApi(configuration)
+
+    // Fetch lead data
     const { data: lead, error: leadError } = await supabaseClient
       .from('leads')
       .select(`
@@ -86,7 +89,7 @@ serve(async (req: Request) => {
       throw new Error(`No lead found with ID ${leadId}`)
     }
 
-    // Generate analysis prompt with try-catch
+    // Generate analysis prompt
     const prompt = `Analyze this contact based on the following information:
 Name: ${lead.name}
 Current Phase: ${lead?.phase?.name || 'Unknown'}
@@ -105,7 +108,7 @@ Please provide:
 
 Format the response in JSON with these fields: summary, key_points (array), recommendations (array)`
 
-    // Generate analysis with OpenAI with proper error handling
+    // Generate analysis with OpenAI
     let completion
     try {
       completion = await openai.createChatCompletion({
@@ -121,8 +124,12 @@ Format the response in JSON with these fields: summary, key_points (array), reco
           }
         ]
       })
-    } catch (openAiError) {
+    } catch (openAiError: any) {
       console.error('OpenAI API error:', openAiError)
+      // Check for specific OpenAI error types
+      if (openAiError.response?.status === 401) {
+        throw new Error('Invalid OpenAI API key. Please check your API key in settings.')
+      }
       throw new Error(`OpenAI API error: ${openAiError.message}`)
     }
 
@@ -130,7 +137,7 @@ Format the response in JSON with these fields: summary, key_points (array), reco
       throw new Error('No response received from OpenAI')
     }
 
-    // Parse OpenAI response with error handling
+    // Parse OpenAI response
     let analysis
     try {
       analysis = JSON.parse(completion.data.choices[0].message.content)
@@ -139,7 +146,7 @@ Format the response in JSON with these fields: summary, key_points (array), reco
       throw new Error('Invalid response format from OpenAI')
     }
 
-    // Store analysis in database with error handling
+    // Store analysis in database
     const { data: savedAnalysis, error: analysisError } = await supabaseClient
       .from('phase_based_analyses')
       .upsert({
@@ -171,7 +178,7 @@ Format the response in JSON with these fields: summary, key_points (array), reco
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error in generate-phase-analysis:', error)
     return new Response(
       JSON.stringify({ 
@@ -179,7 +186,7 @@ Format the response in JSON with these fields: summary, key_points (array), reco
         details: error.stack 
       }),
       { 
-        status: 500,
+        status: error.message.includes('API key') ? 401 : 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     )
