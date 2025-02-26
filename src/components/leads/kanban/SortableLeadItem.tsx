@@ -15,7 +15,7 @@ interface SortableLeadItemProps {
 
 export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: SortableLeadItemProps) => {
   const { toggleFavorite } = useFavorite();
-  const { isDragging, style, dragHandlers } = useDragAndDrop({
+  const { isDragging, style: dragStyle, dragHandlers } = useDragAndDrop({
     id: lead.id,
     lead,
     disabled,
@@ -41,6 +41,13 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
       return "bg-[#F0FFF0]";
     }
     return "bg-white";
+  };
+
+  const style = {
+    ...dragStyle,
+    width: '100%',
+    transform: isDragging ? `${dragStyle?.transform || ''} scale(1.02)` : dragStyle?.transform,
+    transition: 'transform 0.2s ease, box-shadow 0.2s ease'
   };
 
   return (
@@ -82,4 +89,3 @@ export const SortableLeadItem = ({ lead, onLeadClick, disabled = false }: Sortab
     </div>
   );
 };
-
