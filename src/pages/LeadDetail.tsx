@@ -23,9 +23,7 @@ export default function LeadDetail() {
 
   const deletePhaseChangeMutation = useMutation({
     mutationFn: async (noteId: string) => {
-      // Check if this is a status change entry
       if (noteId.startsWith('status-')) {
-        // For status changes, we update the lead status back to 'lead'
         const { error } = await supabase
           .from("leads")
           .update({ status: 'lead' })
@@ -33,7 +31,6 @@ export default function LeadDetail() {
 
         if (error) throw error;
       } else {
-        // For regular notes, delete from notes table
         const { error } = await supabase
           .from("notes")
           .delete()
