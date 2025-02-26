@@ -41,7 +41,16 @@ export const useLeadPhaseMutation = () => {
       return { previousLead };
     },
     onSuccess: async (data, variables) => {
-      console.log('Phase mutation successful, updating queries');
+      console.log('Phase mutation successful:', data);
+      
+      // Nur Toast anzeigen, wenn es eine echte Änderung gab
+      if (!data.noChange) {
+        toast.success(
+          settings?.language === "en" 
+            ? "Phase updated successfully"
+            : "Phase erfolgreich aktualisiert"
+        );
+      }
       
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["leads"] }),
@@ -50,12 +59,6 @@ export const useLeadPhaseMutation = () => {
       ]);
 
       await queryClient.refetchQueries({ queryKey: ["lead-timeline", variables.leadId] });
-      
-      toast.success(
-        settings?.language === "en" 
-          ? "Phase updated successfully"
-          : "Phase erfolgreich aktualisiert"
-      );
     },
     onError: (error, variables, context) => {
       console.error("Error updating phase:", error);
@@ -69,10 +72,6 @@ export const useLeadPhaseMutation = () => {
           ? "Failed to update phase"
           : "Fehler beim Aktualisieren der Phase"
       );
-    },
-    onSettled: (data, error, variables) => {
-      console.log('Phase mutation settled, final cache sync');
-      queryClient.invalidateQueries({ queryKey: ["lead-timeline", variables.leadId] });
     }
   });
 };
