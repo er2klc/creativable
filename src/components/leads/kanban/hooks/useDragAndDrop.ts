@@ -46,14 +46,18 @@ export const useDragAndDrop = ({ id, lead, disabled = false, onLeadClick }: UseD
   };
 
   const style: CSSProperties | undefined = transform ? {
-    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+    transform: CSS.Transform.toString(transform),
     position: isDragging ? 'fixed' : 'relative',
-    zIndex: isDragging ? 9999 : 'auto',
+    zIndex: isDragging ? 99999 : 'auto',
     boxSizing: 'border-box',
     width: isDragging ? '260px' : '100%',
     transition: 'box-shadow 0.2s ease',
     cursor: disabled ? 'default' : (isDragging ? 'grabbing' : 'grab'),
     pointerEvents: isDragging ? 'none' : 'auto',
+    backgroundColor: 'white', // Ensure card is visible during drag
+    margin: 0,
+    left: `${transform.x}px`,
+    top: `${transform.y}px`,
   } : undefined;
 
   return {
