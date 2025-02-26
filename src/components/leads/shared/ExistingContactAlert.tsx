@@ -16,7 +16,7 @@ export function ExistingContactAlert({ contact, onClose }: ExistingContactAlertP
 
   const handleContactClick = () => {
     onClose();
-    navigate(`/leads/${contact.id}`);
+    navigate(`/contacts/${contact.id}`);
   };
 
   return (
