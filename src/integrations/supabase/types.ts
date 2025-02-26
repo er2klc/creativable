@@ -1792,22 +1792,7 @@ export type Database = {
           phase_id?: string
           recommendations?: Json | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "phase_based_analyses_lead_id_fkey"
-            columns: ["lead_id"]
-            isOneToOne: false
-            referencedRelation: "leads"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "phase_based_analyses_phase_id_fkey"
-            columns: ["phase_id"]
-            isOneToOne: false
-            referencedRelation: "pipeline_phases"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       phase_rules: {
         Row: {
