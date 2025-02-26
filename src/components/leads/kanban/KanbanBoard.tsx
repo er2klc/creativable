@@ -46,15 +46,29 @@ export const KanbanBoard = ({
     }
   };
 
+  // Berechne die fixe Breite basierend auf der Anzahl der Phasen
+  const columnWidth = `${100 / phases.length}%`;
+
   return (
     <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <div className="mt-6 border-t border-gray-200 shadow-sm pt-6">
         <div className="flex-1 overflow-x-auto no-scrollbar relative h-[calc(100vh)]">
-          <div className="flex gap-4 px-4 h-full" style={{ minWidth: 'fit-content' }}>
+          <div className="flex h-full px-4" style={{ 
+            minWidth: 'fit-content',
+            width: '100%'
+          }}>
             <div className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent pointer-events-none z-10" />
 
             {phases.map((phase, index) => (
-              <div key={phase.id} className="flex-1" style={{ minWidth: '190px', width: `${100 / phases.length}%` }}>
+              <div 
+                key={phase.id} 
+                style={{ 
+                  width: columnWidth,
+                  minWidth: '190px',
+                  flexShrink: 0,
+                  flexGrow: 0
+                }}
+              >
                 <PhaseColumn
                   phase={phase}
                   leads={leads.filter((lead) => lead.phase_id === phase.id)}
