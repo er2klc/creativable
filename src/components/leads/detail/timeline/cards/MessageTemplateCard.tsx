@@ -7,6 +7,7 @@ import { DeleteButton } from "./DeleteButton";
 import { MetadataDisplay } from "./MetadataDisplay";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
+import ReactMarkdown from 'react-markdown';
 
 interface MessageTemplateCardProps {
   content: string;
@@ -118,7 +119,7 @@ export function MessageTemplateCard({
   };
 
   return (
-    <div className={`relative group bg-white border rounded-lg shadow-sm p-4 ${getBorderColorByPlatform()}`}>
+    <div className={`relative group bg-white border rounded-lg shadow-sm p-4 overflow-hidden ${getBorderColorByPlatform()}`}>
       <div className="flex items-center gap-2 mb-2">
         <Send className={`h-4 w-4 ${getIconColorByPlatform()}`} />
         <span className="font-medium">{getTypeLabel()}</span>
@@ -128,11 +129,13 @@ export function MessageTemplateCard({
         {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
       
-      <div className="whitespace-pre-wrap mb-2 text-sm">
-        {displayContent}
+      <div className="prose prose-sm max-w-none overflow-hidden break-words mb-2">
+        <ReactMarkdown className="whitespace-normal break-words">
+          {displayContent}
+        </ReactMarkdown>
       </div>
       
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between mt-2">
         {shouldTruncate && (
           <Button
             variant="ghost"
