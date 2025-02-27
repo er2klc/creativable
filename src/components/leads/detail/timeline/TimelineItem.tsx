@@ -9,7 +9,17 @@ import { StatusCard } from "./cards/StatusCard";
 import { YoutubeCard } from "./cards/YoutubeCard";
 
 interface TimelineItemProps {
-  item: TimelineItemType;
+  item: {
+    id: string;
+    type: TimelineItemType;
+    content: string;
+    timestamp: string;
+    metadata?: any;
+    status?: string;
+    platform?: string;
+    completed?: boolean;
+    created_at?: string;
+  };
   onDelete?: (noteId: string) => void;
   onToggleTaskComplete?: (id: string, completed: boolean) => void;
 }
@@ -70,10 +80,9 @@ export const TimelineItem = ({
           <div className="w-8 flex-shrink-0">
             <TimelineItemIcon 
               type={item.type} 
-              status={item.metadata?.status} 
+              status={item.status} 
               platform={item.platform}
               metadata={item.metadata}
-              completed={item.type === 'task' ? item.completed : undefined}
             />
           </div>
           

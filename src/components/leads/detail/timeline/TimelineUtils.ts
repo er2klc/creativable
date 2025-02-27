@@ -1,11 +1,28 @@
 
 import { LeadWithRelations } from "@/types/leads";
 
+export type TimelineItemType = 
+  | 'contact_created'
+  | 'message'
+  | 'task' 
+  | 'appointment'
+  | 'note'
+  | 'phase_change'
+  | 'status_change'
+  | 'reminder'
+  | 'presentation'
+  | 'upload'
+  | 'file_upload'
+  | string;
+
 export interface TimelineItem {
   id: string;
-  type: string;
+  type: TimelineItemType;
   content: string;
   timestamp: string;
+  platform?: string;
+  completed?: boolean;
+  status?: string;
   metadata?: {
     dueDate?: string;
     fileName?: string;
@@ -24,40 +41,43 @@ export interface TimelineItem {
     last_edited_at?: string;
     meetingType?: string;
     color?: string;
+    event_type?: string;
   };
   created_at?: string;
 }
 
-export const createStatusChangeItem = (lead: LeadWithRelations): TimelineItem => {
+export const createStatusChangeItem = (
+  status: string, 
+  timestamp: string
+): TimelineItem => {
   let statusMessage = '';
-  const name = lead.name;
-
-  switch (lead.status) {
+  
+  switch (status) {
     case 'partner':
-      statusMessage = `${name} ist jetzt dein neuer Partner! 🚀`;
+      statusMessage = `Kontakt ist jetzt dein Partner! 🚀`;
       break;
     case 'customer':
-      statusMessage = `${name} ist jetzt Kunde – viel Erfolg! 🎉`;
+      statusMessage = `Kontakt ist jetzt Kunde – viel Erfolg! 🎉`;
       break;
     case 'not_for_now':
-      statusMessage = `${name} ist aktuell nicht bereit – bleib dran! ⏳`;
+      statusMessage = `Kontakt ist aktuell nicht bereit – bleib dran! ⏳`;
       break;
     case 'no_interest':
-      statusMessage = `${name} hat kein Interesse – weiter geht's! 🚀`;
+      statusMessage = `Kontakt hat kein Interesse – weiter geht's! 🚀`;
       break;
     default:
-      statusMessage = `Status geändert zu ${lead.status}`;
+      statusMessage = `Status geändert zu ${status}`;
   }
 
   return {
-    id: `status-${lead.id}`,
+    id: `status-${Date.now()}`,
     type: 'status_change',
     content: statusMessage,
-    timestamp: lead.updated_at || new Date().toISOString(),
+    timestamp,
     metadata: {
-      oldStatus: lead.status,
-      newStatus: lead.status,
-      timestamp: lead.updated_at || new Date().toISOString()
+      oldStatus: 'lead',
+      newStatus: status,
+      timestamp
     }
   };
 };
