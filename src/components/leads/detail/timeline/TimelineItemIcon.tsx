@@ -61,7 +61,7 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
         Icon = User;
         break;
       default:
-        Icon = BellRing;
+        Icon = Brain; // KI-Icon statt Glocke als Standard-Icon
     }
   }
 
@@ -99,7 +99,7 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
       case 'contact_created':
         return 'bg-emerald-500';
       default:
-        return 'bg-gray-500';
+        return 'bg-gradient-to-r from-blue-500 to-purple-500'; // Gleicher Farbverlauf wie KI-Analyse-Button
     }
   };
 
