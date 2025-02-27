@@ -148,6 +148,18 @@ export const TimelineItemCard = ({
   };
 
   const renderContent = () => {
+    // Separate case for appointments
+    if (type === "appointment" && id) {
+      return (
+        <AppointmentCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          onDelete={onDelete}
+        />
+      );
+    }
+
     if (type === "task" && id) {
       return (
         <TaskCard
@@ -157,17 +169,6 @@ export const TimelineItemCard = ({
           isCompleted={isCompleted}
           onDelete={onDelete}
           onToggleComplete={onToggleComplete}
-        />
-      );
-    }
-
-    if (type === "appointment" && id) {
-      return (
-        <AppointmentCard
-          id={id}
-          content={content}
-          metadata={metadata}
-          onDelete={onDelete}
         />
       );
     }

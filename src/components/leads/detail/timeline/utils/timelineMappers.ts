@@ -13,21 +13,43 @@ export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
   status: note.status
 });
 
-export const mapTaskToTimelineItem = (task: any): TimelineItem => ({
-  id: task.id,
-  type: task.type || 'task',
-  content: task.title,
-  created_at: task.created_at,
-  timestamp: task.created_at,
-  completed: task.completed || false, // Ensure completed status is correctly mapped
-  metadata: {
-    dueDate: task.due_date,
-    status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
-    completedAt: task.completed ? task.updated_at : undefined,
-    color: task.color,
-    meetingType: task.meeting_type
+export const mapTaskToTimelineItem = (task: any): TimelineItem => {
+  // Check if this is an appointment (meeting) or a regular task
+  if (task.meeting_type || task.type === 'appointment') {
+    return {
+      id: task.id,
+      type: 'appointment',
+      content: task.title,
+      created_at: task.created_at,
+      timestamp: task.created_at,
+      metadata: {
+        dueDate: task.due_date,
+        status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
+        completedAt: task.completed ? task.updated_at : undefined,
+        cancelledAt: task.cancelled ? task.updated_at : undefined,
+        color: task.color,
+        meetingType: task.meeting_type,
+        duration: 60, // Default duration in minutes
+      }
+    };
   }
-});
+  
+  // Regular task
+  return {
+    id: task.id,
+    type: task.type || 'task',
+    content: task.title,
+    created_at: task.created_at,
+    timestamp: task.created_at,
+    completed: task.completed || false,
+    metadata: {
+      dueDate: task.due_date,
+      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
+      completedAt: task.completed ? task.updated_at : undefined,
+      color: task.color,
+    }
+  };
+};
 
 export const mapMessageToTimelineItem = (message: any): TimelineItem => ({
   id: message.id,
