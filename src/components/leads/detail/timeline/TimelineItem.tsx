@@ -74,25 +74,26 @@ export const TimelineItem = ({
         {formatDateTime(item.timestamp, settings?.language)}
       </div>
       
-      <div className="relative">
-        <div className="flex items-start gap-6">
-          {/* Icon Container mit fester Breite */}
-          <div className="w-8 flex-shrink-0">
-            <TimelineItemIcon 
-              type={item.type} 
-              status={item.status} 
-              platform={item.platform}
-              metadata={item.metadata}
-            />
-          </div>
-          
-          {/* Horizontale gestrichelte Linie mit korrigierter Position */}
-          <div className="absolute left-8 top-4 w-8 h-0.5 bg-gray-400 border-t-2 border-dashed border-gray-400" />
-          
-          {/* Content Container mit mehr Abstand */}
-          <div className="flex-1 min-w-0 pl-2">
-            {renderContent()}
-          </div>
+      <div className="relative flex items-start gap-4">
+        {/* Icon Container */}
+        <div className="relative flex-shrink-0 w-8">
+          <TimelineItemIcon 
+            type={item.type} 
+            status={item.status} 
+            platform={item.platform}
+            metadata={item.metadata}
+          />
+        </div>
+        
+        {/* Horizontal Line */}
+        <div 
+          className="absolute left-8 top-4 w-8 h-[1px] bg-gray-300 border-t border-dashed border-gray-300"
+          style={{ transform: 'translateY(-50%)' }}
+        />
+        
+        {/* Content Container */}
+        <div className="flex-1 min-w-0">
+          {renderContent()}
         </div>
       </div>
     </motion.div>
