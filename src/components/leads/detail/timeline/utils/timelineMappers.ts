@@ -54,23 +54,6 @@ export const mapFileToTimelineItem = (file: any): TimelineItem => ({
   }
 });
 
-export const mapBusinessMatchToTimelineItem = (businessMatch: any): TimelineItem => ({
-  id: businessMatch.id,
-  type: 'business_match',
-  content: `Business Match Analyse: ${businessMatch.match_score}%`,
-  created_at: businessMatch.created_at,
-  timestamp: businessMatch.created_at,
-  metadata: {
-    match_score: businessMatch.match_score,
-    skills: businessMatch.skills || [],
-    commonalities: businessMatch.commonalities || [],
-    potential_needs: businessMatch.potential_needs || [],
-    strengths: businessMatch.strengths || [],
-    type: 'business_match',
-    content: businessMatch.analysis_content
-  }
-});
-
 export const createContactCreationItem = (name: string, created_at: string): TimelineItem => ({
   id: `contact-creation-${created_at}`,
   type: 'contact_created',
