@@ -1,5 +1,12 @@
 
+import { useState, useEffect } from "react";
+import { 
+  CalendarIcon, Video, Youtube, FileText, Phone, 
+  MessageSquare, Pencil, ListTodo, Upload, Mail 
+} from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useSettings } from "@/hooks/use-settings";
 import { Platform } from "@/config/platforms";
 import { Tables } from "@/integrations/supabase/types";
@@ -8,12 +15,11 @@ import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { LeadFileUpload } from "./files/LeadFileUpload";
-import { useState, useEffect } from "react";
-import { CalendarIcon, Video, Youtube, FileText, Phone, MessageSquare } from "lucide-react";
 import { PresentationTab } from "./tabs/PresentationTab";
 import { CallScriptGenerator } from "./components/CallScriptGenerator";
 import { MessageGenerator } from "./components/MessageGenerator";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -37,12 +43,89 @@ const tabColors = {
   messagegenerator: "#8A2BE2"
 };
 
+interface TabItem {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  color: string;
+  showDialog?: boolean;
+}
+
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const { settings } = useSettings();
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("notes");
   const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
   const [existingAnalysis, setExistingAnalysis] = useState("");
+  
+  const isEnglish = settings?.language === "en";
+
+  const tabItems: TabItem[] = [
+    {
+      id: "notes",
+      label: isEnglish ? "Notes" : "Notizen",
+      icon: <Pencil className="h-4 w-4" />,
+      color: tabColors.notes
+    },
+    {
+      id: "tasks",
+      label: isEnglish ? "Tasks" : "Aufgaben",
+      icon: <ListTodo className="h-4 w-4" />,
+      color: tabColors.tasks
+    },
+    {
+      id: "appointments",
+      label: isEnglish ? "Appointments" : "Termine",
+      icon: <CalendarIcon className="h-4 w-4" />,
+      color: tabColors.appointments,
+      showDialog: true
+    },
+    {
+      id: "messages",
+      label: isEnglish ? "Messages" : "Nachrichten",
+      icon: <Mail className="h-4 w-4" />,
+      color: tabColors.messages
+    },
+    {
+      id: "uploads",
+      label: isEnglish ? "Upload File" : "Datei hochladen",
+      icon: <Upload className="h-4 w-4" />,
+      color: tabColors.uploads
+    },
+    {
+      id: "callscript",
+      label: isEnglish ? "Call Script" : "Telefonscript",
+      icon: <Phone className="h-4 w-4" />,
+      color: tabColors.callscript
+    },
+    {
+      id: "messagegenerator",
+      label: isEnglish ? "Create Message" : "Nachricht erstellen",
+      icon: <MessageSquare className="h-4 w-4" />,
+      color: tabColors.messagegenerator
+    },
+    {
+      id: "zoom",
+      label: "Zoom",
+      icon: <Video className="h-4 w-4" />,
+      color: tabColors.zoom,
+      showDialog: true
+    },
+    {
+      id: "youtube",
+      label: "YouTube",
+      icon: <Youtube className="h-4 w-4" />,
+      color: tabColors.youtube,
+      showDialog: true
+    },
+    {
+      id: "documents",
+      label: isEnglish ? "Documents" : "Dokumente",
+      icon: <FileText className="h-4 w-4" />,
+      color: tabColors.documents,
+      showDialog: true
+    }
+  ];
 
   useEffect(() => {
     async function fetchExistingAnalysis() {
@@ -70,92 +153,50 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   }, [lead.id, lead.phase_id]);
 
   const handleTabChange = (value: string) => {
-    if (value === "appointments") {
-      setAppointmentDialogOpen(true);
-      return;
-    }
-    if (["zoom", "youtube", "documents"].includes(value)) {
+    const tabItem = tabItems.find(tab => tab.id === value);
+    
+    if (tabItem?.showDialog) {
+      if (value === "appointments") {
+        setAppointmentDialogOpen(true);
+        return;
+      }
+      
       setPresentationDialogOpen(true);
     }
+    
     setSelectedTab(value);
   };
 
   return (
     <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-4 pt-4">
-      <TabsList className="w-full flex-wrap">
-        <TabsTrigger
-          value="notes"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.notes}` }}
-        >
-          {settings?.language === "en" ? "Notes" : "Notizen"}
-        </TabsTrigger>
-        <TabsTrigger
-          value="tasks"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.tasks}` }}
-        >
-          {settings?.language === "en" ? "Tasks" : "Aufgaben"}
-        </TabsTrigger>
-        <TabsTrigger
-          value="appointments"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.appointments}` }}
-        >
-          {settings?.language === "en" ? "Appointments" : "Termine"}
-        </TabsTrigger>
-        <TabsTrigger
-          value="messages"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.messages}` }}
-        >
-          {settings?.language === "en" ? "Messages" : "Nachrichten"}
-        </TabsTrigger>
-        <TabsTrigger
-          value="uploads"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.uploads}` }}
-        >
-          {settings?.language === "en" ? "Upload File" : "Datei hochladen"}
-        </TabsTrigger>
-        <TabsTrigger
-          value="callscript"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.callscript}` }}
-        >
-          <Phone className="w-4 h-4 mr-1" />
-          {settings?.language === "en" ? "Call Script" : "Telefonscript"}
-        </TabsTrigger>
-        <TabsTrigger
-          value="messagegenerator"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.messagegenerator}` }}
-        >
-          <MessageSquare className="w-4 h-4 mr-1" />
-          {settings?.language === "en" ? "Create Message" : "Nachricht erstellen"}
-        </TabsTrigger>
-        <TabsTrigger
-          value="zoom"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.zoom}` }}
-        >
-          <Video className="w-4 h-4" />
-        </TabsTrigger>
-        <TabsTrigger
-          value="youtube"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.youtube}` }}
-        >
-          <Youtube className="w-4 h-4" />
-        </TabsTrigger>
-        <TabsTrigger
-          value="documents"
-          className="flex-1"
-          style={{ borderBottom: `2px solid ${tabColors.documents}` }}
-        >
-          <FileText className="w-4 h-4" />
-        </TabsTrigger>
-      </TabsList>
+      <ScrollArea className="w-full pb-2" orientation="horizontal">
+        <TabsList className="inline-flex w-max px-4 mb-2">
+          <TooltipProvider>
+            {tabItems.map((tab) => (
+              <Tooltip key={tab.id}>
+                <TooltipTrigger asChild>
+                  <TabsTrigger
+                    value={tab.id}
+                    className={cn(
+                      "flex gap-2 items-center px-4 py-2 relative",
+                      "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full",
+                      `after:bg-[${tab.color}]`
+                    )}
+                  >
+                    {tab.icon}
+                    <span className="sr-only md:not-sr-only md:inline-block">
+                      {tab.label}
+                    </span>
+                  </TabsTrigger>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {tab.label}
+                </TooltipContent>
+              </Tooltip>
+            ))}
+          </TooltipProvider>
+        </TabsList>
+      </ScrollArea>
 
       <TabsContent value="notes" className="mt-4">
         <NoteTab leadId={lead.id} />

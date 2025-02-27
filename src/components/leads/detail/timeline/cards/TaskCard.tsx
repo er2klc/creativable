@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CheckSquare, SquareCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DeleteButton } from "./DeleteButton";
@@ -8,6 +8,8 @@ import { format } from "date-fns";
 import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import confetti from "canvas-confetti";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface TaskCardProps {
   id: string;
@@ -33,13 +35,34 @@ export function TaskCard({
   const { settings } = useSettings();
   const [completed, setCompleted] = useState(isCompleted);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+  
+  // Effects to sync with the parent component
+  useEffect(() => {
+    if (isCompleted !== completed) {
+      setCompleted(isCompleted);
+    }
+  }, [isCompleted]);
+
+  const triggerConfetti = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#4CAF50', '#8BC34A', '#CDDC39']
+    });
+  };
 
   const handleToggleComplete = async () => {
     if (isSubmitting) return;
+    if (completed) return; // Don't allow uncompleting tasks - this is optional, remove if you want to toggle both ways
     
     setIsSubmitting(true);
+    
     try {
       const newState = !completed;
+      
+      // Optimistic UI update
       setCompleted(newState);
       
       // Update in the database
@@ -49,6 +72,17 @@ export function TaskCard({
         .eq('id', id);
         
       if (error) throw error;
+      
+      // On success actions
+      if (newState) {
+        // Only trigger confetti when completing a task
+        triggerConfetti();
+      }
+      
+      // Invalidate relevant queries to sync across all views
+      queryClient.invalidateQueries(['tasks']);
+      queryClient.invalidateQueries(['todo']);
+      queryClient.invalidateQueries(['lead']);
       
       // Call the callback if provided
       if (onToggleComplete) {
@@ -62,7 +96,8 @@ export function TaskCard({
       );
     } catch (error) {
       console.error("Error updating task:", error);
-      setCompleted(!completed); // Revert UI state on error
+      // Revert UI state on error
+      setCompleted(!completed);
       toast.error(
         settings?.language === "en"
           ? "Failed to update task"
@@ -97,10 +132,11 @@ export function TaskCard({
           size="icon"
           className={cn(
             "p-0 h-5 w-5",
-            completed && "text-green-500"
+            completed ? "text-green-500" : "",
+            isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           )}
           onClick={handleToggleComplete}
-          disabled={isSubmitting}
+          disabled={isSubmitting || completed} // Disable if already completed
         >
           {completed ? (
             <CheckSquare className="h-5 w-5" />

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "@/types/leads";
 import { useSocialMediaPosts } from "./hooks/useSocialMediaPosts";
@@ -16,6 +16,7 @@ import {
 } from "./timeline/utils/timelineMappers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -27,6 +28,35 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
   const [tasks, setTasks] = useState(lead.tasks || []);
+  const queryClient = useQueryClient();
+  
+  // Update local tasks when lead tasks change
+  useEffect(() => {
+    if (lead.tasks) {
+      setTasks(lead.tasks);
+    }
+  }, [lead.tasks]);
+  
+  // Set up realtime subscription to tasks
+  useEffect(() => {
+    const taskChannel = supabase
+      .channel(`tasks-${lead.id}`)
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'tasks',
+        filter: `lead_id=eq.${lead.id}`
+      }, () => {
+        // When tasks change, invalidate queries
+        queryClient.invalidateQueries(['lead', lead.id]);
+        queryClient.invalidateQueries(['todo']);
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(taskChannel);
+    };
+  }, [lead.id, queryClient]);
   
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
   const hasSocialPosts = Array.isArray(socialMediaPosts) && socialMediaPosts.length > 0;
@@ -48,14 +78,18 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         task.id === taskId ? { ...task, completed } : task
       ));
       
-      // Update in database (the TaskCard component already does this, 
-      // so this is just for consistency in case we need to do more than just toggle)
+      // Update in database
       const { error } = await supabase
         .from('tasks')
         .update({ completed })
         .eq('id', taskId);
         
       if (error) throw error;
+      
+      // Invalidate queries to ensure consistency
+      queryClient.invalidateQueries(['lead', lead.id]);
+      queryClient.invalidateQueries(['todo']);
+      
     } catch (error) {
       console.error("Error toggling task completion:", error);
       toast.error(

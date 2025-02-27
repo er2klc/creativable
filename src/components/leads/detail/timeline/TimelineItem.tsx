@@ -11,9 +11,14 @@ import { YoutubeCard } from "./cards/YoutubeCard";
 interface TimelineItemProps {
   item: TimelineItemType;
   onDelete?: (noteId: string) => void;
+  onToggleTaskComplete?: (id: string, completed: boolean) => void;
 }
 
-export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
+export const TimelineItem = ({ 
+  item, 
+  onDelete,
+  onToggleTaskComplete
+}: TimelineItemProps) => {
   const { settings } = useSettings();
 
   const renderContent = () => {
@@ -41,6 +46,8 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
         onDelete={onDelete ? () => onDelete(item.id) : undefined}
         id={item.id}
         created_at={item.created_at}
+        isCompleted={item.type === 'task' ? item.completed : undefined}
+        onToggleComplete={onToggleTaskComplete && item.type === 'task' ? onToggleTaskComplete : undefined}
       />
     );
   };
@@ -66,6 +73,7 @@ export const TimelineItem = ({ item, onDelete }: TimelineItemProps) => {
               status={item.metadata?.status} 
               platform={item.platform}
               metadata={item.metadata}
+              completed={item.type === 'task' ? item.completed : undefined}
             />
           </div>
           
