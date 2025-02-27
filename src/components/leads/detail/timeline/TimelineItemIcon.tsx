@@ -24,7 +24,8 @@ import {
   Bot,
   Youtube,
   Video,
-  Eye
+  Eye,
+  Phone
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 
@@ -39,6 +40,8 @@ interface TimelineItemIconProps {
     meetingType?: string;
     fileType?: string;
     event_type?: string;
+    script_type?: string;
+    message_type?: string;
   };
 }
 
@@ -49,6 +52,16 @@ export const TimelineItemIcon = ({
   metadata 
 }: TimelineItemIconProps) => {
   const getIconComponent = () => {
+    // Handle call script
+    if (metadata?.type === 'call_script') {
+      return Phone;
+    }
+
+    // Handle message template
+    if (metadata?.type === 'message_template') {
+      return Send;
+    }
+
     // Handle YouTube events first
     if (metadata?.type === 'youtube') {
       // Use different icons based on event_type
@@ -121,6 +134,24 @@ export const TimelineItemIcon = ({
   };
 
   const getIconColor = () => {
+    // Handle call script
+    if (metadata?.type === 'call_script') {
+      return 'bg-orange-500';
+    }
+
+    // Handle message template
+    if (metadata?.type === 'message_template') {
+      switch(platform) {
+        case 'Instagram': return 'bg-gradient-to-r from-purple-500 to-pink-500';
+        case 'LinkedIn': return 'bg-blue-600';
+        case 'Facebook': return 'bg-blue-500';
+        case 'WhatsApp': return 'bg-green-500';
+        case 'Email': return 'bg-gray-500';
+        case 'TikTok': return 'bg-black';
+        default: return 'bg-purple-400';
+      }
+    }
+
     // Handle YouTube type first with different colors based on event_type
     if (metadata?.type === 'youtube') {
       if (metadata.event_type === 'video_opened' || 

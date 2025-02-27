@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { MessageSquare, Copy, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Copy, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
 import { DeleteButton } from "./DeleteButton";
@@ -62,6 +62,44 @@ export function MessageTemplateCard({
     }
   };
 
+  const getBorderColorByPlatform = () => {
+    switch(platform) {
+      case 'Instagram':
+        return 'border-pink-500';
+      case 'LinkedIn':
+        return 'border-blue-600';
+      case 'Facebook':
+        return 'border-blue-500';
+      case 'WhatsApp':
+        return 'border-green-500';
+      case 'Email':
+        return 'border-gray-500';
+      case 'TikTok':
+        return 'border-black';
+      default:
+        return 'border-gray-400';
+    }
+  };
+
+  const getIconColorByPlatform = () => {
+    switch(platform) {
+      case 'Instagram':
+        return 'text-pink-500';
+      case 'LinkedIn':
+        return 'text-blue-600';
+      case 'Facebook':
+        return 'text-blue-500';
+      case 'WhatsApp':
+        return 'text-green-500';
+      case 'Email':
+        return 'text-gray-500';
+      case 'TikTok':
+        return 'text-black';
+      default:
+        return 'text-gray-400';
+    }
+  };
+
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(content);
@@ -80,9 +118,9 @@ export function MessageTemplateCard({
   };
 
   return (
-    <div className="relative group">
+    <div className={`relative group bg-white border rounded-lg shadow-sm p-4 ${getBorderColorByPlatform()}`}>
       <div className="flex items-center gap-2 mb-2">
-        <MessageSquare className="h-4 w-4 text-purple-500" />
+        <Send className={`h-4 w-4 ${getIconColorByPlatform()}`} />
         <span className="font-medium">{getTypeLabel()}</span>
         <Badge className={`text-xs text-white ${getColorByPlatform()}`}>
           {platform}
