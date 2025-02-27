@@ -11,6 +11,7 @@ import {
   mapTaskToTimelineItem, 
   mapMessageToTimelineItem, 
   mapFileToTimelineItem,
+  mapBusinessMatchToTimelineItem,
   createContactCreationItem,
   createStatusChangeItem 
 } from "./timeline/utils/timelineMappers";
@@ -70,6 +71,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     lead.updated_at || lead.created_at || new Date().toISOString()
   );
 
+  // Holen der Business Match-Daten, falls vorhanden
+  const businessMatchItems = lead.business_match ? 
+    [mapBusinessMatchToTimelineItem(lead.business_match)] : 
+    [];
+
   // Handle task completion toggle
   const handleToggleTaskComplete = async (taskId: string, completed: boolean) => {
     try {
@@ -106,6 +112,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   };
 
   const allActivities = [
+    ...businessMatchItems,
     ...(statusChangeItem ? [statusChangeItem] : []),
     ...(lead.notes || []).map(mapNoteToTimelineItem),
     ...(tasks || []).map(mapTaskToTimelineItem),
@@ -137,6 +144,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           items={timelineItems}
           onDeletePhaseChange={onDeletePhaseChange}
           onToggleTaskComplete={handleToggleTaskComplete}
+          leadName={lead.name}
         />
       ) : (
         <SocialTimeline 

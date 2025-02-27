@@ -7,6 +7,7 @@ import { formatDateTime } from "./utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { StatusCard } from "./cards/StatusCard";
 import { YoutubeCard } from "./cards/YoutubeCard";
+import { BusinessMatchCard } from "./cards/BusinessMatchCard";
 
 interface TimelineItemProps {
   item: {
@@ -22,20 +23,38 @@ interface TimelineItemProps {
   };
   onDelete?: (noteId: string) => void;
   onToggleTaskComplete?: (id: string, completed: boolean) => void;
+  leadName?: string;
 }
 
 export const TimelineItem = ({ 
   item, 
   onDelete,
-  onToggleTaskComplete
+  onToggleTaskComplete,
+  leadName
 }: TimelineItemProps) => {
   const { settings } = useSettings();
 
   const renderContent = () => {
+    // Business Match Karte
+    if (item.type === 'business_match') {
+      return (
+        <BusinessMatchCard
+          matchScore={item.metadata?.match_score || 0}
+          skills={item.metadata?.skills || []}
+          commonalities={item.metadata?.commonalities || []}
+          potentialNeeds={item.metadata?.potential_needs || []}
+          strengths={item.metadata?.strengths || []}
+          content={item.metadata?.content || ''}
+        />
+      );
+    }
+
+    // YouTube Karte
     if (item.metadata?.type === 'youtube') {
       return <YoutubeCard content={item.content} metadata={item.metadata} />;
     }
 
+    // Status Change Karte
     if (item.type === 'status_change') {
       return (
         <StatusCard
@@ -47,6 +66,7 @@ export const TimelineItem = ({
       );
     }
 
+    // Alle anderen Kartentypen
     return (
       <TimelineItemCard 
         type={item.type}
@@ -58,6 +78,7 @@ export const TimelineItem = ({
         created_at={item.created_at}
         isCompleted={item.type === 'task' ? item.completed : undefined}
         onToggleComplete={onToggleTaskComplete && item.type === 'task' ? onToggleTaskComplete : undefined}
+        leadName={leadName}
       />
     );
   };
