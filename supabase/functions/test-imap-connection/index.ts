@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { ImapFlow } from "https://esm.sh/imapflow@1.0.126";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,41 +43,25 @@ serve(async (req) => {
 
     console.log(`Testing IMAP connection to ${host}:${port}, secure: ${secure}`);
 
-    // Create IMAP client with provided settings
-    const client = new ImapFlow({
-      host: host,
-      port: port,
-      secure: secure,
-      auth: {
-        user: username,
-        pass: password
-      },
-      logger: false,
-      // Short timeouts for testing
-      timeoutConnection: 10000
-    });
-
     try {
-      // Test connection by connecting and immediately disconnecting
-      await client.connect();
-      console.log("IMAP connection successful");
+      // Since we don't have a native Deno IMAP client, we'll simulate a connection
+      // test by making a TCP socket connection to the server port.
+      // This will verify the server is reachable, but not full authentication.
+      const conn = await Deno.connect({
+        hostname: host,
+        port: port,
+      });
       
-      // Try to get mailbox list as additional validation
-      const mailboxes = await client.list();
-      console.log(`Found ${mailboxes.length} mailboxes`);
+      // We successfully connected to the server
+      console.log("IMAP server connection established");
       
-      // Get inbox count
-      const inbox = await client.mailboxOpen('INBOX');
-      console.log(`INBOX has ${inbox.exists} messages`);
+      // Close the connection
+      conn.close();
       
-      await client.logout();
-
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: "IMAP connection successful",
-          mailboxes: mailboxes.length,
-          inbox_count: inbox.exists
+          message: "IMAP server is reachable. Note: Full authentication test is not available in this version."
         }),
         { 
           status: 200, 
@@ -93,7 +76,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: "IMAP connection failed", 
-          details: connectionError.message 
+          details: connectionError.message || "Could not establish connection to IMAP server"
         }),
         { 
           status: 400, 
@@ -107,7 +90,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error processing request:", error);
     return new Response(
-      JSON.stringify({ error: "Error processing request", details: error.message }),
+      JSON.stringify({ 
+        error: "Error processing request", 
+        details: error.message || "Unknown error"
+      }),
       { 
         status: 500, 
         headers: { 

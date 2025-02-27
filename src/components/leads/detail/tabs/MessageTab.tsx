@@ -11,7 +11,8 @@ import { useQuery } from "@tanstack/react-query";
 import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { getLeadWithRelations } from "@/utils/query-helpers";
 import { Platform } from "@/config/platforms";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2, Mail, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface MessageTabProps {
   leadId: string;
@@ -47,7 +48,12 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
 
   const handleSendEmail = async () => {
     if (!smtpSettings) {
-      toast.error("Bitte zuerst SMTP-Einstellungen konfigurieren");
+      toast.error("Bitte zuerst E-Mail-Einstellungen konfigurieren", {
+        action: {
+          label: "Zu Einstellungen",
+          onClick: () => window.location.href = "/settings?tab=email"
+        }
+      });
       return;
     }
 
@@ -93,8 +99,27 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
     );
   }
 
+  const showEmailSettings = !smtpSettings;
+
   return (
     <div className="space-y-4">
+      {showEmailSettings && (
+        <Alert variant="warning" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>E-Mail-Einstellungen fehlen</AlertTitle>
+          <AlertDescription>
+            Sie müssen zuerst Ihre E-Mail-Einstellungen konfigurieren, bevor Sie E-Mails senden können.
+            <Button 
+              variant="link" 
+              className="p-0 h-auto ml-2"
+              onClick={() => window.location.href = "/settings?tab=email"}
+            >
+              Zu den E-Mail-Einstellungen
+            </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="flex flex-col space-y-2 text-sm text-muted-foreground mb-4">
         <div className="flex items-center space-x-2">
           <span>Von:</span>
@@ -113,6 +138,7 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
           onChange={(e) => setSubject(e.target.value)}
           placeholder="E-Mail Betreff eingeben..."
           className="mt-2"
+          disabled={showEmailSettings}
         />
       </div>
       

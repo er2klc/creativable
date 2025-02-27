@@ -1,6 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -25,7 +25,7 @@ serve(async (req) => {
   }
 
   try {
-    const { host, port, username, password, secure, user_id } = await req.json() as SmtpSettings;
+    const { host, port, username, password, secure } = await req.json() as SmtpSettings;
     
     // Validate required fields
     if (!host || !port || !username || !password) {
@@ -46,25 +46,23 @@ serve(async (req) => {
 
     console.log(`Testing SMTP connection to ${host}:${port}, secure: ${secure}`);
 
-    // Create SMTP client with provided settings
-    const client = new SMTPClient({
-      connection: {
+    try {
+      // Create SMTP client
+      const client = new SmtpClient();
+      
+      // Connect to the server
+      await client.connectTLS({
         hostname: host,
         port: port,
-        tls: secure,
-        auth: {
-          username: username,
-          password: password,
-        },
-      },
-    });
-
-    try {
-      // Test connection by connecting and immediately disconnecting
-      await client.connect();
+        username: username,
+        password: password,
+      });
+      
       console.log("SMTP connection successful");
+      
+      // Close the connection
       await client.close();
-
+      
       return new Response(
         JSON.stringify({ success: true, message: "SMTP connection successful" }),
         { 
@@ -80,7 +78,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           error: "SMTP connection failed", 
-          details: connectionError.message 
+          details: connectionError.message || "Could not establish SMTP connection"
         }),
         { 
           status: 400, 
@@ -94,7 +92,10 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error processing request:", error);
     return new Response(
-      JSON.stringify({ error: "Error processing request", details: error.message }),
+      JSON.stringify({ 
+        error: "Error processing request", 
+        details: error.message || "Unknown error"
+      }),
       { 
         status: 500, 
         headers: { 
