@@ -109,9 +109,7 @@ export const TimelineItemCard = ({
   }
 
   const getBorderColor = () => {
-    // Debugging für Statusänderungen
     if (type === "status_change") {
-      console.log("Status change metadata:", metadata);
       switch (metadata?.newStatus) {
         case "partner":
           return "border-pink-500";
@@ -124,7 +122,7 @@ export const TimelineItemCard = ({
         case "lead":
           return "border-blue-500";
         default:
-          return "border-gray-500"; // Standardfarbe
+          return "border-gray-500";
       }
     }
 
@@ -215,7 +213,7 @@ export const TimelineItemCard = ({
 
   return (
     <div
-      className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-md border ${getBorderColor()} group relative`}
+      className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-sm border ${getBorderColor()} group relative`}
     >
       {renderContent()}
       <MetadataDisplay

@@ -59,7 +59,7 @@ export function CallScriptCard({
   };
 
   return (
-    <div className="relative group">
+    <div className="relative group bg-white border border-gray-200 rounded-lg shadow-sm p-4">
       <div className="flex items-center gap-2 mb-2">
         <Phone className="h-4 w-4 text-orange-500" />
         <span className="font-medium">{getTypeLabel()}</span>
