@@ -39,6 +39,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Loader2, Mail, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useAuth } from "@/hooks/use-auth";
 
 // Define schemas
 const smtpSchema = z.object({
@@ -64,6 +65,7 @@ type ImapFormData = z.infer<typeof imapSchema>;
 
 export function EmailSettings() {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [testingSmtp, setTestingSmtp] = useState(false);
   const [testingImap, setTestingImap] = useState(false);
   const [smtpStatus, setSmtpStatus] = useState<'idle' | 'success' | 'error'>('idle');
@@ -128,11 +130,48 @@ export function EmailSettings() {
   // Update SMTP settings mutation
   const updateSmtpSettings = useMutation({
     mutationFn: async (data: SmtpFormData) => {
-      const { error } = await supabase
-        .from('smtp_settings')
-        .upsert(data, { onConflict: 'user_id' });
+      if (!user) throw new Error("User not authenticated");
 
-      if (error) throw error;
+      // Check if SMTP settings already exist
+      const { data: existingSettings } = await supabase
+        .from('smtp_settings')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingSettings) {
+        // Update existing settings
+        const { error } = await supabase
+          .from('smtp_settings')
+          .update({
+            host: data.host,
+            port: data.port,
+            username: data.username,
+            password: data.password,
+            from_email: data.from_email,
+            from_name: data.from_name,
+            secure: data.secure
+          })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new settings
+        const { error } = await supabase
+          .from('smtp_settings')
+          .insert({
+            host: data.host,
+            port: data.port,
+            username: data.username,
+            password: data.password,
+            from_email: data.from_email,
+            from_name: data.from_name,
+            secure: data.secure,
+            user_id: user.id
+          });
+
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['smtp-settings'] });
@@ -140,18 +179,51 @@ export function EmailSettings() {
     },
     onError: (error) => {
       console.error("Error saving SMTP settings:", error);
-      toast.error("Fehler beim Speichern der SMTP Einstellungen");
+      toast.error("Fehler beim Speichern der SMTP Einstellungen: " + error.message);
     }
   });
 
   // Update IMAP settings mutation
   const updateImapSettings = useMutation({
     mutationFn: async (data: ImapFormData) => {
-      const { error } = await supabase
-        .from('imap_settings')
-        .upsert(data, { onConflict: 'user_id' });
+      if (!user) throw new Error("User not authenticated");
 
-      if (error) throw error;
+      // Check if IMAP settings already exist
+      const { data: existingSettings } = await supabase
+        .from('imap_settings')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingSettings) {
+        // Update existing settings
+        const { error } = await supabase
+          .from('imap_settings')
+          .update({
+            host: data.host,
+            port: data.port,
+            username: data.username,
+            password: data.password,
+            secure: data.secure
+          })
+          .eq('user_id', user.id);
+
+        if (error) throw error;
+      } else {
+        // Insert new settings
+        const { error } = await supabase
+          .from('imap_settings')
+          .insert({
+            host: data.host,
+            port: data.port,
+            username: data.username,
+            password: data.password,
+            secure: data.secure,
+            user_id: user.id
+          });
+
+        if (error) throw error;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['imap-settings'] });
@@ -159,7 +231,7 @@ export function EmailSettings() {
     },
     onError: (error) => {
       console.error("Error saving IMAP settings:", error);
-      toast.error("Fehler beim Speichern der IMAP Einstellungen");
+      toast.error("Fehler beim Speichern der IMAP Einstellungen: " + error.message);
     }
   });
 
@@ -222,7 +294,10 @@ export function EmailSettings() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("SMTP test function error:", error);
+        throw new Error(`Fehler bei der Ausführung: ${error.message}`);
+      }
       
       if (data.success) {
         setSmtpStatus('success');
@@ -236,7 +311,7 @@ export function EmailSettings() {
       console.error("Error testing SMTP connection:", error);
       setSmtpStatus('error');
       setSmtpErrorMessage(error.message || "Verbindungsfehler");
-      toast.error("Fehler beim Testen der SMTP Verbindung");
+      toast.error("Fehler beim Testen der SMTP Verbindung: " + error.message);
     } finally {
       setTestingSmtp(false);
     }
@@ -264,7 +339,10 @@ export function EmailSettings() {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("IMAP test function error:", error);
+        throw new Error(`Fehler bei der Ausführung: ${error.message}`);
+      }
       
       if (data.success) {
         setImapStatus('success');
@@ -278,10 +356,26 @@ export function EmailSettings() {
       console.error("Error testing IMAP connection:", error);
       setImapStatus('error');
       setImapErrorMessage(error.message || "Verbindungsfehler");
-      toast.error("Fehler beim Testen der IMAP Verbindung");
+      toast.error("Fehler beim Testen der IMAP Verbindung: " + error.message);
     } finally {
       setTestingImap(false);
     }
+  };
+
+  // Common error display
+  const displayConnectionError = (message: string | null) => {
+    if (!message) return null;
+    
+    // Check for common error patterns and provide friendly messages
+    if (message.includes("ECONNREFUSED")) {
+      return "Verbindung zum Server verweigert. Bitte überprüfen Sie Host und Port.";
+    } else if (message.includes("authenticate")) {
+      return "Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Benutzername und Passwort.";
+    } else if (message.includes("certificate")) {
+      return "SSL/TLS Zertifikatsfehler. Versuchen Sie die Verbindung ohne SSL/TLS.";
+    }
+    
+    return message;
   };
 
   if (smtpLoading || imapLoading) {
@@ -443,7 +537,7 @@ export function EmailSettings() {
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>Verbindungsfehler</AlertTitle>
                             <AlertDescription>
-                              {smtpErrorMessage}
+                              {displayConnectionError(smtpErrorMessage)}
                             </AlertDescription>
                           </Alert>
                         )}
@@ -588,7 +682,7 @@ export function EmailSettings() {
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>Verbindungsfehler</AlertTitle>
                             <AlertDescription>
-                              {imapErrorMessage}
+                              {displayConnectionError(imapErrorMessage)}
                             </AlertDescription>
                           </Alert>
                         )}
