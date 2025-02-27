@@ -4,7 +4,8 @@ import { Tables } from "@/integrations/supabase/types";
 
 export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
   id: note.id,
-  type: note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
+  type: note.metadata?.type === 'phase_analysis' ? 'phase_analysis' : 
+        note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
   content: note.content,
   created_at: note.created_at,
   timestamp: note.metadata?.timestamp || note.created_at,
@@ -51,6 +52,23 @@ export const mapFileToTimelineItem = (file: any): TimelineItem => ({
     filePath: file.file_path,
     fileType: file.file_type,
     fileSize: file.file_size
+  }
+});
+
+export const mapBusinessMatchToTimelineItem = (businessMatch: any): TimelineItem => ({
+  id: businessMatch.id,
+  type: 'business_match',
+  content: `Business Match Analyse: ${businessMatch.match_score}%`,
+  created_at: businessMatch.created_at,
+  timestamp: businessMatch.created_at,
+  metadata: {
+    match_score: businessMatch.match_score,
+    skills: businessMatch.skills || [],
+    commonalities: businessMatch.commonalities || [],
+    potential_needs: businessMatch.potential_needs || [],
+    strengths: businessMatch.strengths || [],
+    type: 'business_match',
+    content: businessMatch.analysis_content
   }
 });
 
