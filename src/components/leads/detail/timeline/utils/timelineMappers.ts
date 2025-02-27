@@ -18,6 +18,7 @@ export const mapTaskToTimelineItem = (task: any): TimelineItem => ({
   content: task.title,
   created_at: task.created_at,
   timestamp: task.created_at,
+  completed: task.completed || false, // Ensure completed status is correctly mapped
   metadata: {
     dueDate: task.due_date,
     status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
