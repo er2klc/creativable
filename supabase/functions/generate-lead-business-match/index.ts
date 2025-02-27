@@ -1,18 +1,12 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.23.0'
+import { corsHeaders } from '../_shared/cors.ts'
 import OpenAI from "https://esm.sh/openai@4.0.0";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || '';
-
-// CORS Headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS'
-};
 
 interface MatchRequest {
   leadId: string;
@@ -32,7 +26,7 @@ serve(async (req) => {
 
     // Get request body
     const requestData: MatchRequest = await req.json();
-    const { leadId, userId, createTask = true } = requestData;
+    const { leadId, userId, createTask = false } = requestData;
 
     if (!leadId || !userId) {
       return new Response(
@@ -99,27 +93,24 @@ serve(async (req) => {
 
     // Create prompt for OpenAI
     const systemPrompt = `
-      Du bist ein spezialisierter Business-Analyst, der Geschäftsmatches bewertet.
-      Analysiere die Übereinstimmung zwischen einem Unternehmer und einem Kontakt.
-      Konzentriere dich auf: Branchenkompatibilität, Geschäftsbedürfnisse, potentielle Vorteile,
-      gemeinsame Interessen und Wachstumsmöglichkeiten.
+      You are a business analyst specializing in evaluating business matches. 
+      Analyze the potential match between a business owner and a contact.
+      Focus on: Industry compatibility, business needs, potential benefits,
+      common interests, and growth opportunities.
       
-      Anweisungen:
-      1. Analysiere zuerst, wie gut der Kontakt zum Unternehmen passt.
-      2. Berechne einen Match-Score von 0 bis 100.
-      3. Strukturiere deine Analyse mit diesen Abschnitten:
+      Instructions:
+      1. First, analyze how well the contact matches with the business.
+      2. Calculate a match score from 0 to 100.
+      3. Structure your analysis with these sections:
          - Business Match Score (0-100)
-         - Zusammenfassung (kurze Übersicht)
-         - Skills (des Kontakts)
-         - Gemeinsamkeiten (zwischen Unternehmen und Kontakt)
-         - Potentielle Bedarfe (was der Kontakt brauchen könnte)
-         - Stärken (des Matches)
-         - Empfehlungen (konkrete Handlungsschritte)
-      4. Gib eine ehrliche Einschätzung - nicht alle Kontakte sind gute Matches.
-      5. Extrahiere Schlüsselpunkte in jedem Abschnitt für die UI-Anzeige.
-      
-      Bereite am Ende einen EINZIGEN konkreten Vorschlag für einen wichtigen Task vor, der auf dem Match-Score basiert.
-      Formatiere den Task so: [TASK] Hier steht der Task-Text [/TASK]
+         - Summary (brief overview)
+         - Skills (of the contact)
+         - Commonalities (between business and contact)
+         - Potential Needs (what the contact might need)
+         - Strengths (of the match)
+         - Recommendations (actionable steps)
+      4. Provide an honest assessment - not all contacts are good matches.
+      5. Extract key points in each section for UI display.
     `;
 
     // Business owner information
@@ -174,12 +165,8 @@ serve(async (req) => {
             Additional Notes:
             ${contactInfo.notes}
 
-            Bitte erstelle eine vollständige Analyse dieses Business Matches mit allen erforderlichen Abschnitten.
-            Ersetze [Name] oder ähnliche Platzhalter im Text mit dem tatsächlichen Namen des Kontakts.
-            Schließe mit einem EINZIGEN konkreten Vorschlag für einen Task ab, der auf dem Match-Score basiert.
-            Formatiere den Task so: [TASK] Hier steht der Task-Text [/TASK]
-
-            Füge außerdem einen JSON-Abschnitt am Ende mit folgendem Format ein:
+            Please provide a complete analysis of this potential business match with all required sections.
+            Include a JSON section at the end with the format:
             \`\`\`json
             {
               "match_score": <number 0-100>,
@@ -211,15 +198,8 @@ serve(async (req) => {
       }
     }
 
-    // Extract task from the analysis content
-    const taskMatch = responseContent.match(/\[TASK\](.*?)\[\/TASK\]/s);
-    const taskContent = taskMatch ? taskMatch[1].trim() : null;
-
-    // Clean content (remove JSON block and task markup)
-    let cleanContent = responseContent
-      .replace(/```json\s*[\s\S]*?\s*```/, "")
-      .replace(/\[TASK\](.*?)\[\/TASK\]/s, "")
-      .trim();
+    // Clean content (remove JSON block)
+    let cleanContent = responseContent.replace(/```json\s*[\s\S]*?\s*```/, "");
     
     // Default data if parsing failed
     const matchData = extractedData || {
@@ -262,14 +242,14 @@ serve(async (req) => {
       throw analysisError;
     }
 
-    // Create a meaningful task based on the analysis
-    if (createTask && taskContent) {
+    // Create a single meaningful task based on match score
+    if (createTask) {
       try {
-        const taskPriority = matchData.match_score >= 70 ? "High" : 
-                            matchData.match_score >= 40 ? "Medium" : "Low";
-
-        const taskColor = matchData.match_score >= 70 ? "#4CAF50" : 
-                         matchData.match_score >= 40 ? "#2196F3" : "#FFC107";
+        const taskTitle = matchData.match_score >= 70
+          ? `**Wichtig:** Termin mit ${lead.name} vereinbaren - Business Match Score ${matchData.match_score}%`
+          : matchData.match_score >= 40
+            ? `Kontakt mit ${lead.name} aufnehmen - Business Match Score ${matchData.match_score}%`
+            : `Mehr Informationen über ${lead.name} sammeln (Match Score: ${matchData.match_score}%)`;
 
         const taskDueDate = new Date();
         taskDueDate.setDate(taskDueDate.getDate() + 3); // Due in 3 days
@@ -278,20 +258,20 @@ serve(async (req) => {
           .from('tasks')
           .insert({
             lead_id: leadId,
-            title: `**Business Match (${matchData.match_score}%):** ${taskContent}`,
+            title: taskTitle,
             due_date: taskDueDate.toISOString(),
-            priority: taskPriority,
+            priority: matchData.match_score >= 70 ? "High" : "Medium",
             user_id: userId,
-            color: taskColor
+            color: matchData.match_score >= 70 ? "#4CAF50" : "#2196F3"
           });
 
-        console.log("Created single task based on business match analysis");
+        console.log("Created single task based on business match score");
       } catch (taskError) {
         console.error("Error creating task:", taskError);
         // Continue even if task creation fails
       }
     } else {
-      console.log("Skipping task creation as not requested or no task content available");
+      console.log("Skipping task creation as not requested");
     }
 
     return new Response(

@@ -4,7 +4,6 @@ import { Gauge, Target, Crosshair, ChevronDown, ChevronUp, Award, List, Briefcas
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
-import ReactMarkdown from 'react-markdown';
 
 interface BusinessMatchCardProps {
   matchScore: number;
@@ -54,29 +53,6 @@ export const BusinessMatchCard = ({
     if (score >= 40) return "Mittel";
     if (score >= 20) return "Niedrig";
     return "Sehr niedrig";
-  };
-
-  // Custom renderer for markdown to properly handle emoji headers
-  const renderers = {
-    p: ({ children }: { children: React.ReactNode }) => {
-      const text = String(children);
-      // Check if paragraph starts with emoji (Unicode character range for most emojis)
-      const emojiRegex = /^(\p{Emoji}|[\u{1F300}-\u{1F6FF}\u{2600}-\u{26FF}])\s+(.+)/u;
-      const match = text.match(emojiRegex);
-      
-      if (match) {
-        // This is an emoji header
-        return (
-          <h3 className="text-md font-semibold mt-3 mb-2 text-gray-800 flex items-center">
-            <span className="mr-2">{match[1]}</span>
-            <span>{match[2]}</span>
-          </h3>
-        );
-      }
-      
-      // Regular paragraph
-      return <p className="my-2">{children}</p>;
-    }
   };
 
   return (
@@ -198,7 +174,7 @@ export const BusinessMatchCard = ({
       {expanded && (
         <div className="p-4 pt-0 border-t border-gray-100">
           <div className="prose prose-sm max-w-none mt-2">
-            <ReactMarkdown components={renderers}>{content}</ReactMarkdown>
+            <div dangerouslySetInnerHTML={{ __html: content.replace(/\n/g, "<br />") }} />
           </div>
         </div>
       )}

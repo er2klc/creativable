@@ -4,8 +4,7 @@ import { Tables } from "@/integrations/supabase/types";
 
 export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
   id: note.id,
-  type: note.metadata?.type === 'phase_analysis' ? 'phase_analysis' : 
-        note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
+  type: note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
   content: note.content,
   created_at: note.created_at,
   timestamp: note.metadata?.timestamp || note.created_at,

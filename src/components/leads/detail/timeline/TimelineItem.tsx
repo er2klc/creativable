@@ -8,7 +8,6 @@ import { useSettings } from "@/hooks/use-settings";
 import { StatusCard } from "./cards/StatusCard";
 import { YoutubeCard } from "./cards/YoutubeCard";
 import { BusinessMatchCard } from "./cards/BusinessMatchCard";
-import { NexusTimelineCard } from "./cards/NexusTimelineCard";
 
 interface TimelineItemProps {
   item: {
@@ -24,30 +23,16 @@ interface TimelineItemProps {
   };
   onDelete?: (noteId: string) => void;
   onToggleTaskComplete?: (id: string, completed: boolean) => void;
-  leadName?: string;
 }
 
 export const TimelineItem = ({ 
   item, 
   onDelete,
-  onToggleTaskComplete,
-  leadName
+  onToggleTaskComplete
 }: TimelineItemProps) => {
   const { settings } = useSettings();
 
   const renderContent = () => {
-    // Nexus AI Analyse
-    if (item.metadata?.type === 'phase_analysis') {
-      return (
-        <NexusTimelineCard 
-          content={item.content}
-          metadata={item.metadata}
-          onDelete={onDelete ? () => onDelete(item.id) : undefined}
-        />
-      );
-    }
-
-    // Business Match Karte
     if (item.type === 'business_match') {
       return (
         <BusinessMatchCard
@@ -61,18 +46,10 @@ export const TimelineItem = ({
       );
     }
 
-    // YouTube Karte
-    if (item.metadata?.type === 'youtube' || item.type === 'youtube') {
-      return (
-        <YoutubeCard 
-          content={item.content} 
-          metadata={item.metadata}
-          timestamp={item.timestamp}
-        />
-      );
+    if (item.metadata?.type === 'youtube') {
+      return <YoutubeCard content={item.content} metadata={item.metadata} />;
     }
 
-    // Status Change Karte
     if (item.type === 'status_change') {
       return (
         <StatusCard
@@ -84,7 +61,6 @@ export const TimelineItem = ({
       );
     }
 
-    // Alle anderen Kartentypen
     return (
       <TimelineItemCard 
         type={item.type}
@@ -96,7 +72,6 @@ export const TimelineItem = ({
         created_at={item.created_at}
         isCompleted={item.type === 'task' ? item.completed : undefined}
         onToggleComplete={onToggleTaskComplete && item.type === 'task' ? onToggleTaskComplete : undefined}
-        leadName={leadName}
       />
     );
   };
@@ -115,6 +90,7 @@ export const TimelineItem = ({
       
       <div className="relative">
         <div className="flex items-start gap-6">
+          {/* Icon Container mit fester Breite */}
           <div className="w-8 flex-shrink-0 relative z-10">
             <TimelineItemIcon 
               type={item.type} 
@@ -124,8 +100,10 @@ export const TimelineItem = ({
             />
           </div>
           
+          {/* Horizontale Linie mit korrigierter Position */}
           <div className="absolute left-8 top-4 w-8 h-0.5 bg-gray-400" />
           
+          {/* Content Container mit mehr Abstand */}
           <div className="flex-1 min-w-0 pl-2">
             {renderContent()}
           </div>
