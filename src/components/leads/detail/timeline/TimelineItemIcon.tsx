@@ -1,7 +1,7 @@
 
 import { 
   MessageSquare, BellRing, FileText, Calendar, User, AlertCircle, CheckSquare, SquareCheck, 
-  PenSquare, AlertTriangle, Youtube, File, Target, Brain, Eye, Video, Phone, Send
+  PenSquare, AlertTriangle, Youtube, File, Target, Brain, Eye, Video, Phone, Send, ArrowRightLeft
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 import { cn } from "@/lib/utils";
@@ -56,7 +56,7 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
         }
         break;
       case 'phase_change':
-        Icon = PenSquare;
+        Icon = ArrowRightLeft; // Neues Icon für Phasenänderung - zeigt besser einen Wechsel an
         break;
       case 'status_change':
         Icon = AlertTriangle;
