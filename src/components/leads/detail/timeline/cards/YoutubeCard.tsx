@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Copy, Activity, Eye, Video } from "lucide-react";
+import { Copy, Activity, Eye, Video, Youtube } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { VideoThumbnail } from "./youtube/VideoThumbnail";
@@ -44,7 +44,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
   return (
     <Card className={cn(
       "flex-1 p-4 text-sm overflow-hidden bg-white shadow-md relative border",
-      isViewCard ? "border-orange-500" : isExpired ? "border-red-500 bg-gray-50" : "border-gray-200"
+      isViewCard ? "border-orange-500" : isExpired ? "border-red-500 bg-gray-50" : "border-[#ea384c]" // YouTube-Rot für normale YouTube-Karten
     )}>
       {isViewCard && latestProgress > 0 && isVideoActive && (
         <>
@@ -60,13 +60,19 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
       )}
       <div className="flex items-start justify-between mt-2">
         <div className="space-y-1 flex-1">
-          <div className="font-medium text-base">
+          <div className="font-medium text-base flex items-center gap-2">
             {!isViewCard ? (
-              settings?.language === "en" 
-                ? "Presentation URL created"
-                : "Präsentation URL wurde erstellt"
+              <>
+                <Youtube className="h-4 w-4 text-[#ea384c]" />
+                {settings?.language === "en" 
+                  ? "Presentation URL created"
+                  : "Präsentation URL wurde erstellt"}
+              </>
             ) : (
-              metadata?.title || content
+              <>
+                <Eye className="h-4 w-4 text-orange-500" />
+                {metadata?.title || content}
+              </>
             )}
           </div>
           {isViewCard && (
@@ -95,7 +101,8 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 onClick={() => copyToClipboard(metadata.presentationUrl)}
                 className={cn(
                   "flex items-center gap-2 w-fit",
-                  isExpired && "border-red-500 hover:border-red-600 opacity-50 cursor-not-allowed"
+                  isExpired && "border-red-500 hover:border-red-600 opacity-50 cursor-not-allowed",
+                  !isExpired && "border-[#ea384c] hover:border-[#c12e3e] text-[#ea384c]"
                 )}
                 disabled={isExpired}
               >

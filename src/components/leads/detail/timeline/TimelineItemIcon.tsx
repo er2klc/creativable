@@ -21,9 +21,9 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
   if (type === 'youtube' || metadata?.type === 'youtube') {
     // Unterscheiden zwischen Video-Ansicht und URL-Karte
     if (metadata?.event_type?.includes('video') || metadata?.view_id) {
-      Icon = Video; // Video Icon für Video-Ansicht
+      Icon = Eye; // Auge Icon für Video-Ansicht/Präsentation wurde aufgerufen
     } else {
-      Icon = Eye; // Auge Icon für URL-Karte/Präsentation
+      Icon = Youtube; // YouTube Icon für URL-Karte
     }
   } 
   // Andere Typen verarbeiten
@@ -70,9 +70,9 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
     // Spezielle Prüfung für YouTube/Video-Einträge
     if (type === 'youtube' || metadata?.type === 'youtube') {
       if (metadata?.event_type?.includes('video') || metadata?.view_id) {
-        return 'bg-cyan-500'; // Cyan für Video-Ansicht
+        return 'bg-orange-500'; // Orange für Video-Ansicht/Präsentation wird angeschaut
       } else {
-        return 'bg-blue-500'; // Blau für URL-Karte
+        return 'bg-[#ea384c]'; // YouTube Rot für URL-Karte
       }
     }
     

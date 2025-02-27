@@ -1,6 +1,6 @@
 
 import { cn } from "@/lib/utils";
-import { Bot, Copy, RefreshCw, ChevronDown, ChevronUp, ChevronRight, ChevronLeft } from "lucide-react";
+import { Bot, Copy, RefreshCw, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, Brain } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -44,7 +44,8 @@ export const NexusTimelineCard = ({
   content, 
   metadata, 
   onRegenerate,
-  isRegenerating 
+  isRegenerating,
+  onDelete 
 }: NexusTimelineCardProps) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const { settings } = useSettings();
@@ -71,21 +72,23 @@ export const NexusTimelineCard = ({
   const displayContent = isExpanded ? content : content.slice(0, maxPreviewLength) + (shouldTruncate ? '...' : '');
 
   return (
-    <div className="rounded-lg relative p-[1px] bg-gradient-to-r from-blue-500 to-purple-500">
+    <div className="rounded-lg relative p-[1px] bg-gradient-to-r from-blue-500 to-purple-600">
       <div className="bg-white rounded-[7px] p-4 space-y-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Bot className="h-4 w-4" />
-            <span>Nexus AI</span>
+          <div className="flex items-center gap-2 text-sm">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+              <Brain className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="text-blue-600 font-medium">Nexus AI</span>
             {metadata.phase?.name && (
               <>
-                <span>•</span>
-                <span>{metadata.phase.name}</span>
+                <span className="text-gray-400">•</span>
+                <span className="text-gray-600">{metadata.phase.name}</span>
               </>
             )}
             {metadata.completed && (
               <>
-                <span>•</span>
+                <span className="text-gray-400">•</span>
                 <span className="text-green-500">
                   {settings?.language === "en" ? "Completed" : "Abgeschlossen"}
                 </span>
@@ -106,12 +109,21 @@ export const NexusTimelineCard = ({
             <Button variant="ghost" size="icon" onClick={copyToClipboard}>
               <Copy className="h-4 w-4" />
             </Button>
+            {onDelete && (
+              <Button variant="ghost" size="icon" onClick={onDelete} className="text-red-500 hover:text-red-700">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 6h18"></path>
+                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                </svg>
+              </Button>
+            )}
           </div>
         </div>
 
         {metadata.phaseInfo && (
           <div className="flex items-center gap-2 mb-2">
-            <Badge variant="outline" className="flex items-center gap-1 bg-blue-50">
+            <Badge variant="outline" className="flex items-center gap-1 bg-blue-50 text-blue-700 border-blue-200">
               {metadata.phaseInfo.position === "first" ? (
                 <ChevronLeft className="h-3 w-3" />
               ) : metadata.phaseInfo.position === "last" ? (
