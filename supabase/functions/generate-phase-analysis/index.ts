@@ -229,12 +229,13 @@ Personalisierte Kontaktaufnahme empfohlen.
     console.log('Analysis generated, storing in database...');
 
     // Store the analysis in the database
+    // Using created_by instead of user_id
     const { data: savedAnalysis, error: saveError } = await supabase
       .from('phase_based_analyses')
       .insert({
         lead_id: leadId,
         phase_id: phaseId,
-        user_id: userId,
+        created_by: userId, // Changed from user_id to created_by
         analysis_type: 'ai_analysis',
         content: analysis,
         metadata: {
