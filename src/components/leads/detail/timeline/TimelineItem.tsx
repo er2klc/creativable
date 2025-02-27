@@ -61,8 +61,8 @@ export const TimelineItem = ({
       );
     }
 
-    // YouTube Karte
-    if (item.metadata?.type === 'youtube' || item.type === 'youtube') {
+    // YouTube Karte - Berücksichtigen sowohl "youtube" Typ als auch Metadata-Typ
+    if (item.type === 'youtube' || item.metadata?.type === 'youtube') {
       return (
         <YoutubeCard 
           content={item.content} 

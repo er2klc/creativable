@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
-import { Copy, Activity } from "lucide-react";
+import { Copy, Activity, Eye, Video } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { VideoThumbnail } from "./youtube/VideoThumbnail";
@@ -100,7 +100,7 @@ export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) 
                 disabled={isExpired}
               >
                 <Copy className="h-4 w-4" />
-                {settings?.language === "en" ? "Presentation URL" : "Präsentations-URL_2"}
+                {settings?.language === "en" ? "Presentation URL" : "Präsentations-URL"}
                 {isExpired && (
                   <span className="text-red-500 ml-2">
                     {settings?.language === "en" ? "(Expired)" : "(Abgelaufen)"}

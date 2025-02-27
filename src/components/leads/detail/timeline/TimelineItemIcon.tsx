@@ -1,7 +1,7 @@
 
 import { 
   MessageSquare, BellRing, FileText, Calendar, User, AlertCircle, CheckSquare, SquareCheck, 
-  PenSquare, AlertTriangle, Youtube, File, Target, Brain
+  PenSquare, AlertTriangle, Youtube, File, Target, Brain, Eye, Video
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 import { cn } from "@/lib/utils";
@@ -16,51 +16,66 @@ interface TimelineItemIconProps {
 export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineItemIconProps) => {
   // Icon auswählen je nach Typ
   let Icon;
-  switch (type) {
-    case 'business_match':
-      Icon = Target;
-      break;
-    case 'message':
-      Icon = MessageSquare;
-      break;
-    case 'task':
-      Icon = status === 'completed' ? CheckSquare : SquareCheck;
-      break;
-    case 'appointment':
-      Icon = Calendar;
-      break;
-    case 'note':
-      if (metadata?.type === 'phase_analysis') {
-        Icon = Brain;
-      } else {
-        Icon = FileText;
-      }
-      break;
-    case 'phase_change':
-      Icon = PenSquare;
-      break;
-    case 'status_change':
-      Icon = AlertTriangle;
-      break;
-    case 'file_upload':
-      Icon = File;
-      break;
-    case 'contact_created':
-      Icon = User;
-      break;
-    default:
-      // Spezielle Prüfung für YouTube/Video-Einträge
-      if (metadata?.type === 'youtube' || 
-          metadata?.event_type?.includes('video') || 
-          type === 'youtube') {
-        Icon = Youtube;
-      } else {
+  
+  // YouTube und Video-Typ speziell behandeln
+  if (type === 'youtube' || metadata?.type === 'youtube') {
+    // Unterscheiden zwischen Video-Ansicht und URL-Karte
+    if (metadata?.event_type?.includes('video') || metadata?.view_id) {
+      Icon = Video; // Video Icon für Video-Ansicht
+    } else {
+      Icon = Eye; // Auge Icon für URL-Karte/Präsentation
+    }
+  } 
+  // Andere Typen verarbeiten
+  else {
+    switch (type) {
+      case 'business_match':
+        Icon = Target;
+        break;
+      case 'message':
+        Icon = MessageSquare;
+        break;
+      case 'task':
+        Icon = status === 'completed' ? CheckSquare : SquareCheck;
+        break;
+      case 'appointment':
+        Icon = Calendar;
+        break;
+      case 'note':
+        if (metadata?.type === 'phase_analysis') {
+          Icon = Brain; // KI-Icon für Nexus-Karten
+        } else {
+          Icon = FileText;
+        }
+        break;
+      case 'phase_change':
+        Icon = PenSquare;
+        break;
+      case 'status_change':
+        Icon = AlertTriangle;
+        break;
+      case 'file_upload':
+        Icon = File;
+        break;
+      case 'contact_created':
+        Icon = User;
+        break;
+      default:
         Icon = BellRing;
-      }
+    }
   }
 
   // Hintergrundfarbe basierend auf Typ
   const getBgClass = () => {
+    // Spezielle Prüfung für YouTube/Video-Einträge
+    if (type === 'youtube' || metadata?.type === 'youtube') {
+      if (metadata?.event_type?.includes('video') || metadata?.view_id) {
+        return 'bg-cyan-500'; // Cyan für Video-Ansicht
+      } else {
+        return 'bg-blue-500'; // Blau für URL-Karte
+      }
+    }
+    
     switch (type) {
       case 'business_match':
         return 'bg-blue-600';
@@ -72,7 +87,7 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
         return 'bg-blue-500';
       case 'note':
         if (metadata?.type === 'phase_analysis') {
-          return 'bg-gradient-to-br from-blue-600 to-purple-600';
+          return 'bg-gradient-to-br from-blue-500 to-purple-600'; // Farbverlauf für Nexus-Karten
         }
         return 'bg-yellow-500';
       case 'phase_change':
@@ -84,12 +99,6 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
       case 'contact_created':
         return 'bg-emerald-500';
       default:
-        // YouTube/Video spezifische Farbe
-        if (metadata?.type === 'youtube' || 
-            metadata?.event_type?.includes('video') || 
-            type === 'youtube') {
-          return 'bg-red-600';
-        }
         return 'bg-gray-500';
     }
   };
