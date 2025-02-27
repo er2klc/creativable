@@ -86,8 +86,8 @@ export const TimelineItem = ({
             />
           </div>
           
-          {/* Horizontale Linie mit korrigierter Position */}
-          <div className="absolute left-8 top-4 w-6 h-0.5 bg-gray-200" />
+          {/* Horizontale gestrichelte Linie mit korrigierter Position */}
+          <div className="absolute left-8 top-4 w-8 h-0.5 bg-gray-400 border-t-2 border-dashed border-gray-400" />
           
           {/* Content Container mit mehr Abstand */}
           <div className="flex-1 min-w-0 pl-2">
