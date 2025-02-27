@@ -75,7 +75,6 @@ export const TimelineItem = ({
       </div>
       
       <div className="relative">
-        <div className="absolute left-4 top-0 bottom-0 w-[2px] bg-gray-400 z-0" />
         <div className="flex items-start gap-6">
           {/* Icon Container mit fester Breite */}
           <div className="w-8 flex-shrink-0 relative z-10">
