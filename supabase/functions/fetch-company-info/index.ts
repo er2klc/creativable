@@ -7,82 +7,73 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+// Hilfs-Funktion für CORS-Fehler
+function corsError(message: string): Response {
+  return new Response(JSON.stringify({ error: message }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    status: 400,
+  })
+}
+
+// Hilfs-Funktion für normale Antworten
+function corsResponse(body: any, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    status,
+  })
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response(null, {
+      headers: corsHeaders,
+    })
+  }
+
+  // Get OpenAI API key from environment variable
+  const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+  if (!openaiApiKey) {
+    return corsError('OpenAI API key not found in environment variables')
   }
 
   try {
-    // Parse request body
-    let requestData;
-    try {
-      requestData = await req.json();
-      console.log("Request data received:", JSON.stringify(requestData));
-    } catch (error) {
-      console.error("Error parsing request JSON:", error);
-      return new Response(
-        JSON.stringify({ error: "Invalid JSON in request body" }),
-        { 
-          status: 400, 
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-    }
-
-    const { companyName } = requestData;
-
-    console.log('Fetching company info for:', {
-      companyName,
-      timestamp: new Date().toISOString()
-    });
+    const { companyName } = await req.json()
 
     if (!companyName) {
-      console.error("Missing company name in request");
-      return new Response(
-        JSON.stringify({ error: "Company name is required" }),
-        { 
-          status: 400, 
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      console.error("Company name is required")
+      return corsError("Firmenname ist erforderlich")
     }
 
-    // Get OpenAI API key
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    if (!openaiApiKey) {
-      console.error("OpenAI API key not found in environment variables");
-      return new Response(
-        JSON.stringify({ error: "OpenAI API key not configured" }),
-        { 
-          status: 500, 
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
+    console.log(`Received request for company: ${companyName}`)
+
+    // Schnelle lokale Validierung - typische Fehler abfangen
+    // Wenn kein richtiger Name, sondern nur URL oder Domäne übergeben wurde
+    if (
+      companyName.includes("www.") ||
+      companyName.includes("http") ||
+      companyName.includes(".de") ||
+      companyName.includes(".com")
+    ) {
+      console.error("Invalid company name format")
+      return corsError(
+        "Bitte geben Sie einen gültigen Firmennamen ein, keine URL oder Domain."
       );
     }
 
     // Prompt for OpenAI to analyze the company
     const prompt = `
     Als Business-Analyst, analysiere dieses Unternehmen: "${companyName}".
-    
-    Extrahiere und formatiere die folgenden Informationen in einem JSON-Format:
-    1. companyName: Den genauen Firmennamen
-    2. productsServices: Die wichtigsten Produkte und Dienstleistungen des Unternehmens (1-2 Sätze)
-    3. targetAudience: Die Zielgruppe des Unternehmens (1-2 Sätze)
-    4. usp: Das Alleinstellungsmerkmal/USP des Unternehmens (1-2 Sätze)
-    5. businessDescription: Eine kurze Geschäftsbeschreibung (2-3 Sätze)
-    
-    Wichtig: Antworte ausschließlich mit einem validen JSON-Objekt ohne zusätzlichen Text oder Markdown-Formatierung.
-    Das JSON sollte exakt die oben genannten Felder enthalten.
+    Liefere die folgenden Informationen im JSON-Format zurück:
+
+    1. companyName: Der korrekte Name des Unternehmens.
+    2. productsServices: Die wichtigsten Produkte oder Dienstleistungen des Unternehmens.
+    3. targetAudience: Die Zielgruppe des Unternehmens.
+    4. usp: Die Unique Selling Proposition / Alleinstellungsmerkmale des Unternehmens.
+    5. businessDescription: Eine kurze Beschreibung des Unternehmens.
+
+    WICHTIG: Basiere deine Analyse auf öffentlich verfügbaren Informationen. Falls du keine gesicherten Informationen hast, mache vernünftige Annahmen basierend auf der Branche. 
+    Antworte NUR mit einem validen JSON-Objekt, ohne zusätzlichen Text oder Markierungen.
     `;
 
     console.log("Sending request to OpenAI API");
@@ -132,86 +123,40 @@ serve(async (req) => {
       // Try to parse the entire response as JSON first
       let companyInfo;
       try {
+        // Versuchen, die gesamte Antwort als JSON zu parsen
         companyInfo = JSON.parse(aiResponse);
-        console.log("Successfully parsed response as direct JSON");
-      } catch (e) {
-        console.log("Could not parse direct JSON, trying to extract JSON from text");
-        // If direct parsing fails, try to extract JSON from the text
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          try {
-            companyInfo = JSON.parse(jsonMatch[0]);
+        console.log("Successfully parsed entire response as JSON");
+      } catch (parseError) {
+        console.error("Error parsing response as direct JSON:", parseError);
+        
+        // Als Fallback: Versuchen, JSON aus dem Text zu extrahieren
+        try {
+          const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const jsonText = jsonMatch[0];
+            companyInfo = JSON.parse(jsonText);
             console.log("Successfully extracted and parsed JSON from text");
-          } catch (e) {
-            console.error("Error parsing extracted JSON:", e);
-            throw new Error("Failed to parse company information from response");
+          } else {
+            throw new Error("No JSON object found in response");
           }
-        } else {
-          console.error("No JSON pattern found in response");
-          throw new Error("No valid JSON found in AI response");
+        } catch (extractError) {
+          console.error("Error extracting JSON from text:", extractError);
+          throw new Error("Could not parse response as JSON");
         }
       }
 
-      // Validate the required fields
-      const requiredFields = ['companyName', 'productsServices', 'targetAudience', 'usp', 'businessDescription'];
-      const missingFields = requiredFields.filter(field => !companyInfo[field]);
-      
-      if (missingFields.length > 0) {
-        console.warn(`Missing fields in parsed response: ${missingFields.join(', ')}`);
-        // Fill in missing fields with placeholders
-        missingFields.forEach(field => {
-          companyInfo[field] = `Information zu ${field} nicht verfügbar`;
-        });
+      // Final validation
+      if (!companyInfo || typeof companyInfo !== 'object') {
+        throw new Error("Invalid company information format");
       }
 
-      console.log('Successfully generated company info:', {
-        company: companyName,
-        result: companyInfo,
-        timestamp: new Date().toISOString()
-      });
-
-      return new Response(
-        JSON.stringify(companyInfo),
-        { 
-          headers: { 
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          } 
-        }
-      );
-    } catch (openAiError) {
-      console.error("Error calling OpenAI API:", openAiError);
-      return new Response(
-        JSON.stringify({ 
-          error: "Error calling OpenAI API", 
-          details: openAiError.message || "Unknown error",
-          stack: openAiError.stack
-        }),
-        { 
-          status: 500, 
-          headers: {
-            ...corsHeaders,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      return corsResponse(companyInfo);
+    } catch (error) {
+      console.error("Error calling API:", error.message);
+      return corsError(`Error analyzing company: ${error.message}`);
     }
   } catch (error) {
-    console.error('Error in fetch-company-info:', error);
-    
-    return new Response(
-      JSON.stringify({ 
-        error: "Internal server error", 
-        message: error.message || "Unknown error",
-        stack: error.stack
-      }),
-      { 
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json'
-        }
-      }
-    )
+    console.error("Function error:", error.message);
+    return corsError(`Function error: ${error.message}`);
   }
 })
