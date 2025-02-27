@@ -55,15 +55,8 @@ serve(async (req) => {
       .from('leads')
       .select(`
         *,
-        social_media_posts (
-          *
-        ),
-        linkedin_posts (
-          *
-        ),
-        notes (
-          *
-        )
+        notes (*),
+        social_media_posts (*)
       `)
       .eq('id', leadId)
       .single();
@@ -94,12 +87,20 @@ serve(async (req) => {
 
     // Dynamischer Prompt basierend auf Phase & Branche
     const phaseGuidance = {
-      "Analyse": `🔍 Identifiziere das Potenzial dieses Kontakts für dein Geschäft. Berücksichtige folgende Faktoren: ${businessStrategy}`,
+      "Kontakt erstellt": `🔍 Identifiziere das Potenzial dieses Kontakts für dein Geschäft. Berücksichtige folgende Faktoren: ${businessStrategy}`,
       "Kontaktaufnahme": `✉️ Entwickle eine **individuelle Ansprache**, die ${businessStrategy} unterstützt.`,
-      "Bedarfsanalyse": `💬 Erfrage gezielt, welche Herausforderungen der Kontakt hat und **passe dein Angebot darauf an**.`,
-      "Vertrauensaufbau": `🛠️ Zeige deine Expertise durch **hochwertige Inhalte** & **interaktive Gespräche**.`,
-      "Abschluss": `🎯 Erstelle ein **maßgeschneidertes Angebot** und nutze psychologische Verkaufsstrategien.`
+      "Kennenlernen": `💬 Erfrage gezielt, welche Herausforderungen der Kontakt hat und **passe dein Angebot darauf an**.`,
+      "Präsentation": `🛠️ Zeige deine Expertise durch **hochwertige Inhalte** & **interaktive Gespräche**.`,
+      "Follow-Up": `🎯 Erstelle ein **maßgeschneidertes Angebot** und nutze psychologische Verkaufsstrategien.`
     };
+
+    // Sammle alle verfügbaren Notizen
+    const notes = lead.notes || [];
+    const noteContents = notes.slice(0, 5).map((note: any) => note.content).join('\n');
+
+    // Sammle Social Media Posts
+    const socialPosts = lead.social_media_posts || [];
+    const socialContents = socialPosts.slice(0, 3).map((post: any) => post.content || '[Bild/Video Post]').join('\n');
 
     const systemPrompt = `Du bist ein hochspezialisierter Business Development Assistent für ${settings?.company_name || 'ein Unternehmen'}.
 Deine Aufgabe ist es, für die Phase **${phaseData.name}** eine **präzise Strategie** zu entwickeln.
@@ -113,12 +114,16 @@ Deine Aufgabe ist es, für die Phase **${phaseData.name}** eine **präzise Strat
 ${businessStrategy}
 
 📌 **Phase: ${phaseData.name}**
-${phaseGuidance[phaseData.name] || "Erstelle eine individuelle Analyse."}`;
+${phaseGuidance[phaseData.name] || "Erstelle eine individuelle Analyse."}
 
-    // Sammle Notizen und Social Media Posts für Kontext
-    const notes = lead.notes || [];
-    const socialMediaPosts = lead.social_media_posts || [];
-    const linkedinPosts = lead.linkedin_posts || [];
+Ich brauche von dir eine ausführliche Analyse im Markdown-Format mit den folgenden Abschnitten:
+- "# 📊 Analyse für [Name]" (Überschrift)
+- "## 🔍 Profil-Check" (Zusammenfassung der Lead-Informationen)
+- "## 📌 Stärken & Chancen" (Potenziale und Anknüpfungspunkte)
+- "## 💡 Nächste Schritte" (Konkrete Handlungsempfehlungen)
+
+Der Abschnitt "## 💡 Nächste Schritte" MUSS genau 3 nummerierte, konkrete Aufgaben enthalten, die der Benutzer ausführen kann. 
+Formuliere diese präzise, klar und handlungsorientiert mit einem erkennbaren Titel und einer kurzen Erklärung.`;
 
     const userPrompt = `
 **📊 Lead-Analyse: [${lead.name}]**
@@ -129,11 +134,10 @@ ${phaseGuidance[phaseData.name] || "Erstelle eine individuelle Analyse."}`;
 - **Interessen:** ${lead.social_media_interests?.join(', ') || 'Keine angegeben'}
 
 📌 **Letzte Aktivitäten:**
-${notes.slice(0, 3).map((note: any) => `- ${note.content}`).join('\n') || 'Keine Aktivitäten'}
+${noteContents || 'Keine Aktivitäten'}
 
 📌 **Social Media Aktivität:**
-${socialMediaPosts.slice(0, 3).map((post: any) => `- ${post.content || '[Bild/Video Post]'}`).join('\n')}
-${linkedinPosts.slice(0, 3).map((post: any) => `- ${post.content || '[LinkedIn Post]'}`).join('\n')}
+${socialContents || 'Keine Social Media Aktivitäten'}
 
 🚀 **Deine Aufgabe:**  
 Analysiere dieses Profil und erstelle eine **klare, handlungsorientierte Strategie**, um diesen Kontakt in **einen Kunden oder Partner zu verwandeln**.
@@ -164,12 +168,9 @@ Analysiere dieses Profil und erstelle eine **klare, handlungsorientierte Strateg
       try {
         const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
-          headers: { 
-            'Authorization': `Bearer ${openaiApiKey}`, 
-            'Content-Type': 'application/json' 
-          },
+          headers: { 'Authorization': `Bearer ${openaiApiKey}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            model: 'gpt-4o-mini', 
+            model: 'gpt-4o-mini',
             messages: [
               { role: 'system', content: systemPrompt }, 
               { role: 'user', content: userPrompt }
@@ -232,6 +233,89 @@ Analysiere dieses Profil und erstelle eine **klare, handlungsorientierte Strateg
           timestamp: new Date().toISOString()
         }
       });
+
+    // Extrahiere die "Nächsten Schritte" aus der Analyse und erstelle Tasks
+    try {
+      console.log('🔍 Extrahiere Tasks aus der Analyse...');
+      
+      // Suche nach "## 💡 Nächste Schritte" Abschnitt und extrahiere die nummerierten Punkte
+      const nextStepsMatch = analysis.match(/## 💡 Nächste Schritte\s+([\s\S]*?)(?=##|$)/);
+      
+      if (nextStepsMatch && nextStepsMatch[1]) {
+        const nextStepsText = nextStepsMatch[1].trim();
+        
+        // Suche nach nummerierten Punkten (1. **Titel**: Beschreibung)
+        const taskRegex = /(\d+)\.\s+\*\*([^*]+)\*\*:\s+([^\n]+)/g;
+        const tasks = [];
+        let match;
+        
+        while ((match = taskRegex.exec(nextStepsText)) !== null && tasks.length < 3) {
+          const taskTitle = match[2].trim();
+          const taskDescription = match[3].trim();
+          
+          tasks.push({
+            title: `${taskTitle}: ${taskDescription}`,
+            user_id: userId,
+            lead_id: leadId,
+            color: '#FFE2DD'
+          });
+        }
+        
+        // Fallback für den Fall, dass keine übereinstimmenden Tasks gefunden wurden
+        if (tasks.length === 0) {
+          // Alternative Regex für "1. **Titel** Beschreibung" Format
+          const altTaskRegex = /(\d+)\.\s+\*\*([^*]+)\*\*\s+([^\n]+)/g;
+          
+          while ((match = altTaskRegex.exec(nextStepsText)) !== null && tasks.length < 3) {
+            const taskTitle = match[2].trim();
+            const taskDescription = match[3].trim();
+            
+            tasks.push({
+              title: `${taskTitle}: ${taskDescription}`,
+              user_id: userId,
+              lead_id: leadId,
+              color: '#FFE2DD'
+            });
+          }
+        }
+        
+        // Wenn immer noch keine Tasks gefunden wurden, versuche es mit einfacheren Regex
+        if (tasks.length === 0) {
+          const simpleTaskRegex = /(\d+)\.\s+\*\*([^*\n]+)[:\*]*\s*([^\n]+)/g;
+          
+          while ((match = simpleTaskRegex.exec(nextStepsText)) !== null && tasks.length < 3) {
+            tasks.push({
+              title: `${match[2].trim()}: ${match[3].trim()}`,
+              user_id: userId,
+              lead_id: leadId,
+              color: '#FFE2DD'
+            });
+          }
+        }
+        
+        // Wenn Tasks gefunden wurden, speichere sie in der Datenbank
+        if (tasks.length > 0) {
+          console.log(`✅ ${tasks.length} Tasks aus der Analyse erstellt`);
+          const { data: createdTasks, error: taskError } = await supabase
+            .from('tasks')
+            .insert(tasks)
+            .select();
+          
+          if (taskError) {
+            console.error('❌ Fehler beim Erstellen der Tasks:', taskError);
+          } else {
+            console.log('✅ Tasks erfolgreich erstellt:', createdTasks);
+          }
+        } else {
+          console.log('⚠️ Keine Tasks in der Analyse gefunden');
+        }
+      } else {
+        console.log('⚠️ Kein "Nächste Schritte" Abschnitt in der Analyse gefunden');
+      }
+    } catch (err) {
+      console.error('❌ Fehler beim Extrahieren der Tasks:', err);
+      // Ignoriere Fehler bei der Task-Erstellung, damit die Analyse trotzdem zurückgegeben wird
+    }
 
     return new Response(
       JSON.stringify({ 
