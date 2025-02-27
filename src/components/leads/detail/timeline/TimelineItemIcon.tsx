@@ -52,6 +52,35 @@ export function TimelineItemIcon({
     }
   };
   
+  const getIconColor = () => {
+    switch (type) {
+      case 'appointment':
+        return status === 'cancelled' ? 'bg-gray-100' : 'bg-orange-100';
+      case 'task':
+        return completed ? 'bg-green-100' : 'bg-cyan-100';
+      case 'note':
+        return 'bg-yellow-100';
+      case 'message':
+        return 'bg-blue-100';
+      case 'file_upload':
+        if (metadata?.fileType?.includes('pdf')) return 'bg-red-100';
+        if (metadata?.fileType?.includes('image')) return 'bg-green-100';
+        return 'bg-blue-100';
+      case 'status_change':
+        if (metadata?.newStatus === 'customer') return 'bg-sky-100';
+        if (metadata?.newStatus === 'partner') return 'bg-pink-100';
+        return 'bg-gray-100';
+      case 'phase_change':
+        return 'bg-purple-100';
+      case 'contact_created':
+        return 'bg-emerald-100';
+      case 'call_script':
+        return 'bg-orange-100';
+      default:
+        return 'bg-gray-100';
+    }
+  };
+  
   const getTypeIcon = () => {
     switch (type) {
       case 'appointment':
@@ -110,5 +139,10 @@ export function TimelineItemIcon({
     }
   };
   
-  return getTypeIcon();
+  // Kreisförmiges Design für das Icon
+  return (
+    <div className={`flex items-center justify-center w-8 h-8 rounded-full ${getIconColor()} transition-colors duration-200`}>
+      {getTypeIcon()}
+    </div>
+  );
 }

@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { formatDateTime } from "../utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
@@ -6,9 +7,10 @@ interface StatusCardProps {
   content: string;
   timestamp: string;
   metadata?: any;
+  onDelete?: () => void;
 }
 
-export const StatusCard = ({ content, timestamp }: StatusCardProps) => {
+export const StatusCard = ({ content, timestamp, onDelete }: StatusCardProps) => {
   const { settings } = useSettings();
 
   return (

@@ -167,35 +167,62 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
     setSelectedTab(value);
   };
 
+  // Hilfsfunktion zum Ermitteln der Hintergrundfarbe für Tabs mit Opacity
+  const getTabBgColor = (tabId: string) => {
+    const tabItem = tabItems.find(tab => tab.id === tabId);
+    if (!tabItem) return "";
+    
+    // Basis-CSS-Klasse für den Tab
+    return selectedTab === tabId
+      ? `bg-[${tabItem.color}] bg-opacity-20`
+      : `hover:bg-[${tabItem.color}] hover:bg-opacity-10`;
+  };
+
   return (
     <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-4 pt-4">
-      <ScrollArea className="w-full pb-2" orientation="horizontal">
-        <TabsList className="inline-flex w-max px-4 mb-2">
-          <TooltipProvider>
-            {tabItems.map((tab) => (
-              <Tooltip key={tab.id}>
-                <TooltipTrigger asChild>
-                  <TabsTrigger
-                    value={tab.id}
-                    className={cn(
-                      "flex gap-2 items-center px-4 py-2 relative",
-                      "after:absolute after:bottom-0 after:left-0 after:right-0 after:h-[2px] after:rounded-full",
-                      `after:bg-[${tab.color}]`
-                    )}
-                  >
-                    {tab.icon}
-                    <span className="sr-only md:not-sr-only md:inline-block">
-                      {tab.label}
-                    </span>
-                  </TabsTrigger>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {tab.label}
-                </TooltipContent>
-              </Tooltip>
-            ))}
-          </TooltipProvider>
-        </TabsList>
+      <ScrollArea className="w-full pb-2 no-scrollbar overflow-x-auto" orientation="horizontal">
+        <div className="min-w-full">
+          <TabsList className="w-full flex px-4 mb-2 overflow-x-auto no-scrollbar">
+            <TooltipProvider>
+              {tabItems.map((tab) => (
+                <Tooltip key={tab.id}>
+                  <TooltipTrigger asChild>
+                    <TabsTrigger
+                      value={tab.id}
+                      className={cn(
+                        "flex gap-2 items-center px-4 py-2 relative",
+                        "transition-all duration-200",
+                        selectedTab === tab.id
+                          ? `text-foreground border-b-2 border-[${tab.color}]`
+                          : "text-muted-foreground border-b-2 border-transparent",
+                        selectedTab === tab.id
+                          ? `bg-opacity-15 bg-[${tab.color}]`
+                          : `hover:bg-opacity-10 hover:bg-[${tab.color}]`
+                      )}
+                      style={{
+                        backgroundColor: selectedTab === tab.id 
+                          ? `${tab.color}20` // 20 is hexadecimal for ~12% opacity
+                          : 'transparent',
+                        borderBottomColor: selectedTab === tab.id ? tab.color : 'transparent',
+                        '--tab-color': tab.color,
+                      } as React.CSSProperties}
+                    >
+                      <span className="flex items-center justify-center">
+                        {tab.icon}
+                      </span>
+                      <span className="sr-only md:not-sr-only md:inline-block">
+                        {tab.label}
+                      </span>
+                    </TabsTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {tab.label}
+                  </TooltipContent>
+                </Tooltip>
+              ))}
+            </TooltipProvider>
+          </TabsList>
+        </div>
       </ScrollArea>
 
       <TabsContent value="notes" className="mt-4">
