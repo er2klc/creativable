@@ -8,6 +8,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { StatusCard } from "./cards/StatusCard";
 import { YoutubeCard } from "./cards/YoutubeCard";
 import { BusinessMatchCard } from "./cards/BusinessMatchCard";
+import { NexusTimelineCard } from "./cards/NexusTimelineCard";
 
 interface TimelineItemProps {
   item: {
@@ -35,6 +36,17 @@ export const TimelineItem = ({
   const { settings } = useSettings();
 
   const renderContent = () => {
+    // Nexus AI Analyse
+    if (item.metadata?.type === 'phase_analysis') {
+      return (
+        <NexusTimelineCard 
+          content={item.content}
+          metadata={item.metadata}
+          onDelete={onDelete ? () => onDelete(item.id) : undefined}
+        />
+      );
+    }
+
     // Business Match Karte
     if (item.type === 'business_match') {
       return (
@@ -50,8 +62,14 @@ export const TimelineItem = ({
     }
 
     // YouTube Karte
-    if (item.metadata?.type === 'youtube') {
-      return <YoutubeCard content={item.content} metadata={item.metadata} />;
+    if (item.metadata?.type === 'youtube' || item.type === 'youtube') {
+      return (
+        <YoutubeCard 
+          content={item.content} 
+          metadata={item.metadata}
+          timestamp={item.timestamp}
+        />
+      );
     }
 
     // Status Change Karte
@@ -97,7 +115,6 @@ export const TimelineItem = ({
       
       <div className="relative">
         <div className="flex items-start gap-6">
-          {/* Icon Container mit fester Breite */}
           <div className="w-8 flex-shrink-0 relative z-10">
             <TimelineItemIcon 
               type={item.type} 
@@ -107,10 +124,8 @@ export const TimelineItem = ({
             />
           </div>
           
-          {/* Horizontale Linie mit korrigierter Position */}
           <div className="absolute left-8 top-4 w-8 h-0.5 bg-gray-400" />
           
-          {/* Content Container mit mehr Abstand */}
           <div className="flex-1 min-w-0 pl-2">
             {renderContent()}
           </div>
