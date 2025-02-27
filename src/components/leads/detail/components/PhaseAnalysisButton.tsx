@@ -19,7 +19,15 @@ export function PhaseAnalysisButton({
   const { settings } = useSettings();
 
   return (
-    <div className="rounded-lg bg-white p-4 shadow-sm">
+    <div className="rounded-lg bg-white p-4 shadow-sm border border-gray-100">
+      <h3 className="text-md font-medium mb-2">
+        {settings?.language === "en" ? "Phase Analysis" : "Phasenanalyse"}
+      </h3>
+      <p className="text-sm text-gray-500 mb-3">
+        {settings?.language === "en" 
+          ? "Generate an AI analysis based on the current phase position"
+          : "Generiere eine KI-Analyse basierend auf der aktuellen Phasenposition"}
+      </p>
       <Button
         onClick={onGenerateAnalysis}
         disabled={isLoading}

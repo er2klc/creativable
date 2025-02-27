@@ -1,11 +1,12 @@
 
 import { cn } from "@/lib/utils";
-import { Bot, Copy, RefreshCw, ChevronDown, ChevronUp } from "lucide-react";
+import { Bot, Copy, RefreshCw, ChevronDown, ChevronUp, ChevronRight, ChevronLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
 import ReactMarkdown from 'react-markdown';
+import { Badge } from "@/components/ui/badge";
 
 interface NexusTimelineCardProps {
   content: string;
@@ -17,6 +18,12 @@ interface NexusTimelineCardProps {
     phase?: {
       id: string;
       name: string;
+    };
+    phaseInfo?: {
+      position: string;
+      index: number;
+      total: number;
+      positionLabel: string;
     };
     timestamp?: string;
     analysis?: {
@@ -101,6 +108,26 @@ export const NexusTimelineCard = ({
             </Button>
           </div>
         </div>
+
+        {metadata.phaseInfo && (
+          <div className="flex items-center gap-2 mb-2">
+            <Badge variant="outline" className="flex items-center gap-1 bg-blue-50">
+              {metadata.phaseInfo.position === "first" ? (
+                <ChevronLeft className="h-3 w-3" />
+              ) : metadata.phaseInfo.position === "last" ? (
+                <ChevronRight className="h-3 w-3" />
+              ) : (
+                <>
+                  <ChevronLeft className="h-3 w-3" />
+                  <ChevronRight className="h-3 w-3" />
+                </>
+              )}
+              <span>
+                {metadata.phaseInfo.positionLabel} ({metadata.phaseInfo.index + 1}/{metadata.phaseInfo.total})
+              </span>
+            </Badge>
+          </div>
+        )}
 
         <div className="prose prose-sm max-w-none dark:prose-invert">
           <ReactMarkdown>{displayContent}</ReactMarkdown>
