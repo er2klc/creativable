@@ -64,9 +64,8 @@ export const NexusTimelineCard = ({
   const displayContent = isExpanded ? content : content.slice(0, maxPreviewLength) + (shouldTruncate ? '...' : '');
 
   return (
-    <div className="rounded-lg relative">
-      <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-500 to-purple-500" />
-      <div className="relative m-[1px] bg-white rounded-[7px] p-4 space-y-4">
+    <div className="rounded-lg relative p-[1px] bg-gradient-to-r from-blue-500 to-purple-500">
+      <div className="bg-white rounded-[7px] p-4 space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Bot className="h-4 w-4" />

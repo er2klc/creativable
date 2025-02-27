@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
@@ -12,7 +13,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [showButton, setShowButton] = useState(true);
   const [analysisContent, setAnalysisContent] = useState<string | null>(null);
   const [analysisMetadata, setAnalysisMetadata] = useState<any>(null);
   const queryClient = useQueryClient();
@@ -32,7 +32,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         if (error) throw error;
         
         if (existingAnalysis) {
-          setShowButton(false);
           setAnalysisContent(existingAnalysis.content);
           setAnalysisMetadata({
             type: 'phase_analysis',
@@ -43,7 +42,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
             timestamp: existingAnalysis.created_at
           });
         } else {
-          setShowButton(true);
           setAnalysisContent(null);
           setAnalysisMetadata(null);
         }
@@ -96,7 +94,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         return;
       }
 
-      setShowButton(false);
       setAnalysisContent(data.analysis?.content || "Analysis generated");
       setAnalysisMetadata({
         type: 'phase_analysis',
@@ -127,7 +124,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  if (analysisContent && !showButton) {
+  if (analysisContent) {
     return (
       <NexusTimelineCard 
         content={analysisContent}
@@ -138,12 +135,6 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     );
   }
 
-  return (
-    <PhaseAnalysisButton 
-      isLoading={isLoading}
-      leadId={lead.id}
-      phaseId={lead.phase_id}
-      onGenerateAnalysis={generateAnalysis}
-    />
-  );
+  // Don't show anything if there's no analysis
+  return null;
 }
