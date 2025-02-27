@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { getLeadWithRelations } from "@/utils/query-helpers";
 import { Platform } from "@/config/platforms";
+import { Loader2, Mail } from "lucide-react";
 
 interface MessageTabProps {
   leadId: string;
@@ -25,13 +26,13 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   const [isSending, setIsSending] = useState(false);
 
   // Lead Daten laden
-  const { data: lead } = useQuery({
+  const { data: lead, isLoading: leadLoading } = useQuery({
     queryKey: ['lead', leadId],
     queryFn: () => getLeadWithRelations(leadId),
   });
 
   // SMTP Settings laden
-  const { data: smtpSettings } = useQuery({
+  const { data: smtpSettings, isLoading: smtpLoading } = useQuery({
     queryKey: ['smtp-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -84,12 +85,20 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
     }
   };
 
+  if (leadLoading || smtpLoading) {
+    return (
+      <div className="flex justify-center items-center h-40">
+        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex flex-col space-y-2 text-sm text-muted-foreground mb-4">
         <div className="flex items-center space-x-2">
           <span>Von:</span>
-          <span>{smtpSettings?.from_email}</span>
+          <span>{smtpSettings?.from_email || "Nicht konfiguriert"}</span>
         </div>
         <div className="flex items-center space-x-2">
           <span>An:</span>
@@ -127,7 +136,17 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
             onClick={handleSendEmail}
             disabled={isSending || !smtpSettings || !lead?.email}
           >
-            {isSending ? "Wird gesendet..." : "Senden"}
+            {isSending ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Wird gesendet...
+              </>
+            ) : (
+              <>
+                <Mail className="h-4 w-4 mr-2" />
+                Senden
+              </>
+            )}
           </Button>
         </div>
       </div>

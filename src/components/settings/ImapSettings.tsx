@@ -6,12 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, Mail, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, MailQuestion, AlertCircle, Inbox } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
-import { smtpSettingsSchema } from "./schemas/smtp-settings-schema";
+import { imapSettingsSchema } from "./schemas/imap-settings-schema";
 import { supabase } from "@/integrations/supabase/client";
-import type { SmtpSettingsFormData } from "./schemas/smtp-settings-schema";
+import type { ImapSettingsFormData } from "./schemas/imap-settings-schema";
 import {
   Form,
   FormControl,
@@ -22,33 +22,32 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-export function SmtpSettings() {
+export function ImapSettings() {
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [lastTestError, setLastTestError] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<any>(null);
 
-  const form = useForm<SmtpSettingsFormData>({
-    resolver: zodResolver(smtpSettingsSchema),
+  const form = useForm<ImapSettingsFormData>({
+    resolver: zodResolver(imapSettingsSchema),
     defaultValues: {
       host: "",
-      port: 587,
+      port: 993,
       username: "",
       password: "",
-      from_email: "",
-      from_name: "",
       secure: true
     }
   });
 
   const watchSecure = form.watch("secure");
 
-  // Lade existierende SMTP Einstellungen
+  // Lade existierende IMAP Einstellungen
   useEffect(() => {
-    async function loadSmtpSettings() {
+    async function loadImapSettings() {
       try {
         const { data: settings, error } = await supabase
-          .from('smtp_settings')
+          .from('imap_settings')
           .select('*')
           .single();
 
@@ -63,17 +62,17 @@ export function SmtpSettings() {
           }
         }
       } catch (error) {
-        console.error('Error loading SMTP settings:', error);
-        toast.error("Fehler beim Laden der SMTP-Einstellungen");
+        console.error('Error loading IMAP settings:', error);
+        toast.error("Fehler beim Laden der IMAP-Einstellungen");
       } finally {
         setIsLoading(false);
       }
     }
 
-    loadSmtpSettings();
+    loadImapSettings();
   }, [form]);
 
-  const onSubmit = async (formData: SmtpSettingsFormData) => {
+  const onSubmit = async (formData: ImapSettingsFormData) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       
@@ -87,38 +86,39 @@ export function SmtpSettings() {
       };
 
       const { data: existingSettings } = await supabase
-        .from('smtp_settings')
+        .from('imap_settings')
         .select('id')
         .single();
 
       if (existingSettings) {
         const { error } = await supabase
-          .from('smtp_settings')
+          .from('imap_settings')
           .update(dataWithUserId)
           .eq('id', existingSettings.id);
 
         if (error) throw error;
-        toast.success("SMTP-Einstellungen wurden aktualisiert");
+        toast.success("IMAP-Einstellungen wurden aktualisiert");
       } else {
         const { error } = await supabase
-          .from('smtp_settings')
+          .from('imap_settings')
           .insert([dataWithUserId]);
 
         if (error) throw error;
-        toast.success("SMTP-Einstellungen wurden gespeichert");
+        toast.success("IMAP-Einstellungen wurden gespeichert");
       }
 
       // Zurücksetzen des Verbindungsstatus wenn kritische Parameter geändert wurden
       setIsVerified(false);
     } catch (error) {
-      console.error('Error saving SMTP settings:', error);
-      toast.error("Fehler beim Speichern der SMTP-Einstellungen");
+      console.error('Error saving IMAP settings:', error);
+      toast.error("Fehler beim Speichern der IMAP-Einstellungen");
     }
   };
 
   const testConnection = async () => {
     setIsTestingConnection(true);
     setLastTestError(null);
+    setTestResult(null);
     
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -138,7 +138,7 @@ export function SmtpSettings() {
         throw new Error('Bitte füllen Sie alle erforderlichen Felder aus');
       }
 
-      const { data, error } = await supabase.functions.invoke('test-smtp-connection', {
+      const { data, error } = await supabase.functions.invoke('test-imap-connection', {
         body: {
           host,
           port,
@@ -151,21 +151,24 @@ export function SmtpSettings() {
 
       if (error) throw error;
       
+      // Store test results
+      setTestResult(data);
+      
       // If we got here, the connection was successful
       setIsVerified(true);
       
       // Update verification timestamp in database
       await supabase
-        .from('smtp_settings')
+        .from('imap_settings')
         .update({ 
           last_verified_at: new Date().toISOString(),
           last_verification_status: 'success'
         })
         .eq('user_id', user.id);
       
-      toast.success("SMTP-Verbindung erfolgreich getestet");
+      toast.success("IMAP-Verbindung erfolgreich getestet");
     } catch (error) {
-      console.error('Error testing SMTP connection:', error);
+      console.error('Error testing IMAP connection:', error);
       setLastTestError(error.message || "Verbindung fehlgeschlagen");
       setIsVerified(false);
       
@@ -173,7 +176,7 @@ export function SmtpSettings() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await supabase
-          .from('smtp_settings')
+          .from('imap_settings')
           .update({ 
             last_verified_at: new Date().toISOString(),
             last_verification_status: 'failed',
@@ -182,9 +185,36 @@ export function SmtpSettings() {
           .eq('user_id', user.id);
       }
       
-      toast.error(`Fehler beim Testen der SMTP-Verbindung: ${error.message}`);
+      toast.error(`Fehler beim Testen der IMAP-Verbindung: ${error.message}`);
     } finally {
       setIsTestingConnection(false);
+    }
+  };
+
+  const syncEmails = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        throw new Error('Not authenticated');
+      }
+
+      toast.info("E-Mail-Synchronisation gestartet...");
+      
+      const { data, error } = await supabase.functions.invoke('sync-emails', {
+        body: {
+          user_id: user.id,
+          max_emails: 50,
+          folder: 'INBOX'
+        }
+      });
+
+      if (error) throw error;
+      
+      toast.success(`E-Mail-Synchronisation abgeschlossen. ${data.emails_synced} E-Mails wurden geprüft, ${data.new_emails} neue E-Mails gefunden.`);
+    } catch (error) {
+      console.error('Error syncing emails:', error);
+      toast.error(`Fehler bei der E-Mail-Synchronisation: ${error.message}`);
     }
   };
 
@@ -204,9 +234,9 @@ export function SmtpSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>SMTP-Einstellungen</CardTitle>
+        <CardTitle>IMAP-Einstellungen</CardTitle>
         <CardDescription>
-          Konfigurieren Sie Ihre E-Mail-Server-Einstellungen für den E-Mail-Versand
+          Konfigurieren Sie Ihre E-Mail-Server-Einstellungen für den E-Mail-Empfang
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -218,9 +248,9 @@ export function SmtpSettings() {
                 name="host"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SMTP Server</FormLabel>
+                    <FormLabel>IMAP Server</FormLabel>
                     <FormControl>
-                      <Input placeholder="smtp.gmail.com" {...field} />
+                      <Input placeholder="imap.gmail.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -236,7 +266,7 @@ export function SmtpSettings() {
                     <FormControl>
                       <Input 
                         type="number" 
-                        placeholder="587" 
+                        placeholder="993" 
                         {...field} 
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
@@ -277,36 +307,6 @@ export function SmtpSettings() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="from_email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Absender E-Mail</FormLabel>
-                    <FormControl>
-                      <Input placeholder="your@email.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="from_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Absender Name</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
             <FormField
               control={form.control}
               name="secure"
@@ -340,20 +340,48 @@ export function SmtpSettings() {
               </div>
             )}
 
+            {testResult && (
+              <div className="bg-green-50 border border-green-200 rounded-md p-4 mt-4">
+                <div className="flex items-start">
+                  <CheckCircle2 className="h-5 w-5 text-green-500 mt-0.5 mr-2" />
+                  <div>
+                    <h3 className="text-sm font-medium text-green-800">Verbindung erfolgreich</h3>
+                    <p className="text-sm text-green-700 mt-1">
+                      Gefundene Mailboxen: {testResult.mailboxes} <br />
+                      E-Mails im Posteingang: {testResult.inbox_count}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex justify-between pt-4">
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={testConnection}
-                disabled={isTestingConnection}
-              >
-                {isTestingConnection ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Mail className="mr-2 h-4 w-4" />
+              <div className="flex space-x-2">
+                <Button 
+                  type="button" 
+                  variant="outline"
+                  onClick={testConnection}
+                  disabled={isTestingConnection}
+                >
+                  {isTestingConnection ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <MailQuestion className="mr-2 h-4 w-4" />
+                  )}
+                  Verbindung testen
+                </Button>
+
+                {isVerified && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={syncEmails}
+                  >
+                    <Inbox className="mr-2 h-4 w-4" />
+                    E-Mails synchronisieren
+                  </Button>
                 )}
-                Verbindung testen
-              </Button>
+              </div>
 
               <div className="flex space-x-2">
                 {isVerified && (

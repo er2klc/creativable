@@ -6,6 +6,7 @@ import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { AboutSettings } from "@/components/settings/AboutSettings";
 import { BillingSettings } from "@/components/settings/BillingSettings";
 import { SmtpSettings } from "@/components/settings/SmtpSettings";
+import { ImapSettings } from "@/components/settings/ImapSettings";
 import { useSettings } from "@/hooks/use-settings";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
@@ -55,7 +56,8 @@ export default function Settings() {
         <Tabs defaultValue="general" className="space-y-4">
           <TabsList>
             <TabsTrigger value="general">Allgemein</TabsTrigger>
-            <TabsTrigger value="smtp">E-Mail</TabsTrigger>
+            <TabsTrigger value="smtp">SMTP</TabsTrigger>
+            <TabsTrigger value="imap">IMAP</TabsTrigger>
             <TabsTrigger value="mlm">Über mein Business</TabsTrigger>
             <TabsTrigger value="about">Über mich</TabsTrigger>
             <TabsTrigger value="billing">Plan & Rechnung</TabsTrigger>
@@ -68,6 +70,10 @@ export default function Settings() {
 
           <TabsContent value="smtp" className="space-y-4">
             <SmtpSettings />
+          </TabsContent>
+
+          <TabsContent value="imap" className="space-y-4">
+            <ImapSettings />
           </TabsContent>
 
           <TabsContent value="mlm" className="space-y-4">

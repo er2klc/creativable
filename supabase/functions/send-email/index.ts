@@ -1,27 +1,26 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Helper function to ensure proper HTML email structure
-function formatEmailContent(content: string): string {
-  return `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      </head>
-      <body style="margin: 0; padding: 20px; font-family: Arial, sans-serif; line-height: 1.6;">
-        ${content}
-      </body>
-    </html>
-  `.trim();
+interface EmailRequest {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  cc?: string[];
+  bcc?: string[];
+  attachments?: Array<{
+    filename: string;
+    content: string; // Base64 encoded content
+    contentType?: string;
+  }>;
+  lead_id?: string;
 }
 
 serve(async (req) => {
@@ -31,138 +30,163 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    );
-
-    // Get the authenticated user
-    const authHeader = req.headers.get('Authorization')!;
-    const { data: { user }, error: authError } = await supabase.auth.getUser(authHeader.split(' ')[1]);
+    // Create a Supabase client using the environment variables
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     
-    if (authError || !user) {
-      console.error('Authentication error:', authError);
-      throw new Error('Unauthorized');
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    
+    // Get the request body
+    const { 
+      to, 
+      subject, 
+      html, 
+      text, 
+      cc, 
+      bcc, 
+      attachments,
+      lead_id 
+    } = await req.json() as EmailRequest;
+
+    // Get authentication info
+    const authHeader = req.headers.get('Authorization');
+    let user_id;
+    
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user }, error } = await supabase.auth.getUser(token);
+      
+      if (error) {
+        console.error("Auth error:", error);
+        return new Response(
+          JSON.stringify({ error: "Authentication error", details: error.message }),
+          { 
+            status: 401, 
+            headers: { 
+              'Content-Type': 'application/json',
+              ...corsHeaders 
+            } 
+          }
+        );
+      }
+      
+      user_id = user?.id;
+    } else {
+      return new Response(
+        JSON.stringify({ error: "Authentication required" }),
+        { 
+          status: 401, 
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          } 
+        }
+      );
     }
 
-    // Get request body
-    const requestBody = await req.json();
-    console.log('Received request body:', requestBody);
-
-    const { to, subject, html, lead_id } = requestBody;
-
-    if (!to || !subject || !html) {
-      console.error('Missing required fields:', { to, subject, html: !!html });
-      throw new Error('Missing required fields: to, subject, and html are required');
-    }
-
-    // Get SMTP settings for the user
-    const { data: smtpSettings, error: settingsError } = await supabase
+    // Get SMTP settings from the database
+    const { data: smtpSettings, error: smtpError } = await supabase
       .from('smtp_settings')
       .select('*')
-      .eq('user_id', user.id)
+      .eq('user_id', user_id)
       .single();
-
-    if (settingsError || !smtpSettings) {
-      console.error('SMTP settings error:', settingsError);
-      throw new Error('SMTP settings not found. Please configure your SMTP settings first.');
-    }
-
-    console.log('Retrieved SMTP settings for user:', user.id);
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(to)) {
-      throw new Error('Invalid recipient email address format');
-    }
-
-    try {
-      // Create SMTP client with proper SSL/TLS configuration
-      const client = new SMTPClient({
-        connection: {
-          hostname: smtpSettings.host,
-          port: smtpSettings.port,
-          tls: smtpSettings.secure,
-          auth: {
-            username: smtpSettings.username,
-            password: smtpSettings.password,
-          },
-          // Add specific TLS options
-          tlsOptions: {
-            rejectUnauthorized: false // Only for development/testing
-          }
-        },
-      });
-
-      console.log('Attempting to send email to:', to);
-
-      // Format the HTML content properly
-      const formattedHtml = formatEmailContent(html);
-      console.log('Formatted email content:', formattedHtml);
-
-      // Send email with content-type headers
-      const emailResult = await client.send({
-        from: `${smtpSettings.from_name} <${smtpSettings.from_email}>`,
-        to: to,
-        subject: subject,
-        content: formattedHtml,
-        html: formattedHtml,
-        headers: {
-          "Content-Type": "text/html; charset=UTF-8"
-        }
-      });
-
-      console.log('Email sent successfully:', emailResult);
-
-      // Close connection
-      await client.close();
-
-      // If this was sent to a lead, create a message record
-      if (lead_id) {
-        const { error: messageError } = await supabase
-          .from('messages')
-          .insert({
-            lead_id: lead_id,
-            user_id: user.id,
-            content: html,
-            subject: subject,
-            type: 'email',
-            metadata: { 
-              to, 
-              from: smtpSettings.from_email 
-            }
-          });
-
-        if (messageError) {
-          console.error('Error saving message record:', messageError);
-          // Don't throw here as the email was sent successfully
-        }
-      }
-
-      return new Response(JSON.stringify({ 
-        success: true,
-        message: 'Email sent successfully'
-      }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 200,
-      });
-
-    } catch (smtpError) {
-      console.error('SMTP Error:', smtpError);
-      throw new Error(`SMTP Error: ${smtpError.message}`);
-    }
-
-  } catch (error) {
-    console.error('Error in send-email function:', error);
     
+    if (smtpError || !smtpSettings) {
+      console.error("SMTP settings error:", smtpError);
+      return new Response(
+        JSON.stringify({ 
+          error: "SMTP settings not found", 
+          details: "Please configure your SMTP settings first" 
+        }),
+        { 
+          status: 400, 
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          } 
+        }
+      );
+    }
+
+    // Create SMTP client with stored settings
+    const client = new SMTPClient({
+      connection: {
+        hostname: smtpSettings.host,
+        port: smtpSettings.port,
+        tls: smtpSettings.secure,
+        auth: {
+          username: smtpSettings.username,
+          password: smtpSettings.password,
+        },
+      },
+    });
+
+    // Prepare attachments if any
+    const parsedAttachments = attachments?.map(attachment => ({
+      content: Uint8Array.from(atob(attachment.content), c => c.charCodeAt(0)),
+      filename: attachment.filename,
+      contentType: attachment.contentType || 'application/octet-stream',
+    })) || [];
+
+    // Send the email
+    const emailResult = await client.send({
+      from: `${smtpSettings.from_name} <${smtpSettings.from_email}>`,
+      to: to,
+      subject: subject,
+      html: html,
+      text: text || undefined,
+      cc: cc || undefined,
+      bcc: bcc || undefined,
+      attachments: parsedAttachments,
+    });
+
+    // Close the connection
+    await client.close();
+    
+    // Record the email in the database
+    const { data: emailRecord, error: recordError } = await supabase
+      .from('email_tracking')
+      .insert({
+        user_id: user_id,
+        to_email: to,
+        subject: subject,
+        content: html,
+        lead_id: lead_id || null,
+        status: 'sent',
+        sent_at: new Date().toISOString(),
+      })
+      .select()
+      .single();
+    
+    if (recordError) {
+      console.error("Error recording email:", recordError);
+      // We still consider this a success since the email was sent
+    }
+
     return new Response(
       JSON.stringify({ 
-        success: false,
-        error: error.message || 'An error occurred while sending the email' 
+        success: true, 
+        message: "Email sent successfully", 
+        email_id: emailRecord?.id 
       }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 400,
+      { 
+        status: 200, 
+        headers: { 
+          'Content-Type': 'application/json',
+          ...corsHeaders 
+        } 
+      }
+    );
+  } catch (error) {
+    console.error("Error sending email:", error);
+    return new Response(
+      JSON.stringify({ error: "Failed to send email", details: error.message }),
+      { 
+        status: 500, 
+        headers: { 
+          'Content-Type': 'application/json',
+          ...corsHeaders 
+        } 
       }
     );
   }

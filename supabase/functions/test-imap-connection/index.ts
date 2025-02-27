@@ -1,20 +1,18 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import { ImapFlow } from "https://esm.sh/imapflow@1.0.126";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-interface SmtpSettings {
+interface ImapSettings {
   host: string;
   port: number;
   username: string;
   password: string;
   secure: boolean;
-  from_email?: string;
-  from_name?: string;
   user_id?: string;
 }
 
@@ -25,13 +23,13 @@ serve(async (req) => {
   }
 
   try {
-    const { host, port, username, password, secure, user_id } = await req.json() as SmtpSettings;
+    const { host, port, username, password, secure } = await req.json() as ImapSettings;
     
     // Validate required fields
     if (!host || !port || !username || !password) {
       return new Response(
         JSON.stringify({ 
-          error: "Missing required SMTP settings",
+          error: "Missing required IMAP settings",
           details: "Host, port, username, and password are required"
         }),
         { 
@@ -44,29 +42,44 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Testing SMTP connection to ${host}:${port}, secure: ${secure}`);
+    console.log(`Testing IMAP connection to ${host}:${port}, secure: ${secure}`);
 
-    // Create SMTP client with provided settings
-    const client = new SMTPClient({
-      connection: {
-        hostname: host,
-        port: port,
-        tls: secure,
-        auth: {
-          username: username,
-          password: password,
-        },
+    // Create IMAP client with provided settings
+    const client = new ImapFlow({
+      host: host,
+      port: port,
+      secure: secure,
+      auth: {
+        user: username,
+        pass: password
       },
+      logger: false,
+      // Short timeouts for testing
+      timeoutConnection: 10000
     });
 
     try {
       // Test connection by connecting and immediately disconnecting
       await client.connect();
-      console.log("SMTP connection successful");
-      await client.close();
+      console.log("IMAP connection successful");
+      
+      // Try to get mailbox list as additional validation
+      const mailboxes = await client.list();
+      console.log(`Found ${mailboxes.length} mailboxes`);
+      
+      // Get inbox count
+      const inbox = await client.mailboxOpen('INBOX');
+      console.log(`INBOX has ${inbox.exists} messages`);
+      
+      await client.logout();
 
       return new Response(
-        JSON.stringify({ success: true, message: "SMTP connection successful" }),
+        JSON.stringify({ 
+          success: true, 
+          message: "IMAP connection successful",
+          mailboxes: mailboxes.length,
+          inbox_count: inbox.exists
+        }),
         { 
           status: 200, 
           headers: { 
@@ -76,10 +89,10 @@ serve(async (req) => {
         }
       );
     } catch (connectionError) {
-      console.error("SMTP connection failed:", connectionError);
+      console.error("IMAP connection failed:", connectionError);
       return new Response(
         JSON.stringify({ 
-          error: "SMTP connection failed", 
+          error: "IMAP connection failed", 
           details: connectionError.message 
         }),
         { 
