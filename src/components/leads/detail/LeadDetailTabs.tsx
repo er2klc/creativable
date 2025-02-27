@@ -170,7 +170,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   return (
     <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-4 pt-4">
       <div className="w-full pb-2">
-        <TabsList className="w-full flex flex-wrap px-4 mb-2">
+        <TabsList className="w-full flex flex-wrap px-4 mb-2 bg-transparent border-b">
           <TooltipProvider>
             {tabItems.map((tab) => (
               <Tooltip key={tab.id}>
@@ -178,10 +178,10 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
                   <TabsTrigger
                     value={tab.id}
                     className={cn(
-                      "flex items-center justify-center transition-all duration-200 px-4 py-2",
+                      "flex items-center justify-center transition-all duration-200 px-4 py-2 rounded-none",
                       selectedTab === tab.id 
                         ? "text-foreground" 
-                        : "text-muted-foreground"
+                        : "text-muted-foreground hover:text-foreground"
                     )}
                     style={{
                       backgroundColor: selectedTab === tab.id 
@@ -193,14 +193,15 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
                     <span className="flex items-center justify-center">
                       {tab.icon}
                     </span>
-                    {selectedTab === tab.id && (
-                      <span className="ml-2">
-                        {tab.label}
-                      </span>
-                    )}
+                    <span className={cn(
+                      "ml-2 transition-opacity duration-200 sm:opacity-100",
+                      selectedTab === tab.id ? "opacity-100" : "opacity-0 hidden sm:block sm:opacity-70"
+                    )}>
+                      {tab.label}
+                    </span>
                   </TabsTrigger>
                 </TooltipTrigger>
-                <TooltipContent>
+                <TooltipContent side="bottom" className="sm:hidden">
                   {tab.label}
                 </TooltipContent>
               </Tooltip>
