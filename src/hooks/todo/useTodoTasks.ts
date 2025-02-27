@@ -57,7 +57,9 @@ export function useTodoTasks(settings: any) {
       }
     },
     onSuccess: () => {
+      // Invalidate both tasks query and any lead queries to sync both views
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['lead'] });
     },
     onError: (error) => {
       console.error('Mutation error:', error);

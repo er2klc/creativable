@@ -61,6 +61,16 @@ export function SortableTask({ task, updateTaskMutation, settings }: SortableTas
     });
   };
 
+  // Function to render content with appropriate formatting
+  const renderTaskContent = () => {
+    if (task.title?.includes('**')) {
+      return <div dangerouslySetInnerHTML={{ 
+        __html: task.title.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+      }} />;
+    }
+    return <span>{task.title}</span>;
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -81,7 +91,7 @@ export function SortableTask({ task, updateTaskMutation, settings }: SortableTas
       />
       <div className="flex-1">
         <span className={task.completed ? "line-through text-gray-500" : ""}>
-          {task.title}
+          {renderTaskContent()}
         </span>
         {task.leads && (
           <div className="flex items-center gap-2 mt-2 text-sm text-gray-600">

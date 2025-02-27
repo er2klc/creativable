@@ -48,8 +48,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         filter: `lead_id=eq.${lead.id}`
       }, () => {
         // When tasks change, invalidate queries
-        queryClient.invalidateQueries(['lead', lead.id]);
-        queryClient.invalidateQueries(['todo']);
+        queryClient.invalidateQueries({ queryKey: ['lead', lead.id] });
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
       })
       .subscribe();
 
@@ -87,8 +87,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
       if (error) throw error;
       
       // Invalidate queries to ensure consistency
-      queryClient.invalidateQueries(['lead', lead.id]);
-      queryClient.invalidateQueries(['todo']);
+      queryClient.invalidateQueries({ queryKey: ['lead', lead.id] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       
     } catch (error) {
       console.error("Error toggling task completion:", error);

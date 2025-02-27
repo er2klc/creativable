@@ -114,7 +114,7 @@ export default function TodoList() {
     );
   }
 
-  // Filter out completed tasks for display
+  // Filter out completed tasks for display in TodoList
   const incompleteTasks = tasks.filter(task => !task.completed);
 
   return (

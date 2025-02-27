@@ -55,7 +55,6 @@ export function TaskCard({
 
   const handleToggleComplete = async () => {
     if (isSubmitting) return;
-    if (completed) return; // Don't allow uncompleting tasks - this is optional, remove if you want to toggle both ways
     
     setIsSubmitting(true);
     
@@ -80,9 +79,8 @@ export function TaskCard({
       }
       
       // Invalidate relevant queries to sync across all views
-      queryClient.invalidateQueries(['tasks']);
-      queryClient.invalidateQueries(['todo']);
-      queryClient.invalidateQueries(['lead']);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['lead'] });
       
       // Call the callback if provided
       if (onToggleComplete) {
@@ -108,14 +106,9 @@ export function TaskCard({
     }
   };
 
-  // Function to determine if a string contains markdown bold syntax
-  const containsBoldMarkdown = (text: string) => {
-    return /\*\*(.*?)\*\*/g.test(text);
-  };
-
   // Function to render content with appropriate formatting
   const renderTaskContent = () => {
-    if (containsBoldMarkdown(content)) {
+    if (content.includes('**')) {
       // Replace markdown bold with HTML bold
       return <div dangerouslySetInnerHTML={{ 
         __html: content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
@@ -136,7 +129,7 @@ export function TaskCard({
             isSubmitting ? "opacity-50 cursor-not-allowed" : ""
           )}
           onClick={handleToggleComplete}
-          disabled={isSubmitting || completed} // Disable if already completed
+          disabled={isSubmitting}
         >
           {completed ? (
             <CheckSquare className="h-5 w-5" />
