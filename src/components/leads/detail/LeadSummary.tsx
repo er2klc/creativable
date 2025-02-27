@@ -8,9 +8,6 @@ import { NexusTimelineCard } from "./timeline/cards/NexusTimelineCard";
 import { useAuth } from "@/hooks/use-auth";
 import { PhaseAnalysisButton } from "./components/PhaseAnalysisButton";
 import { useQueryClient } from "@tanstack/react-query";
-import { BusinessMatchCard } from "./timeline/cards/BusinessMatchCard";
-import { Gauge, Target } from "lucide-react";
-import { Button } from "@/components/ui/button";
 
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
@@ -26,156 +23,84 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
   } | null>(null);
   const queryClient = useQueryClient();
 
-  // New state for business match
-  const [businessMatch, setBusinessMatch] = useState<any>(null);
-  const [isLoadingBusinessMatch, setIsLoadingBusinessMatch] = useState(false);
-
-  // Load business match and/or existing phase analysis
+  // Load existing analysis and determine phase position
   useEffect(() => {
-    async function loadAnalysisData() {
-      if (!lead.id || !user?.id) return;
+    async function loadAnalysisAndPhaseInfo() {
+      if (!lead.id || !lead.phase_id) return;
       
       try {
-        // 1. Check for existing business match
-        const { data: existingMatch, error: matchError } = await supabase
-          .from("lead_business_match")
+        // 1. Check for existing analysis
+        const { data: existingAnalysis, error } = await supabase
+          .from("phase_based_analyses")
           .select("*")
           .eq("lead_id", lead.id)
-          .eq("user_id", user.id)
+          .eq("phase_id", lead.phase_id)
           .maybeSingle();
 
-        if (matchError) throw matchError;
+        if (error) throw error;
         
-        if (existingMatch) {
-          setBusinessMatch(existingMatch);
-        }
-        
-        // 2. Check for existing phase analysis only if no business match
-        if (!existingMatch && lead.phase_id) {
-          const { data: existingAnalysis, error } = await supabase
-            .from("phase_based_analyses")
-            .select("*")
-            .eq("lead_id", lead.id)
-            .eq("phase_id", lead.phase_id)
-            .maybeSingle();
-
-          if (error) throw error;
-          
-          if (existingAnalysis) {
-            setAnalysisContent(existingAnalysis.content);
-            setAnalysisMetadata({
-              type: 'phase_analysis',
-              phase: {
-                id: lead.phase_id,
-                name: lead.phase_name || "Current Phase"
-              },
-              timestamp: existingAnalysis.created_at,
-              metadata: existingAnalysis.metadata
-            });
-          }
-
-          // 3. Determine phase position in pipeline
-          const { data: pipelinePhases, error: phasesError } = await supabase
-            .from("pipeline_phases")
-            .select("id, name, order_index, pipeline_id")
-            .eq("id", lead.phase_id)
-            .single();
-
-          if (phasesError) throw phasesError;
-
-          const { data: allPhases, error: allPhasesError } = await supabase
-            .from("pipeline_phases")
-            .select("id, name, order_index")
-            .eq("pipeline_id", pipelinePhases.pipeline_id)
-            .order("order_index", { ascending: true });
-
-          if (allPhasesError) throw allPhasesError;
-
-          const totalPhases = allPhases.length;
-          const currentPhaseIndex = allPhases.findIndex(phase => phase.id === lead.phase_id);
-          
-          let phasePosition = "middle";
-          if (currentPhaseIndex === 0) {
-            phasePosition = "first";
-          } else if (currentPhaseIndex === totalPhases - 1) {
-            phasePosition = "last";
-          }
-
-          setPhaseInfo({
-            position: phasePosition,
-            index: currentPhaseIndex,
-            total: totalPhases,
-            positionLabel: settings?.language === "en" 
-              ? capitalizeFirstLetter(phasePosition) + " Phase" 
-              : phasePosition === "first" 
-                ? "Erste Phase" 
-                : phasePosition === "last" 
-                  ? "Letzte Phase" 
-                  : "Mittlere Phase"
+        if (existingAnalysis) {
+          setAnalysisContent(existingAnalysis.content);
+          setAnalysisMetadata({
+            type: 'phase_analysis',
+            phase: {
+              id: lead.phase_id,
+              name: lead.phase_name || "Current Phase"
+            },
+            timestamp: existingAnalysis.created_at,
+            metadata: existingAnalysis.metadata
           });
+        } else {
+          setAnalysisContent(null);
+          setAnalysisMetadata(null);
         }
+
+        // 2. Determine phase position in pipeline
+        const { data: pipelinePhases, error: phasesError } = await supabase
+          .from("pipeline_phases")
+          .select("id, name, order_index, pipeline_id")
+          .eq("id", lead.phase_id)
+          .single();
+
+        if (phasesError) throw phasesError;
+
+        const { data: allPhases, error: allPhasesError } = await supabase
+          .from("pipeline_phases")
+          .select("id, name, order_index")
+          .eq("pipeline_id", pipelinePhases.pipeline_id)
+          .order("order_index", { ascending: true });
+
+        if (allPhasesError) throw allPhasesError;
+
+        const totalPhases = allPhases.length;
+        const currentPhaseIndex = allPhases.findIndex(phase => phase.id === lead.phase_id);
+        
+        let phasePosition = "middle";
+        if (currentPhaseIndex === 0) {
+          phasePosition = "first";
+        } else if (currentPhaseIndex === totalPhases - 1) {
+          phasePosition = "last";
+        }
+
+        setPhaseInfo({
+          position: phasePosition,
+          index: currentPhaseIndex,
+          total: totalPhases,
+          positionLabel: settings?.language === "en" 
+            ? capitalizeFirstLetter(phasePosition) + " Phase" 
+            : phasePosition === "first" 
+              ? "Erste Phase" 
+              : phasePosition === "last" 
+                ? "Letzte Phase" 
+                : "Mittlere Phase"
+        });
       } catch (error) {
-        console.error("Error loading analysis data:", error);
+        console.error("Error loading analysis and phase info:", error);
       }
     }
     
-    loadAnalysisData();
-  }, [lead.id, lead.phase_id, lead.phase_name, settings?.language, user?.id]);
-
-  const generateBusinessMatch = async () => {
-    if (!user) {
-      toast.error(
-        settings?.language === "en"
-          ? "You must be logged in"
-          : "Sie müssen angemeldet sein"
-      );
-      return;
-    }
-
-    try {
-      setIsLoadingBusinessMatch(true);
-      
-      const { data, error } = await supabase.functions.invoke('generate-lead-business-match', {
-        body: {
-          leadId: lead.id,
-          userId: user.id
-        }
-      });
-
-      if (error) {
-        console.error("Edge function error:", error);
-        throw error;
-      }
-      
-      if (data.error) {
-        console.error("Business match generation error:", data.error);
-        toast.error(settings?.language === "en" 
-          ? `Business match generation failed: ${data.error}` 
-          : `Fehler bei der Business Match Generierung: ${data.error}`);
-        return;
-      }
-
-      setBusinessMatch(data.analysis);
-      
-      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
-      queryClient.invalidateQueries({ queryKey: ["lead-with-relations", lead.id] });
-      
-      toast.success(
-        settings?.language === "en"
-          ? "Business match analysis created successfully"
-          : "Business Match Analyse erfolgreich erstellt"
-      );
-    } catch (error: any) {
-      console.error("Error generating business match:", error);
-      toast.error(
-        settings?.language === "en"
-          ? `Error generating business match: ${error.message || "Please try again"}`
-          : `Fehler bei der Business Match Generierung: ${error.message || "Bitte versuchen Sie es erneut"}`
-      );
-    } finally {
-      setIsLoadingBusinessMatch(false);
-    }
-  };
+    loadAnalysisAndPhaseInfo();
+  }, [lead.id, lead.phase_id, lead.phase_name, settings?.language]);
 
   const generateAnalysis = async () => {
     if (!user) {
@@ -230,6 +155,39 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         return;
       }
 
+      // Create task automatically from the analysis
+      if (data.analysis?.content) {
+        try {
+          // Extract recommended tasks from the analysis
+          const taskRegex = /\*\*(.*?)\*\*/g;
+          const matches = [...data.analysis.content.matchAll(taskRegex)];
+          
+          if (matches.length > 0) {
+            // Create a task from the first recommendation
+            const taskTitle = matches[0][1].replace(/\*\*/g, '');
+            
+            await supabase
+              .from("tasks")
+              .insert({
+                lead_id: lead.id,
+                title: taskTitle,
+                user_id: user.id,
+                priority: "High",
+                type: "task",
+                color: "#FFD700", // Gold color for AI-recommended tasks
+              });
+              
+            toast.success(
+              settings?.language === "en"
+                ? "Task created from analysis"
+                : "Aufgabe aus Analyse erstellt"
+            );
+          }
+        } catch (taskError) {
+          console.error("Error creating task from analysis:", taskError);
+        }
+      }
+
       // Update state with new analysis
       setAnalysisContent(data.analysis?.content || "Analysis generated");
       setAnalysisMetadata({
@@ -262,50 +220,8 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  // Render business match score if it exists
-  if (businessMatch) {
-    return (
-      <BusinessMatchCard 
-        matchScore={businessMatch.match_score}
-        skills={businessMatch.skills || []}
-        commonalities={businessMatch.commonalities || []}
-        potentialNeeds={businessMatch.potential_needs || []}
-        strengths={businessMatch.strengths || []}
-        content={businessMatch.analysis_content}
-        onRegenerate={generateBusinessMatch}
-        isRegenerating={isLoadingBusinessMatch}
-      />
-    );
-  }
-
-  // Show business match analysis button if no analysis exists yet
-  if (!businessMatch && !analysisContent) {
-    return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center">
-            <Target className="w-5 h-5 mr-2 text-blue-600" />
-            <h3 className="text-lg font-semibold">Business Match Analyse</h3>
-          </div>
-        </div>
-        
-        <p className="text-gray-600 mb-4">
-          Analysieren Sie, wie gut dieser Kontakt zu Ihrem Geschäft passt. Die KI bewertet auf einer Skala von 0-100 die Übereinstimmung basierend auf dem Profil und identifiziert Gemeinsamkeiten, Stärken und Bedarfe.
-        </p>
-        
-        <Button
-          className="w-full"
-          onClick={generateBusinessMatch}
-          disabled={isLoadingBusinessMatch}
-        >
-          {isLoadingBusinessMatch ? "Analyse wird erstellt..." : "Business Match Analyse erstellen"}
-        </Button>
-      </div>
-    );
-  }
-
-  // Use phase info from metadata if available, otherwise use our calculated info
   if (analysisContent) {
+    // Use phase info from metadata if available, otherwise use our calculated info
     const analysisPhaseInfo = analysisMetadata?.metadata?.phase_position 
       ? {
           position: analysisMetadata.metadata.phase_position,
@@ -334,7 +250,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     );
   }
 
-  // Show phase analysis button if no business match or phase analysis
+  // Show analysis button if no analysis exists yet
   return (
     <PhaseAnalysisButton 
       isLoading={isLoading}

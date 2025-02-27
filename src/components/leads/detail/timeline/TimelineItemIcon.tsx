@@ -1,95 +1,215 @@
 
 import { 
-  MessageSquare, BellRing, FileText, Calendar, CheckCircle, Clock, User, AlertCircle, CheckSquare, SquareCheck, 
-  PenSquare, AlertTriangle, Youtube, File, Gauge, Target
+  MessageSquare, 
+  CheckSquare, 
+  StickyNote, 
+  Calendar,
+  FileText,
+  FileSpreadsheet,
+  Image,
+  Bell,
+  Instagram,
+  Linkedin,
+  MessageCircle,
+  UserPlus,
+  ListTodo,
+  Send,
+  ArrowUpCircle,
+  Upload,
+  X,
+  Check,
+  Heart,
+  Clock,
+  ThumbsDown,
+  Bot,
+  Youtube,
+  Video,
+  Eye,
+  Phone
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
-import { cn } from "@/lib/utils";
 
 interface TimelineItemIconProps {
   type: TimelineItemType;
   status?: string;
   platform?: string;
-  metadata?: any;
+  metadata?: {
+    type?: string;
+    oldStatus?: string;
+    newStatus?: string;
+    meetingType?: string;
+    fileType?: string;
+    event_type?: string;
+    script_type?: string;
+    message_type?: string;
+  };
 }
 
-export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineItemIconProps) => {
-  // Tailwind classes für den Hintergrund
-  const bgClass = getBgClass(type, status);
-  
-  // Icon auswählen je nach Typ
-  let Icon;
-  switch (type) {
-    case 'business_match':
-      Icon = Target;
-      break;
-    case 'message':
-      Icon = MessageSquare;
-      break;
-    case 'task':
-      Icon = status === 'completed' ? CheckSquare : SquareCheck;
-      break;
-    case 'appointment':
-      Icon = Calendar;
-      break;
-    case 'note':
-      if (metadata?.type === 'call_script') {
-        Icon = MessageSquare;
-      } else if (metadata?.type === 'message_template') {
-        Icon = MessageSquare;
-      } else if (metadata?.type === 'phase_analysis') {
-        Icon = AlertCircle;
-      } else {
-        Icon = FileText;
+export const TimelineItemIcon = ({ 
+  type, 
+  status, 
+  platform, 
+  metadata 
+}: TimelineItemIconProps) => {
+  const getIconComponent = () => {
+    // Handle call script
+    if (metadata?.type === 'call_script') {
+      return Phone;
+    }
+
+    // Handle message template
+    if (metadata?.type === 'message_template') {
+      return Send;
+    }
+
+    // Handle YouTube events first
+    if (metadata?.type === 'youtube') {
+      // Use different icons based on event_type
+      switch(metadata.event_type) {
+        case 'video_opened':
+        case 'video_closed':
+        case 'video_completed':
+        case 'video_progress':
+          return Eye;
+        default:
+          return Video;
       }
-      break;
-    case 'phase_change':
-      Icon = PenSquare;
-      break;
-    case 'status_change':
-      Icon = AlertTriangle;
-      break;
-    case 'file_upload':
-      Icon = File;
-      break;
-    default:
-      if (metadata?.type === 'youtube' || metadata?.event_type?.includes('video')) {
-        Icon = Youtube;
-      } else if (type === 'contact_created') {
-        Icon = User;
-      } else {
-        Icon = BellRing;
+    }
+
+    // Handle file type logic
+    if (type === 'file_upload') {
+      return getFileIcon(metadata?.fileType);
+    }
+
+    // Handle status changes first
+    if (type === 'status_change') {
+      switch(metadata?.newStatus) {
+        case 'partner': return Heart;
+        case 'customer': return Heart;
+        case 'not_for_now': return Clock;
+        case 'no_interest': return ThumbsDown;
+        case 'lead': return UserPlus;
+        default: return ArrowUpCircle;
       }
-  }
+    }
+
+    // Handle phase analysis first
+    if (metadata?.type === 'phase_analysis') {
+      return Bot;
+    }
+
+    // Handle other types
+    switch (type) {
+      case 'contact_created':
+        return UserPlus;
+      case 'message':
+        if (platform === 'instagram') return Instagram;
+        if (platform === 'linkedin') return Linkedin;
+        if (platform === 'whatsapp') return MessageCircle;
+        return MessageSquare;
+      case 'task':
+        return status === 'completed' ? Check : ListTodo;
+      case 'appointment':
+        return status === 'cancelled' ? X : Calendar;
+      case 'note':
+        return StickyNote;
+      case 'phase_change':
+        return ArrowUpCircle;
+      case 'reminder':
+        return Bell;
+      case 'presentation':
+        return Send;
+      case 'upload':
+        return Upload;
+      default:
+        return MessageSquare;
+    }
+  };
+
+  const getFileIcon = (fileType?: string) => {
+    if (fileType?.includes('image')) return Image;
+    if (fileType === 'pdf') return FileText;
+    if (fileType?.includes('spreadsheet')) return FileSpreadsheet;
+    return FileText;
+  };
+
+  const getIconColor = () => {
+    // Handle call script
+    if (metadata?.type === 'call_script') {
+      return 'bg-orange-500';
+    }
+
+    // Handle message template
+    if (metadata?.type === 'message_template') {
+      switch(platform) {
+        case 'Instagram': return 'bg-gradient-to-r from-purple-500 to-pink-500';
+        case 'LinkedIn': return 'bg-blue-600';
+        case 'Facebook': return 'bg-blue-500';
+        case 'WhatsApp': return 'bg-green-500';
+        case 'Email': return 'bg-gray-500';
+        case 'TikTok': return 'bg-black';
+        default: return 'bg-purple-400';
+      }
+    }
+
+    // Handle YouTube type first with different colors based on event_type
+    if (metadata?.type === 'youtube') {
+      if (metadata.event_type === 'video_opened' || 
+          metadata.event_type === 'video_closed' || 
+          metadata.event_type === 'video_completed' ||
+          metadata.event_type === 'video_progress') {
+        return 'bg-orange-500'; // More prominent color for view events
+      }
+      return 'bg-red-500'; // YouTube brand color for video additions
+    }
+
+    if (type === 'status_change') {
+      switch(metadata?.newStatus) {
+        case 'partner': return 'bg-pink-500';
+        case 'customer': return 'bg-sky-500';
+        case 'not_for_now': return 'bg-stone-500';
+        case 'no_interest': return 'bg-rose-500';
+        case 'lead': return 'bg-blue-500';
+        default: return 'bg-gray-500';
+      }
+    }
+
+    if (metadata?.type === 'phase_analysis') {
+      return 'bg-gradient-to-r from-blue-500 to-purple-500';
+    }
+
+    switch (type) {
+      case 'task':
+        return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
+      case 'appointment':
+        if (status === 'cancelled') return 'bg-gray-400';
+        return 'bg-orange-500';
+      case 'note':
+        return 'bg-yellow-500';
+      case 'phase_change':
+        return 'bg-purple-500';
+      case 'message':
+        return 'bg-blue-500';
+      case 'contact_created':
+        return 'bg-emerald-500';
+      case 'file_upload':
+        return 'bg-blue-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
+
+  const Icon = getIconComponent();
+  const iconSize = metadata?.type === 'youtube' && 
+    (metadata.event_type === 'video_opened' || 
+     metadata.event_type === 'video_closed' || 
+     metadata.event_type === 'video_completed' ||
+     metadata.event_type === 'video_progress') ? 'h-5 w-5' : 'h-4 w-4';
 
   return (
-    <div className={cn("h-8 w-8 rounded-full flex items-center justify-center", bgClass)}>
-      <Icon className="h-4 w-4 text-white" />
+    <div className="z-10 flex items-center justify-center w-8 h-8 rounded-full relative">
+      <div className={`absolute inset-0 rounded-full ${getIconColor()}`} />
+      <Icon className={`${iconSize} text-white relative z-20`} />
     </div>
   );
 };
-
-function getBgClass(type: TimelineItemType, status?: string) {
-  switch (type) {
-    case 'business_match':
-      return 'bg-blue-600';
-    case 'task':
-      return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
-    case 'appointment':
-      return status === 'cancelled' ? 'bg-gray-400' : 'bg-orange-500';
-    case 'message':
-      return 'bg-blue-500';
-    case 'note':
-      return 'bg-yellow-500';
-    case 'phase_change':
-      return 'bg-purple-500';
-    case 'status_change':
-      return 'bg-red-500';
-    case 'file_upload':
-      return 'bg-blue-500';
-    case 'contact_created':
-      return 'bg-emerald-500';
-    default:
-      return 'bg-gray-500';
-  }
-}
