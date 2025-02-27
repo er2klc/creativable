@@ -59,20 +59,18 @@ export function CallScriptCard({
   };
 
   return (
-    <div className="relative group bg-white border border-orange-500 rounded-lg shadow-sm p-4 overflow-hidden">
+    <div className="relative group bg-white border border-orange-500 rounded-lg shadow-sm p-4">
       <div className="flex items-center gap-2 mb-2">
         <Phone className="h-4 w-4 text-orange-500" />
         <span className="font-medium">{getTypeLabel()}</span>
         {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
       
-      <div className="prose prose-sm max-w-none prose-headings:mt-2 prose-headings:mb-1 prose-headings:text-base prose-p:my-1 overflow-hidden break-words">
-        <ReactMarkdown className="whitespace-normal break-words">
-          {displayContent}
-        </ReactMarkdown>
+      <div className="prose prose-sm max-w-none dark:prose-invert mb-2">
+        <ReactMarkdown>{displayContent}</ReactMarkdown>
       </div>
       
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex items-center justify-between">
         {shouldTruncate && (
           <Button
             variant="ghost"
