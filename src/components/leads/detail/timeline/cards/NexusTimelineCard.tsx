@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { cn } from "@/lib/utils";
 import { Bot, Copy, RefreshCw, ChevronDown, ChevronUp, ChevronRight, ChevronLeft, Brain } from "lucide-react";
 import { useState } from "react";
@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
 import ReactMarkdown from 'react-markdown';
 import { Badge } from "@/components/ui/badge";
-import type { Components } from 'react-markdown';
 
 interface NexusTimelineCardProps {
   content: string;
@@ -71,29 +70,6 @@ export const NexusTimelineCard = ({
 
   const shouldTruncate = content.length > maxPreviewLength;
   const displayContent = isExpanded ? content : content.slice(0, maxPreviewLength) + (shouldTruncate ? '...' : '');
-
-  const markdownComponents: Components = {
-    h2: ({ children, ...props }) => {
-      const childArray = React.Children.toArray(children);
-      const firstChild = childArray[0];
-      
-      if (typeof firstChild === 'string') {
-        const emojiMatch = firstChild.match(/^([\p{Emoji}]+)\s?(.*)/u);
-        if (emojiMatch) {
-          const [_, emoji, text] = emojiMatch;
-          return (
-            <h2 className="flex items-center gap-2 text-base font-semibold mt-3 mb-2" {...props}>
-              <span className="text-xl">{emoji}</span>
-              <span>{text}</span>
-              {childArray.slice(1)}
-            </h2>
-          );
-        }
-      }
-      
-      return <h2 className="text-base font-semibold mt-3 mb-2" {...props}>{children}</h2>;
-    }
-  };
 
   return (
     <div className="rounded-lg relative p-[1px] bg-gradient-to-r from-blue-500 to-purple-600">
@@ -165,13 +141,8 @@ export const NexusTimelineCard = ({
           </div>
         )}
 
-        <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-base prose-headings:font-medium prose-headings:mt-3 prose-headings:mb-2 prose-strong:font-semibold prose-p:my-1.5 prose-p:leading-relaxed overflow-hidden">
-          <ReactMarkdown 
-            className="whitespace-pre-wrap break-words"
-            components={markdownComponents}
-          >
-            {displayContent}
-          </ReactMarkdown>
+        <div className="prose prose-sm max-w-none dark:prose-invert">
+          <ReactMarkdown>{displayContent}</ReactMarkdown>
         </div>
 
         {shouldTruncate && (
