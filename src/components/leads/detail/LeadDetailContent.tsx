@@ -11,6 +11,7 @@ import { PhaseAnalysisButton } from "./components/PhaseAnalysisButton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
@@ -64,7 +65,8 @@ export const LeadDetailContent = ({
     try {
       setIsGeneratingAnalysis(true);
       
-      const { data, error } = await supabase.functions.invoke('generate-phase-analysis', {
+      // Verwende die neue Edge Function
+      const { data, error } = await supabase.functions.invoke('generate-lead-phase-analysis', {
         body: {
           leadId: lead.id,
           phaseId: lead.phase_id,
@@ -74,11 +76,17 @@ export const LeadDetailContent = ({
 
       if (error) {
         console.error("Edge function error:", error);
+        toast.error(settings?.language === "en" 
+          ? `Analysis generation failed: ${error.message}` 
+          : `Fehler bei der Analyse-Generierung: ${error.message}`);
         throw error;
       }
       
       if (data.error) {
         console.error("Analysis generation error:", data.error);
+        toast.error(settings?.language === "en" 
+          ? `Analysis generation failed: ${data.error}` 
+          : `Fehler bei der Analyse-Generierung: ${data.error}`);
         return;
       }
       
@@ -86,8 +94,14 @@ export const LeadDetailContent = ({
       queryClient.invalidateQueries({ queryKey: ["lead-with-relations", lead.id] });
       setHasAnalysis(true);
       
+      toast.success(settings?.language === "en" 
+        ? "Phase analysis created successfully" 
+        : "Phasenanalyse erfolgreich erstellt");
     } catch (error: any) {
       console.error("Error generating analysis:", error);
+      toast.error(settings?.language === "en" 
+        ? `Error generating analysis: ${error.message}` 
+        : `Fehler bei der Analyse-Generierung: ${error.message}`);
     } finally {
       setIsGeneratingAnalysis(false);
     }
