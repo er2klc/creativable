@@ -109,4 +109,10 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           platform={lead.platform}
           hasLinkedInPosts={hasLinkedInPosts}
           linkedInPosts={lead.linkedin_posts || []}
-          socialMediaPosts={socialMediaPosts || [
+          socialMediaPosts={socialMediaPosts || []}
+          leadId={lead.id}
+        />
+      )}
+    </div>
+  );
+};
