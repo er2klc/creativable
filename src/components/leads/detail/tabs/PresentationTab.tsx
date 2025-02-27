@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -5,11 +6,41 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useQuery } from "@tanstack/react-query";
-import { ManualInputForm } from "./presentation/ManualInputForm";
-import { LinkSelectionForm } from "./presentation/LinkSelectionForm";
-import { ExpirySelect } from "./presentation/ExpirySelect";
-import { getVideoId, generateSlug } from "./presentation/presentationUtils";
-import { UserLink } from "@/pages/Links";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { useSettings } from "@/hooks/use-settings";
+
+// Hilfsfunktion für die Generierung von YouTube Video IDs
+const getVideoId = (url: string): string | null => {
+  // YouTube URL patterns
+  const patterns = [
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i,
+    /^[a-zA-Z0-9_-]{11}$/
+  ];
+
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
+};
+
+// Hilfsfunktion für die Generierung von Slugs
+const generateSlug = (title: string, videoId: string): string => {
+  // Einfachen slug aus Titel erstellen
+  const baseSlug = title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '');
+  
+  // Zeitstempel hinzufügen, um Einzigartigkeit zu gewährleisten
+  const timestamp = Date.now().toString(36);
+  
+  return `${baseSlug}-${videoId}-${timestamp}`;
+};
 
 interface PresentationTabProps {
   leadId: string;
@@ -19,35 +50,19 @@ interface PresentationTabProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const calculateExpiryDate = (expiresIn: string): Date | null => {
-  if (expiresIn === "never") return null;
-  
-  const now = new Date();
-  switch (expiresIn) {
-    case "1hour":
-      return new Date(now.getTime() + 60 * 60 * 1000);
-    case "1day":
-      return new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    case "1week":
-      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    case "1month":
-      return new Date(now.setMonth(now.getMonth() + 1));
-    default:
-      return null;
-  }
-};
-
 export const PresentationTab = ({
   leadId,
   type,
+  tabColors,
   isOpen,
   onOpenChange,
 }: PresentationTabProps) => {
   const [url, setUrl] = useState("");
   const [title, setTitle] = useState("");
   const [expiresIn, setExpiresIn] = useState("never");
-  const [isManualInput, setIsManualInput] = useState(false);
+  const [isManualInput, setIsManualInput] = useState(true);
   const { user } = useAuth();
+  const { settings } = useSettings();
 
   const { data: userLinks = [] } = useQuery({
     queryKey: ['user-links', type],
@@ -63,9 +78,27 @@ export const PresentationTab = ({
     },
   });
 
-  const handleLinkSelect = (link: UserLink) => {
+  const handleLinkSelect = (link: any) => {
     setUrl(link.url);
     setTitle(link.title);
+  };
+
+  const calculateExpiryDate = (expiresIn: string): Date | null => {
+    if (expiresIn === "never") return null;
+    
+    const now = new Date();
+    switch (expiresIn) {
+      case "1hour":
+        return new Date(now.getTime() + 60 * 60 * 1000);
+      case "1day":
+        return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      case "1week":
+        return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      case "1month":
+        return new Date(now.setMonth(now.getMonth() + 1));
+      default:
+        return null;
+    }
   };
 
   const handleSubmit = async () => {
@@ -75,13 +108,13 @@ export const PresentationTab = ({
         return;
       }
 
-      const videoId = getVideoId(url);
-      if (!videoId) {
-        toast.error("Ungültige YouTube-URL");
-        return;
-      }
-
       if (type === "youtube") {
+        const videoId = getVideoId(url);
+        if (!videoId) {
+          toast.error("Ungültige YouTube-URL");
+          return;
+        }
+
         const slug = generateSlug(title || url, videoId);
         const expiryDate = calculateExpiryDate(expiresIn);
         
@@ -123,6 +156,44 @@ export const PresentationTab = ({
         if (noteError) throw noteError;
 
         toast.success("YouTube Video erfolgreich hinzugefügt");
+      } else if (type === "zoom") {
+        // Implementierung für Zoom-Links
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert([
+            {
+              lead_id: leadId,
+              user_id: user?.id,
+              content: url,
+              metadata: {
+                type: "zoom",
+                title: title || "Zoom Meeting",
+                url: url
+              }
+            }
+          ]);
+
+        if (noteError) throw noteError;
+        toast.success("Zoom-Link erfolgreich hinzugefügt");
+      } else if (type === "documents") {
+        // Implementierung für Dokumente
+        const { error: noteError } = await supabase
+          .from("notes")
+          .insert([
+            {
+              lead_id: leadId,
+              user_id: user?.id,
+              content: url,
+              metadata: {
+                type: "document",
+                title: title || "Dokument",
+                url: url
+              }
+            }
+          ]);
+
+        if (noteError) throw noteError;
+        toast.success("Dokument-Link erfolgreich hinzugefügt");
       }
 
       setUrl("");
@@ -155,25 +226,57 @@ export const PresentationTab = ({
           </div>
 
           {isManualInput ? (
-            <ManualInputForm
-              title={title}
-              url={url}
-              onTitleChange={setTitle}
-              onUrlChange={setUrl}
-              type={type}
-            />
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="title">Titel (optional)</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder={`${type === "youtube" ? "YouTube Video" : type === "zoom" ? "Zoom Meeting" : "Dokument"} Titel`}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="url">URL</Label>
+                <Input
+                  id="url"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  placeholder={`${type === "youtube" ? "YouTube" : type === "zoom" ? "Zoom" : "Dokument"} URL`}
+                />
+              </div>
+            </>
           ) : (
-            <LinkSelectionForm
-              userLinks={userLinks}
-              selectedUrl={url}
-              onLinkSelect={handleLinkSelect}
-            />
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
+              {userLinks.map((link: any) => (
+                <div
+                  key={link.id}
+                  className={`p-3 border rounded-md cursor-pointer hover:bg-gray-100 ${
+                    url === link.url ? "border-2 border-primary" : ""
+                  }`}
+                  onClick={() => handleLinkSelect(link)}
+                >
+                  <p className="font-medium">{link.title}</p>
+                  <p className="text-sm text-muted-foreground">{link.url}</p>
+                </div>
+              ))}
+            </div>
           )}
 
-          <ExpirySelect 
-            expiresIn={expiresIn}
-            onChange={setExpiresIn}
-          />
+          <div className="space-y-2">
+            <Label htmlFor="expires">URL gültig für</Label>
+            <select
+              id="expires"
+              value={expiresIn}
+              onChange={(e) => setExpiresIn(e.target.value)}
+              className="w-full p-2 border rounded-md"
+            >
+              <option value="never">Unbegrenzt</option>
+              <option value="1day">1 Tag</option>
+              <option value="7days">7 Tage</option>
+              <option value="30days">30 Tage</option>
+            </select>
+          </div>
 
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>

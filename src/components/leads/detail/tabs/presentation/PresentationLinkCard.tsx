@@ -1,77 +1,58 @@
 
-import { Video, Youtube, FileText, Plus } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { useSettings } from "@/hooks/use-settings";
-
-interface UserLink {
-  id: string;
-  title: string;
-  url: string;
-  group_type: string;
-  is_favorite: boolean;
-}
+import { ExternalLink, FileText, Video } from "lucide-react";
 
 interface PresentationLinkCardProps {
-  link: UserLink;
-  type: "zoom" | "youtube" | "documents";
+  page: any;
   tabColors: Record<string, string>;
-  onAddClick: (link: UserLink) => void;
 }
 
-export function PresentationLinkCard({ link, type, tabColors, onAddClick }: PresentationLinkCardProps) {
+export function PresentationLinkCard({ page, tabColors }: PresentationLinkCardProps) {
   const { settings } = useSettings();
   
   const getIcon = () => {
-    switch (type) {
-      case "zoom":
-        return <Video className="w-4 h-4" style={{ color: tabColors.zoom }} />;
-      case "youtube":
-        return <Youtube className="w-4 h-4" style={{ color: tabColors.youtube }} />;
-      case "documents":
-        return <FileText className="w-4 h-4" style={{ color: tabColors.documents }} />;
+    if (page.resource_type === 'zoom') {
+      return <Video className="h-5 w-5" />;
+    } else {
+      return <FileText className="h-5 w-5" />;
     }
   };
-
-  const getYoutubeVideoId = (url: string) => {
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return match && match[2].length === 11 ? match[2] : null;
+  
+  const getColorByType = () => {
+    if (page.resource_type === 'zoom') {
+      return tabColors.zoom;
+    } else if (page.resource_type === 'document') {
+      return tabColors.documents;
+    }
+    return '#E5E7EB';
   };
 
   return (
-    <Card key={link.id} className="p-4">
-      <div className="flex items-start space-x-4">
-        {getIcon()}
-        <div className="flex-1 min-w-0">
-          <p className="font-medium">{link.title}</p>
-          {type === 'youtube' && getYoutubeVideoId(link.url) && (
-            <div className="aspect-video w-full max-w-[200px] my-2">
-              <iframe
-                width="100%"
-                height="100%"
-                src={`https://www.youtube.com/embed/${getYoutubeVideoId(link.url)}`}
-                title={link.title}
-                frameBorder="0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          )}
-          <p className="text-sm text-muted-foreground break-all">
-            {link.url}
-          </p>
+    <Card className="overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex items-start gap-3">
+          <div 
+            className="p-2 rounded-md" 
+            style={{ backgroundColor: getColorByType() }}
+          >
+            {getIcon()}
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold mb-1 line-clamp-2">{page.title}</h3>
+            <p className="text-sm text-muted-foreground mb-2">
+              {new Date(page.created_at).toLocaleDateString()}
+            </p>
+            <Button variant="outline" size="sm" asChild>
+              <a href={page.video_url || page.document_url} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-1" />
+                {settings?.language === "en" ? "Open" : "Öffnen"}
+              </a>
+            </Button>
+          </div>
         </div>
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => onAddClick(link)}
-          className="shrink-0"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {settings?.language === "en" ? "Add" : "Hinzufügen"}
-        </Button>
-      </div>
+      </CardContent>
     </Card>
   );
 }

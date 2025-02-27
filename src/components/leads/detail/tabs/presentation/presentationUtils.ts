@@ -1,35 +1,49 @@
 
-import { nanoid } from 'nanoid';
+// Hilfsfunktion für YouTube Video IDs
+export const getVideoId = (url: string): string | null => {
+  // YouTube URL patterns
+  const patterns = [
+    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i,
+    /^[a-zA-Z0-9_-]{11}$/
+  ];
 
-export const getVideoId = (url: string) => {
-  const regExp = /^.*((youtu.be\/)|(v\/)|(\/u\/\w\/)|(embed\/)|(watch\?))\??v?=?([^#&?]*).*/;
-  const match = url.match(regExp);
-  return (match && match[7].length === 11) ? match[7] : false;
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
 };
 
-export const generateSlug = (baseTitle: string, videoId: string) => {
-  // Generate a short 6-character unique ID
-  const shortId = nanoid(6);
-  
-  // Take first 20 characters of sanitized title if available
-  const sanitizedTitle = baseTitle
+// Hilfsfunktion für Slug-Generierung
+export const generateSlug = (title: string, videoId: string): string => {
+  // Einfachen slug aus Titel erstellen
+  const baseSlug = title
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '')
-    .slice(0, 20);
-
-  return `${sanitizedTitle}-${shortId}`;
+    .replace(/^-|-$/g, '');
+  
+  // Zeitstempel hinzufügen, um Einzigartigkeit zu gewährleisten
+  const timestamp = Date.now().toString(36);
+  
+  return `${baseSlug}-${videoId}-${timestamp}`;
 };
 
-export const calculateExpiryDate = (expiresIn: string) => {
-  if (expiresIn === 'never') return null;
-  
-  const now = new Date();
-  const days = {
-    '1day': 1,
-    '7days': 7,
-    '30days': 30
-  }[expiresIn] || 0;
-  
-  return new Date(now.setDate(now.getDate() + days));
+// Hilfsfunktion zum Parsen von YouTube-Daten
+export const parseYoutubeData = (data: any) => {
+  return {
+    videoId: data?.videoId || "",
+    title: data?.title || "YouTube Video",
+    presentationUrl: data?.presentationUrl || "",
+    thumbnail: data?.thumbnail || `https://img.youtube.com/vi/${data?.videoId}/hqdefault.jpg`
+  };
+};
+
+// Die Hilfsfunktionen als Objekt exportieren
+export const presentationUtils = {
+  getVideoId,
+  generateSlug,
+  parseYoutubeData
 };

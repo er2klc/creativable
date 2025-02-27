@@ -1,91 +1,54 @@
 
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
-import { toast } from "sonner";
-import { formatDateTime } from "../../timeline/utils/dateUtils";
+import { ExternalLink } from "lucide-react";
 
-interface YoutubeCardProps {
-  content: string;
-  metadata?: {
-    title?: string;
-    url?: string;
-    presentationUrl?: string;
-    videoId?: string;
-    expires_at?: string;
-  };
+interface YoutubeVideoData {
+  videoId: string;
+  title: string;
+  presentationUrl?: string;
+  thumbnail?: string;
 }
 
-export const YoutubeCard = ({ content, metadata }: YoutubeCardProps) => {
+interface YoutubeCardProps {
+  videoData: YoutubeVideoData;
+  presentationPage: any;
+}
+
+export function YoutubeCard({ videoData, presentationPage }: YoutubeCardProps) {
   const { settings } = useSettings();
-  const videoId = metadata?.url?.split('v=')[1] || '';
-  const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
-
-  const copyToClipboard = async (text: string, type: 'youtube' | 'presentation') => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(
-        settings?.language === "en"
-          ? `${type === 'youtube' ? 'YouTube' : 'Presentation'} URL copied to clipboard`
-          : `${type === 'youtube' ? 'YouTube' : 'Präsentations'}-URL in die Zwischenablage kopiert`
-      );
-    } catch (err) {
-      toast.error(
-        settings?.language === "en"
-          ? "Failed to copy URL"
-          : "URL konnte nicht kopiert werden"
-      );
-    }
-  };
-
+  
   return (
-    <div className="relative group bg-white border-2 border-red-500 rounded-lg p-4 w-full">
-      <div className="flex items-start gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="font-medium mb-2">{metadata?.title || content}</div>
-          {videoId && (
-            <div className="mb-4 w-48 h-27 rounded overflow-hidden">
-              <img 
-                src={`https://img.youtube.com/vi/${videoId}/mqdefault.jpg`}
-                alt="Video thumbnail"
-                className="w-full h-full object-cover"
-              />
-            </div>
-          )}
-          <div className="flex flex-col gap-2">
-            {metadata?.expires_at && (
-              <div className={`text-xs ${isExpired ? 'text-red-500' : 'text-gray-500'} font-medium`}>
-                {isExpired ? (
-                  settings?.language === "en"
-                    ? `Expired on ${formatDateTime(metadata.expires_at, 'en')}`
-                    : `Abgelaufen am ${formatDateTime(metadata.expires_at, 'de')}`
-                ) : (
-                  settings?.language === "en"
-                    ? `Expires on ${formatDateTime(metadata.expires_at, 'en')}`
-                    : `Läuft ab am ${formatDateTime(metadata.expires_at, 'de')}`
-                )}
-              </div>
-            )}
-            <div className="flex gap-4">
-              {metadata?.url && (
-                <button
-                  onClick={() => copyToClipboard(metadata.url!, 'youtube')}
-                  className="text-sm text-blue-500 hover:underline"
-                >
-                  {settings?.language === "en" ? "Copy YouTube URL" : "YouTube URL kopieren"}
-                </button>
-              )}
-              {metadata?.presentationUrl && (
-                <button
-                  onClick={() => copyToClipboard(metadata.presentationUrl!, 'presentation')}
-                  className={`text-sm text-blue-500 hover:underline ${isExpired ? 'opacity-50 cursor-not-allowed' : ''}`}
-                  disabled={isExpired}
-                >
-                  {settings?.language === "en" ? "Copy Presentation URL" : "Präsentations-URL kopieren"}
-                </button>
-              )}
-            </div>
+    <Card className="overflow-hidden">
+      <div className="relative aspect-video">
+        <img 
+          src={videoData.thumbnail || `https://img.youtube.com/vi/${videoData.videoId}/hqdefault.jpg`}
+          alt={videoData.title}
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-16 h-12 bg-red-600 rounded-lg flex items-center justify-center">
+            <div className="w-0 h-0 border-t-8 border-b-8 border-l-[16px] border-t-transparent border-b-transparent border-l-white ml-1"></div>
           </div>
         </div>
       </div>
-    </div>
+      <CardContent className="p-4">
+        <h3 className="text-lg font-semibold mb-2 line-clamp-2">{videoData.title}</h3>
+        <div className="flex justify-between items-center">
+          <p className="text-sm text-muted-foreground">
+            {new Date(presentationPage.created_at).toLocaleDateString()}
+          </p>
+          {videoData.presentationUrl && (
+            <Button variant="outline" size="sm" asChild>
+              <a href={videoData.presentationUrl} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4 mr-1" />
+                {settings?.language === "en" ? "Open" : "Öffnen"}
+              </a>
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
-};
+}

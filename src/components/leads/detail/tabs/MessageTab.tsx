@@ -1,14 +1,13 @@
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
-import { Platform } from "@/config/platforms";
+import { useQuery } from "@tanstack/react-query";
 import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { getLeadWithRelations } from "@/utils/query-helpers";
 
