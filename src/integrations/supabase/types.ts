@@ -860,6 +860,59 @@ export type Database = {
         }
         Relationships: []
       }
+      lead_business_match: {
+        Row: {
+          analysis_content: string
+          commonalities: string[] | null
+          created_at: string | null
+          id: string
+          lead_id: string
+          match_score: number
+          metadata: Json | null
+          potential_needs: string[] | null
+          skills: string[] | null
+          strengths: string[] | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_content: string
+          commonalities?: string[] | null
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          match_score: number
+          metadata?: Json | null
+          potential_needs?: string[] | null
+          skills?: string[] | null
+          strengths?: string[] | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_content?: string
+          commonalities?: string[] | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          match_score?: number
+          metadata?: Json | null
+          potential_needs?: string[] | null
+          skills?: string[] | null
+          strengths?: string[] | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_business_match_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_files: {
         Row: {
           compressed_file_path: string | null
