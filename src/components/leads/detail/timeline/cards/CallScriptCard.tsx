@@ -66,7 +66,7 @@ export function CallScriptCard({
         {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
       
-      <div className="prose prose-sm max-w-none dark:prose-invert mb-2">
+      <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-bold prose-headings:text-base mb-2">
         <ReactMarkdown className="whitespace-pre-wrap break-words">{displayContent}</ReactMarkdown>
       </div>
       
