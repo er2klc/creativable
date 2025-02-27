@@ -1,7 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.2.1'
+import "https://deno.land/x/xhr@0.1.0/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -71,11 +70,6 @@ serve(async (req) => {
       );
     }
 
-    const configuration = new Configuration({
-      apiKey: openaiApiKey,
-    });
-    const openai = new OpenAIApi(configuration);
-
     // Prompt for OpenAI to analyze the company
     const prompt = `
     Als Business-Analyst, analysiere dieses Unternehmen: "${companyName}".
@@ -94,33 +88,46 @@ serve(async (req) => {
     console.log("Sending request to OpenAI API");
     
     try {
-      // Call OpenAI API with the new model
-      const response = await openai.createChatCompletion({
-        model: "gpt-4o-mini-2024-07-18",
-        messages: [
-          {
-            role: "system",
-            content: "Du bist ein hilfreicher Business-Analyst, der Unternehmensinformationen extrahiert und strukturiert. Antworte immer mit einem validen JSON-Objekt."
-          },
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.7,
-        max_tokens: 800,
+      // Direct API call to OpenAI using fetch
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${openaiApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini-2024-07-18",
+          messages: [
+            {
+              role: "system",
+              content: "Du bist ein hilfreicher Business-Analyst, der Unternehmensinformationen extrahiert und strukturiert. Antworte immer mit einem validen JSON-Objekt."
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.7,
+          max_tokens: 800,
+        }),
       });
 
-      // Log the raw response for debugging
-      console.log("OpenAI API response received. Status:", response.status);
-      
-      if (!response.data.choices || response.data.choices.length === 0) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("OpenAI API error response:", errorData);
+        throw new Error(`OpenAI API returned status ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("OpenAI API raw response:", data);
+
+      if (!data.choices || data.choices.length === 0) {
         console.error("No choices in OpenAI response");
         throw new Error("OpenAI returned an empty response");
       }
 
-      const aiResponse = response.data.choices[0]?.message?.content || '';
-      console.log("AI raw response:", aiResponse);
+      const aiResponse = data.choices[0]?.message?.content || '';
+      console.log("AI content response:", aiResponse);
 
       // Try to parse the entire response as JSON first
       let companyInfo;
