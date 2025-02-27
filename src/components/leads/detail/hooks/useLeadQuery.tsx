@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { type Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";

@@ -10,6 +10,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { useQuery } from "@tanstack/react-query";
 import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { getLeadWithRelations } from "@/utils/query-helpers";
+import { Platform } from "@/config/platforms";
 
 interface MessageTabProps {
   leadId: string;

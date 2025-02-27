@@ -10,38 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
 
-// Hilfsfunktion für die Generierung von YouTube Video IDs
-const getVideoId = (url: string): string | null => {
-  // YouTube URL patterns
-  const patterns = [
-    /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i,
-    /^[a-zA-Z0-9_-]{11}$/
-  ];
-
-  for (const pattern of patterns) {
-    const match = url.match(pattern);
-    if (match && match[1]) {
-      return match[1];
-    }
-  }
-
-  return null;
-};
-
-// Hilfsfunktion für die Generierung von Slugs
-const generateSlug = (title: string, videoId: string): string => {
-  // Einfachen slug aus Titel erstellen
-  const baseSlug = title
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-  
-  // Zeitstempel hinzufügen, um Einzigartigkeit zu gewährleisten
-  const timestamp = Date.now().toString(36);
-  
-  return `${baseSlug}-${videoId}-${timestamp}`;
-};
-
 interface PresentationTabProps {
   leadId: string;
   type: string;
@@ -64,6 +32,38 @@ export const PresentationTab = ({
   const { user } = useAuth();
   const { settings } = useSettings();
 
+  // Hilfsfunktion für YouTube Video IDs
+  const getVideoId = (url: string): string | null => {
+    // YouTube URL patterns
+    const patterns = [
+      /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i,
+      /^[a-zA-Z0-9_-]{11}$/
+    ];
+
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+
+    return null;
+  };
+
+  // Hilfsfunktion für Slug-Generierung
+  const generateSlug = (title: string, videoId: string): string => {
+    // Einfachen slug aus Titel erstellen
+    const baseSlug = title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
+    
+    // Zeitstempel hinzufügen, um Einzigartigkeit zu gewährleisten
+    const timestamp = Date.now().toString(36);
+    
+    return `${baseSlug}-${videoId}-${timestamp}`;
+  };
+
   const { data: userLinks = [] } = useQuery({
     queryKey: ['user-links', type],
     queryFn: async () => {
@@ -74,7 +74,7 @@ export const PresentationTab = ({
         .order('is_favorite', { ascending: false });
 
       if (error) throw error;
-      return data;
+      return data || [];
     },
   });
 
@@ -248,18 +248,24 @@ export const PresentationTab = ({
             </>
           ) : (
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
-              {userLinks.map((link: any) => (
-                <div
-                  key={link.id}
-                  className={`p-3 border rounded-md cursor-pointer hover:bg-gray-100 ${
-                    url === link.url ? "border-2 border-primary" : ""
-                  }`}
-                  onClick={() => handleLinkSelect(link)}
-                >
-                  <p className="font-medium">{link.title}</p>
-                  <p className="text-sm text-muted-foreground">{link.url}</p>
+              {userLinks.length > 0 ? (
+                userLinks.map((link: any) => (
+                  <div
+                    key={link.id}
+                    className={`p-3 border rounded-md cursor-pointer hover:bg-gray-100 ${
+                      url === link.url ? "border-2 border-primary" : ""
+                    }`}
+                    onClick={() => handleLinkSelect(link)}
+                  >
+                    <p className="font-medium">{link.title}</p>
+                    <p className="text-sm text-muted-foreground">{link.url}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  Keine gespeicherten Links vorhanden
                 </div>
-              ))}
+              )}
             </div>
           )}
 
