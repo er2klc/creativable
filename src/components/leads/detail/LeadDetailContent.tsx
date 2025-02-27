@@ -6,7 +6,6 @@ import { LeadTimeline } from "./LeadTimeline";
 import { ContactFieldManager } from "./contact-info/ContactFieldManager";
 import { LeadWithRelations } from "@/types/leads";
 import { LeadDetailTabs } from "./LeadDetailTabs";
-import { LeadSummary } from "./LeadSummary";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
@@ -34,7 +33,6 @@ export const LeadDetailContent = ({
       <div className="grid grid-cols-12 gap-6 p-6 bg-gray-50 min-h-[calc(100vh-10rem)] mt-32">
         {/* Left Column - 4/12 */}
         <div className="col-span-4 space-y-6">
-          <LeadSummary lead={lead} />
           <LeadInfoCard 
             lead={lead} 
             onUpdate={(updates) => {

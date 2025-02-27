@@ -26,9 +26,9 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Starting analysis generation for:', { leadId, phaseId, userId });
+    console.log('🔍 Starte Phasenanalyse für:', { leadId, phaseId, userId });
 
-    // Check if analysis already exists
+    // Prüfe, ob bereits eine Analyse existiert
     const { data: existingAnalysis, error: existingError } = await supabase
       .from('phase_based_analyses')
       .select('*')
@@ -36,33 +36,21 @@ serve(async (req) => {
       .eq('phase_id', phaseId)
       .single();
 
-    if (existingError && existingError.code !== 'PGRST116') {
-      console.error('Error checking existing analysis:', existingError);
-      throw existingError;
-    }
-
     if (existingAnalysis) {
-      console.log('Found existing analysis:', existingAnalysis.id);
-      return new Response(
-        JSON.stringify({
-          analysis: existingAnalysis,
-          message: "Existierende Analyse geladen"
-        }),
-        {
-          status: 200,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      return new Response(JSON.stringify({ analysis: existingAnalysis, message: "Existierende Analyse geladen" }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
-    // Get business context from settings
+    // Benutzer Einstellungen abrufen
     const { data: settings } = await supabase
       .from('settings')
       .select('*')
       .eq('user_id', userId)
       .single();
 
-    // Fetch lead data with all necessary information
+    // Lead-Daten abrufen
     const { data: lead, error: leadError } = await supabase
       .from('leads')
       .select(`
@@ -75,189 +63,160 @@ serve(async (req) => {
         ),
         notes (
           *
-        ),
-        messages (
-          *
         )
       `)
       .eq('id', leadId)
       .single();
 
-    if (leadError) {
-      console.error('Error fetching lead:', leadError);
-      throw leadError;
-    }
-    
-    if (!lead) {
-      throw new Error('Lead not found');
-    }
+    if (leadError || !lead) throw new Error('Lead nicht gefunden');
 
-    // Get phase information
+    // Phaseninformationen abrufen
     const { data: phaseData, error: phaseError } = await supabase
       .from('pipeline_phases')
       .select('*')
       .eq('id', phaseId)
       .single();
 
-    if (phaseError) {
-      console.error('Error fetching phase:', phaseError);
-      throw phaseError;
-    }
+    if (phaseError || !phaseData) throw new Error('Phase nicht gefunden');
 
-    if (!phaseData) {
-      throw new Error('Phase not found');
-    }
+    // Geschäftsinfos aus den Settings abrufen
+    const industry = settings?.industry?.toLowerCase() || "allgemein";
+    const businessTypes = {
+      "handwerk": "🔨 Persönliche & lokale Kundengewinnung. Empfehlungen & direkte Kontakte nutzen.",
+      "network marketing": "📈 Fokus auf Beziehungsaufbau. Authentisches Storytelling & Social Proof einsetzen.",
+      "coach": "🎓 Wertvolle Inhalte & Expertenstatus zeigen. Kundenbindung durch Mehrwert schaffen.",
+      "influencer": "📢 Sichtbarkeit & Community-Aufbau priorisieren. Kooperationen & Content-Marketing nutzen.",
+      "ernährungsberater": "🥗 Individuelle Beratung & Vertrauen aufbauen. Referenzen & Fallstudien nutzen.",
+      "fitnesstrainer": "🏋️‍♂️ Demonstration von Expertise. Challenges & Gruppenmotivation als Strategie."
+    };
 
-    // Prepare social media insights
-    const instagramData = lead.apify_instagram_data || {};
+    const businessStrategy = businessTypes[industry] || "📌 Allgemeine Strategie zur Geschäftsentwicklung.";
+
+    // Dynamischer Prompt basierend auf Phase & Branche
+    const phaseGuidance = {
+      "Analyse": `🔍 Identifiziere das Potenzial dieses Kontakts für dein Geschäft. Berücksichtige folgende Faktoren: ${businessStrategy}`,
+      "Kontaktaufnahme": `✉️ Entwickle eine **individuelle Ansprache**, die ${businessStrategy} unterstützt.`,
+      "Bedarfsanalyse": `💬 Erfrage gezielt, welche Herausforderungen der Kontakt hat und **passe dein Angebot darauf an**.`,
+      "Vertrauensaufbau": `🛠️ Zeige deine Expertise durch **hochwertige Inhalte** & **interaktive Gespräche**.`,
+      "Abschluss": `🎯 Erstelle ein **maßgeschneidertes Angebot** und nutze psychologische Verkaufsstrategien.`
+    };
+
+    const systemPrompt = `Du bist ein hochspezialisierter Business Development Assistent für ${settings?.company_name || 'ein Unternehmen'}.
+Deine Aufgabe ist es, für die Phase **${phaseData.name}** eine **präzise Strategie** zu entwickeln.
+
+🏢 **Unternehmensinfos:**
+- **Zielgruppe:** ${settings?.target_audience || 'Allgemein'}
+- **USP:** ${settings?.usp || 'Nicht definiert'}
+- **Branche:** ${industry.toUpperCase()}
+
+📌 **Branchenspezifische Strategie:**
+${businessStrategy}
+
+📌 **Phase: ${phaseData.name}**
+${phaseGuidance[phaseData.name] || "Erstelle eine individuelle Analyse."}`;
+
+    // Sammle Notizen und Social Media Posts für Kontext
+    const notes = lead.notes || [];
     const socialMediaPosts = lead.social_media_posts || [];
     const linkedinPosts = lead.linkedin_posts || [];
 
-    // Create enhanced business context
-    const businessContext = {
-      companyName: settings?.company_name || '',
-      productsServices: settings?.products_services || '',
-      targetAudience: settings?.target_audience || '',
-      usp: settings?.usp || '',
-      businessDescription: settings?.business_description || ''
-    };
+    const userPrompt = `
+**📊 Lead-Analyse: [${lead.name}]**
+- **Branche:** ${lead.industry || 'Nicht angegeben'}
+- **Position:** ${lead.position || 'Nicht angegeben'}
+- **Unternehmen:** ${lead.company_name || 'Nicht angegeben'}
+- **Followers:** ${lead.social_media_followers || 'Unbekannt'}
+- **Interessen:** ${lead.social_media_interests?.join(', ') || 'Keine angegeben'}
 
-    const systemPrompt = `Du bist ein hochspezialisierter Business Development Assistent für ${businessContext.companyName}. 
-Deine Aufgabe ist es, Social Media Profile zu analysieren und konkrete Handlungsempfehlungen zu geben.
+📌 **Letzte Aktivitäten:**
+${notes.slice(0, 3).map((note: any) => `- ${note.content}`).join('\n') || 'Keine Aktivitäten'}
 
-Nutze diese Informationen über uns:
-🏢 Unternehmen: ${businessContext.businessDescription}
-🎯 Zielgruppe: ${businessContext.targetAudience}
-💫 USP: ${businessContext.usp}
-🛍️ Produkte/Services: ${businessContext.productsServices}
+📌 **Social Media Aktivität:**
+${socialMediaPosts.slice(0, 3).map((post: any) => `- ${post.content || '[Bild/Video Post]'}`).join('\n')}
+${linkedinPosts.slice(0, 3).map((post: any) => `- ${post.content || '[LinkedIn Post]'}`).join('\n')}
 
-Analysiere das Profil und erstelle einen strukturierten Bericht, der uns hilft, diesen Kontakt optimal anzusprechen.
-Formatiere die Ausgabe mit Markdown und passenden Emojis.
+🚀 **Deine Aufgabe:**  
+Analysiere dieses Profil und erstelle eine **klare, handlungsorientierte Strategie**, um diesen Kontakt in **einen Kunden oder Partner zu verwandeln**.
+`;
 
-Strukturiere die Analyse in:
-1. 👤 Profil & Reichweite
-2. 📊 Engagement & Aktivität
-3. 🎯 Relevanz für uns
-4. 💡 Ansprache-Strategie
-5. ⚡️ Quick-Wins & nächste Schritte`;
-
-    const userPrompt = `Analysiere dieses Profil für die Phase "${phaseData.name}":
-      
-Profil Basics:
-- Name: ${lead.name}
-- Bio: ${lead.social_media_bio || 'Nicht angegeben'}
-- Followers: ${lead.social_media_followers || instagramData.followersCount || 'Unbekannt'}
-- Following: ${lead.social_media_following || instagramData.followsCount || 'Unbekannt'}
-- Engagement Rate: ${lead.social_media_engagement_rate || 'Unbekannt'}
-- Interessen: ${lead.social_media_interests?.join(', ') || 'Keine angegeben'}
-- Branche: ${lead.industry || 'Nicht angegeben'}
-- Position: ${lead.position || 'Nicht angegeben'}
-- Unternehmen: ${lead.company_name || 'Nicht angegeben'}
-
-Instagram Posts (${socialMediaPosts.length}):
-${socialMediaPosts.slice(0, 5).map((post: any) => `- ${post.content || 'Visueller Post'} (Likes: ${post.likes_count}, Kommentare: ${post.comments_count})`).join('\n')}
-
-LinkedIn Posts (${linkedinPosts.length}):
-${linkedinPosts.slice(0, 5).map((post: any) => `- ${post.content || 'LinkedIn Update'} (Reaktionen: ${post.reactions?.count || 0})`).join('\n')}
-
-Letzte Aktivitäten:
-${lead.notes?.slice(0, 5).map((note: any) => `- ${note.content}`).join('\n') || 'Keine Aktivitäten'}
-
-Phasen-Kontext: ${phaseData.name}
-
-Analysiere diese Informationen im Kontext unseres Geschäfts und gib konkrete, umsetzbare Empfehlungen.`;
-
-    console.log('Generating analysis with OpenAI...');
+    console.log('🧠 Generiere Analyse mit OpenAI...');
 
     let analysis;
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
-    
-    // Use a simpler analysis if no OpenAI API key is available
+
     if (!openaiApiKey) {
-      console.log('No OpenAI API key available, using default analysis');
-      analysis = `# Analyse für ${lead.name}
+      console.log('⚠️ Kein OpenAI API Key - Fallback Analyse.');
+      analysis = `# 📊 Analyse für ${lead.name}
 
-## 👤 Profil & Reichweite
-${lead.name} ist in der Branche ${lead.industry || 'Unbekannt'} tätig und hat eine Social Media Präsenz.
+## 🔍 Profil-Check
+- Branche: ${lead.industry || 'Unbekannt'}
+- Position: ${lead.position || 'Unbekannt'}
 
-## 📊 Engagement & Aktivität 
-Die Engagement-Rate liegt bei ${lead.social_media_engagement_rate || 'unbekannt'}.
+## 📌 Stärken & Chancen
+🏆 [Erkennbare Stärken des Leads]  
+⚡ [Wie du ihn ansprechen kannst]  
 
-## 🎯 Relevanz für uns
-Basierend auf dem Profil könnte diese Person an unseren Produkten/Dienstleistungen interessiert sein.
-
-## 💡 Ansprache-Strategie
-Personalisierte Kontaktaufnahme empfohlen.
-
-## ⚡️ Quick-Wins & nächste Schritte
-1. Personalisierte Nachricht senden
-2. Gemeinsame Interessen betonen
-3. Vorschlag für ein unverbindliches Gespräch`;
+## 💡 Nächste Schritte
+1. **Kontakt aufnehmen**: [Persönlicher Einstieg]  
+2. **Bedarf analysieren**: [Fragen, um Interesse zu wecken]  
+3. **Wertvolle Infos senden**: [Erklärung, warum der Lead profitieren könnte]`;
     } else {
-      // Generate analysis using OpenAI
       try {
         const openAIResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${openaiApiKey}`,
-            'Content-Type': 'application/json',
+          headers: { 
+            'Authorization': `Bearer ${openaiApiKey}`, 
+            'Content-Type': 'application/json' 
           },
-          body: JSON.stringify({
-            model: 'gpt-4-0125-preview',
+          body: JSON.stringify({ 
+            model: 'gpt-4o-mini', 
             messages: [
-              { role: 'system', content: systemPrompt },
+              { role: 'system', content: systemPrompt }, 
               { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.7,
+            ], 
+            temperature: 0.7 
           }),
         });
 
         const openAIData = await openAIResponse.json();
         
         if (openAIData.error) {
-          console.error('OpenAI API error:', openAIData.error);
-          throw new Error(`OpenAI API error: ${openAIData.error.message}`);
+          console.error('OpenAI API Fehler:', openAIData.error);
+          throw new Error(`OpenAI API Fehler: ${openAIData.error.message}`);
         }
         
         analysis = openAIData.choices[0].message.content;
-      } catch (openaiError) {
-        console.error('Error calling OpenAI:', openaiError);
-        throw openaiError;
+      } catch (err) {
+        console.error('❌ OpenAI Fehler:', err);
+        throw err;
       }
     }
 
-    console.log('Analysis generated, storing in database...');
+    console.log('✅ Analyse generiert, speichere in Datenbank...');
 
-    // Store the analysis in the database
-    // Using created_by instead of user_id
+    // Speichere die Analyse in der Datenbank
     const { data: savedAnalysis, error: saveError } = await supabase
       .from('phase_based_analyses')
       .insert({
         lead_id: leadId,
         phase_id: phaseId,
-        created_by: userId, // Changed from user_id to created_by
+        created_by: userId,
         analysis_type: 'ai_analysis',
         content: analysis,
         metadata: {
-          context: {
-            phase_name: phaseData.name,
-            generated_at: new Date().toISOString(),
-            user_id: userId,
-            business_context: businessContext
-          }
+          phase_name: phaseData.name,
+          generated_at: new Date().toISOString()
         }
       })
       .select()
       .single();
 
     if (saveError) {
-      console.error('Error saving analysis:', saveError);
+      console.error('❌ Fehler beim Speichern der Analyse:', saveError);
       throw saveError;
     }
 
-    console.log('Analysis saved successfully:', savedAnalysis?.id);
-
-    // Also create a note with the analysis
+    // Erstelle auch eine Notiz mit der Analyse
     await supabase
       .from('notes')
       .insert({
@@ -275,19 +234,19 @@ Personalisierte Kontaktaufnahme empfohlen.
       });
 
     return new Response(
-      JSON.stringify({
-        analysis: savedAnalysis,
-        message: "Phasenanalyse erfolgreich erstellt"
+      JSON.stringify({ 
+        analysis: savedAnalysis, 
+        message: "Phasenanalyse erfolgreich erstellt" 
       }),
-      {
+      { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       },
     );
   } catch (err: any) {
-    console.error('Error in phase analysis:', err);
+    console.error('❌ Fehler in der Phasenanalyse:', err);
     return new Response(
       JSON.stringify({ 
-        error: err.message || 'An unexpected error occurred',
+        error: err.message || 'Ein unerwarteter Fehler ist aufgetreten',
         details: err
       }), 
       {
