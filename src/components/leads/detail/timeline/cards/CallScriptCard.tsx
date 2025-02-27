@@ -28,6 +28,20 @@ export function CallScriptCard({
   const shouldTruncate = content.length > maxPreviewLength;
   const displayContent = isExpanded ? content : content.slice(0, maxPreviewLength) + (shouldTruncate ? '...' : '');
 
+  // Format the markdown content to properly display in UI
+  const formatMarkdownContent = (text: string) => {
+    // Replace markdown headers (## Heading) with actual HTML heading
+    let formattedText = text.replace(/## (.*?)($|\n)/g, '<h2>$1</h2>$2');
+    
+    // Replace bold text (**text**) with HTML strong tags
+    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Preserve line breaks
+    formattedText = formattedText.replace(/\n/g, '<br />');
+    
+    return formattedText;
+  };
+
   const getTypeLabel = () => {
     switch(scriptType) {
       case 'introduction':
@@ -66,8 +80,11 @@ export function CallScriptCard({
         {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
       
-      <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-headings:text-lg prose-headings:mt-4 prose-headings:mb-2 prose-strong:font-bold prose-strong:text-gray-900 prose-p:my-2 prose-p:leading-relaxed mb-2">
-        <ReactMarkdown className="whitespace-pre-wrap break-words">{displayContent}</ReactMarkdown>
+      <div className="mb-2 text-sm">
+        <div 
+          className="whitespace-pre-wrap break-words"
+          dangerouslySetInnerHTML={{ __html: formatMarkdownContent(displayContent) }}
+        />
       </div>
       
       <div className="flex items-center justify-between">
