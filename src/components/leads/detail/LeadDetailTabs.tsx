@@ -18,6 +18,7 @@ import { CallScriptGenerator } from "./components/CallScriptGenerator";
 import { MessageGenerator } from "./components/MessageGenerator";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -173,32 +174,35 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   return (
     <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-4 pt-4">
       <div className="w-full">
-        <TabsList className="w-full flex border-b">
-          {tabItems.map((tab) => (
-            <TabsTrigger
-              key={tab.id}
-              value={tab.id}
-              className={cn(
-                "flex-1 flex items-center justify-center transition-all duration-200 px-4 py-2 rounded-none",
-                selectedTab === tab.id 
-                  ? "text-foreground border-b-2" 
-                  : "text-muted-foreground hover:text-foreground hover:bg-gray-50"
-              )}
-              style={{
-                borderBottomColor: selectedTab === tab.id ? tab.color : 'transparent',
-              }}
-            >
-              <span className="flex items-center justify-center">
-                {tab.icon}
-              </span>
-              {!tab.iconOnly && (
-                <span className="ml-2 text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-[60px] md:max-w-none">
-                  {tab.label}
+        <ScrollArea className="w-full">
+          <TabsList className="w-full flex border-b">
+            {tabItems.map((tab) => (
+              <TabsTrigger
+                key={tab.id}
+                value={tab.id}
+                className={cn(
+                  "flex-1 flex items-center justify-center transition-all duration-200 px-4 py-2 rounded-none",
+                  selectedTab === tab.id 
+                    ? "text-foreground border-b-2" 
+                    : "text-muted-foreground hover:text-foreground hover:bg-gray-50"
+                )}
+                style={{
+                  borderBottomColor: selectedTab === tab.id ? tab.color : 'transparent',
+                }}
+              >
+                <span className="flex items-center justify-center">
+                  {tab.icon}
                 </span>
-              )}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+                {!tab.iconOnly && (
+                  <span className="ml-2 text-xs whitespace-nowrap overflow-hidden text-ellipsis max-w-[60px] md:max-w-none">
+                    {tab.label}
+                  </span>
+                )}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <ScrollBar orientation="horizontal" className="h-2.5" />
+        </ScrollArea>
       </div>
 
       <TabsContent value="notes" className="mt-4">
