@@ -162,8 +162,8 @@ export function CallScriptGenerator({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Tabs value={scriptType} onValueChange={(v) => setScriptType(v as any)}>
-          <TabsList className="w-full">
+        <Tabs value={scriptType} onValueChange={(v) => setScriptType(v as any)} className="w-full">
+          <TabsList className="w-full grid grid-cols-3 mb-4">
             <TabsTrigger value="introduction" className="flex-1">
               {settings?.language === "en" ? "Introduction" : "Erstgespräch"}
             </TabsTrigger>
@@ -180,7 +180,7 @@ export function CallScriptGenerator({
           <Button
             onClick={generateCallScript}
             disabled={isGenerating}
-            className="w-full"
+            className="w-full bg-[#9b87f5] hover:bg-[#7E69AB] text-white"
           >
             {isGenerating ? (
               <>
@@ -200,7 +200,7 @@ export function CallScriptGenerator({
               <ReactMarkdown>{generatedScript}</ReactMarkdown>
             </div>
             <div className="flex gap-3">
-              <Button onClick={copyToClipboard} className="flex-1">
+              <Button onClick={copyToClipboard} className="flex-1 bg-[#F1F0FB] text-foreground hover:bg-[#E5E4F3]">
                 <Copy className="h-4 w-4 mr-2" />
                 {settings?.language === "en" ? "Copy to Clipboard" : "In Zwischenablage kopieren"}
               </Button>
@@ -211,6 +211,7 @@ export function CallScriptGenerator({
                 }} 
                 variant="outline"
                 disabled={isGenerating}
+                className="bg-white hover:bg-[#F1F0FB]"
               >
                 <Bot className="h-4 w-4 mr-2" />
                 {settings?.language === "en" ? "Regenerate" : "Neu erstellen"}
