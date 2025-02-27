@@ -1,7 +1,6 @@
-
+import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -165,7 +164,7 @@ export function EmailSettings() {
   });
 
   // Update forms when data loads
-  React.useEffect(() => {
+  useEffect(() => {
     if (smtpSettings) {
       smtpForm.reset({
         host: smtpSettings.host || "",
@@ -179,7 +178,7 @@ export function EmailSettings() {
     }
   }, [smtpSettings, smtpForm]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (imapSettings) {
       imapForm.reset({
         host: imapSettings.host || "",
