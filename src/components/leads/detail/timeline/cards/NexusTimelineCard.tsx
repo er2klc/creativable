@@ -71,6 +71,14 @@ export const NexusTimelineCard = ({
   const shouldTruncate = content.length > maxPreviewLength;
   const displayContent = isExpanded ? content : content.slice(0, maxPreviewLength) + (shouldTruncate ? '...' : '');
 
+  // Formatiere Markdown-Inhalte mit Emoji-Überschriften
+  const formatMarkdownWithEmojis = (text: string) => {
+    // Ersetze Emoji-Überschriften mit einem speziellen Format
+    return text.replace(/## ([\p{Emoji}]+) ([^\n]+)/gu, '## <span class="emoji-heading">$1</span> $2');
+  };
+
+  const formattedContent = formatMarkdownWithEmojis(displayContent);
+
   return (
     <div className="rounded-lg relative p-[1px] bg-gradient-to-r from-blue-500 to-purple-600">
       <div className="bg-white rounded-[7px] p-4 space-y-4">
@@ -141,8 +149,50 @@ export const NexusTimelineCard = ({
           </div>
         )}
 
-        <div className="prose prose-sm max-w-none dark:prose-invert">
-          <ReactMarkdown>{displayContent}</ReactMarkdown>
+        <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:text-base prose-headings:font-medium prose-headings:mt-3 prose-headings:mb-2 prose-strong:font-semibold prose-p:my-1.5 prose-p:leading-relaxed overflow-hidden">
+          <style jsx global>{`
+            .emoji-heading {
+              display: inline-block;
+              margin-right: 0.4rem;
+              font-size: 1.15em;
+            }
+            h2 {
+              display: flex;
+              align-items: center;
+              margin-top: 1rem;
+              margin-bottom: 0.5rem;
+              font-weight: 600;
+            }
+          `}</style>
+          <ReactMarkdown 
+            className="whitespace-pre-wrap break-words"
+            components={{
+              h2: ({ node, ...props }) => {
+                // Suche nach einem Emoji am Anfang der Überschrift
+                const children = React.Children.toArray(props.children);
+                let firstChild = children[0];
+                
+                // Wenn das erste Kind ein String ist und mit einem Emoji beginnt
+                if (typeof firstChild === 'string') {
+                  const emojiMatch = firstChild.match(/^([\p{Emoji}]+)\s?(.*)/u);
+                  if (emojiMatch) {
+                    const [_, emoji, text] = emojiMatch;
+                    return (
+                      <h2 {...props}>
+                        <span className="text-xl mr-2">{emoji}</span>
+                        {text}
+                        {children.slice(1)}
+                      </h2>
+                    );
+                  }
+                }
+                
+                return <h2 {...props} />;
+              }
+            }}
+          >
+            {displayContent}
+          </ReactMarkdown>
         </div>
 
         {shouldTruncate && (
@@ -195,4 +245,4 @@ export const NexusTimelineCard = ({
       </div>
     </div>
   );
-};
+}
