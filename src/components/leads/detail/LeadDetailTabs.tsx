@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { 
   CalendarIcon, Video, Youtube, FileText, Phone, 
@@ -28,17 +29,18 @@ interface LeadDetailTabsProps {
   };
 }
 
+// Definiere Farbschema für Tabs
 const tabColors = {
-  notes: "#FEF08A",
-  tasks: "#A5F3FC",
-  appointments: "#FDBA74",
-  messages: "#BFDBFE",
-  uploads: "#E5E7EB",
-  zoom: "#2D8CFF",
-  youtube: "#FF0000",
-  documents: "#34D399",
-  callscript: "#FF7F50",
-  messagegenerator: "#8A2BE2"
+  notes: "#FEF08A",         // Soft yellow
+  tasks: "#A5F3FC",         // Soft cyan
+  appointments: "#FDBA74",  // Soft orange
+  messages: "#BFDBFE",      // Soft blue
+  uploads: "#E5E7EB",       // Soft gray
+  zoom: "#2D8CFF",          // Zoom blue
+  youtube: "#FF0000",       // YouTube red
+  documents: "#34D399",     // Soft green
+  callscript: "#FF7F50",    // Soft coral
+  messagegenerator: "#8A2BE2" // Purple
 };
 
 interface TabItem {
