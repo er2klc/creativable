@@ -30,13 +30,26 @@ export function CallScriptCard({
 
   // Format the markdown content to properly display in UI
   const formatMarkdownContent = (text: string) => {
-    // Replace markdown headers (## Heading) with actual HTML heading
-    let formattedText = text.replace(/## (.*?)($|\n)/g, '<h2>$1</h2>$2');
+    // Remove code block markers
+    let formattedText = text.replace(/```markdown|```/g, '');
     
-    // Replace bold text (**text**) with HTML strong tags
+    // Format numbered lists
+    formattedText = formattedText.replace(/(\d+)\.\s+(.*?)(\n|$)/g, '<div class="mb-1"><span class="font-bold">$1.</span> $2</div>$3');
+    
+    // Format headers
+    formattedText = formattedText.replace(/## (.*?)(\n|$)/g, '<h2 class="text-base font-semibold my-2">$1</h2>$2');
+    
+    // Format dialog style (Name: Text format)
+    formattedText = formattedText.replace(/([A-Za-zäöüÄÖÜß]+):\s+(.*?)(\n|$)/g, 
+      '<div class="mb-2"><span class="font-semibold">$1:</span> <span class="italic">$2</span></div>$3');
+    
+    // Format bold text
     formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
     
-    // Preserve line breaks
+    // Preserve double line breaks for better readability
+    formattedText = formattedText.replace(/\n\n/g, '<div class="my-3"></div>');
+    
+    // Handle remaining single line breaks
     formattedText = formattedText.replace(/\n/g, '<br />');
     
     return formattedText;
