@@ -1,4 +1,3 @@
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { MLMSettings } from "@/components/settings/MLMSettings";
@@ -11,10 +10,17 @@ import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Settings as SettingsIcon } from "lucide-react";
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export default function Settings() {
   const { settings, isLoading } = useSettings();
   const user = useUser();
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
+  // Komponente für initiale Tabs-Auswahl basierend auf URL-Parameter
+  const defaultTab = tabParam || "general";
 
   if (isLoading) {
     return (
@@ -52,7 +58,7 @@ export default function Settings() {
           Verwalten Sie hier Ihre globalen Einstellungen und Integrationen.
         </p>
 
-        <Tabs defaultValue="general" className="space-y-4">
+        <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="general">Allgemein</TabsTrigger>
             <TabsTrigger value="email">E-Mail</TabsTrigger>
