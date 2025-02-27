@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { SmtpClient } from "https://deno.land/x/smtp@v0.7.0/mod.ts";
 
@@ -25,10 +24,35 @@ serve(async (req) => {
   }
 
   try {
-    const { host, port, username, password, secure } = await req.json() as SmtpSettings;
+    console.log("Starting SMTP connection test");
+    
+    // Parse request body
+    let body;
+    try {
+      body = await req.json() as SmtpSettings;
+      console.log(`Received request to test SMTP connection to ${body.host}:${body.port}`);
+    } catch (error) {
+      console.error("Error parsing request body:", error);
+      return new Response(
+        JSON.stringify({ 
+          error: "Invalid request body", 
+          details: "Could not parse JSON request" 
+        }),
+        { 
+          status: 400, 
+          headers: { 
+            'Content-Type': 'application/json',
+            ...corsHeaders 
+          } 
+        }
+      );
+    }
     
     // Validate required fields
+    const { host, port, username, password, secure = true } = body;
+    
     if (!host || !port || !username || !password) {
+      console.error("Missing required SMTP settings");
       return new Response(
         JSON.stringify({ 
           error: "Missing required SMTP settings",
@@ -50,13 +74,22 @@ serve(async (req) => {
       // Create SMTP client
       const client = new SmtpClient();
       
-      // Connect to the server
-      await client.connectTLS({
-        hostname: host,
-        port: port,
-        username: username,
-        password: password,
-      });
+      // Connect to the server with appropriate security settings
+      if (secure) {
+        await client.connectTLS({
+          hostname: host,
+          port: port,
+          username: username,
+          password: password,
+        });
+      } else {
+        await client.connect({
+          hostname: host,
+          port: port,
+          username: username,
+          password: password,
+        });
+      }
       
       console.log("SMTP connection successful");
       
@@ -90,10 +123,10 @@ serve(async (req) => {
       );
     }
   } catch (error) {
-    console.error("Error processing request:", error);
+    console.error("Unexpected error:", error);
     return new Response(
       JSON.stringify({ 
-        error: "Error processing request", 
+        error: "Unexpected error occurred", 
         details: error.message || "Unknown error"
       }),
       { 
