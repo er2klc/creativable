@@ -1,7 +1,7 @@
 
 import { 
   MessageSquare, BellRing, FileText, Calendar, User, AlertCircle, CheckSquare, SquareCheck, 
-  PenSquare, AlertTriangle, Youtube, File, Target, Brain, Eye, Video
+  PenSquare, AlertTriangle, Youtube, File, Target, Brain, Eye, Video, Phone, Send
 } from "lucide-react";
 import { TimelineItemType } from "./TimelineUtils";
 import { cn } from "@/lib/utils";
@@ -17,8 +17,15 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
   // Icon auswählen je nach Typ
   let Icon;
   
+  // Call Script und Message Template speziell behandeln
+  if (metadata?.type === 'call_script') {
+    Icon = Phone; // Telefon-Icon für Telefonscripts
+  }
+  else if (metadata?.type === 'message_template') {
+    Icon = Send; // Nachricht-Icon für Nachrichtenvorlagen
+  }
   // YouTube und Video-Typ speziell behandeln
-  if (type === 'youtube' || metadata?.type === 'youtube') {
+  else if (type === 'youtube' || metadata?.type === 'youtube') {
     // Unterscheiden zwischen Video-Ansicht und URL-Karte
     if (metadata?.event_type?.includes('video') || metadata?.view_id) {
       Icon = Eye; // Auge Icon für Video-Ansicht/Präsentation wurde aufgerufen
@@ -67,6 +74,32 @@ export const TimelineItemIcon = ({ type, status, platform, metadata }: TimelineI
 
   // Hintergrundfarbe basierend auf Typ
   const getBgClass = () => {
+    // Spezielle Prüfung für Call Script Einträge
+    if (metadata?.type === 'call_script') {
+      return 'bg-orange-500'; // Orange für Telefonscripts
+    }
+    
+    // Spezielle Prüfung für Message Template Einträge
+    if (metadata?.type === 'message_template') {
+      // Plattformspezifische Farben
+      switch(metadata?.platform) {
+        case 'Instagram':
+          return 'bg-gradient-to-r from-purple-500 to-pink-500';
+        case 'LinkedIn':
+          return 'bg-blue-600';
+        case 'Facebook':
+          return 'bg-blue-500';
+        case 'WhatsApp':
+          return 'bg-green-500';
+        case 'Email':
+          return 'bg-gray-500';
+        case 'TikTok':
+          return 'bg-black';
+        default:
+          return 'bg-blue-500'; // Standard-Blau für Nachrichten
+      }
+    }
+    
     // Spezielle Prüfung für YouTube/Video-Einträge
     if (type === 'youtube' || metadata?.type === 'youtube') {
       if (metadata?.event_type?.includes('video') || metadata?.view_id) {
