@@ -12,11 +12,13 @@ import {
   mapMessageToTimelineItem, 
   mapFileToTimelineItem,
   createContactCreationItem,
-  createStatusChangeItem 
+  createStatusChangeItem,
+  mapBusinessMatchToTimelineItem
 } from "./timeline/utils/timelineMappers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -29,6 +31,20 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
   const [tasks, setTasks] = useState(lead.tasks || []);
   const queryClient = useQueryClient();
+  
+  // Fetch business match data
+  const { data: businessMatches, isLoading: isLoadingBusinessMatch } = useQuery({
+    queryKey: ["business-match", lead.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("lead_business_match")
+        .select("*")
+        .eq("lead_id", lead.id);
+        
+      if (error) throw error;
+      return data || [];
+    }
+  });
   
   // Update local tasks when lead tasks change
   useEffect(() => {
@@ -111,6 +127,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     ...(tasks || []).map(mapTaskToTimelineItem),
     ...(lead.messages || []).map(mapMessageToTimelineItem),
     ...(lead.lead_files || []).map(mapFileToTimelineItem),
+    ...(businessMatches || []).map(mapBusinessMatchToTimelineItem),
     createContactCreationItem(lead.name, lead.created_at)
   ];
 

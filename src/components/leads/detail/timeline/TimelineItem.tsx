@@ -7,6 +7,7 @@ import { formatDateTime } from "./utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
 import { StatusCard } from "./cards/StatusCard";
 import { YoutubeCard } from "./cards/YoutubeCard";
+import { BusinessMatchCard } from "./cards/BusinessMatchCard";
 
 interface TimelineItemProps {
   item: {
@@ -32,6 +33,19 @@ export const TimelineItem = ({
   const { settings } = useSettings();
 
   const renderContent = () => {
+    if (item.type === 'business_match') {
+      return (
+        <BusinessMatchCard
+          matchScore={item.metadata?.match_score || 0}
+          skills={item.metadata?.skills || []}
+          commonalities={item.metadata?.commonalities || []}
+          potentialNeeds={item.metadata?.potential_needs || []}
+          strengths={item.metadata?.strengths || []}
+          content={item.metadata?.content || ''}
+        />
+      );
+    }
+
     if (item.metadata?.type === 'youtube') {
       return <YoutubeCard content={item.content} metadata={item.metadata} />;
     }

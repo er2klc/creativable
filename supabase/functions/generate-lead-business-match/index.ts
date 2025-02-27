@@ -11,6 +11,7 @@ const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || '';
 interface MatchRequest {
   leadId: string;
   userId: string;
+  createTask?: boolean; // Optional flag to create a task
 }
 
 serve(async (req) => {
@@ -25,7 +26,7 @@ serve(async (req) => {
 
     // Get request body
     const requestData: MatchRequest = await req.json();
-    const { leadId, userId } = requestData;
+    const { leadId, userId, createTask = false } = requestData;
 
     if (!leadId || !userId) {
       return new Response(
@@ -239,6 +240,38 @@ serve(async (req) => {
     if (analysisError) {
       console.error("Error storing analysis:", analysisError);
       throw analysisError;
+    }
+
+    // Create a single meaningful task based on match score
+    if (createTask) {
+      try {
+        const taskTitle = matchData.match_score >= 70
+          ? `**Wichtig:** Termin mit ${lead.name} vereinbaren - Business Match Score ${matchData.match_score}%`
+          : matchData.match_score >= 40
+            ? `Kontakt mit ${lead.name} aufnehmen - Business Match Score ${matchData.match_score}%`
+            : `Mehr Informationen über ${lead.name} sammeln (Match Score: ${matchData.match_score}%)`;
+
+        const taskDueDate = new Date();
+        taskDueDate.setDate(taskDueDate.getDate() + 3); // Due in 3 days
+
+        await supabase
+          .from('tasks')
+          .insert({
+            lead_id: leadId,
+            title: taskTitle,
+            due_date: taskDueDate.toISOString(),
+            priority: matchData.match_score >= 70 ? "High" : "Medium",
+            user_id: userId,
+            color: matchData.match_score >= 70 ? "#4CAF50" : "#2196F3"
+          });
+
+        console.log("Created single task based on business match score");
+      } catch (taskError) {
+        console.error("Error creating task:", taskError);
+        // Continue even if task creation fails
+      }
+    } else {
+      console.log("Skipping task creation as not requested");
     }
 
     return new Response(

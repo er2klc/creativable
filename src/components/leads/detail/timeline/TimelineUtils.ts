@@ -13,6 +13,7 @@ export type TimelineItemType =
   | 'presentation'
   | 'upload'
   | 'file_upload'
+  | 'business_match'
   | string;
 
 export interface TimelineItem {
@@ -42,6 +43,11 @@ export interface TimelineItem {
     meetingType?: string;
     color?: string;
     event_type?: string;
+    match_score?: number;
+    skills?: string[];
+    commonalities?: string[];
+    potential_needs?: string[];
+    strengths?: string[];
   };
   created_at?: string;
 }
