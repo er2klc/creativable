@@ -702,6 +702,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_sync_status: {
+        Row: {
+          created_at: string | null
+          folder: string
+          id: string
+          items_synced: number | null
+          last_sync_time: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          folder?: string
+          id?: string
+          items_synced?: number | null
+          last_sync_time?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          folder?: string
+          id?: string
+          items_synced?: number | null
+          last_sync_time?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       email_templates: {
         Row: {
           body: string
@@ -731,6 +761,68 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      email_tracking: {
+        Row: {
+          bcc_email: string | null
+          cc_email: string | null
+          content: string
+          created_at: string | null
+          delivered_at: string | null
+          error_message: string | null
+          id: string
+          lead_id: string | null
+          opened_at: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          to_email: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          bcc_email?: string | null
+          cc_email?: string | null
+          content: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          opened_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          to_email: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          bcc_email?: string | null
+          cc_email?: string | null
+          content?: string
+          created_at?: string | null
+          delivered_at?: string | null
+          error_message?: string | null
+          id?: string
+          lead_id?: string | null
+          opened_at?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          to_email?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_tracking_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       emails: {
         Row: {
@@ -836,6 +928,51 @@ export type Database = {
           processed_at?: string | null
           status?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      imap_settings: {
+        Row: {
+          created_at: string | null
+          host: string
+          id: string
+          last_error: string | null
+          last_verification_status: string | null
+          last_verified_at: string | null
+          password: string
+          port: number
+          secure: boolean
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          host: string
+          id?: string
+          last_error?: string | null
+          last_verification_status?: string | null
+          last_verified_at?: string | null
+          password: string
+          port: number
+          secure?: boolean
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          host?: string
+          id?: string
+          last_error?: string | null
+          last_verification_status?: string | null
+          last_verified_at?: string | null
+          password?: string
+          port?: number
+          secure?: boolean
+          updated_at?: string | null
+          user_id?: string
+          username?: string
         }
         Relationships: []
       }
@@ -2199,6 +2336,83 @@ export type Database = {
         }
         Relationships: []
       }
+      received_emails: {
+        Row: {
+          attachments_info: Json | null
+          cc_email: string | null
+          created_at: string | null
+          flags: string[] | null
+          folder: string
+          from_email: string
+          has_attachments: boolean | null
+          headers: string | null
+          html_content: string | null
+          id: string
+          imap_uid: number | null
+          is_read: boolean | null
+          lead_id: string | null
+          message_id: string | null
+          received_at: string
+          subject: string
+          text_content: string | null
+          to_email: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          attachments_info?: Json | null
+          cc_email?: string | null
+          created_at?: string | null
+          flags?: string[] | null
+          folder?: string
+          from_email: string
+          has_attachments?: boolean | null
+          headers?: string | null
+          html_content?: string | null
+          id?: string
+          imap_uid?: number | null
+          is_read?: boolean | null
+          lead_id?: string | null
+          message_id?: string | null
+          received_at: string
+          subject: string
+          text_content?: string | null
+          to_email: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          attachments_info?: Json | null
+          cc_email?: string | null
+          created_at?: string | null
+          flags?: string[] | null
+          folder?: string
+          from_email?: string
+          has_attachments?: boolean | null
+          headers?: string | null
+          html_content?: string | null
+          id?: string
+          imap_uid?: number | null
+          is_read?: boolean | null
+          lead_id?: string | null
+          message_id?: string | null
+          received_at?: string
+          subject?: string
+          text_content?: string | null
+          to_email?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "received_emails_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       secrets: {
         Row: {
           created_at: string | null
@@ -2333,6 +2547,8 @@ export type Database = {
           host: string
           id: string
           is_verified: boolean | null
+          last_error: string | null
+          last_verification_status: string | null
           last_verified_at: string | null
           password: string
           port: number
@@ -2348,6 +2564,8 @@ export type Database = {
           host: string
           id?: string
           is_verified?: boolean | null
+          last_error?: string | null
+          last_verification_status?: string | null
           last_verified_at?: string | null
           password: string
           port: number
@@ -2363,6 +2581,8 @@ export type Database = {
           host?: string
           id?: string
           is_verified?: boolean | null
+          last_error?: string | null
+          last_verification_status?: string | null
           last_verified_at?: string | null
           password?: string
           port?: number
