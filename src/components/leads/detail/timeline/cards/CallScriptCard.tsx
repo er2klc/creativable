@@ -67,7 +67,7 @@ export function CallScriptCard({
       </div>
       
       <div className="prose prose-sm max-w-none dark:prose-invert mb-2">
-        <ReactMarkdown>{displayContent}</ReactMarkdown>
+        <ReactMarkdown className="whitespace-pre-wrap break-words">{displayContent}</ReactMarkdown>
       </div>
       
       <div className="flex items-center justify-between">
