@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompanyNameField } from "./mlm/CompanyNameField";
@@ -34,23 +35,35 @@ export function MLMSettings() {
 
     setIsLoading(true);
     try {
+      // Verbesserte Fehlerbehandlung und Logging
+      console.log("Sending request to fetch-company-info function with company name:", settings?.company_name);
+      
       const { data, error } = await supabase.functions.invoke('fetch-company-info', {
         body: { companyName: settings?.company_name }
       });
 
-      if (error) throw error;
-
-      if (data) {
-        await updateSettings.mutateAsync({
-          company_name: data.companyName,
-          products_services: data.productsServices,
-          target_audience: data.targetAudience,
-          usp: data.usp,
-          business_description: data.businessDescription,
-        });
-
-        toast.success("Business Informationen erfolgreich aktualisiert");
+      if (error) {
+        console.error("Error calling fetch-company-info function:", error);
+        throw error;
       }
+      
+      if (!data) {
+        console.error("No data returned from fetch-company-info function");
+        throw new Error("Keine Informationen zum Unternehmen gefunden");
+      }
+
+      console.log("Received company info:", data);
+
+      // Aktualisieren der Einstellungen mit den erhaltenen Daten
+      await updateSettings.mutateAsync({
+        company_name: data.companyName || settings?.company_name,
+        products_services: data.productsServices || settings?.products_services,
+        target_audience: data.targetAudience || settings?.target_audience,
+        usp: data.usp || settings?.usp,
+        business_description: data.businessDescription || settings?.business_description,
+      });
+
+      toast.success("Business Informationen erfolgreich aktualisiert");
     } catch (error: any) {
       console.error('Error fetching company info:', error);
       toast.error(error.message || "Fehler beim Abrufen der Business Informationen");

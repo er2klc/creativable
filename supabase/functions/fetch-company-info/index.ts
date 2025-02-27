@@ -1,5 +1,7 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Configuration, OpenAIApi } from 'https://esm.sh/openai@3.2.1'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -18,53 +20,83 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { companyName, userId, isRegistration } = await req.json()
+    // Parse request body
+    const requestData = await req.json()
+    const { companyName } = requestData
 
     console.log('Fetching company info for:', {
       companyName,
-      userId,
-      isRegistration,
       timestamp: new Date().toISOString()
     })
 
-    if (!companyName || !userId) {
-      throw new Error('Missing required parameters')
+    if (!companyName) {
+      throw new Error('Company name is required')
     }
 
-    // Get user's language preference
-    const { data: settings } = await supabaseClient
-      .from('settings')
-      .select('language')
-      .eq('user_id', userId)
-      .single()
+    // Get OpenAI API key
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY')
+    if (!openaiApiKey) {
+      throw new Error('OpenAI API key not found')
+    }
 
-    const language = settings?.language || 'de'
-    const systemPrompt = language === 'en' 
-      ? "You are a helpful business analyst. Analyze the company and provide key business insights."
-      : "Du bist ein hilfreicher Business Analyst. Analysiere das Unternehmen und liefere wichtige geschäftliche Erkenntnisse."
+    const configuration = new Configuration({
+      apiKey: openaiApiKey,
+    });
+    const openai = new OpenAIApi(configuration);
 
-    // Simulate company info analysis
-    const companyInfo = {
-      companyName,
-      productsServices: language === 'en' 
-        ? "Products and services analysis based on company profile"
-        : "Produkt- und Dienstleistungsanalyse basierend auf Unternehmensprofil",
-      targetAudience: language === 'en'
-        ? "Target audience analysis"
-        : "Zielgruppenanalyse",
-      usp: language === 'en'
-        ? "Unique selling proposition analysis"
-        : "Alleinstellungsmerkmal-Analyse",
-      businessDescription: language === 'en'
-        ? "Detailed business description and analysis"
-        : "Detaillierte Geschäftsbeschreibung und Analyse"
+    // Prompt for OpenAI to analyze the company
+    const prompt = `
+    Als Business-Analyst, analysiere dieses Unternehmen: "${companyName}".
+    
+    Extrahiere und formatiere die folgenden Informationen in einem JSON-Format:
+    1. companyName: Den genauen Firmennamen
+    2. productsServices: Die wichtigsten Produkte und Dienstleistungen des Unternehmens (1-2 Sätze)
+    3. targetAudience: Die Zielgruppe des Unternehmens (1-2 Sätze)
+    4. usp: Das Alleinstellungsmerkmal/USP des Unternehmens (1-2 Sätze)
+    5. businessDescription: Eine kurze Geschäftsbeschreibung (2-3 Sätze)
+    
+    Antworte nur mit dem JSON-Objekt, ohne zusätzlichen Text.
+    `;
+
+    // Call OpenAI API
+    const response = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "Du bist ein hilfreicher Business-Analyst, der Unternehmensinformationen extrahiert und strukturiert."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 600,
+    });
+
+    const aiResponse = response.data.choices[0]?.message?.content || '';
+    console.log('AI response received, processing...');
+
+    // Parse JSON from AI response
+    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
+    let companyInfo;
+    
+    if (jsonMatch) {
+      try {
+        companyInfo = JSON.parse(jsonMatch[0]);
+      } catch (e) {
+        console.error('Error parsing AI response:', e);
+        throw new Error('Failed to parse company information');
+      }
+    } else {
+      throw new Error('No valid JSON found in AI response');
     }
 
     console.log('Successfully generated company info:', {
       company: companyName,
-      userId,
       timestamp: new Date().toISOString()
-    })
+    });
 
     return new Response(
       JSON.stringify(companyInfo),
@@ -76,7 +108,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error in fetch-company-info:', error)
+    console.error('Error in fetch-company-info:', error);
     
     return new Response(
       JSON.stringify({ error: error.message }),
