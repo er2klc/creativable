@@ -1,4 +1,5 @@
 
+import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { NoteCard } from "./cards/NoteCard";
 import { TaskCard } from "./cards/TaskCard";
@@ -8,6 +9,8 @@ import { MetadataDisplay } from "./cards/MetadataDisplay";
 import { DeleteButton } from "./cards/DeleteButton";
 import { StatusCard } from "./cards/StatusCard";
 import { NexusTimelineCard } from "./cards/NexusTimelineCard";
+import { CallScriptCard } from "./cards/CallScriptCard";
+import { MessageTemplateCard } from "./cards/MessageTemplateCard";
 
 interface TimelineItemCardProps {
   type: string;
@@ -31,6 +34,9 @@ interface TimelineItemCardProps {
     meetingType?: string;
     color?: string;
     timestamp?: string;
+    script_type?: string;
+    message_type?: string;
+    platform?: string;
     phase?: {
       id: string;
       name: string;
@@ -50,6 +56,7 @@ interface TimelineItemCardProps {
   id?: string;
   created_at?: string;
   isCompleted?: boolean;
+  onToggleComplete?: (id: string, completed: boolean) => void;
 }
 
 export const TimelineItemCard = ({
@@ -61,6 +68,7 @@ export const TimelineItemCard = ({
   id,
   created_at,
   isCompleted,
+  onToggleComplete,
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
 
@@ -70,6 +78,31 @@ export const TimelineItemCard = ({
       <NexusTimelineCard
         content={content}
         metadata={metadata}
+        onDelete={onDelete}
+      />
+    );
+  }
+
+  // For call scripts
+  if (metadata?.type === 'call_script') {
+    return (
+      <CallScriptCard
+        content={content}
+        scriptType={metadata.script_type || 'introduction'}
+        created_at={created_at}
+        onDelete={onDelete}
+      />
+    );
+  }
+
+  // For message templates
+  if (metadata?.type === 'message_template') {
+    return (
+      <MessageTemplateCard
+        content={content}
+        messageType={metadata.message_type || 'introduction'}
+        platform={metadata.platform || 'Generic'}
+        created_at={created_at}
         onDelete={onDelete}
       />
     );
@@ -125,6 +158,7 @@ export const TimelineItemCard = ({
           metadata={metadata}
           isCompleted={isCompleted}
           onDelete={onDelete}
+          onToggleComplete={onToggleComplete}
         />
       );
     }
@@ -165,7 +199,7 @@ export const TimelineItemCard = ({
       );
     }
 
-    // Für phase_change und andere Typen
+    // For phase_change and other types
     return (
       <div className="relative group">
         <div className="flex items-center">

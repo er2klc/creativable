@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
 import { Platform } from "@/config/platforms";
@@ -7,9 +8,12 @@ import { TaskTab } from "./tabs/TaskTab";
 import { MessageTab } from "./tabs/MessageTab";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
 import { LeadFileUpload } from "./files/LeadFileUpload";
-import { useState } from "react";
-import { CalendarIcon, Video, Youtube, FileText } from "lucide-react";
+import { useState, useEffect } from "react";
+import { CalendarIcon, Video, Youtube, FileText, Phone, MessageSquare } from "lucide-react";
 import { PresentationTab } from "./tabs/PresentationTab";
+import { CallScriptGenerator } from "./components/CallScriptGenerator";
+import { MessageGenerator } from "./components/MessageGenerator";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LeadDetailTabsProps {
   lead: Tables<"leads"> & {
@@ -28,7 +32,9 @@ const tabColors = {
   uploads: "#E5E7EB",
   zoom: "#2D8CFF",
   youtube: "#FF0000",
-  documents: "#34D399"
+  documents: "#34D399",
+  callscript: "#FF7F50",
+  messagegenerator: "#8A2BE2"
 };
 
 export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
@@ -36,6 +42,32 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("notes");
   const [presentationDialogOpen, setPresentationDialogOpen] = useState(false);
+  const [existingAnalysis, setExistingAnalysis] = useState("");
+
+  useEffect(() => {
+    async function fetchExistingAnalysis() {
+      if (!lead.id || !lead.phase_id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from("phase_based_analyses")
+          .select("content")
+          .eq("lead_id", lead.id)
+          .eq("phase_id", lead.phase_id)
+          .maybeSingle();
+
+        if (error) throw error;
+        
+        if (data?.content) {
+          setExistingAnalysis(data.content);
+        }
+      } catch (error) {
+        console.error("Error fetching analysis:", error);
+      }
+    }
+    
+    fetchExistingAnalysis();
+  }, [lead.id, lead.phase_id]);
 
   const handleTabChange = (value: string) => {
     if (value === "appointments") {
@@ -50,7 +82,7 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
 
   return (
     <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full rounded-lg border bg-card text-card-foreground shadow-sm p-4 pt-4">
-      <TabsList className="w-full">
+      <TabsList className="w-full flex-wrap">
         <TabsTrigger
           value="notes"
           className="flex-1"
@@ -87,22 +119,38 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
           {settings?.language === "en" ? "Upload File" : "Datei hochladen"}
         </TabsTrigger>
         <TabsTrigger
+          value="callscript"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.callscript}` }}
+        >
+          <Phone className="w-4 h-4 mr-1" />
+          {settings?.language === "en" ? "Call Script" : "Telefonscript"}
+        </TabsTrigger>
+        <TabsTrigger
+          value="messagegenerator"
+          className="flex-1"
+          style={{ borderBottom: `2px solid ${tabColors.messagegenerator}` }}
+        >
+          <MessageSquare className="w-4 h-4 mr-1" />
+          {settings?.language === "en" ? "Create Message" : "Nachricht erstellen"}
+        </TabsTrigger>
+        <TabsTrigger
           value="zoom"
-          className="flex-2"
+          className="flex-1"
           style={{ borderBottom: `2px solid ${tabColors.zoom}` }}
         >
           <Video className="w-4 h-4" />
         </TabsTrigger>
         <TabsTrigger
           value="youtube"
-          className="flex-2"
+          className="flex-1"
           style={{ borderBottom: `2px solid ${tabColors.youtube}` }}
         >
           <Youtube className="w-4 h-4" />
         </TabsTrigger>
         <TabsTrigger
           value="documents"
-          className="flex-2"
+          className="flex-1"
           style={{ borderBottom: `2px solid ${tabColors.documents}` }}
         >
           <FileText className="w-4 h-4" />
@@ -147,6 +195,25 @@ export function LeadDetailTabs({ lead }: LeadDetailTabsProps) {
 
       <TabsContent value="uploads" className="mt-4">
         <LeadFileUpload leadId={lead.id} />
+      </TabsContent>
+
+      <TabsContent value="callscript" className="mt-4">
+        <CallScriptGenerator 
+          leadId={lead.id} 
+          leadName={lead.name}
+          leadPlatform={lead.platform}
+          leadIndustry={lead.industry}
+          existingAnalysis={existingAnalysis}
+        />
+      </TabsContent>
+
+      <TabsContent value="messagegenerator" className="mt-4">
+        <MessageGenerator 
+          leadId={lead.id} 
+          leadName={lead.name}
+          platform={lead.platform}
+          existingAnalysis={existingAnalysis}
+        />
       </TabsContent>
 
       <TabsContent value="zoom" className="mt-4">

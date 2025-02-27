@@ -1,12 +1,12 @@
 
 import { useState } from "react";
-import { Check, Edit } from "lucide-react";
+import { CheckSquare, SquareCheck } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { DeleteButton } from "./DeleteButton";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 import { useSettings } from "@/hooks/use-settings";
-import { formatDateTime } from "../utils/dateUtils";
-import { MEETING_TYPES } from "@/constants/meetingTypes";
-import { getMeetingTypeIcon } from "./utils/meetingTypeUtils";
-import { TaskEditForm } from "./TaskEditForm";
-import confetti from "canvas-confetti";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 interface TaskCardProps {
@@ -14,103 +14,123 @@ interface TaskCardProps {
   content: string;
   metadata?: {
     dueDate?: string;
-    meetingType?: string;
-    status?: string;
-    completedAt?: string;
     color?: string;
+    [key: string]: any;
   };
   isCompleted?: boolean;
   onDelete?: () => void;
-  onComplete?: () => void;
+  onToggleComplete?: (id: string, completed: boolean) => void;
 }
 
-export const TaskCard = ({
+export function TaskCard({
   id,
   content,
   metadata,
-  isCompleted,
-  onComplete
-}: TaskCardProps) => {
+  isCompleted = false,
+  onDelete,
+  onToggleComplete,
+}: TaskCardProps) {
   const { settings } = useSettings();
-  const [isEditing, setIsEditing] = useState(false);
+  const [completed, setCompleted] = useState(isCompleted);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleComplete = () => {
-    if (!isCompleted && onComplete) {
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#FFD700', '#FFA500', '#FF6347', '#98FB98', '#87CEEB'],
-      });
-
-      toast.success(
-        settings?.language === "en" 
-          ? "Task completed! 🎉" 
-          : "Aufgabe erledigt! 🎉"
-      );
+  const handleToggleComplete = async () => {
+    if (isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      const newState = !completed;
+      setCompleted(newState);
       
-      onComplete();
+      // Update in the database
+      const { error } = await supabase
+        .from('tasks')
+        .update({ completed: newState })
+        .eq('id', id);
+        
+      if (error) throw error;
+      
+      // Call the callback if provided
+      if (onToggleComplete) {
+        onToggleComplete(id, newState);
+      }
+      
+      toast.success(
+        settings?.language === "en"
+          ? newState ? "Task completed" : "Task reopened" 
+          : newState ? "Aufgabe abgeschlossen" : "Aufgabe wiedereröffnet"
+      );
+    } catch (error) {
+      console.error("Error updating task:", error);
+      setCompleted(!completed); // Revert UI state on error
+      toast.error(
+        settings?.language === "en"
+          ? "Failed to update task"
+          : "Fehler beim Aktualisieren der Aufgabe"
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const getMeetingTypeLabel = (meetingType?: string) => {
-    if (!meetingType) return null;
-    const meetingTypeObj = MEETING_TYPES.find(type => type.value === meetingType);
-    if (!meetingTypeObj) return null;
-    
-    return (
-      <div className="flex items-center gap-2">
-        {getMeetingTypeIcon(meetingType)}
-        <span>{meetingTypeObj.label}</span>
-      </div>
-    );
+  // Function to determine if a string contains markdown bold syntax
+  const containsBoldMarkdown = (text: string) => {
+    return /\*\*(.*?)\*\*/g.test(text);
   };
 
-  if (isEditing) {
-    return (
-      <TaskEditForm
-        id={id}
-        title={content}
-        onCancel={() => setIsEditing(false)}
-        onSave={() => setIsEditing(false)}
-      />
-    );
-  }
+  // Function to render content with appropriate formatting
+  const renderTaskContent = () => {
+    if (containsBoldMarkdown(content)) {
+      // Replace markdown bold with HTML bold
+      return <div dangerouslySetInnerHTML={{ 
+        __html: content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') 
+      }} />;
+    }
+    return <span>{content}</span>;
+  };
 
   return (
     <div className="relative group">
-      <div className={`space-y-2 ${isCompleted ? 'line-through text-gray-500' : ''}`}>
-        <div className="font-medium">{content}</div>
-        {metadata?.meetingType && (
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            {getMeetingTypeLabel(metadata.meetingType)}
-          </div>
-        )}
-        {metadata?.dueDate && (
-          <div className="text-sm text-gray-600">
-            {formatDateTime(metadata.dueDate, settings?.language)}
-          </div>
-        )}
-      </div>
-
-      <div className="absolute top-0 right-0 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-        {onComplete && (
-          <button
-            onClick={handleComplete}
-            className="p-1 hover:bg-gray-100 rounded"
-          >
-            <div className={`w-4 h-4 border border-gray-400 rounded flex items-center justify-center ${isCompleted ? 'bg-green-500 border-green-500' : ''} hover:border-green-500 hover:bg-green-50`}>
-              {isCompleted && <Check className="h-3 w-3 text-white" />}
-            </div>
-          </button>
-        )}
-        <button
-          onClick={() => setIsEditing(true)}
-          className="p-1 hover:bg-gray-100 rounded"
+      <div className="flex items-start gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "p-0 h-5 w-5",
+            completed && "text-green-500"
+          )}
+          onClick={handleToggleComplete}
+          disabled={isSubmitting}
         >
-          <Edit className="h-4 w-4 text-gray-500 hover:text-blue-600" />
-        </button>
+          {completed ? (
+            <CheckSquare className="h-5 w-5" />
+          ) : (
+            <SquareCheck className="h-5 w-5" />
+          )}
+        </Button>
+        
+        <div className="flex-1">
+          <div className={cn(
+            "text-sm", 
+            completed && "line-through text-gray-500"
+          )}>
+            {renderTaskContent()}
+          </div>
+          
+          {metadata?.dueDate && (
+            <div className={cn(
+              "text-xs mt-1",
+              new Date(metadata.dueDate) < new Date() && !completed
+                ? "text-red-500 font-medium"
+                : "text-gray-500"
+            )}>
+              {settings?.language === "en" ? "Due" : "Fällig"}: {format(new Date(metadata.dueDate), "PPP")}
+            </div>
+          )}
+        </div>
+        
+        {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
     </div>
   );
-};
+}

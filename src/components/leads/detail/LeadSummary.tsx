@@ -124,11 +124,21 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     try {
       setIsLoading(true);
       
+      // Get user's display name to include in analysis
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('display_name')
+        .eq('id', user.id)
+        .single();
+        
+      const userName = profileData?.display_name || 'Sie';
+      
       const { data, error } = await supabase.functions.invoke('generate-lead-phase-analysis', {
         body: {
           leadId: lead.id,
           phaseId: lead.phase_id,
-          userId: user.id
+          userId: user.id,
+          userName: userName
         }
       });
 
@@ -143,6 +153,39 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
           ? `Analysis generation failed: ${data.error}` 
           : `Fehler bei der Analyse-Generierung: ${data.error}`);
         return;
+      }
+
+      // Create task automatically from the analysis
+      if (data.analysis?.content) {
+        try {
+          // Extract recommended tasks from the analysis
+          const taskRegex = /\*\*(.*?)\*\*/g;
+          const matches = [...data.analysis.content.matchAll(taskRegex)];
+          
+          if (matches.length > 0) {
+            // Create a task from the first recommendation
+            const taskTitle = matches[0][1].replace(/\*\*/g, '');
+            
+            await supabase
+              .from("tasks")
+              .insert({
+                lead_id: lead.id,
+                title: taskTitle,
+                user_id: user.id,
+                priority: "High",
+                type: "task",
+                color: "#FFD700", // Gold color for AI-recommended tasks
+              });
+              
+            toast.success(
+              settings?.language === "en"
+                ? "Task created from analysis"
+                : "Aufgabe aus Analyse erstellt"
+            );
+          }
+        } catch (taskError) {
+          console.error("Error creating task from analysis:", taskError);
+        }
       }
 
       // Update state with new analysis
