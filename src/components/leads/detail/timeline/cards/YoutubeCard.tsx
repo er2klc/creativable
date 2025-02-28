@@ -1,143 +1,153 @@
 
-import { cn } from "@/lib/utils";
-import { Card } from "@/components/ui/card";
-import { formatDateTime } from "../utils/dateUtils";
-import { useSettings } from "@/hooks/use-settings";
-import { toast } from "sonner";
-import { Copy, Activity, Eye, Video, Youtube } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { VideoThumbnail } from "./youtube/VideoThumbnail";
-import { SessionProgress } from "./youtube/SessionProgress";
-import { ViewInfo } from "./youtube/ViewInfo";
+import { formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
+import { Eye, Play, ExternalLink } from "lucide-react";
 import { YoutubeCardProps } from "./youtube/types";
+import { ViewInfo } from "./youtube/ViewInfo";
+import { useState } from "react";
 
 export const YoutubeCard = ({ content, metadata, timestamp }: YoutubeCardProps) => {
-  const { settings } = useSettings();
-  const videoId = metadata?.url?.split('v=')[1] || '';
-  const latestProgress = metadata?.video_progress || 0;
-  const isExpired = metadata?.expires_at && new Date(metadata.expires_at) < new Date();
-  const isVideoActive = metadata?.event_type !== 'video_closed';
-
-  const isViewCard = metadata?.event_type === 'video_opened' || 
-                     metadata?.event_type === 'video_progress' ||
-                     metadata?.event_type === 'video_closed' || 
-                     metadata?.event_type === 'video_completed';
-
-  const copyToClipboard = async (text: string) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      toast.success(
-        settings?.language === "en"
-          ? "Presentation URL copied to clipboard"
-          : "Präsentations-URL in die Zwischenablage kopiert"
-      );
-    } catch (err) {
-      toast.error(
-        settings?.language === "en"
-          ? "Failed to copy URL"
-          : "URL konnte nicht kopiert werden"
-      );
-    }
+  const [expanded, setExpanded] = useState(false);
+  
+  // Extract video ID from URL if available
+  const getYoutubeIdFromUrl = (url?: string) => {
+    if (!url) return null;
+    
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+  
+  const videoId = getYoutubeIdFromUrl(metadata?.url);
+  const thumbnailUrl = videoId ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg` : null;
+  
+  const formatProgress = (progress?: number) => {
+    if (progress === undefined || progress === null) return "Keine Daten";
+    return `${Math.round(progress)}%`;
   };
 
+  const getEventTypeText = (eventType?: string) => {
+    switch (eventType) {
+      case 'video_opened':
+        return 'Präsentation geöffnet';
+      case 'video_progress':
+        return 'Präsentation angeschaut';
+      case 'video_completed':
+        return 'Präsentation vollständig angeschaut';
+      default:
+        return 'Präsentation angesehen';
+    }
+  };
+  
+  // Extract view history if available
+  const viewHistory = metadata?.view_history || [];
+  
   return (
-    <Card className={cn(
-      "flex-1 p-4 text-sm overflow-hidden bg-white shadow-md relative border",
-      isViewCard ? "border-orange-500" : isExpired ? "border-red-500 bg-gray-50" : "border-[#ea384c]" // YouTube-Rot für normale YouTube-Karten
-    )}>
-      {isViewCard && latestProgress > 0 && isVideoActive && (
-        <>
-          <Progress 
-            value={latestProgress} 
-            className="absolute top-0 left-0 right-0 h-[2px]" 
-          />
-          <div className="absolute top-2 right-2 flex items-center gap-2">
-            <span className="text-xs text-orange-500">{Math.round(latestProgress)}%</span>
-            <Activity className="h-4 w-4 text-orange-500 animate-pulse" />
-          </div>
-        </>
-      )}
-      <div className="flex items-start justify-between mt-2">
-        <div className="space-y-1 flex-1">
-          <div className="font-medium text-base flex items-center gap-2">
-            {!isViewCard ? (
-              <>
-                <Youtube className="h-4 w-4 text-[#ea384c]" />
-                {settings?.language === "en" 
-                  ? "Presentation URL created"
-                  : "Präsentation URL wurde erstellt"}
-              </>
-            ) : (
-              <>
-                <Eye className="h-4 w-4 text-orange-500" />
-                {metadata?.title || content}
-              </>
-            )}
-          </div>
-          {isViewCard && (
-            <div className="text-gray-600">
-              {settings?.language === "en" ? "Presentation opened" : "Präsentation wurde aufgerufen"}
+    <div className="bg-white rounded-lg border p-4 shadow-sm">
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0">
+          {metadata?.event_type === 'video_completed' ? (
+            <div className="h-8 w-8 bg-green-100 rounded-full flex items-center justify-center">
+              <Play className="h-4 w-4 text-green-600" />
+            </div>
+          ) : (
+            <div className="h-8 w-8 bg-blue-100 rounded-full flex items-center justify-center">
+              <Eye className="h-4 w-4 text-blue-600" />
             </div>
           )}
-          {isViewCard && (
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="font-medium text-gray-900">
+              {getEventTypeText(metadata?.event_type)}
+            </h3>
+            <span className="text-xs text-gray-500">
+              {timestamp ? formatDistanceToNow(new Date(timestamp), {
+                addSuffix: true,
+                locale: de
+              }) : ''}
+            </span>
+          </div>
+          
+          <p className="text-sm text-gray-600 mb-3">
+            {content || metadata?.title || 'Präsentation angeschaut'}
+          </p>
+          
+          {thumbnailUrl && (
+            <div className="mb-3 relative rounded-md overflow-hidden">
+              <img 
+                src={thumbnailUrl} 
+                alt="Video thumbnail" 
+                className="w-full h-auto rounded-md"
+              />
+              <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                {formatProgress(metadata?.video_progress)}
+              </div>
+            </div>
+          )}
+          
+          <div className="text-sm space-y-1 mb-2">
             <ViewInfo 
-              id={metadata?.id}
-              ip={metadata?.ip}
+              id={metadata?.id || metadata?.view_id} 
+              ip={metadata?.ip} 
               location={metadata?.location}
             />
-          )}
-          {isViewCard && (
-            <SessionProgress 
-              viewId={metadata?.view_id}
-              language={settings?.language}
-            />
-          )}
-          {!isViewCard && metadata?.presentationUrl && (
-            <div className="flex flex-col gap-2 mt-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => copyToClipboard(metadata.presentationUrl)}
-                className={cn(
-                  "flex items-center gap-2 w-fit",
-                  isExpired && "border-red-500 hover:border-red-600 opacity-50 cursor-not-allowed",
-                  !isExpired && "border-[#ea384c] hover:border-[#c12e3e] text-[#ea384c]"
-                )}
-                disabled={isExpired}
+          </div>
+          
+          {viewHistory.length > 0 && (
+            <div className="mt-3">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setExpanded(!expanded)}
+                className="text-xs"
               >
-                <Copy className="h-4 w-4" />
-                {settings?.language === "en" ? "Presentation URL" : "Präsentations-URL"}
-                {isExpired && (
-                  <span className="text-red-500 ml-2">
-                    {settings?.language === "en" ? "(Expired)" : "(Abgelaufen)"}
-                  </span>
-                )}
+                {expanded ? 'Verlauf ausblenden' : 'Verlauf anzeigen'}
               </Button>
-              {isExpired && (
-                <div className="text-xs text-red-500 font-medium">
-                  {settings?.language === "en" 
-                    ? `Expired on ${formatDateTime(metadata.expires_at!, 'en')}` 
-                    : `Abgelaufen am ${formatDateTime(metadata.expires_at!, 'de')}`}
+              
+              {expanded && (
+                <div className="mt-2 space-y-2 border-t pt-2">
+                  <h4 className="text-sm font-medium">Verlauf:</h4>
+                  <ul className="text-xs space-y-1 text-gray-600">
+                    {viewHistory.map((entry: any, index: number) => (
+                      <li key={index} className="flex justify-between">
+                        <span>
+                          {entry.event_type === 'video_opened' ? 'Geöffnet' : 
+                           entry.event_type === 'video_completed' ? 'Abgeschlossen' : 
+                           `Fortschritt: ${Math.round(entry.progress)}%`}
+                        </span>
+                        <span>
+                          {formatDistanceToNow(new Date(entry.timestamp), {
+                            addSuffix: true,
+                            locale: de
+                          })}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
               )}
             </div>
           )}
-          {timestamp && (
-            <div className="text-xs text-gray-500">
-              {formatDateTime(timestamp, settings?.language)}
+          
+          {metadata?.presentationUrl && (
+            <div className="mt-3">
+              <a 
+                href={metadata.presentationUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-xs text-blue-600 hover:text-blue-800"
+              >
+                <ExternalLink className="h-3 w-3 mr-1" />
+                Präsentation öffnen
+              </a>
             </div>
           )}
         </div>
-        <div className="flex flex-col items-end">
-          {videoId && (
-            <VideoThumbnail 
-              videoId={videoId}
-              latestProgress={latestProgress}
-            />
-          )}
-        </div>
       </div>
-    </Card>
+    </div>
   );
 };

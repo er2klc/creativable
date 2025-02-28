@@ -5,6 +5,7 @@ export interface Session {
   start_time?: string;
   end_time?: string;
   max_progress?: number;
+  event_type?: string;
 }
 
 export interface YoutubeCardProps {
@@ -31,4 +32,3 @@ export interface YoutubeCardMetadata {
     event_type: string;
   }>;
 }
-
