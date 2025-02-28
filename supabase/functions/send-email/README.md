@@ -1,35 +1,37 @@
 
-# Send Email Edge Function
+# SMTP-basierte E-Mail-Versand Edge Function
 
-This function handles email sending through the Resend.com API.
+Diese Edge Function sendet E-Mails über einen SMTP-Server basierend auf den Einstellungen des Benutzers.
 
-## Environment Variables Required:
+## Benötigte Umgebungsvariablen:
 - SUPABASE_URL
 - SUPABASE_SERVICE_ROLE_KEY
-- RESEND_API_KEY
 
-## Setup:
-1. Deploy the function
-2. Set the environment variables in the Supabase dashboard
-3. Add secrets:
-```bash
-supabase secrets set --env production RESEND_API_KEY=your-resend-api-key
-```
+## Einrichtung:
+1. Edge Function deployen
+2. Umgebungsvariablen in den Supabase-Einstellungen setzen
+3. SMTP-Einstellungen in der Benutzeroberfläche konfigurieren
 
-## Usage:
-Send a POST request to the function endpoint with:
+## Verwendung:
+Senden Sie eine POST-Anfrage an den Funktionsendpunkt mit:
 ```json
 {
-  "to": "recipient@example.com",
-  "subject": "Email Subject",
-  "html": "<p>Email content</p>",
-  "lead_id": "optional-lead-uuid",
+  "to": "empfaenger@beispiel.de",
+  "subject": "E-Mail-Betreff",
+  "html": "<p>E-Mail-Inhalt</p>",
+  "lead_id": "optionale-lead-uuid",
   "attachments": [
     {
-      "filename": "file.pdf",
-      "content": "base64-encoded-content",
+      "filename": "datei.pdf",
+      "content": "base64-codierter-inhalt",
       "contentType": "application/pdf"
     }
   ]
 }
 ```
+
+## Fehlerbehandlung:
+Die Funktion gibt einen detaillierten Fehlercode zurück, wenn während des Versands ein Problem auftritt.
+
+## SMTP-Einstellungen:
+Die Funktion verwendet die in der Datenbank gespeicherten SMTP-Einstellungen des Benutzers.
