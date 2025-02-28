@@ -7,3 +7,4 @@ export { adminItems } from './items/adminItems';
 export { useTaskCount } from './hooks/useTaskCount';
 export { useAppointmentCount } from './hooks/useAppointmentCount';
 export { useElevateProgress } from './hooks/useElevateProgress';
+export { useUnreadCount } from './hooks/useUnreadCount';

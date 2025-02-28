@@ -30,7 +30,7 @@ export const usePersonalItems = () => {
     {
       title: "E-Mail",
       icon: Mail,
-      url: "/mail",
+      url: "/messages",
       badge: unreadCount > 0 ? unreadCount : undefined
     },
     {

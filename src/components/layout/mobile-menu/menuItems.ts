@@ -21,7 +21,7 @@ export const personalItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutGrid },
   { name: "Kontakte", path: "/contacts", icon: Users },
   { name: "Pool", path: "/pool", icon: Waves },
-  { name: "E-Mail", path: "/mail", icon: Mail },
+  { name: "E-Mail", path: "/messages", icon: Mail },
   { name: "Kalender", path: "/calendar", icon: Calendar },
   { name: "Todo Liste", path: "/todo", icon: CheckSquare },
   { name: "Links", path: "/links", icon: Link2 },
