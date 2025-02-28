@@ -24,7 +24,6 @@ interface Notification {
     team_id?: string;
     sender_id?: string;
     post_id?: string;
-    view_id?: string;
   };
   target_page?: string;
 }
@@ -153,11 +152,8 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
         .update({ read: true })
         .eq('id', notification.id);
 
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-
-      // Spezielle Behandlung für verschiedene Benachrichtigungstypen
+      // Wenn es eine Chat-Benachrichtigung ist, markiere auch die Nachricht als gelesen
       if (notification.type === 'team_chat_message' && notification.metadata?.message_id) {
-        // Teamchat-Nachricht als gelesen markieren
         await supabase
           .from('team_direct_messages')
           .update({ 
@@ -168,15 +164,11 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
 
         // Invalidiere auch die Chat-Queries
         queryClient.invalidateQueries({ queryKey: ['team-messages'] });
-      } 
-      else if (notification.type.startsWith('presentation_') && notification.metadata?.leadId) {
-        // Für Präsentations-Benachrichtigungen direkt zur Lead-Detail-Seite navigieren
-        navigate(`/leads/${notification.metadata.leadId}`);
-        onOpenChange(false);
-        return;
       }
 
-      // Allgemeine Navigation basierend auf target_page
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+
+      // Navigation zur entsprechenden Seite
       if (notification.target_page) {
         // Korrigiere doppelte "team" Präfixe in der URL
         const correctedPath = notification.target_page.replace('/team-team-', '/team-');

@@ -8,23 +8,16 @@ interface ViewInfoProps {
 export const ViewInfo = ({ id, ip, location }: ViewInfoProps) => {
   if (!ip && !location) return null;
   
+  const locationInfo = `${ip || 'Unknown IP'} | ${location || 'Unknown Location'}`;
+  
   return (
-    <div className="space-y-1 text-gray-500 text-xs">
-      {id && (
-        <div>
-          View ID: <span className="font-mono">{id.slice(0, 8)}...</span>
-        </div>
-      )}
-      {ip && (
-        <div>
-          IP-Adresse: <span className="font-mono">{ip}</span>
-        </div>
-      )}
-      {location && (
-        <div>
-          Standort: {location}
-        </div>
-      )}
-    </div>
+    <>
+      <div className="text-gray-500 text-sm">
+        View ID: {id || 'No ID'}
+      </div>
+      <div className="text-gray-500 text-sm flex items-center gap-2">
+        {locationInfo}
+      </div>
+    </>
   );
 };
