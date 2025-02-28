@@ -30,36 +30,82 @@ interface EmailRequest {
 }
 
 // Helper function to detect SMTP errors and provide clear error messages
-function getDetailedSmtpErrorMessage(error: unknown): string {
+function getDetailedSmtpErrorMessage(error: unknown): { 
+  userMessage: string;
+  technicalDetails: string;
+  errorCode?: string;
+  errorCategory: 'connection' | 'authentication' | 'tls' | 'rate_limit' | 'recipient' | 'unknown';
+} {
   const errorMessage = error instanceof Error ? error.message : String(error);
   
+  // Extract technical details for debugging
+  const technicalDetails = errorMessage;
+  
+  // Default values
+  let userMessage = "E-Mail konnte nicht gesendet werden. Bitte prüfen Sie die SMTP-Einstellungen.";
+  let errorCategory: 'connection' | 'authentication' | 'tls' | 'rate_limit' | 'recipient' | 'unknown' = 'unknown';
+  let errorCode: string | undefined = undefined;
+  
+  // Try to extract error code if it exists
+  const errorCodeMatch = errorMessage.match(/(\d{3})/);
+  if (errorCodeMatch) {
+    errorCode = errorCodeMatch[1];
+  }
+  
   // Connection issues
-  if (errorMessage.includes("connection refused") || errorMessage.includes("ECONNREFUSED") || 
-      errorMessage.includes("connect failed") || errorMessage.includes("network error")) {
-    return "Verbindung zum SMTP-Server fehlgeschlagen. Bitte überprüfen Sie die Server-Adresse und den Port.";
+  if (errorMessage.includes("connection refused") || 
+      errorMessage.includes("ECONNREFUSED") || 
+      errorMessage.includes("connect failed") || 
+      errorMessage.includes("network error") ||
+      errorMessage.includes("Connection timed out") ||
+      errorMessage.includes("getaddrinfo")) {
+    userMessage = "Verbindung zum SMTP-Server fehlgeschlagen. Bitte überprüfen Sie die Server-Adresse und den Port.";
+    errorCategory = 'connection';
   }
   
   // Authentication issues
-  if (errorMessage.includes("535") || errorMessage.includes("535 5.7.8") ||
-      errorMessage.includes("authentication failed") || errorMessage.includes("invalid credentials") ||
-      errorMessage.includes("Bad username or password")) {
-    return "SMTP-Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Benutzername und Passwort.";
+  else if (errorMessage.includes("535") || 
+           errorMessage.includes("535 5.7.8") ||
+           errorMessage.includes("authentication failed") || 
+           errorMessage.includes("invalid credentials") ||
+           errorMessage.includes("Bad username or password")) {
+    userMessage = "SMTP-Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Benutzername und Passwort.";
+    errorCategory = 'authentication';
   }
   
   // SSL/TLS issues
-  if (errorMessage.includes("SSL") || errorMessage.includes("TLS") || 
-      errorMessage.includes("certificate") || errorMessage.includes("secure connection")) {
-    return "SSL/TLS-Verbindungsfehler. Bitte prüfen Sie die SSL/TLS-Einstellungen oder versuchen Sie, SSL zu deaktivieren.";
+  else if (errorMessage.includes("SSL") || 
+           errorMessage.includes("TLS") || 
+           errorMessage.includes("certificate") || 
+           errorMessage.includes("secure connection")) {
+    userMessage = "SSL/TLS-Verbindungsfehler. Bitte prüfen Sie die SSL/TLS-Einstellungen oder versuchen Sie, SSL zu deaktivieren.";
+    errorCategory = 'tls';
   }
   
   // Rate limiting or spam detection
-  if (errorMessage.includes("rate limit") || errorMessage.includes("too many") ||
-      errorMessage.includes("spam") || errorMessage.includes("550")) {
-    return "E-Mail wurde nicht akzeptiert. Mögliche Gründe: Rate-Limit überschritten oder Spam-Verdacht.";
+  else if (errorMessage.includes("rate limit") || 
+           errorMessage.includes("too many") ||
+           errorMessage.includes("spam") || 
+           errorMessage.includes("550")) {
+    userMessage = "E-Mail wurde vom Server abgelehnt. Mögliche Gründe: Rate-Limit überschritten oder Spam-Verdacht.";
+    errorCategory = 'rate_limit';
   }
   
-  // Default case
-  return `E-Mail-Versand fehlgeschlagen: ${errorMessage}`;
+  // Recipient issues
+  else if (errorMessage.includes("recipient") || 
+           errorMessage.includes("mailbox") ||
+           errorMessage.includes("no such user") || 
+           errorMessage.includes("550 5.1.1")) {
+    userMessage = "E-Mail-Adresse des Empfängers wurde nicht akzeptiert. Bitte prüfen Sie die E-Mail-Adresse.";
+    errorCategory = 'recipient';
+  }
+  
+  return {
+    userMessage,
+    technicalDetails,
+    errorCode,
+    errorCategory
+  };
 }
 
 serve(async (req) => {
@@ -89,7 +135,10 @@ serve(async (req) => {
     if (!requestData.to || !requestData.subject || !requestData.html) {
       console.error("Missing required fields");
       return new Response(
-        JSON.stringify({ error: "Missing required fields" }),
+        JSON.stringify({ 
+          error: "Missing required fields", 
+          details: `Required fields: ${!requestData.to ? 'to, ' : ''}${!requestData.subject ? 'subject, ' : ''}${!requestData.html ? 'html' : ''}` 
+        }),
         { 
           status: 400, 
           headers: { 
@@ -101,15 +150,20 @@ serve(async (req) => {
     }
 
     // Get SMTP settings from database
+    console.log("Fetching SMTP settings from database");
     const { data: smtpSettings, error: smtpError } = await supabase
       .from("smtp_settings")
       .select("*")
       .single();
 
-    if (smtpError || !smtpSettings) {
+    if (smtpError) {
       console.error("Failed to retrieve SMTP settings:", smtpError);
       return new Response(
-        JSON.stringify({ error: "SMTP settings not found" }),
+        JSON.stringify({ 
+          error: "SMTP Einstellungen konnten nicht abgerufen werden", 
+          details: smtpError.message,
+          code: smtpError.code 
+        }),
         { 
           status: 500, 
           headers: { 
@@ -120,13 +174,40 @@ serve(async (req) => {
       );
     }
 
-    // Validate SMTP settings
-    if (!smtpSettings.smtp_host || !smtpSettings.smtp_port || !smtpSettings.smtp_user || !smtpSettings.smtp_password) {
-      console.error("Incomplete SMTP settings");
+    if (!smtpSettings) {
+      console.error("No SMTP settings found");
       return new Response(
-        JSON.stringify({ error: "Incomplete SMTP settings. Please check your email configuration." }),
+        JSON.stringify({ 
+          error: "SMTP-Einstellungen nicht gefunden", 
+          details: "Bitte konfigurieren Sie Ihre E-Mail-Einstellungen im Einstellungsbereich." 
+        }),
         { 
-          status: 500, 
+          status: 404, 
+          headers: { 
+            "Content-Type": "application/json",
+            ...corsHeaders 
+          } 
+        }
+      );
+    }
+
+    // Validate SMTP settings
+    const missingFields = [];
+    if (!smtpSettings.smtp_host) missingFields.push("SMTP-Server");
+    if (!smtpSettings.smtp_port) missingFields.push("SMTP-Port");
+    if (!smtpSettings.smtp_user) missingFields.push("SMTP-Benutzername");
+    if (!smtpSettings.smtp_password) missingFields.push("SMTP-Passwort");
+    if (!smtpSettings.from_email) missingFields.push("Absender-E-Mail");
+
+    if (missingFields.length > 0) {
+      console.error("Incomplete SMTP settings:", missingFields);
+      return new Response(
+        JSON.stringify({ 
+          error: "Unvollständige SMTP-Einstellungen", 
+          details: `Folgende Einstellungen fehlen: ${missingFields.join(", ")}` 
+        }),
+        { 
+          status: 400, 
           headers: { 
             "Content-Type": "application/json",
             ...corsHeaders 
@@ -173,7 +254,8 @@ serve(async (req) => {
     });
 
     try {
-      // Create SMTP client
+      // Create SMTP client with proper debug logging
+      console.log("Creating SMTP client...");
       const client = new SMTPClient({
         connection: {
           hostname: smtpSettings.smtp_host,
@@ -183,31 +265,41 @@ serve(async (req) => {
             username: smtpSettings.smtp_user,
             password: smtpSettings.smtp_password,
           },
+          // Set a reasonable timeout
+          timeout: 10000,
         },
       });
 
       // Prepare email with fallback plain text
       const htmlContent = requestData.html;
       // Simple conversion of HTML to plain text
-      const plainText = htmlContent.replace(/<[^>]*>/g, '');
+      const plainText = requestData.text || htmlContent.replace(/<[^>]*>/g, '');
 
       // Send email
+      console.log("Connecting to SMTP server...");
+      await client.connect();
+      console.log("Connected to SMTP server successfully");
+      
       console.log("Sending email via SMTP to:", requestData.to);
-      await client.send({
+      const sendResult = await client.send({
         from: smtpSettings.from_email,
         to: requestData.to,
         subject: requestData.subject,
-        content: requestData.text || plainText,
+        content: plainText,
         html: htmlContent,
       });
       
+      console.log("Send command completed with result:", sendResult);
+      
       // Close connection
+      console.log("Closing SMTP connection...");
       await client.close();
-      console.log("Email sent successfully");
+      console.log("Email sent successfully and connection closed");
       
       // Log to email_tracking table if lead_id is provided
       if (requestData.lead_id && userId) {
         try {
+          console.log("Logging email to tracking table for lead:", requestData.lead_id);
           const { error: trackingError } = await supabase
             .from("email_tracking")
             .insert({
@@ -222,6 +314,8 @@ serve(async (req) => {
 
           if (trackingError) {
             console.warn("Failed to insert email tracking record:", trackingError);
+          } else {
+            console.log("Email tracking record created successfully");
           }
         } catch (trackingError) {
           console.warn("Error tracking email:", trackingError);
@@ -231,7 +325,7 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: "Email sent successfully"
+          message: "E-Mail erfolgreich gesendet" 
         }),
         { 
           status: 200, 
@@ -244,13 +338,24 @@ serve(async (req) => {
     } catch (smtpError) {
       console.error("SMTP Error:", smtpError);
       
-      // Get detailed error message
-      const detailedError = getDetailedSmtpErrorMessage(smtpError);
+      // Get detailed error information
+      const errorInfo = getDetailedSmtpErrorMessage(smtpError);
+      
+      // Log the error details for debugging
+      console.error("Detailed SMTP error:", {
+        message: errorInfo.userMessage,
+        technicalDetails: errorInfo.technicalDetails,
+        errorCode: errorInfo.errorCode,
+        category: errorInfo.errorCategory
+      });
       
       return new Response(
         JSON.stringify({ 
-          error: "Failed to send email", 
-          details: detailedError
+          error: "E-Mail konnte nicht gesendet werden", 
+          message: errorInfo.userMessage,
+          details: errorInfo.technicalDetails,
+          errorCode: errorInfo.errorCode,
+          errorCategory: errorInfo.errorCategory
         }),
         { 
           status: 500, 
@@ -266,8 +371,8 @@ serve(async (req) => {
     
     return new Response(
       JSON.stringify({ 
-        error: "Error sending email", 
-        details: error instanceof Error ? error.message : "Unknown error"
+        error: "Fehler beim E-Mail-Versand", 
+        details: error instanceof Error ? error.message : "Unbekannter Fehler"
       }),
       { 
         status: 500, 

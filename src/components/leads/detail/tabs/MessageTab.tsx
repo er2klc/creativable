@@ -11,12 +11,40 @@ import { useQuery } from "@tanstack/react-query";
 import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { getLeadWithRelations } from "@/utils/query-helpers";
 import { Platform } from "@/config/platforms";
-import { Loader2, Mail, AlertCircle } from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  AlertCircle, 
+  Loader2, 
+  Mail, 
+  Settings as SettingsIcon,
+  CheckCircle
+} from "lucide-react";
+import { 
+  Alert, 
+  AlertDescription, 
+  AlertTitle 
+} from "@/components/ui/alert";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface MessageTabProps {
   leadId: string;
   platform: Platform;
+}
+
+interface SmtpTestResult {
+  success: boolean;
+  stages?: Array<{
+    name: string;
+    success: boolean;
+    message: string;
+  }>;
+  error?: string;
 }
 
 export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
@@ -25,7 +53,11 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [isTestingSmtp, setIsTestingSmtp] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<SmtpTestResult | null>(null);
+  const [showTestDialog, setShowTestDialog] = useState(false);
 
   // Lead Daten laden
   const { data: lead, isLoading: leadLoading } = useQuery({
@@ -50,6 +82,7 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   const handleSendEmail = async () => {
     // Reset error state
     setErrorMessage(null);
+    setErrorDetails(null);
     
     if (!smtpSettings) {
       toast.error("Bitte zuerst E-Mail-Einstellungen konfigurieren", {
@@ -90,6 +123,8 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
 
       if (data && data.error) {
         console.error("Email sending error:", data.error, data.details);
+        setErrorMessage(data.message || data.error);
+        setErrorDetails(data.details || "Keine Details verfügbar");
         throw new Error(data.details || data.error);
       }
 
@@ -108,10 +143,49 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
         errorMsg = error.details || error.message || errorMsg;
       }
       
-      setErrorMessage(errorMsg);
+      if (!errorMessage) {
+        setErrorMessage(errorMsg);
+      }
       toast.error(errorMsg);
     } finally {
       setIsSending(false);
+    }
+  };
+  
+  const handleTestSmtpSettings = async () => {
+    setIsTestingSmtp(true);
+    setTestResult(null);
+    
+    try {
+      const { data, error } = await supabase.functions.invoke("test-smtp-connection", {
+        body: {
+          use_saved_settings: true
+        },
+      });
+      
+      if (error) {
+        console.error("SMTP test function error:", error);
+        throw new Error(`Failed to call SMTP test function: ${error.message}`);
+      }
+      
+      setTestResult(data);
+      
+      if (data.success) {
+        toast.success("SMTP-Verbindung erfolgreich getestet");
+      } else {
+        toast.error(`SMTP-Test fehlgeschlagen: ${data.error}`);
+      }
+    } catch (error) {
+      console.error("Error testing SMTP settings:", error);
+      
+      setTestResult({
+        success: false,
+        error: error instanceof Error ? error.message : "Unbekannter Fehler"
+      });
+      
+      toast.error("Fehler beim Testen der SMTP-Einstellungen");
+    } finally {
+      setIsTestingSmtp(false);
     }
   };
 
@@ -149,7 +223,13 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Fehler beim Senden</AlertTitle>
           <AlertDescription>
-            {errorMessage}
+            <p>{errorMessage}</p>
+            {errorDetails && (
+              <details className="mt-2 text-xs">
+                <summary className="cursor-pointer">Technische Details</summary>
+                <p className="mt-1 font-mono whitespace-pre-wrap p-2 bg-black/10 rounded">{errorDetails}</p>
+              </details>
+            )}
           </AlertDescription>
         </Alert>
       )}
@@ -191,7 +271,99 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
           />
         </div>
 
-        <div className="flex justify-end mt-4">
+        <div className="flex justify-between mt-4">
+          <Dialog open={showTestDialog} onOpenChange={setShowTestDialog}>
+            <DialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                onClick={() => setShowTestDialog(true)}
+                disabled={!smtpSettings}
+              >
+                <SettingsIcon className="h-4 w-4 mr-2" />
+                E-Mail-Einstellungen testen
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>SMTP-Verbindung testen</DialogTitle>
+                <DialogDescription>
+                  Überprüft die Verbindung zu Ihrem konfigurierten SMTP-Server
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="py-4">
+                {isTestingSmtp ? (
+                  <div className="flex flex-col items-center justify-center py-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                    <p>Überprüfe SMTP-Verbindung...</p>
+                  </div>
+                ) : testResult ? (
+                  <div className="space-y-4">
+                    <Alert variant={testResult.success ? "default" : "destructive"}>
+                      {testResult.success ? (
+                        <CheckCircle className="h-4 w-4" />
+                      ) : (
+                        <AlertCircle className="h-4 w-4" />
+                      )}
+                      <AlertTitle>
+                        {testResult.success 
+                          ? "Verbindung erfolgreich" 
+                          : "Verbindung fehlgeschlagen"}
+                      </AlertTitle>
+                      <AlertDescription>
+                        {testResult.error || "SMTP-Verbindung wurde erfolgreich getestet."}
+                      </AlertDescription>
+                    </Alert>
+                    
+                    {testResult.stages && (
+                      <div className="border rounded-md overflow-hidden">
+                        <div className="bg-muted px-4 py-2 font-medium">
+                          Verbindungsdetails
+                        </div>
+                        <div className="divide-y">
+                          {testResult.stages.map((stage, index) => (
+                            <div key={index} className="px-4 py-3 flex items-start justify-between">
+                              <div>
+                                <h4 className="font-medium">{stage.name}</h4>
+                                <p className="text-sm text-muted-foreground">{stage.message}</p>
+                              </div>
+                              {stage.success ? (
+                                <CheckCircle className="h-5 w-5 text-green-500 shrink-0" />
+                              ) : (
+                                <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-6 space-y-4">
+                    <p>
+                      Klicken Sie auf "Test starten", um die Verbindung zu Ihrem SMTP-Server zu überprüfen.
+                    </p>
+                    <Button 
+                      onClick={handleTestSmtpSettings}
+                      disabled={!smtpSettings}
+                    >
+                      Test starten
+                    </Button>
+                  </div>
+                )}
+              </div>
+              
+              <div className="flex justify-end">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowTestDialog(false)}
+                >
+                  Schließen
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+          
           <Button 
             onClick={handleSendEmail}
             disabled={isSending || !smtpSettings || !lead?.email}
