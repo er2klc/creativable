@@ -26,6 +26,38 @@ interface EmailRequest {
   }>;
 }
 
+/**
+ * Helper function to detect common SMTP errors and provide clearer error messages
+ */
+function getDetailedSmtpErrorMessage(error: unknown): string {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  
+  // Connection issues
+  if (errorMessage.includes("connection refused") || errorMessage.includes("ECONNREFUSED")) {
+    return "Verbindung zum SMTP-Server wurde verweigert. Bitte überprüfen Sie die Server-Adresse und den Port.";
+  }
+  
+  // Authentication issues
+  if (errorMessage.includes("535") || 
+      errorMessage.includes("authentication failed") || 
+      errorMessage.includes("credentials rejection")) {
+    return "SMTP-Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Benutzername und Passwort.";
+  }
+  
+  // SSL/TLS issues
+  if (errorMessage.includes("SSL") || errorMessage.includes("TLS") || errorMessage.includes("certificate")) {
+    return "SSL/TLS-Verbindungsfehler. Bitte überprüfen Sie die SSL/TLS-Einstellungen.";
+  }
+  
+  // Rate limiting
+  if (errorMessage.includes("rate limit") || errorMessage.includes("too many")) {
+    return "E-Mail-Rate überschritten. Bitte versuchen Sie es später erneut.";
+  }
+  
+  // Default case
+  return errorMessage;
+}
+
 serve(async (req) => {
   console.log("Email service function called", new Date().toISOString());
   
@@ -81,6 +113,21 @@ serve(async (req) => {
       );
     }
 
+    // Validate SMTP settings
+    if (!smtpSettings.smtp_host || !smtpSettings.smtp_port || !smtpSettings.smtp_user || !smtpSettings.smtp_password) {
+      console.error("Incomplete SMTP settings");
+      return new Response(
+        JSON.stringify({ error: "Incomplete SMTP settings. Please check your email configuration." }),
+        { 
+          status: 500, 
+          headers: { 
+            "Content-Type": "application/json",
+            ...corsHeaders 
+          } 
+        }
+      );
+    }
+
     // Extract the authenticated user from the request
     let userId: string | null = null;
     const authHeader = req.headers.get("Authorization");
@@ -109,32 +156,64 @@ serve(async (req) => {
 
     console.log("Authenticated user ID:", userId);
 
-    // Configure SMTP client
-    const client = new SMTPClient({
-      connection: {
-        hostname: smtpSettings.smtp_host,
-        port: smtpSettings.smtp_port,
-        tls: smtpSettings.smtp_secure,
-        auth: {
-          username: smtpSettings.smtp_user,
-          password: smtpSettings.smtp_password,
-        },
-      },
+    // Configure SMTP client with verbose logging and proper error handling
+    console.log("Configuring SMTP client with settings:", {
+      host: smtpSettings.smtp_host,
+      port: smtpSettings.smtp_port,
+      secure: smtpSettings.smtp_secure,
+      user: smtpSettings.smtp_user ? "***" : undefined,
+      fromEmail: smtpSettings.from_email
     });
 
-    // Prepare email
+    let client: SMTPClient;
+    try {
+      client = new SMTPClient({
+        connection: {
+          hostname: smtpSettings.smtp_host,
+          port: smtpSettings.smtp_port,
+          tls: smtpSettings.smtp_secure,
+          auth: {
+            username: smtpSettings.smtp_user,
+            password: smtpSettings.smtp_password,
+          },
+          // Add additional options for better compatibility
+          debug: true,
+        },
+      });
+    } catch (initError) {
+      console.error("SMTP client initialization error:", initError);
+      return new Response(
+        JSON.stringify({ 
+          error: "Failed to initialize SMTP client", 
+          details: getDetailedSmtpErrorMessage(initError)
+        }),
+        { 
+          status: 500, 
+          headers: { 
+            "Content-Type": "application/json",
+            ...corsHeaders 
+          } 
+        }
+      );
+    }
+
+    // Prepare email with fallback plain text
+    const htmlContent = requestData.html;
+    // Simple conversion of HTML to plain text for fallback
+    const plainText = htmlContent.replace(/<[^>]*>/g, '');
+
     const emailMessage = {
       from: smtpSettings.from_email,
       to: requestData.to,
       subject: requestData.subject,
-      content: requestData.html,
-      html: requestData.html,
+      content: plainText,
+      html: htmlContent,
     };
 
     console.log("Sending email via SMTP to:", requestData.to);
     console.log("Using SMTP server:", smtpSettings.smtp_host, "port:", smtpSettings.smtp_port);
     
-    // Send email
+    // Send email with proper error handling
     try {
       const sendResult = await client.send(emailMessage);
       console.log("Email sent successfully:", sendResult);
@@ -177,10 +256,14 @@ serve(async (req) => {
       );
     } catch (smtpError) {
       console.error("SMTP Error:", smtpError);
+      
+      // Get detailed error message
+      const detailedError = getDetailedSmtpErrorMessage(smtpError);
+      
       return new Response(
         JSON.stringify({ 
           error: "Failed to send email", 
-          details: smtpError instanceof Error ? smtpError.message : String(smtpError)
+          details: detailedError
         }),
         { 
           status: 500, 

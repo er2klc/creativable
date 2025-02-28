@@ -25,6 +25,7 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Lead Daten laden
   const { data: lead, isLoading: leadLoading } = useQuery({
@@ -47,6 +48,9 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   });
 
   const handleSendEmail = async () => {
+    // Reset error state
+    setErrorMessage(null);
+    
     if (!smtpSettings) {
       toast.error("Bitte zuerst E-Mail-Einstellungen konfigurieren", {
         action: {
@@ -69,7 +73,8 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
 
     setIsSending(true);
     try {
-      const { error } = await supabase.functions.invoke("send-email", {
+      console.log("Sende E-Mail an:", lead.email);
+      const { data, error } = await supabase.functions.invoke("send-email", {
         body: {
           to: lead.email,
           subject: subject,
@@ -78,14 +83,33 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw new Error(`Fehler beim Aufruf der Edge-Funktion: ${error.message}`);
+      }
+
+      if (data && data.error) {
+        console.error("Email sending error:", data.error, data.details);
+        throw new Error(data.details || data.error);
+      }
 
       setSubject("");
       setContent("");
       toast.success("E-Mail wurde erfolgreich gesendet");
     } catch (error) {
       console.error("Error sending email:", error);
-      toast.error("Fehler beim Senden der E-Mail");
+      
+      // Extract detailed error message
+      let errorMsg = "Fehler beim Senden der E-Mail";
+      if (error instanceof Error) {
+        errorMsg = error.message;
+      } else if (typeof error === 'object' && error !== null) {
+        // @ts-ignore
+        errorMsg = error.details || error.message || errorMsg;
+      }
+      
+      setErrorMessage(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setIsSending(false);
     }
@@ -116,6 +140,16 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
             >
               Zu den E-Mail-Einstellungen
             </Button>
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {errorMessage && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Fehler beim Senden</AlertTitle>
+          <AlertDescription>
+            {errorMessage}
           </AlertDescription>
         </Alert>
       )}
