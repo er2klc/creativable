@@ -2,7 +2,7 @@
 import Dashboard from "@/pages/Dashboard";
 import Leads from "@/pages/Leads";
 import LeadDetail from "@/pages/LeadDetail";
-import Messages from "@/pages/Messages";
+import Mail from "@/pages/Mail";
 import Calendar from "@/pages/Calendar";
 import Settings from "@/pages/Settings";
 import Pool from "@/pages/Pool";
@@ -36,9 +36,9 @@ export const mainRoutes = [
     label: "Pool Status",
   },
   {
-    path: "/messages",
-    element: <Messages />,
-    label: "Messages",
+    path: "/mail",
+    element: <Mail />,
+    label: "Mail",
   },
   {
     path: "/calendar",
