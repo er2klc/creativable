@@ -19,15 +19,31 @@ interface NotificationListProps {
   notifications: Notification[];
   onDelete: (id: string) => void;
   onNotificationClick: (notification: Notification) => void;
-  getNotificationIcon: (type: string) => string;
 }
 
 export const NotificationList = ({
   notifications,
   onDelete,
-  onNotificationClick,
-  getNotificationIcon
+  onNotificationClick
 }: NotificationListProps) => {
+  // Function to get icon based on notification type
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'presentation_view':
+        return 'eye';
+      case 'presentation_halfway':
+        return 'play';
+      case 'presentation_completed':
+        return 'check-circle';
+      case 'appointment_reminder':
+        return 'calendar';
+      case 'team_chat_message':
+        return 'message-circle';
+      default:
+        return 'bell';
+    }
+  };
+
   return (
     <ScrollArea className="h-[calc(100vh-100px)]">
       <div className="space-y-4 pr-4">
