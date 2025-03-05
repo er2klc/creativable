@@ -146,7 +146,13 @@ serve(async (req) => {
       });
       
       const dnsStartTime = Date.now();
-      const dnsLookup = await Deno.resolveDns(imap_config.host, "A");
+      const dnsLookup = await Promise.race([
+        Deno.resolveDns(imap_config.host, "A"),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("DNS resolution timeout after 15 seconds")), 15000)
+        )
+      ]) as string[];
+      
       const dnsEndTime = Date.now();
       
       stages[stages.length - 1] = {
@@ -193,22 +199,25 @@ serve(async (req) => {
     
     try {
       // Create a connection with appropriate timeout
+      console.log("Establishing TCP connection...");
       const conn = await Promise.race([
         Deno.connect({
           hostname: imap_config.host,
           port: imap_config.port,
         }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Connection timeout after 15 seconds")), 15000)
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error("Connection timeout after 30 seconds")), 30000)
         )
       ]) as Deno.Conn;
 
+      console.log("TCP connection established, waiting for server greeting...");
+      
       // Read the initial greeting (should start with * OK)
       const buf = new Uint8Array(1024);
       const n = await Promise.race([
         conn.read(buf),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout waiting for server greeting")), 5000)
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout waiting for server greeting")), 20000)
         )
       ]) as number | null;
       
@@ -231,7 +240,12 @@ serve(async (req) => {
         
         // Read the response
         const logoutBuf = new Uint8Array(1024);
-        await conn.read(logoutBuf);
+        await Promise.race([
+          conn.read(logoutBuf),
+          new Promise<never>((_, reject) => 
+            setTimeout(() => reject(new Error("Timeout waiting for logout response")), 10000)
+          )
+        ]);
       } catch (e) {
         console.warn("Failed to send LOGOUT command:", e);
       }

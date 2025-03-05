@@ -144,7 +144,13 @@ serve(async (req) => {
       });
       
       const dnsStartTime = Date.now();
-      const dnsLookup = await Deno.resolveDns(smtp_config.host, "A");
+      const dnsLookup = await Promise.race([
+        Deno.resolveDns(smtp_config.host, "A"),
+        new Promise((_, reject) => 
+          setTimeout(() => reject(new Error("DNS resolution timeout after 15 seconds")), 15000)
+        )
+      ]) as string[];
+      
       const dnsEndTime = Date.now();
       
       stages[stages.length - 1] = {
@@ -191,22 +197,25 @@ serve(async (req) => {
     
     try {
       // Create a connection with appropriate timeout
+      console.log("Establishing TCP connection...");
       const conn = await Promise.race([
         Deno.connect({
           hostname: smtp_config.host,
           port: smtp_config.port,
         }),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Connection timeout after 15 seconds")), 15000)
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error("Connection timeout after 30 seconds")), 30000)
         )
       ]) as Deno.Conn;
 
+      console.log("TCP connection established, waiting for server greeting...");
+      
       // Read the initial greeting (should start with 220)
       const buf = new Uint8Array(1024);
       const n = await Promise.race([
         conn.read(buf),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout waiting for server greeting")), 5000)
+        new Promise<never>((_, reject) => 
+          setTimeout(() => reject(new Error("Timeout waiting for server greeting")), 20000)
         )
       ]) as number | null;
       
@@ -223,10 +232,12 @@ serve(async (req) => {
       }
       
       // Try sending EHLO command
+      console.log("Sending EHLO command...");
       const ehloCommand = `EHLO ${Deno.hostname()}\r\n`;
       await conn.write(new TextEncoder().encode(ehloCommand));
       
       // Read EHLO response
+      console.log("Waiting for EHLO response...");
       const ehloResponse = await Promise.race([
         (async () => {
           const responseBuf = new Uint8Array(1024);
@@ -234,7 +245,7 @@ serve(async (req) => {
           return bytesRead !== null ? new TextDecoder().decode(responseBuf.subarray(0, bytesRead)) : null;
         })(),
         new Promise<null>((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout waiting for EHLO response")), 5000)
+          setTimeout(() => reject(new Error("Timeout waiting for EHLO response")), 20000)
         )
       ]);
       
@@ -246,6 +257,7 @@ serve(async (req) => {
       
       // Attempt to close connection gracefully with QUIT
       try {
+        console.log("Sending QUIT command...");
         await conn.write(new TextEncoder().encode("QUIT\r\n"));
         // We don't need to wait for the response here
       } catch (e) {
