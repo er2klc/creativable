@@ -1,6 +1,5 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -182,19 +181,27 @@ serve(async (req) => {
       }
     }, null, 2));
 
-    client = new SMTPClient({
-      connection: {
-        hostname: smtp_config.host,
-        port: smtp_config.port,
-        tls: smtp_config.secure,
-        auth: {
-          username: smtp_config.username,
-          password: smtp_config.password,
+    // Import the SMTP client (explicit imports required for Edge Functions)
+    const { SMTPClient } = await import("https://deno.land/x/denomailer@1.6.0/mod.ts");
+
+    try {
+      // Create SMTP client with correct configuration format
+      client = new SMTPClient({
+        connection: {
+          hostname: smtp_config.host,
+          port: smtp_config.port,
+          tls: smtp_config.secure,
+          auth: {
+            username: smtp_config.username,
+            password: smtp_config.password,
+          },
+          timeout: 15000,
         },
-        // Set timeout for connection to 15 seconds
-        timeout: 15000,
-      },
-    });
+      });
+    } catch (clientError) {
+      console.error("SMTP client creation error:", clientError);
+      throw new Error(`Failed to create SMTP client: ${clientError.message}`);
+    }
 
     // Step 5: Connect to server
     stages.push({
@@ -205,15 +212,26 @@ serve(async (req) => {
 
     console.log(`Attempting to connect to SMTP server: ${smtp_config.host}:${smtp_config.port}`);
     const connectionStartTime = Date.now();
-    await client.connect();
-    const connectionEndTime = Date.now();
-    console.log(`SMTP connection successful in ${connectionEndTime - connectionStartTime}ms`);
+    
+    try {
+      await client.connect();
+      const connectionEndTime = Date.now();
+      console.log(`SMTP connection successful in ${connectionEndTime - connectionStartTime}ms`);
 
-    stages[stages.length - 1] = {
-      name: "SMTP Connection",
-      success: true,
-      message: `Successfully connected to ${smtp_config.host}:${smtp_config.port} in ${connectionEndTime - connectionStartTime}ms`,
-    };
+      stages[stages.length - 1] = {
+        name: "SMTP Connection",
+        success: true,
+        message: `Successfully connected to ${smtp_config.host}:${smtp_config.port} in ${connectionEndTime - connectionStartTime}ms`,
+      };
+    } catch (connectError) {
+      console.error("SMTP connection error:", connectError);
+      stages[stages.length - 1] = {
+        name: "SMTP Connection",
+        success: false,
+        message: `Failed to connect to SMTP server: ${connectError.message}`,
+      };
+      throw new Error(`SMTP connection failed: ${connectError.message}`);
+    }
 
     // Step 6: Test authentication
     stages.push({
@@ -237,14 +255,24 @@ serve(async (req) => {
       message: "Closing SMTP connection...",
     });
     
-    await client.close();
-    console.log("SMTP connection closed properly");
-    
-    stages[stages.length - 1] = {
-      name: "Connection Cleanup",
-      success: true,
-      message: "SMTP connection closed properly",
-    };
+    try {
+      await client.close();
+      console.log("SMTP connection closed properly");
+      
+      stages[stages.length - 1] = {
+        name: "Connection Cleanup",
+        success: true,
+        message: "SMTP connection closed properly",
+      };
+    } catch (closeError) {
+      console.error("SMTP close error:", closeError);
+      stages[stages.length - 1] = {
+        name: "Connection Cleanup",
+        success: false,
+        message: `Failed to close connection: ${closeError.message}`,
+      };
+      // Don't throw here, continue to report test result
+    }
 
     const result: TestResult = {
       success: true,

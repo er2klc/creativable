@@ -204,15 +204,26 @@ serve(async (req) => {
 
     console.log(`Attempting to connect to IMAP server: ${imap_config.host}:${imap_config.port}`);
     const connectionStartTime = Date.now();
-    await client.connect();
-    const connectionEndTime = Date.now();
-    console.log(`IMAP connection successful in ${connectionEndTime - connectionStartTime}ms`);
+    
+    try {
+      await client.connect();
+      const connectionEndTime = Date.now();
+      console.log(`IMAP connection successful in ${connectionEndTime - connectionStartTime}ms`);
 
-    stages[stages.length - 1] = {
-      name: "IMAP Connection",
-      success: true,
-      message: `Successfully connected to ${imap_config.host}:${imap_config.port} in ${connectionEndTime - connectionStartTime}ms`,
-    };
+      stages[stages.length - 1] = {
+        name: "IMAP Connection",
+        success: true,
+        message: `Successfully connected to ${imap_config.host}:${imap_config.port} in ${connectionEndTime - connectionStartTime}ms`,
+      };
+    } catch (connectError) {
+      console.error("IMAP connection error:", connectError);
+      stages[stages.length - 1] = {
+        name: "IMAP Connection",
+        success: false,
+        message: `Failed to connect to IMAP server: ${connectError.message}`,
+      };
+      throw new Error(`IMAP connection failed: ${connectError.message}`);
+    }
 
     // Step 6: Test authentication and mailbox access
     stages.push({
@@ -222,14 +233,24 @@ serve(async (req) => {
     });
 
     // List available mailboxes to verify authentication works
-    const mailboxes = await client.list();
-    console.log(`Successfully listed ${mailboxes.length} mailboxes`);
+    try {
+      const mailboxes = await client.list();
+      console.log(`Successfully listed ${mailboxes.length} mailboxes`);
 
-    stages[stages.length - 1] = {
-      name: "IMAP Authentication",
-      success: true,
-      message: `Authentication successful, found ${mailboxes.length} mailboxes`,
-    };
+      stages[stages.length - 1] = {
+        name: "IMAP Authentication",
+        success: true,
+        message: `Authentication successful, found ${mailboxes.length} mailboxes`,
+      };
+    } catch (authError) {
+      console.error("IMAP authentication error:", authError);
+      stages[stages.length - 1] = {
+        name: "IMAP Authentication",
+        success: false,
+        message: `Authentication failed: ${authError.message}`,
+      };
+      throw new Error(`IMAP authentication failed: ${authError.message}`);
+    }
 
     // Step 7: Close connection gracefully
     stages.push({
@@ -238,14 +259,24 @@ serve(async (req) => {
       message: "Closing IMAP connection...",
     });
     
-    await client.logout();
-    console.log("IMAP connection closed properly");
-    
-    stages[stages.length - 1] = {
-      name: "Connection Cleanup",
-      success: true,
-      message: "IMAP connection closed properly",
-    };
+    try {
+      await client.logout();
+      console.log("IMAP connection closed properly");
+      
+      stages[stages.length - 1] = {
+        name: "Connection Cleanup",
+        success: true,
+        message: "IMAP connection closed properly",
+      };
+    } catch (closeError) {
+      console.error("IMAP close error:", closeError);
+      stages[stages.length - 1] = {
+        name: "Connection Cleanup",
+        success: false,
+        message: `Failed to close connection: ${closeError.message}`,
+      };
+      // Don't throw here, continue to report test result
+    }
 
     const result: TestResult = {
       success: true,
