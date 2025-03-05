@@ -20,6 +20,8 @@ interface TestResult {
 }
 
 serve(async (req) => {
+  console.log("SMTP test function called");
+  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,7 +34,17 @@ serve(async (req) => {
   }> = [];
 
   try {
-    const { host, port, username, password, secure, use_saved_settings } = await req.json();
+    // Parse request body - wrapping in try/catch for better error messages
+    let requestData;
+    try {
+      requestData = await req.json();
+      console.log("Request data received:", JSON.stringify(requestData, null, 2));
+    } catch (parseError) {
+      console.error("Failed to parse request:", parseError);
+      throw new Error(`Invalid request format: ${parseError.message}`);
+    }
+
+    const { host, port, username, password, secure, from_email, use_saved_settings } = requestData;
     let smtp_config;
 
     // Step 1: Get SMTP settings
@@ -107,9 +119,10 @@ serve(async (req) => {
       // Use provided settings directly
       smtp_config = {
         host,
-        port: parseInt(port),
+        port: parseInt(port.toString()), // Ensure it's treated as a number
         username,
         password,
+        from_email,
         secure: secure === true || secure === "true",
       };
       
@@ -129,7 +142,7 @@ serve(async (req) => {
     try {
       stages.push({
         name: "DNS Resolution",
-        success: true,
+        success: false, // Will update to true if successful
         message: "Starting DNS resolution test",
       });
       
@@ -143,6 +156,7 @@ serve(async (req) => {
         message: `Successfully resolved ${smtp_config.host} to ${dnsLookup.join(", ")} in ${dnsEndTime - dnsStartTime}ms`,
       };
     } catch (error) {
+      console.error("DNS resolution error:", error);
       stages[stages.length - 1] = {
         name: "DNS Resolution",
         success: false,
@@ -157,6 +171,16 @@ serve(async (req) => {
       success: true,
       message: "Creating SMTP client configuration",
     });
+
+    console.log("Creating SMTP client with config:", JSON.stringify({
+      hostname: smtp_config.host,
+      port: smtp_config.port,
+      tls: smtp_config.secure,
+      auth: {
+        username: smtp_config.username,
+        password: "********" // Don't log actual password
+      }
+    }, null, 2));
 
     client = new SMTPClient({
       connection: {
@@ -179,9 +203,11 @@ serve(async (req) => {
       message: "Connecting to SMTP server...",
     });
 
+    console.log(`Attempting to connect to SMTP server: ${smtp_config.host}:${smtp_config.port}`);
     const connectionStartTime = Date.now();
     await client.connect();
     const connectionEndTime = Date.now();
+    console.log(`SMTP connection successful in ${connectionEndTime - connectionStartTime}ms`);
 
     stages[stages.length - 1] = {
       name: "SMTP Connection",
@@ -212,6 +238,7 @@ serve(async (req) => {
     });
     
     await client.close();
+    console.log("SMTP connection closed properly");
     
     stages[stages.length - 1] = {
       name: "Connection Cleanup",
@@ -224,17 +251,20 @@ serve(async (req) => {
       stages,
     };
 
+    console.log("SMTP test completed successfully");
+
     return new Response(JSON.stringify(result), {
       headers: {
         "Content-Type": "application/json",
         ...corsHeaders,
       },
+      status: 200,
     });
   } catch (error) {
     console.error("SMTP test error:", error);
     
     // Add failure to the last stage if there was one in progress
-    if (stages.length > 0 && !stages[stages.length - 1].success) {
+    if (stages.length > 0 && stages[stages.length - 1].success === false) {
       stages[stages.length - 1].message = `Failed: ${error.message}`;
     }
 
@@ -245,12 +275,13 @@ serve(async (req) => {
       stages,
     };
 
+    // Always return 200 even with error - frontend will handle the error state
     return new Response(JSON.stringify(result), {
       headers: {
         "Content-Type": "application/json",
         ...corsHeaders,
       },
-      status: 200, // Still return 200 so frontend gets our detailed error info
+      status: 200, // Always return 200 so the frontend gets our detailed error info
     });
   }
 });

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -37,7 +38,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Loader2, Mail, Shield, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, Mail, Shield, AlertCircle, CheckCircle2, Info, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -72,6 +73,8 @@ export function EmailSettings() {
   const [imapStatus, setImapStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [smtpErrorMessage, setSmtpErrorMessage] = useState<string | null>(null);
   const [imapErrorMessage, setImapErrorMessage] = useState<string | null>(null);
+  const [smtpTestStages, setSmtpTestStages] = useState<Array<{name: string, success: boolean, message: string}>>([]);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Fetch SMTP settings
   const { data: smtpSettings, isLoading: smtpLoading } = useQuery({
@@ -282,6 +285,7 @@ export function EmailSettings() {
     setTestingSmtp(true);
     setSmtpStatus('idle');
     setSmtpErrorMessage(null);
+    setSmtpTestStages([]);
     
     try {
       const { data, error } = await supabase.functions.invoke('test-smtp-connection', {
@@ -290,21 +294,29 @@ export function EmailSettings() {
           port: values.port,
           username: values.username,
           password: values.password,
+          from_email: values.from_email,
           secure: values.secure
         }
       });
+
+      console.log("SMTP test response:", data);
 
       if (error) {
         console.error("SMTP test function error:", error);
         throw new Error(`Fehler bei der Ausführung: ${error.message}`);
       }
       
+      // Save test stages for UI display
+      if (data.stages) {
+        setSmtpTestStages(data.stages);
+      }
+
       if (data.success) {
         setSmtpStatus('success');
         toast.success("SMTP Verbindung erfolgreich");
       } else {
         setSmtpStatus('error');
-        setSmtpErrorMessage(data.details || "Unbekannter Fehler");
+        setSmtpErrorMessage(data.error || data.details || "Unbekannter Fehler");
         toast.error("SMTP Verbindung fehlgeschlagen");
       }
     } catch (error) {
@@ -315,6 +327,11 @@ export function EmailSettings() {
     } finally {
       setTestingSmtp(false);
     }
+  };
+
+  const retrySmtpTest = () => {
+    setRetryCount(prevCount => prevCount + 1);
+    testSmtpConnection();
   };
 
   const testImapConnection = async () => {
@@ -369,14 +386,153 @@ export function EmailSettings() {
     // Check for common error patterns and provide friendly messages
     if (message.includes("ECONNREFUSED")) {
       return "Verbindung zum Server verweigert. Bitte überprüfen Sie Host und Port.";
-    } else if (message.includes("authenticate")) {
+    } else if (message.includes("ETIMEDOUT") || message.includes("timed out")) {
+      return "Zeitüberschreitung bei der Verbindung. Der Server reagiert nicht oder Ihre Firewall blockiert die Verbindung.";
+    } else if (message.includes("authenticate") || message.includes("535") || message.includes("auth")) {
       return "Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Benutzername und Passwort.";
-    } else if (message.includes("certificate")) {
-      return "SSL/TLS Zertifikatsfehler. Versuchen Sie die Verbindung ohne SSL/TLS.";
+    } else if (message.includes("certificate") || message.includes("SSL") || message.includes("TLS")) {
+      return "SSL/TLS Zertifikatsfehler. Versuchen Sie die Verbindung ohne SSL/TLS oder überprüfen Sie Zertifikate.";
+    } else if (message.includes("ENOTFOUND") || message.includes("DNS")) {
+      return "Server nicht gefunden. Bitte überprüfen Sie den Hostnamen.";
+    } else if (message.includes("Incomplete")) {
+      return "Unvollständige SMTP-Konfiguration. Bitte füllen Sie alle erforderlichen Felder aus.";
+    } else if (message.includes("Edge Function")) {
+      return "Technischer Fehler beim Verbindungstest. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Support.";
     }
     
     return message;
   };
+  
+  // Function to generate troubleshooting suggestions based on error stage
+  const getTroubleshootingTips = (stages?: Array<{name: string, success: boolean, message: string}>) => {
+    if (!stages || stages.length === 0) return [];
+    
+    // Find the first failed stage
+    const failedStage = stages.find(stage => !stage.success);
+    if (!failedStage) return [];
+    
+    const stageName = failedStage.name;
+    
+    const tips: Record<string, string[]> = {
+      "DNS Resolution": [
+        "Überprüfen Sie, ob der Hostname korrekt geschrieben ist",
+        "Stellen Sie sicher, dass Ihre Internetverbindung funktioniert",
+        "Versuchen Sie, die IP-Adresse direkt anstelle des Hostnamens zu verwenden",
+        "Prüfen Sie, ob der SMTP-Server überhaupt existiert"
+      ],
+      "SMTP Connection": [
+        "Überprüfen Sie, ob der Port korrekt ist (normalerweise 25, 465, 587)",
+        "Stellen Sie sicher, dass keine Firewall den Zugriff blockiert",
+        "Überprüfen Sie, ob Ihr ISP den SMTP-Port blockiert",
+        "Versuchen Sie, den Wert für SSL/TLS zu ändern"
+      ],
+      "SMTP Authentication": [
+        "Überprüfen Sie Ihren Benutzernamen und Ihr Passwort",
+        "Stellen Sie sicher, dass Ihr Konto nicht gesperrt ist",
+        "Überprüfen Sie, ob spezielle Zeichen im Passwort Probleme verursachen könnten",
+        "Prüfen Sie, ob eine App-spezifische Passwort erforderlich ist (z.B. bei Gmail)"
+      ],
+      "Connection Cleanup": [
+        "Dies ist ein ungewöhnlicher Fehler. Versuchen Sie es erneut",
+        "Prüfen Sie, ob Ihr Server instabil ist oder Verbindungen plötzlich unterbricht"
+      ]
+    };
+    
+    return tips[stageName] || [
+      "Überprüfen Sie alle Einstellungen sorgfältig",
+      "Konsultieren Sie die Dokumentation Ihres E-Mail-Providers",
+      "Stellen Sie sicher, dass der SMTP-Server erreichbar ist"
+    ];
+  };
+
+  // Provider settings suggestions based on hostname
+  const getProviderSettings = (hostname: string) => {
+    const providers: Record<string, {
+      name: string;
+      smtp: {host: string; port: number; secure: boolean};
+      imap: {host: string; port: number; secure: boolean};
+      note?: string;
+    }> = {
+      "gmail.com": {
+        name: "Gmail",
+        smtp: {host: "smtp.gmail.com", port: 587, secure: false},
+        imap: {host: "imap.gmail.com", port: 993, secure: true},
+        note: "Für Gmail benötigen Sie ein App-Passwort, wenn Sie die Zwei-Faktor-Authentifizierung aktiviert haben."
+      },
+      "googlemail.com": {
+        name: "Gmail",
+        smtp: {host: "smtp.gmail.com", port: 587, secure: false},
+        imap: {host: "imap.gmail.com", port: 993, secure: true},
+        note: "Für Gmail benötigen Sie ein App-Passwort, wenn Sie die Zwei-Faktor-Authentifizierung aktiviert haben."
+      },
+      "outlook.com": {
+        name: "Outlook.com",
+        smtp: {host: "smtp-mail.outlook.com", port: 587, secure: false},
+        imap: {host: "outlook.office365.com", port: 993, secure: true},
+        note: "Für Outlook.com/Hotmail verwenden Sie Ihre vollständige E-Mail-Adresse als Benutzernamen."
+      },
+      "hotmail.com": {
+        name: "Hotmail",
+        smtp: {host: "smtp-mail.outlook.com", port: 587, secure: false},
+        imap: {host: "outlook.office365.com", port: 993, secure: true},
+        note: "Für Outlook.com/Hotmail verwenden Sie Ihre vollständige E-Mail-Adresse als Benutzernamen."
+      },
+      "live.com": {
+        name: "Outlook",
+        smtp: {host: "smtp-mail.outlook.com", port: 587, secure: false},
+        imap: {host: "outlook.office365.com", port: 993, secure: true},
+        note: "Für Outlook.com/Hotmail verwenden Sie Ihre vollständige E-Mail-Adresse als Benutzernamen."
+      },
+      "yahoo.com": {
+        name: "Yahoo",
+        smtp: {host: "smtp.mail.yahoo.com", port: 587, secure: false},
+        imap: {host: "imap.mail.yahoo.com", port: 993, secure: true},
+        note: "Für Yahoo Mail benötigen Sie ein App-Passwort, wenn Sie die Zwei-Faktor-Authentifizierung aktiviert haben."
+      }
+    };
+
+    if (!hostname) return null;
+
+    // Extract domain from email or hostname
+    let domain = hostname;
+    if (hostname.includes('@')) {
+      domain = hostname.split('@')[1].toLowerCase();
+    } else if (hostname.startsWith('smtp.') || hostname.startsWith('imap.')) {
+      domain = hostname.substring(hostname.indexOf('.') + 1).toLowerCase();
+    }
+
+    for (const key in providers) {
+      if (domain.includes(key)) {
+        return providers[key];
+      }
+    }
+
+    return null;
+  };
+
+  // Detect provider based on form values
+  useEffect(() => {
+    const usernameOrHost = smtpForm.watch('username') || smtpForm.watch('host');
+    if (usernameOrHost) {
+      const provider = getProviderSettings(usernameOrHost);
+      if (provider && !smtpSettings) {
+        // Only suggest if there are no existing settings
+        smtpForm.setValue('host', provider.smtp.host);
+        smtpForm.setValue('port', provider.smtp.port);
+        smtpForm.setValue('secure', provider.smtp.secure);
+        
+        if (imapForm) {
+          imapForm.setValue('host', provider.imap.host);
+          imapForm.setValue('port', provider.imap.port);
+          imapForm.setValue('secure', provider.imap.secure);
+        }
+        
+        if (provider.note) {
+          toast.info(`${provider.name} Konfiguration: ${provider.note}`, { duration: 6000 });
+        }
+      }
+    }
+  }, [smtpForm.watch('username'), smtpForm.watch('host')]);
 
   if (smtpLoading || imapLoading) {
     return (
@@ -432,6 +588,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input placeholder="smtp.example.com" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  z.B. smtp.gmail.com, smtp.office365.com
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -445,6 +604,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input type="number" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  Typisch: 587 (STARTTLS), 465 (SSL/TLS), 25 (unsicher)
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -461,6 +623,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input placeholder="name@example.com" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  Meist Ihre vollständige E-Mail-Adresse
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -474,6 +639,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input type="password" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  Bei aktivierter 2FA oft ein App-Passwort erforderlich
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -490,6 +658,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input placeholder="name@example.com" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  Die E-Mail-Adresse, die als Absender erscheinen soll
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -503,6 +674,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input placeholder="Ihr Name oder Firma" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  Der Name, der als Absender erscheinen soll
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -519,7 +693,7 @@ export function EmailSettings() {
                                   SSL/TLS Verschlüsselung verwenden
                                 </FormLabel>
                                 <FormDescription>
-                                  Empfohlen für die meisten E-Mail-Server
+                                  Empfohlen für die meisten E-Mail-Server (Port 465). Deaktivieren für STARTTLS (Port 587).
                                 </FormDescription>
                               </div>
                               <FormControl>
@@ -533,11 +707,65 @@ export function EmailSettings() {
                         />
 
                         {smtpStatus === 'error' && smtpErrorMessage && (
-                          <Alert variant="destructive">
+                          <Alert variant="destructive" className="mt-4">
                             <AlertCircle className="h-4 w-4" />
                             <AlertTitle>Verbindungsfehler</AlertTitle>
                             <AlertDescription>
-                              {displayConnectionError(smtpErrorMessage)}
+                              <p className="mb-2">{displayConnectionError(smtpErrorMessage)}</p>
+                              
+                              {smtpTestStages && smtpTestStages.length > 0 && (
+                                <div className="mt-4 space-y-2">
+                                  <p className="font-semibold">Diagnose:</p>
+                                  <ul className="space-y-1 text-sm">
+                                    {smtpTestStages.map((stage, idx) => (
+                                      <li key={idx} className="flex items-start">
+                                        {stage.success ? (
+                                          <CheckCircle2 className="h-4 w-4 mr-2 text-green-500 mt-0.5" />
+                                        ) : (
+                                          <AlertCircle className="h-4 w-4 mr-2 text-red-500 mt-0.5" />
+                                        )}
+                                        <span>
+                                          <strong>{stage.name}:</strong> {stage.message}
+                                        </span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              
+                              {getTroubleshootingTips(smtpTestStages).length > 0 && (
+                                <div className="mt-4 space-y-2">
+                                  <p className="font-semibold">Fehlerbehebungstipps:</p>
+                                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                                    {getTroubleshootingTips(smtpTestStages).map((tip, idx) => (
+                                      <li key={idx}>{tip}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                              
+                              <div className="mt-4">
+                                <Button 
+                                  type="button" 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={retrySmtpTest}
+                                  className="mt-2"
+                                >
+                                  <RefreshCw className="mr-2 h-4 w-4" />
+                                  Erneut versuchen
+                                </Button>
+                              </div>
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        
+                        {smtpStatus === 'success' && (
+                          <Alert className="mt-4 bg-green-50 border-green-200">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <AlertTitle className="text-green-800">Verbindung erfolgreich</AlertTitle>
+                            <AlertDescription className="text-green-600">
+                              Die SMTP-Verbindung wurde erfolgreich hergestellt. Ihre E-Mail-Konfiguration funktioniert korrekt.
                             </AlertDescription>
                           </Alert>
                         )}
@@ -606,6 +834,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input placeholder="imap.example.com" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  z.B. imap.gmail.com, outlook.office365.com
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -619,6 +850,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input type="number" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  Typisch: 993 (SSL/TLS), 143 (unsicher/STARTTLS)
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -635,6 +869,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input placeholder="name@example.com" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  Meist Ihre vollständige E-Mail-Adresse
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -648,6 +885,9 @@ export function EmailSettings() {
                                 <FormControl>
                                   <Input type="password" {...field} />
                                 </FormControl>
+                                <FormDescription>
+                                  Bei aktivierter 2FA oft ein App-Passwort erforderlich
+                                </FormDescription>
                                 <FormMessage />
                               </FormItem>
                             )}
@@ -664,7 +904,7 @@ export function EmailSettings() {
                                   SSL/TLS Verschlüsselung verwenden
                                 </FormLabel>
                                 <FormDescription>
-                                  Empfohlen für die meisten E-Mail-Server
+                                  Empfohlen für die meisten E-Mail-Server (Port 993). Deaktivieren für STARTTLS (Port 143).
                                 </FormDescription>
                               </div>
                               <FormControl>
@@ -683,6 +923,16 @@ export function EmailSettings() {
                             <AlertTitle>Verbindungsfehler</AlertTitle>
                             <AlertDescription>
                               {displayConnectionError(imapErrorMessage)}
+                            </AlertDescription>
+                          </Alert>
+                        )}
+                        
+                        {imapStatus === 'success' && (
+                          <Alert className="mt-4 bg-green-50 border-green-200">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <AlertTitle className="text-green-800">Verbindung erfolgreich</AlertTitle>
+                            <AlertDescription className="text-green-600">
+                              Die IMAP-Verbindung wurde erfolgreich hergestellt. Ihre E-Mail-Konfiguration funktioniert korrekt.
                             </AlertDescription>
                           </Alert>
                         )}
@@ -735,27 +985,87 @@ export function EmailSettings() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-wrap gap-4">
-                  <Button variant="outline" disabled className="flex items-center space-x-2 opacity-50">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/a/ab/Gmail_Icon.svg" alt="Gmail" className="h-5 w-5" />
-                    <span>Gmail</span>
-                    <span className="text-xs text-muted-foreground ml-2">Coming soon</span>
-                  </Button>
-                  <Button variant="outline" disabled className="flex items-center space-x-2 opacity-50">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/4/48/Yahoo%21_1_color_black.svg" alt="Yahoo" className="h-5 w-5" />
-                    <span>Yahoo</span>
-                    <span className="text-xs text-muted-foreground ml-2">Coming soon</span>
-                  </Button>
-                  <Button variant="outline" disabled className="flex items-center space-x-2 opacity-50">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg" alt="Outlook" className="h-5 w-5" />
-                    <span>Outlook</span>
-                    <span className="text-xs text-muted-foreground ml-2">Coming soon</span>
-                  </Button>
+                <Alert className="mb-4">
+                  <Info className="h-4 w-4" />
+                  <AlertTitle>Konfigurationshilfe</AlertTitle>
+                  <AlertDescription>
+                    Geben Sie in den SMTP-Einstellungen Ihren Benutzernamen (E-Mail) ein. Wir erkennen automatisch den Provider und schlagen passende Einstellungen vor.
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Card className="border bg-white hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Gmail</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0 text-sm">
+                      <p className="text-muted-foreground">SMTP: smtp.gmail.com:587</p>
+                      <p className="text-muted-foreground">IMAP: imap.gmail.com:993</p>
+                      <p className="mt-2 text-xs text-orange-600">Erfordert App-Passwort bei aktivierter 2FA</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border bg-white hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Outlook/Office 365</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0 text-sm">
+                      <p className="text-muted-foreground">SMTP: smtp-mail.outlook.com:587</p>
+                      <p className="text-muted-foreground">IMAP: outlook.office365.com:993</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border bg-white hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Yahoo Mail</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0 text-sm">
+                      <p className="text-muted-foreground">SMTP: smtp.mail.yahoo.com:587</p>
+                      <p className="text-muted-foreground">IMAP: imap.mail.yahoo.com:993</p>
+                      <p className="mt-2 text-xs text-orange-600">Erfordert App-Passwort bei aktivierter 2FA</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border bg-white hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Ionos</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0 text-sm">
+                      <p className="text-muted-foreground">SMTP: smtp.ionos.de:587</p>
+                      <p className="text-muted-foreground">IMAP: imap.ionos.de:993</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border bg-white hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">GMX</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0 text-sm">
+                      <p className="text-muted-foreground">SMTP: mail.gmx.net:587</p>
+                      <p className="text-muted-foreground">IMAP: imap.gmx.net:993</p>
+                    </CardContent>
+                  </Card>
+                  
+                  <Card className="border bg-white hover:shadow-md transition-shadow">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base">Web.de</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0 text-sm">
+                      <p className="text-muted-foreground">SMTP: smtp.web.de:587</p>
+                      <p className="text-muted-foreground">IMAP: imap.web.de:993</p>
+                    </CardContent>
+                  </Card>
                 </div>
+                
+                <Alert className="mt-6 bg-amber-50 border-amber-200">
+                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <AlertTitle className="text-amber-800">Wichtiger Hinweis</AlertTitle>
+                  <AlertDescription className="text-amber-700">
+                    <p>Bei Anbietern mit 2-Faktor-Authentifizierung (wie Gmail oder Yahoo) benötigen Sie ein spezielles App-Passwort statt Ihres normalen Passworts.</p>
+                    <p className="mt-2">Einige Provider beschränken möglicherweise den SMTP-Zugriff. Prüfen Sie die Dokumentation Ihres E-Mail-Anbieters für spezifische Einstellungen.</p>
+                  </AlertDescription>
+                </Alert>
               </CardContent>
-              <CardFooter className="bg-muted/50 border-t text-sm text-muted-foreground">
-                Die direkte Integration mit E-Mail-Providern befindet sich in der Entwicklung und wird bald verfügbar sein.
-              </CardFooter>
             </Card>
           </TabsContent>
         </Tabs>
