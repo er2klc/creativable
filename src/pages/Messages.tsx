@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -38,6 +37,7 @@ import { TiptapEditor } from "@/components/ui/tiptap-editor";
 import { Checkbox } from "@/components/ui/checkbox";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useAuth } from "@/hooks/use-auth";
+import { Progress } from "@/components/ui/progress";
 
 type EmailFolder = "inbox" | "drafts" | "outbox" | "sent" | "archive";
 
@@ -145,7 +145,6 @@ const ComposeDialog = ({ isOpen, onClose }: { isOpen: boolean; onClose: () => vo
   const [content, setContent] = useState("");
   const [isSending, setIsSending] = useState(false);
 
-  // SMTP Settings laden
   const { data: smtpSettings } = useQuery({
     queryKey: ['smtp-settings'],
     queryFn: async () => {
@@ -335,12 +334,27 @@ const Messages = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const { data: smtpSettings } = useQuery({
     queryKey: ['smtp-settings'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('smtp_settings')
+        .select('*')
+        .single();
+
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+  });
+
+  const { data: imapSettings } = useQuery({
+    queryKey: ['imap-settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('imap_settings')
         .select('*')
         .single();
 
@@ -376,30 +390,48 @@ const Messages = () => {
 
   const handleRefreshEmails = async () => {
     setIsRefreshing(true);
+    setIsSyncing(true);
+    setSyncProgress(10);
+
     try {
-      // First refresh the emails from the database
       await refetch();
+      setSyncProgress(30);
       
-      // Then optionally trigger the email sync function to fetch new emails
-      const { error } = await supabase.functions.invoke('sync-emails', {
+      const { data, error } = await supabase.functions.invoke('sync-emails', {
         body: { 
           force_refresh: true 
         }
       });
       
+      setSyncProgress(70);
+      
       if (error) {
         throw error;
       }
       
-      // Refresh again to get the newly synced emails
-      await refetch();
-      
-      toast.success("E-Mails wurden aktualisiert");
+      if (data && data.success) {
+        await refetch();
+        setSyncProgress(100);
+        
+        if (data.emailsCount && data.emailsCount > 0) {
+          toast.success(`${data.emailsCount} neue E-Mails wurden synchronisiert`);
+        } else {
+          toast.info("Keine neuen E-Mails gefunden");
+        }
+      } else {
+        const errorMsg = data?.error || "Unbekannter Fehler";
+        toast.error(`Fehler bei der E-Mail-Synchronisation: ${errorMsg}`);
+      }
     } catch (error) {
       console.error("Error refreshing emails:", error);
       toast.error("Fehler beim Aktualisieren der E-Mails");
+      setSyncProgress(0);
     } finally {
       setIsRefreshing(false);
+      setTimeout(() => {
+        setIsSyncing(false);
+        setSyncProgress(0);
+      }, 1000);
     }
   };
 
@@ -459,9 +491,9 @@ const Messages = () => {
                 variant="outline" 
                 size="icon" 
                 onClick={handleRefreshEmails}
-                disabled={isRefreshing}
+                disabled={isRefreshing || !imapSettings}
                 className="ml-2"
-                title="E-Mails aktualisieren"
+                title={imapSettings ? "E-Mails aktualisieren" : "IMAP-Einstellungen erforderlich"}
               >
                 <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </Button>
@@ -469,6 +501,11 @@ const Messages = () => {
             <HeaderActions profile={null} userEmail={user?.email} />
           </div>
         </div>
+        {isSyncing && (
+          <div className="px-4 pb-2">
+            <Progress value={syncProgress} className="h-1" indicatorClassName="bg-green-500" />
+          </div>
+        )}
       </div>
 
       <div className="flex flex-1 pt-16">
@@ -498,6 +535,40 @@ const Messages = () => {
 
         <div className="flex-1 p-6">
           {!smtpSettings && <NoSmtpWarning />}
+          
+          {!imapSettings && (
+            <Card className="border-yellow-200 bg-yellow-50 mb-6">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Mail className="h-5 w-5" />
+                  IMAP-Einstellungen erforderlich
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="mb-4">
+                  Um E-Mails empfangen zu können, müssen Sie zuerst Ihre IMAP-Einstellungen konfigurieren.
+                </p>
+                <div className="space-y-2">
+                  <p className="text-sm">Sie benötigen folgende Informationen:</p>
+                  <ul className="list-disc list-inside text-sm">
+                    <li>IMAP-Server-Adresse</li>
+                    <li>Port-Nummer</li>
+                    <li>Benutzername</li>
+                    <li>Passwort</li>
+                    <li>SSL/TLS-Einstellungen</li>
+                  </ul>
+                </div>
+                <Button 
+                  className="mt-4"
+                  asChild
+                >
+                  <Link to="/settings?tab=imap">
+                    IMAP-Einstellungen konfigurieren
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="space-y-6">
             <div className="flex items-center justify-between">
