@@ -419,12 +419,19 @@ const Messages = () => {
           toast.info("Keine neuen E-Mails gefunden");
         }
       } else {
-        const errorMsg = data?.error || "Unbekannter Fehler";
+        const errorMsg = data?.error || data?.details || data?.message || "Unbekannter Fehler";
+        console.error("Email sync error details:", data);
         toast.error(`Fehler bei der E-Mail-Synchronisation: ${errorMsg}`);
+        
+        if (data?.details && data?.message && data.details !== data.message) {
+          setTimeout(() => {
+            toast.error(`Details: ${data.details}`, { duration: 6000 });
+          }, 500);
+        }
       }
     } catch (error) {
       console.error("Error refreshing emails:", error);
-      toast.error("Fehler beim Aktualisieren der E-Mails");
+      toast.error(`Fehler beim Aktualisieren der E-Mails: ${error.message}`);
       setSyncProgress(0);
     } finally {
       setIsRefreshing(false);

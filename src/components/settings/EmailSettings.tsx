@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -42,7 +41,6 @@ import { Loader2, Mail, Shield, AlertCircle, CheckCircle2, Info, RefreshCw } fro
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
 
-// Define schemas
 const smtpSchema = z.object({
   host: z.string().min(1, "SMTP Server ist erforderlich"),
   port: z.coerce.number().min(1, "Port ist erforderlich"),
@@ -76,7 +74,6 @@ export function EmailSettings() {
   const [smtpTestStages, setSmtpTestStages] = useState<Array<{name: string, success: boolean, message: string}>>([]);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Fetch SMTP settings
   const { data: smtpSettings, isLoading: smtpLoading } = useQuery({
     queryKey: ['smtp-settings'],
     queryFn: async () => {
@@ -90,7 +87,6 @@ export function EmailSettings() {
     },
   });
 
-  // Fetch IMAP settings
   const { data: imapSettings, isLoading: imapLoading } = useQuery({
     queryKey: ['imap-settings'],
     queryFn: async () => {
@@ -104,7 +100,6 @@ export function EmailSettings() {
     },
   });
 
-  // SMTP form
   const smtpForm = useForm<SmtpFormData>({
     resolver: zodResolver(smtpSchema),
     defaultValues: {
@@ -118,7 +113,6 @@ export function EmailSettings() {
     }
   });
 
-  // IMAP form
   const imapForm = useForm<ImapFormData>({
     resolver: zodResolver(imapSchema),
     defaultValues: {
@@ -130,12 +124,10 @@ export function EmailSettings() {
     }
   });
 
-  // Update SMTP settings mutation
   const updateSmtpSettings = useMutation({
     mutationFn: async (data: SmtpFormData) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Check if SMTP settings already exist
       const { data: existingSettings } = await supabase
         .from('smtp_settings')
         .select('id')
@@ -143,7 +135,6 @@ export function EmailSettings() {
         .maybeSingle();
 
       if (existingSettings) {
-        // Update existing settings
         const { error } = await supabase
           .from('smtp_settings')
           .update({
@@ -159,7 +150,6 @@ export function EmailSettings() {
 
         if (error) throw error;
       } else {
-        // Insert new settings
         const { error } = await supabase
           .from('smtp_settings')
           .insert({
@@ -186,12 +176,10 @@ export function EmailSettings() {
     }
   });
 
-  // Update IMAP settings mutation
   const updateImapSettings = useMutation({
     mutationFn: async (data: ImapFormData) => {
       if (!user) throw new Error("User not authenticated");
 
-      // Check if IMAP settings already exist
       const { data: existingSettings } = await supabase
         .from('imap_settings')
         .select('id')
@@ -199,7 +187,6 @@ export function EmailSettings() {
         .maybeSingle();
 
       if (existingSettings) {
-        // Update existing settings
         const { error } = await supabase
           .from('imap_settings')
           .update({
@@ -213,7 +200,6 @@ export function EmailSettings() {
 
         if (error) throw error;
       } else {
-        // Insert new settings
         const { error } = await supabase
           .from('imap_settings')
           .insert({
@@ -238,7 +224,6 @@ export function EmailSettings() {
     }
   });
 
-  // Update forms when data loads
   useEffect(() => {
     if (smtpSettings) {
       smtpForm.reset({
@@ -265,7 +250,6 @@ export function EmailSettings() {
     }
   }, [imapSettings, imapForm]);
 
-  // Submit handlers
   const onSubmitSmtp = (data: SmtpFormData) => {
     updateSmtpSettings.mutate(data);
   };
@@ -274,7 +258,6 @@ export function EmailSettings() {
     updateImapSettings.mutate(data);
   };
 
-  // Test connection handlers
   const testSmtpConnection = async () => {
     const values = smtpForm.getValues();
     if (!values.host || !values.port || !values.username || !values.password) {
@@ -306,7 +289,6 @@ export function EmailSettings() {
         throw new Error(`Fehler bei der Ausführung: ${error.message}`);
       }
       
-      // Save test stages for UI display
       if (data.stages) {
         setSmtpTestStages(data.stages);
       }
@@ -379,11 +361,9 @@ export function EmailSettings() {
     }
   };
 
-  // Common error display
   const displayConnectionError = (message: string | null) => {
     if (!message) return null;
     
-    // Check for common error patterns and provide friendly messages
     if (message.includes("ECONNREFUSED")) {
       return "Verbindung zum Server verweigert. Bitte überprüfen Sie Host und Port.";
     } else if (message.includes("ETIMEDOUT") || message.includes("timed out")) {
@@ -402,12 +382,10 @@ export function EmailSettings() {
     
     return message;
   };
-  
-  // Function to generate troubleshooting suggestions based on error stage
+
   const getTroubleshootingTips = (stages?: Array<{name: string, success: boolean, message: string}>) => {
     if (!stages || stages.length === 0) return [];
     
-    // Find the first failed stage
     const failedStage = stages.find(stage => !stage.success);
     if (!failedStage) return [];
     
@@ -445,7 +423,6 @@ export function EmailSettings() {
     ];
   };
 
-  // Provider settings suggestions based on hostname
   const getProviderSettings = (hostname: string) => {
     const providers: Record<string, {
       name: string;
@@ -488,12 +465,41 @@ export function EmailSettings() {
         smtp: {host: "smtp.mail.yahoo.com", port: 587, secure: false},
         imap: {host: "imap.mail.yahoo.com", port: 993, secure: true},
         note: "Für Yahoo Mail benötigen Sie ein App-Passwort, wenn Sie die Zwei-Faktor-Authentifizierung aktiviert haben."
+      },
+      "gmx.net": {
+        name: "GMX",
+        smtp: {host: "mail.gmx.net", port: 587, secure: false},
+        imap: {host: "imap.gmx.net", port: 993, secure: true},
+        note: "Für GMX sollten SSL/TLS für IMAP und STARTTLS für SMTP verwendet werden."
+      },
+      "gmx.de": {
+        name: "GMX",
+        smtp: {host: "mail.gmx.net", port: 587, secure: false},
+        imap: {host: "imap.gmx.net", port: 993, secure: true},
+        note: "Für GMX sollten SSL/TLS für IMAP und STARTTLS für SMTP verwendet werden."
+      },
+      "web.de": {
+        name: "Web.de",
+        smtp: {host: "smtp.web.de", port: 587, secure: false},
+        imap: {host: "imap.web.de", port: 993, secure: true},
+        note: "Für Web.de sollten SSL/TLS für IMAP und STARTTLS für SMTP verwendet werden."
+      },
+      "t-online.de": {
+        name: "T-Online",
+        smtp: {host: "securesmtp.t-online.de", port: 587, secure: false},
+        imap: {host: "secureimap.t-online.de", port: 993, secure: true},
+        note: "Für T-Online müssen Sie die T-Online-Kundennummer als Benutzernamen und Ihre E-Mail-Adresse im T-Online-Format verwenden."
+      },
+      "ionos.de": {
+        name: "IONOS",
+        smtp: {host: "smtp.ionos.de", port: 587, secure: false},
+        imap: {host: "imap.ionos.de", port: 993, secure: true},
+        note: "IONOS empfiehlt SSL/TLS für IMAP (Port 993) und SMTP (Port 465 oder 587 mit STARTTLS)."
       }
     };
 
     if (!hostname) return null;
 
-    // Extract domain from email or hostname
     let domain = hostname;
     if (hostname.includes('@')) {
       domain = hostname.split('@')[1].toLowerCase();
@@ -510,13 +516,11 @@ export function EmailSettings() {
     return null;
   };
 
-  // Detect provider based on form values
   useEffect(() => {
     const usernameOrHost = smtpForm.watch('username') || smtpForm.watch('host');
     if (usernameOrHost) {
       const provider = getProviderSettings(usernameOrHost);
       if (provider && !smtpSettings) {
-        // Only suggest if there are no existing settings
         smtpForm.setValue('host', provider.smtp.host);
         smtpForm.setValue('port', provider.smtp.port);
         smtpForm.setValue('secure', provider.smtp.secure);
@@ -605,7 +609,7 @@ export function EmailSettings() {
                                   <Input type="number" {...field} />
                                 </FormControl>
                                 <FormDescription>
-                                  Typisch: 587 (STARTTLS), 465 (SSL/TLS), 25 (unsicher)
+                                  Standard Ports: 587 (STARTTLS), 465 (SSL/TLS), 25 (unsicher)
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>
@@ -851,7 +855,8 @@ export function EmailSettings() {
                                   <Input type="number" {...field} />
                                 </FormControl>
                                 <FormDescription>
-                                  Typisch: 993 (SSL/TLS), 143 (unsicher/STARTTLS)
+                                  Standard Ports: 993 (SSL/TLS), 143 (STARTTLS)
+                                  Bei Verbindungsproblemen bitte SSL/TLS auf Port 993 verwenden.
                                 </FormDescription>
                                 <FormMessage />
                               </FormItem>

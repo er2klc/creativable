@@ -13,6 +13,7 @@ interface SyncResult {
   message: string;
   emailsCount?: number;
   error?: string;
+  details?: string;
 }
 
 interface EmailMessage {
@@ -34,16 +35,37 @@ interface ImapSettings {
     pass: string;
   }
   logger: boolean;
+  // Add timeout configurations
+  tls: {
+    rejectUnauthorized: boolean;
+    servername?: string;
+  };
+  // Longer timeouts for edge function environment
+  connectionTimeout: number;
+  greetTimeout: number;
+  socketTimeout: number;
+  // Optional: Add proxy support if needed
+  disableCompression?: boolean;
 }
 
-async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefresh = false) {
-  console.log("Connecting to IMAP server:", imapSettings.host);
+async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefresh = false, retryCount = 0): Promise<SyncResult> {
+  console.log(`[Attempt ${retryCount + 1}] Connecting to IMAP server: ${imapSettings.host}:${imapSettings.port} (secure: ${imapSettings.secure})`);
   
   const client = new ImapFlow(imapSettings);
   
   try {
-    // Connect to the server
-    await client.connect();
+    // Connect with timeout
+    const connectPromise = client.connect();
+    const timeout = setTimeout(() => {
+      if (client.usable) {
+        client.close();
+      }
+      throw new Error(`Connection timed out after ${imapSettings.connectionTimeout}ms`);
+    }, imapSettings.connectionTimeout);
+    
+    await connectPromise;
+    clearTimeout(timeout);
+    
     console.log("Successfully connected to IMAP server");
     
     // Select the mailbox
@@ -101,14 +123,14 @@ async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefr
       try {
         const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
         
-        // Store email in database
+        // Store email in database using upsert to avoid duplicates
         const response = await fetch(`${SUPABASE_URL}/rest/v1/emails`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
             'apikey': SUPABASE_SERVICE_ROLE_KEY,
-            'Prefer': 'return=minimal'
+            'Prefer': 'resolution=merge-duplicates'
           },
           body: JSON.stringify({
             message_id: parsedEmail.message_id,
@@ -151,10 +173,67 @@ async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefr
     
   } catch (error) {
     console.error("IMAP error:", error);
+    
+    // Only retry for connection errors, not authentication errors
+    if (retryCount < 2 && 
+        (error.message.includes('timeout') || 
+         error.message.includes('connection') || 
+         error.message.includes('ECONNRESET') ||
+         error.message.includes('Failed to upgrade'))) {
+      
+      console.log(`Retrying connection (${retryCount + 1}/2) with modified settings...`);
+      
+      // For first retry: try with different SSL settings
+      if (retryCount === 0) {
+        const newSettings = {
+          ...imapSettings,
+          secure: !imapSettings.secure, // Toggle secure setting
+          port: imapSettings.secure ? 143 : 993, // Toggle port based on secure setting
+          tls: {
+            ...imapSettings.tls,
+            rejectUnauthorized: false // Don't fail on invalid certificates for retry
+          },
+          connectionTimeout: imapSettings.connectionTimeout * 1.5, // Increase timeout
+        };
+        return fetchEmails(newSettings, userId, forceRefresh, retryCount + 1);
+      } 
+      // For second retry: try with very permissive settings and longer timeout
+      else {
+        const newSettings = {
+          ...imapSettings,
+          secure: true, // Force secure
+          port: 993, // Standard secure port
+          tls: {
+            rejectUnauthorized: false
+          },
+          disableCompression: true, // Try disabling compression
+          connectionTimeout: 60000, // Full minute timeout
+          greetTimeout: 30000,
+          socketTimeout: 60000
+        };
+        return fetchEmails(newSettings, userId, forceRefresh, retryCount + 1);
+      }
+    }
+    
+    let errorDetails = error.message || "Unknown error";
+    let friendlyMessage = "Failed to sync emails";
+    
+    // Provide more friendly error messages
+    if (error.message.includes("auth") || error.message.includes("credentials")) {
+      friendlyMessage = "Authentication failed. Please check your username and password.";
+    } else if (error.message.includes("certificate") || error.message.includes("TLS")) {
+      friendlyMessage = "Secure connection failed. Try changing the security settings.";
+    } else if (error.message.includes("timeout") || error.message.includes("Failed to upgrade")) {
+      friendlyMessage = "Connection timed out. The server took too long to respond.";
+    } else if (error.message.includes("ENOTFOUND") || error.message.includes("getaddrinfo")) {
+      friendlyMessage = "Server not found. Please check the hostname.";
+    }
+    
     return {
       success: false,
-      message: "Failed to sync emails",
+      message: friendlyMessage,
       error: error.message,
+      details: errorDetails
     };
   } finally {
     // Ensure client is closed
@@ -229,7 +308,7 @@ serve(async (req) => {
       throw new Error("No IMAP settings found for this user");
     }
 
-    // Configure IMAP client
+    // Configure IMAP client with improved settings
     const settings = imapSettings[0];
     const imapConfig = {
       host: settings.host,
@@ -239,7 +318,17 @@ serve(async (req) => {
         user: settings.username,
         pass: settings.password
       },
-      logger: false
+      logger: false,
+      // Add improved TLS configuration
+      tls: {
+        rejectUnauthorized: false, // Accept self-signed certificates
+        servername: settings.host // Explicitly set servername
+      },
+      // Add timeout configurations
+      connectionTimeout: 30000, // 30 seconds
+      greetTimeout: 15000,      // 15 seconds
+      socketTimeout: 30000,     // 30 seconds
+      disableCompression: false // Keep compression enabled by default
     };
 
     // Fetch emails
