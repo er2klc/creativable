@@ -1,6 +1,6 @@
 
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
@@ -20,7 +20,8 @@ import {
   MailX,
   Search,
   Check,
-  Trash2
+  Trash2,
+  RefreshCw
 } from "lucide-react";
 import { toast } from "sonner";
 import { useSettings } from "@/hooks/use-settings";
@@ -327,11 +328,13 @@ const NoSmtpWarning = () => {
 const Messages = () => {
   const { settings } = useSettings();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [selectedFolder, setSelectedFolder] = useState<EmailFolder>("inbox");
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { data: smtpSettings } = useQuery({
     queryKey: ['smtp-settings'],
@@ -346,7 +349,7 @@ const Messages = () => {
     },
   });
 
-  const { data: allEmails = [], isLoading } = useQuery({
+  const { data: allEmails = [], isLoading, refetch } = useQuery({
     queryKey: ['emails', selectedFolder],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -370,6 +373,35 @@ const Messages = () => {
       return data;
     },
   });
+
+  const handleRefreshEmails = async () => {
+    setIsRefreshing(true);
+    try {
+      // First refresh the emails from the database
+      await refetch();
+      
+      // Then optionally trigger the email sync function to fetch new emails
+      const { error } = await supabase.functions.invoke('sync-emails', {
+        body: { 
+          force_refresh: true 
+        }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      // Refresh again to get the newly synced emails
+      await refetch();
+      
+      toast.success("E-Mails wurden aktualisiert");
+    } catch (error) {
+      console.error("Error refreshing emails:", error);
+      toast.error("Fehler beim Aktualisieren der E-Mails");
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   const filteredEmails = allEmails.filter(email => {
     const searchLower = searchQuery.toLowerCase();
@@ -423,6 +455,16 @@ const Messages = () => {
                   />
                 </div>
               </div>
+              <Button 
+                variant="outline" 
+                size="icon" 
+                onClick={handleRefreshEmails}
+                disabled={isRefreshing}
+                className="ml-2"
+                title="E-Mails aktualisieren"
+              >
+                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              </Button>
             </div>
             <HeaderActions profile={null} userEmail={user?.email} />
           </div>
