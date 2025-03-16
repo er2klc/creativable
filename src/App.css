@@ -74,4 +74,9 @@ body {
   .mobile-content {
     padding-top: 4rem;
   }
+
+  /* Fix z-index stacking for page headers */
+  .page-header {
+    z-index: 45 !important;
+  }
 }

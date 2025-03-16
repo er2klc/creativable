@@ -17,7 +17,7 @@ export const MainContent = ({ children, className }: MainContentProps) => {
 
   return (
     <main className={cn("flex-1 relative overflow-x-hidden", className)}>
-      <div className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-4 py-2 border-b border-sidebar-border md:hidden h-16">
+      <div className="fixed top-0 left-0 right-0 z-[50] flex items-center justify-between bg-black/90 backdrop-blur supports-[backdrop-filter]:bg-black/90 px-4 py-2 border-b border-sidebar-border md:hidden h-16">
         <MobileMenu />
       </div>
       <div className={cn(

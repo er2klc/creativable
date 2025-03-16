@@ -108,7 +108,7 @@ export function MobileMenu() {
           <SheetContent 
             side="left" 
             className={cn(
-              "w-[280px] p-0 border-none bg-[#111111] text-white z-[200] overflow-hidden",
+              "w-[280px] p-0 border-none bg-[#111111] text-white z-[100] overflow-hidden",
               "max-w-[100vw] sheet-content"
             )}
           >
