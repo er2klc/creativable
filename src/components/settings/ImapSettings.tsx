@@ -1,478 +1,303 @@
 
-import React, { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import * as z from "zod";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import {
-  Loader2,
-  Mail,
-  Shield,
-  AlertCircle,
-  CheckCircle2,
-  Info,
-  Calendar,
-  RefreshCw
-} from "lucide-react";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useAuth } from "@/hooks/use-auth";
-import { DatePicker } from "@/components/ui/date-picker";
-import { format, isValid, parseISO, subMonths } from "date-fns";
+import React, { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/components/ui/use-toast';
+import { DatePicker } from '@/components/ui/date-picker';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
 
-const imapSchema = z.object({
-  host: z.string().min(1, "IMAP Server ist erforderlich"),
-  port: z.coerce.number().min(1, "Port ist erforderlich"),
-  username: z.string().min(1, "Benutzername ist erforderlich"),
-  password: z.string().min(1, "Passwort ist erforderlich"),
+// The schema is based on supabase/functions/sync-emails/index.ts
+export const imapSettingsSchema = z.object({
+  host: z.string().min(1, { message: 'Host is required' }),
+  port: z.coerce.number().int().positive().default(993),
+  username: z.string().min(1, { message: 'Username is required' }),
+  password: z.string().min(1, { message: 'Password is required' }),
   secure: z.boolean().default(true),
+  max_emails: z.coerce.number().int().positive().default(100),
   historical_sync: z.boolean().default(false),
   historical_sync_date: z.date().optional(),
-  max_emails: z.coerce.number().min(1).max(1000).default(100)
 });
 
-type ImapFormData = z.infer<typeof imapSchema>;
+// Infer the type from schema
+export type ImapFormValues = z.infer<typeof imapSettingsSchema>;
 
 interface ImapSettingsProps {
-  getProviderSettings: (hostname: string) => any;
+  onSettingsSaved?: () => void;
 }
 
-export function ImapSettings({ getProviderSettings }: ImapSettingsProps) {
-  const queryClient = useQueryClient();
+export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
   const { user } = useAuth();
-  const [testingImap, setTestingImap] = useState(false);
-  const [imapStatus, setImapStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [imapErrorMessage, setImapErrorMessage] = useState<string | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+  const { toast } = useToast();
+  const [isSaving, setIsSaving] = useState(false);
+  const [loadingSettings, setLoadingSettings] = useState(true);
 
-  const { data: imapSettings, isLoading: imapLoading } = useQuery({
-    queryKey: ['imap-settings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('imap_settings')
-        .select('*')
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    },
-  });
-
-  const imapForm = useForm<ImapFormData>({
-    resolver: zodResolver(imapSchema),
+  // Initialize the form
+  const form = useForm<ImapFormValues>({
+    resolver: zodResolver(imapSettingsSchema),
     defaultValues: {
-      host: "",
+      host: '',
       port: 993,
-      username: "",
-      password: "",
+      username: '',
+      password: '',
       secure: true,
+      max_emails: 100,
       historical_sync: false,
-      max_emails: 100
-    }
+      historical_sync_date: undefined,
+    },
   });
 
-  const updateImapSettings = useMutation({
-    mutationFn: async (data: ImapFormData) => {
-      if (!user) throw new Error("User not authenticated");
-
-      const { data: existingSettings } = await supabase
-        .from('imap_settings')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      const historicalSyncDate = data.historical_sync && data.historical_sync_date 
-        ? data.historical_sync_date.toISOString() 
-        : null;
-
-      if (existingSettings) {
-        const { error } = await supabase
-          .from('imap_settings')
-          .update({
-            host: data.host,
-            port: data.port,
-            username: data.username,
-            password: data.password,
-            secure: data.secure,
-            historical_sync: data.historical_sync,
-            historical_sync_date: historicalSyncDate,
-            max_emails: data.max_emails
-          })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('imap_settings')
-          .insert({
-            host: data.host,
-            port: data.port,
-            username: data.username,
-            password: data.password,
-            secure: data.secure,
-            historical_sync: data.historical_sync,
-            historical_sync_date: historicalSyncDate,
-            max_emails: data.max_emails,
-            user_id: user.id
-          });
-
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['imap-settings'] });
-      toast.success("IMAP Einstellungen wurden gespeichert");
-    },
-    onError: (error) => {
-      console.error("Error saving IMAP settings:", error);
-      toast.error("Fehler beim Speichern der IMAP Einstellungen: " + error.message);
-    }
-  });
-
+  // Fetch existing settings
   useEffect(() => {
-    if (imapSettings) {
-      let historicalSyncDate = null;
-      if (imapSettings.historical_sync_date) {
-        const parsedDate = parseISO(imapSettings.historical_sync_date);
-        if (isValid(parsedDate)) {
-          historicalSyncDate = parsedDate;
+    async function fetchSettings() {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('imap_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching IMAP settings:', error);
+          return;
         }
+
+        if (data) {
+          form.reset({
+            host: data.host || '',
+            port: data.port || 993,
+            username: data.username || '',
+            password: data.password || '',
+            secure: data.secure !== undefined ? data.secure : true,
+            max_emails: data.max_emails || 100,
+            historical_sync: data.historical_sync || false,
+            historical_sync_date: data.historical_sync_date ? new Date(data.historical_sync_date) : undefined,
+          });
+        }
+      } catch (error) {
+        console.error('Error loading IMAP settings:', error);
+      } finally {
+        setLoadingSettings(false);
       }
-
-      imapForm.reset({
-        host: imapSettings.host || "",
-        port: imapSettings.port || 993,
-        username: imapSettings.username || "",
-        password: imapSettings.password || "",
-        secure: imapSettings.secure !== undefined ? imapSettings.secure : true,
-        historical_sync: imapSettings.historical_sync || false,
-        historical_sync_date: historicalSyncDate,
-        max_emails: imapSettings.max_emails || 100
-      });
-    }
-  }, [imapSettings, imapForm]);
-
-  const onSubmitImap = (data: ImapFormData) => {
-    updateImapSettings.mutate(data);
-  };
-
-  const testImapConnection = async () => {
-    const values = imapForm.getValues();
-    if (!values.host || !values.port || !values.username || !values.password) {
-      toast.error("Bitte füllen Sie alle erforderlichen IMAP-Felder aus");
-      return;
     }
 
-    setTestingImap(true);
-    setImapStatus('idle');
-    setImapErrorMessage(null);
-    
+    fetchSettings();
+  }, [user, form]);
+
+  const onSubmit = async (values: ImapFormValues) => {
+    if (!user) return;
+
+    setIsSaving(true);
+
     try {
-      const { data, error } = await supabase.functions.invoke('test-imap-connection', {
-        body: {
+      const { error } = await supabase
+        .from('imap_settings')
+        .upsert({
+          user_id: user.id,
           host: values.host,
           port: values.port,
           username: values.username,
           password: values.password,
-          secure: values.secure
-        }
-      });
+          secure: values.secure,
+          max_emails: values.max_emails,
+          historical_sync: values.historical_sync,
+          historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
+        });
 
       if (error) {
-        console.error("IMAP test function error:", error);
-        throw new Error(`Fehler bei der Ausführung: ${error.message}`);
+        throw error;
       }
-      
-      if (data.success) {
-        setImapStatus('success');
-        toast.success("IMAP Verbindung erfolgreich");
-      } else {
-        setImapStatus('error');
-        setImapErrorMessage(data.details || "Unbekannter Fehler");
-        toast.error("IMAP Verbindung fehlgeschlagen");
+
+      toast({
+        title: 'Settings saved',
+        description: 'Your IMAP settings have been saved successfully.',
+      });
+
+      if (onSettingsSaved) {
+        onSettingsSaved();
       }
-    } catch (error) {
-      console.error("Error testing IMAP connection:", error);
-      setImapStatus('error');
-      setImapErrorMessage(error.message || "Verbindungsfehler");
-      toast.error("Fehler beim Testen der IMAP Verbindung: " + error.message);
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
+      toast({
+        title: 'Failed to save settings',
+        description: error.message || 'An error occurred while saving your settings.',
+        variant: 'destructive',
+      });
     } finally {
-      setTestingImap(false);
+      setIsSaving(false);
     }
   };
 
-  const displayConnectionError = (message: string | null) => {
-    if (!message) return null;
-    
-    if (message.includes("ECONNREFUSED")) {
-      return "Verbindung zum Server verweigert. Bitte überprüfen Sie Host und Port.";
-    } else if (message.includes("ETIMEDOUT") || message.includes("timed out")) {
-      return "Zeitüberschreitung bei der Verbindung. Der Server reagiert nicht oder Ihre Firewall blockiert die Verbindung.";
-    } else if (message.includes("authenticate") || message.includes("535") || message.includes("auth")) {
-      return "Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Benutzername und Passwort.";
-    } else if (message.includes("certificate") || message.includes("SSL") || message.includes("TLS")) {
-      return "SSL/TLS Zertifikatsfehler. Versuchen Sie die Verbindung ohne SSL/TLS oder überprüfen Sie Zertifikate.";
-    } else if (message.includes("ENOTFOUND") || message.includes("DNS")) {
-      return "Server nicht gefunden. Bitte überprüfen Sie den Hostnamen.";
-    } else if (message.includes("Edge Function")) {
-      return "Technischer Fehler beim Verbindungstest. Bitte versuchen Sie es später erneut oder kontaktieren Sie den Support.";
-    }
-    
-    return message;
-  };
-
-  useEffect(() => {
-    const usernameOrHost = imapForm.watch('username') || imapForm.watch('host');
-    if (usernameOrHost) {
-      const provider = getProviderSettings(usernameOrHost);
-      if (provider && !imapSettings) {
-        imapForm.setValue('host', provider.imap.host);
-        imapForm.setValue('port', provider.imap.port);
-        imapForm.setValue('secure', provider.imap.secure);
-        
-        if (provider.note) {
-          toast.info(`${provider.name} IMAP Konfiguration: ${provider.note}`, { duration: 6000 });
-        }
-      }
-    }
-  }, [imapForm.watch('username'), imapForm.watch('host')]);
-
-  const historicalSyncEnabled = imapForm.watch("historical_sync");
-
-  if (imapLoading) {
-    return (
-      <div className="flex items-center justify-center h-40">
-        <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
-      </div>
-    );
-  }
+  const watchHistoricalSync = form.watch('historical_sync');
 
   return (
-    <Form {...imapForm}>
-      <form onSubmit={imapForm.handleSubmit(onSubmitImap)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={imapForm.control}
-            name="host"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>IMAP Server</FormLabel>
-                <FormControl>
-                  <Input placeholder="imap.example.com" {...field} />
-                </FormControl>
-                <FormDescription>
-                  z.B. imap.gmail.com, outlook.office365.com
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={imapForm.control}
-            name="port"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Port</FormLabel>
-                <FormControl>
-                  <Input type="number" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Standard Ports: 993 (SSL/TLS), 143 (STARTTLS)
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>IMAP Settings</CardTitle>
+        <CardDescription>
+          Configure your email account to fetch emails. This is required to sync your emails.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="host"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>IMAP Server</FormLabel>
+                    <FormControl>
+                      <Input placeholder="imap.example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            control={imapForm.control}
-            name="username"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Benutzername</FormLabel>
-                <FormControl>
-                  <Input placeholder="name@example.com" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Meist Ihre vollständige E-Mail-Adresse
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={imapForm.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Passwort</FormLabel>
-                <FormControl>
-                  <Input type="password" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Bei aktivierter 2FA oft ein App-Passwort erforderlich
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+              <FormField
+                control={form.control}
+                name="port"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Port</FormLabel>
+                    <FormControl>
+                      <Input type="number" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        <FormField
-          control={imapForm.control}
-          name="secure"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">
-                  SSL/TLS Verschlüsselung verwenden
-                </FormLabel>
-                <FormDescription>
-                  Empfohlen für die meisten E-Mail-Server (Port 993). Deaktivieren für STARTTLS (Port 143).
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <FormField
+                control={form.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Username</FormLabel>
+                    <FormControl>
+                      <Input placeholder="user@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-        <FormField
-          control={imapForm.control}
-          name="historical_sync"
-          render={({ field }) => (
-            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-              <div className="space-y-0.5">
-                <FormLabel className="text-base">
-                  Historische E-Mails synchronisieren
-                </FormLabel>
-                <FormDescription>
-                  Aktivieren Sie diese Option, um auch ältere E-Mails zu synchronisieren. 
-                  Standardmäßig werden nur die neuesten E-Mails abgerufen.
-                </FormDescription>
-              </div>
-              <FormControl>
-                <Switch
-                  checked={field.value}
-                  onCheckedChange={field.onChange}
-                />
-              </FormControl>
-            </FormItem>
-          )}
-        />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Password</FormLabel>
+                    <FormControl>
+                      <Input type="password" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
-        {historicalSyncEnabled && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-gray-50">
             <FormField
-              control={imapForm.control}
-              name="historical_sync_date"
+              control={form.control}
+              name="secure"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Synchronisierung ab Datum</FormLabel>
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Use Secure Connection (SSL/TLS)</FormLabel>
+                    <FormDescription>
+                      Enable for secure connections (usually port 993)
+                    </FormDescription>
+                  </div>
                   <FormControl>
-                    <DatePicker
-                      date={field.value || subMonths(new Date(), 1)}
-                      setDate={field.onChange}
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                  <FormDescription>
-                    E-Mails ab diesem Datum werden synchronisiert
-                  </FormDescription>
-                  <FormMessage />
                 </FormItem>
               )}
             />
-            
+
             <FormField
-              control={imapForm.control}
+              control={form.control}
               name="max_emails"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Maximale E-Mail-Anzahl</FormLabel>
+                  <FormLabel>Maximum Emails to Sync</FormLabel>
                   <FormControl>
-                    <Input type="number" min={10} max={1000} {...field} />
+                    <Input type="number" {...field} />
                   </FormControl>
                   <FormDescription>
-                    Maximale Anzahl der zu ladenden E-Mails (10-1000)
+                    Limit the number of emails to fetch in each sync
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
-          </div>
-        )}
 
-        {imapStatus === 'error' && imapErrorMessage && (
-          <Alert variant="destructive">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Verbindungsfehler</AlertTitle>
-            <AlertDescription>
-              {displayConnectionError(imapErrorMessage)}
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {imapStatus === 'success' && (
-          <Alert className="mt-4 bg-green-50 border-green-200">
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-            <AlertTitle className="text-green-800">Verbindung erfolgreich</AlertTitle>
-            <AlertDescription className="text-green-600">
-              Die IMAP-Verbindung wurde erfolgreich hergestellt. Ihre E-Mail-Konfiguration funktioniert korrekt.
-            </AlertDescription>
-          </Alert>
-        )}
+            <FormField
+              control={form.control}
+              name="historical_sync"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <FormLabel>Enable Historical Sync</FormLabel>
+                    <FormDescription>
+                      Fetch emails from a specific date instead of just the most recent ones
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
-        <div className="flex items-center justify-end space-x-2">
-          <Button 
-            type="button" 
-            variant="outline" 
-            onClick={testImapConnection}
-            disabled={testingImap}
-          >
-            {testingImap ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verbindung wird getestet...
-              </>
-            ) : (
-              <>
-                <Shield className="mr-2 h-4 w-4" />
-                Verbindung testen
-              </>
+            {watchHistoricalSync && (
+              <FormField
+                control={form.control}
+                name="historical_sync_date"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Historical Sync Start Date</FormLabel>
+                    <FormControl>
+                      <DatePicker
+                        date={field.value}
+                        setDate={field.onChange}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Fetch emails from this date forward
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             )}
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={updateImapSettings.isPending}
-          >
-            {updateImapSettings.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Speichern...
-              </>
-            ) : "Speichern"}
-          </Button>
-        </div>
-      </form>
-    </Form>
+
+            <div className="pt-6">
+              <Button type="submit" disabled={isSaving || loadingSettings}>
+                {isSaving ? 'Saving...' : 'Save Settings'}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </CardContent>
+    </Card>
   );
 }
