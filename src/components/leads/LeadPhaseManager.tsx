@@ -263,9 +263,24 @@ export const LeadPhaseManager = () => {
     },
   });
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  // Function to generate phase colors based on index
+  const getPhaseColor = (index: number) => {
+    const colors = [
+      '#3b82f6', // blue-500
+      '#6366f1', // indigo-500
+      '#8b5cf6', // violet-500
+      '#d946ef', // fuchsia-500
+      '#ec4899', // pink-500
+      '#f43f5e', // rose-500
+      '#ef4444', // red-500
+      '#f97316', // orange-500
+      '#f59e0b', // amber-500
+      '#84cc16', // lime-500
+      '#10b981', // emerald-500
+      '#14b8a6', // teal-500
+    ];
+    return colors[index % colors.length];
+  };
 
   return (
     <div className="space-y-4">
@@ -282,7 +297,10 @@ export const LeadPhaseManager = () => {
       </div>
       
       <PhaseList
-        phases={phases}
+        phases={phases.map((phase, index) => ({
+          ...phase,
+          color: getPhaseColor(index)
+        }))}
         onPhaseOrderChange={(newPhases) => updatePhaseOrder.mutate(newPhases)}
         onDeletePhase={setPhaseToDelete}
       />

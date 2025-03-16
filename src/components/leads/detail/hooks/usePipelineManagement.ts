@@ -39,29 +39,14 @@ export function usePipelineManagement(initialPipelineId: string | null) {
       if (!selectedPipelineId) return [];
 
       try {
-        // Only select columns that exist in the database
+        // Only select columns that we know exist in the database
         const { data, error } = await supabase
           .from("pipeline_phases")
           .select("id, pipeline_id, name, order_index, created_at, updated_at")
           .eq("pipeline_id", selectedPipelineId)
           .order("order_index");
 
-        if (error) {
-          // Check if this is a "column does not exist" error
-          if (error.message.includes("column") && error.message.includes("does not exist")) {
-            console.error("Column error in pipeline_phases query:", error);
-            // Try a more basic query instead
-            const { data: basicData, error: basicError } = await supabase
-              .from("pipeline_phases")
-              .select("id, pipeline_id, name, order_index")
-              .eq("pipeline_id", selectedPipelineId)
-              .order("order_index");
-              
-            if (basicError) throw basicError;
-            return basicData;
-          }
-          throw error;
-        }
+        if (error) throw error;
         return data;
       } catch (err) {
         console.error("Error fetching phases:", err);
@@ -74,7 +59,6 @@ export function usePipelineManagement(initialPipelineId: string | null) {
       }
     },
     enabled: !!selectedPipelineId,
-    retry: false, // Don't retry if the query fails due to missing columns
   });
 
   const updateLeadPipeline = useMutation({
