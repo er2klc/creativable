@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,7 +9,7 @@ export const useDefaultPipeline = () => {
   const user = useUser();
   const queryClient = useQueryClient();
 
-  // Prüfe ob Benutzer bereits eine Pipeline hat
+  // Check if user already has a pipeline
   const { data: existingPipeline } = useQuery({
     queryKey: ["default-pipeline", user?.id],
     queryFn: async () => {
@@ -27,16 +28,17 @@ export const useDefaultPipeline = () => {
     enabled: !!user?.id,
   });
 
-  // Mutation zum Erstellen der Pipeline und Phasen
+  // Mutation to create default pipeline and phases
   const createDefaultPipeline = useMutation({
     mutationFn: async () => {
       if (!user?.id) throw new Error("No user found");
 
-      // Erstelle Pipeline
+      // Create pipeline
       const { data: pipeline, error: pipelineError } = await supabase
         .from("pipelines")
         .insert({
           user_id: user.id,
+          created_by: user.id,
           name: "Pipeline",
           order_index: 0,
         })
@@ -45,7 +47,7 @@ export const useDefaultPipeline = () => {
 
       if (pipelineError) throw pipelineError;
 
-      // Erstelle Standard-Phasen
+      // Create default phases
       const defaultPhases = [
         { name: "Kontakt erstellt", order_index: 0 },
         { name: "Kontaktaufnahme", order_index: 1 },
@@ -79,7 +81,7 @@ export const useDefaultPipeline = () => {
   });
 
   useEffect(() => {
-    // Wenn der Benutzer keine Pipeline hat, erstelle eine
+    // Create a pipeline if user doesn't have one
     if (user?.id && existingPipeline === null) {
       createDefaultPipeline.mutate();
     }

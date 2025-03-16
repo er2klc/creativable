@@ -2,9 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import { imapSettingsSchema, ImapSettingsFormData } from './schemas/imap-settings-schema';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -12,21 +12,6 @@ import { useToast } from '@/components/ui/use-toast';
 import { DatePicker } from '@/components/ui/date-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
-
-// The schema is based on supabase/functions/sync-emails/index.ts
-export const imapSettingsSchema = z.object({
-  host: z.string().min(1, { message: 'Host is required' }),
-  port: z.coerce.number().int().positive().default(993),
-  username: z.string().min(1, { message: 'Username is required' }),
-  password: z.string().min(1, { message: 'Password is required' }),
-  secure: z.boolean().default(true),
-  max_emails: z.coerce.number().int().positive().default(100),
-  historical_sync: z.boolean().default(false),
-  historical_sync_date: z.date().optional(),
-});
-
-// Infer the type from schema
-export type ImapFormValues = z.infer<typeof imapSettingsSchema>;
 
 interface ImapSettingsProps {
   onSettingsSaved?: () => void;
@@ -37,9 +22,10 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
   const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
+  const [existingSettingsId, setExistingSettingsId] = useState<string | null>(null);
 
   // Initialize the form
-  const form = useForm<ImapFormValues>({
+  const form = useForm<ImapSettingsFormData>({
     resolver: zodResolver(imapSettingsSchema),
     defaultValues: {
       host: '',
@@ -65,12 +51,13 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
           .eq('user_id', user.id)
           .single();
 
-        if (error) {
+        if (error && error.code !== 'PGRST116') {
           console.error('Error fetching IMAP settings:', error);
           return;
         }
 
         if (data) {
+          setExistingSettingsId(data.id);
           form.reset({
             host: data.host || '',
             port: data.port || 993,
@@ -92,28 +79,55 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     fetchSettings();
   }, [user, form]);
 
-  const onSubmit = async (values: ImapFormValues) => {
+  const onSubmit = async (values: ImapSettingsFormData) => {
     if (!user) return;
 
     setIsSaving(true);
 
     try {
-      const { error } = await supabase
-        .from('imap_settings')
-        .upsert({
-          user_id: user.id,
-          host: values.host,
-          port: values.port,
-          username: values.username,
-          password: values.password,
-          secure: values.secure,
-          max_emails: values.max_emails,
-          historical_sync: values.historical_sync,
-          historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
-        });
+      let operation;
+      
+      if (existingSettingsId) {
+        // Update existing record
+        operation = supabase
+          .from('imap_settings')
+          .update({
+            host: values.host,
+            port: values.port,
+            username: values.username,
+            password: values.password,
+            secure: values.secure,
+            max_emails: values.max_emails,
+            historical_sync: values.historical_sync,
+            historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
+          })
+          .eq('id', existingSettingsId);
+      } else {
+        // Insert new record
+        operation = supabase
+          .from('imap_settings')
+          .insert({
+            user_id: user.id,
+            host: values.host,
+            port: values.port,
+            username: values.username,
+            password: values.password,
+            secure: values.secure,
+            max_emails: values.max_emails,
+            historical_sync: values.historical_sync,
+            historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
+          });
+      }
+
+      const { error, data } = await operation;
 
       if (error) {
         throw error;
+      }
+
+      // If this is a new record, set the ID for future updates
+      if (!existingSettingsId && data && data.length > 0) {
+        setExistingSettingsId(data[0].id);
       }
 
       toast({

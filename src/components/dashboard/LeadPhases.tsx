@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,7 +13,7 @@ export const LeadPhases = () => {
         const { data: pipelineData, error: pipelineError } = await supabase
           .from('pipelines')
           .select('id')
-          .eq('created_by', user.id)
+          .eq('user_id', user.id)
           .eq('is_default', true)
           .single();
 

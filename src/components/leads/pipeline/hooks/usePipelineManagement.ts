@@ -1,10 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
-// Konstante für den localStorage Key
+// Constant for localStorage key
 const LAST_PIPELINE_KEY = 'lastSelectedPipelineId';
 
 export function usePipelineManagement(initialPipelineId: string | null) {
@@ -47,13 +45,13 @@ export function usePipelineManagement(initialPipelineId: string | null) {
     const initializePipeline = async () => {
       if (!pipelines.length) return;
 
-      // Wenn bereits eine gültige Pipeline ausgewählt ist, behalte sie
+      // If there's already a valid pipeline selected, keep it
       if (selectedPipelineId && pipelines.some(p => p.id === selectedPipelineId)) {
         console.log("Keeping current selection:", selectedPipelineId);
         return;
       }
 
-      // Versuche die Pipeline aus der Session zu laden
+      // Try to load pipeline from session
       const sessionPipelineId = localStorage.getItem(LAST_PIPELINE_KEY);
       if (sessionPipelineId && pipelines.some(p => p.id === sessionPipelineId)) {
         console.log("Using session pipeline:", sessionPipelineId);
@@ -61,7 +59,7 @@ export function usePipelineManagement(initialPipelineId: string | null) {
         return;
       }
 
-      // Fallback: Erste verfügbare Pipeline
+      // Fallback: First available pipeline
       console.log("Using first available pipeline:", pipelines[0].id);
       setSelectedPipelineId(pipelines[0].id);
     };
