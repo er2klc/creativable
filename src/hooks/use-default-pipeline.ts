@@ -19,7 +19,7 @@ export const useDefaultPipeline = () => {
         .from("pipelines")
         .select("*")
         .eq("user_id", user.id)
-        .limit(1)
+        .eq("is_default", true)
         .maybeSingle();
 
       if (error) throw error;
@@ -38,9 +38,9 @@ export const useDefaultPipeline = () => {
         .from("pipelines")
         .insert({
           user_id: user.id,
-          created_by: user.id,
           name: "Pipeline",
           order_index: 0,
+          is_default: true
         })
         .select()
         .single();

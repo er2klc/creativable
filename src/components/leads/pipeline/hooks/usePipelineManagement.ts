@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -56,6 +57,14 @@ export function usePipelineManagement(initialPipelineId: string | null) {
       if (sessionPipelineId && pipelines.some(p => p.id === sessionPipelineId)) {
         console.log("Using session pipeline:", sessionPipelineId);
         setSelectedPipelineId(sessionPipelineId);
+        return;
+      }
+
+      // Find default pipeline
+      const defaultPipeline = pipelines.find(p => p.is_default);
+      if (defaultPipeline) {
+        console.log("Using default pipeline:", defaultPipeline.id);
+        setSelectedPipelineId(defaultPipeline.id);
         return;
       }
 
