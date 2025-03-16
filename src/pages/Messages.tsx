@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/progress';
 import { DatePicker } from '@/components/ui/date-picker';
 import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/hooks/use-settings';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function Messages() {
   const { user } = useAuth();
@@ -134,7 +135,7 @@ export default function Messages() {
 
   if (!user) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-4 overflow-x-hidden">
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-xl">Messages</CardTitle>
@@ -155,7 +156,7 @@ export default function Messages() {
 
   if (!hasImapSettings) {
     return (
-      <div className="container mx-auto p-4">
+      <div className="container mx-auto p-4 overflow-x-hidden">
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="text-xl">Messages</CardTitle>
@@ -181,14 +182,14 @@ export default function Messages() {
   }
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="container mx-auto p-4 overflow-x-hidden">
       <Card className="w-full mb-6">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between pb-2">
           <div>
             <CardTitle className="text-xl">Email Sync</CardTitle>
             <CardDescription>Sync and manage your emails</CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
             <Button 
               variant="outline" 
               size="sm" 
@@ -254,51 +255,53 @@ export default function Messages() {
             {emails?.length || 0} emails synced from your account
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="animate-pulse space-y-4">
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="p-4 border rounded-md">
-                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </div>
-              ))}
-            </div>
-          ) : emails?.length ? (
-            <div className="space-y-4">
-              {emails.map((email) => (
-                <Card key={email.id} className="overflow-hidden">
-                  <CardHeader className="p-4 pb-2">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <CardTitle className="text-base line-clamp-1">
-                          {email.subject || '(No Subject)'}
-                        </CardTitle>
-                        <CardDescription className="text-xs">
-                          From: {email.from_name || email.from_email}
-                        </CardDescription>
+        <CardContent className="p-0">
+          <ScrollArea className="h-[60vh] px-4">
+            {isLoading ? (
+              <div className="animate-pulse space-y-4 py-4">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="p-4 border rounded-md">
+                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                  </div>
+                ))}
+              </div>
+            ) : emails?.length ? (
+              <div className="space-y-4 py-4">
+                {emails.map((email) => (
+                  <Card key={email.id} className="overflow-hidden">
+                    <CardHeader className="p-4 pb-2">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <CardTitle className="text-base line-clamp-1">
+                            {email.subject || '(No Subject)'}
+                          </CardTitle>
+                          <CardDescription className="text-xs">
+                            From: {email.from_name || email.from_email}
+                          </CardDescription>
+                        </div>
+                        <div className="flex items-center text-xs text-gray-500">
+                          <Clock className="h-3 w-3 mr-1" />
+                          {new Date(email.sent_at).toLocaleDateString()}
+                        </div>
                       </div>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {new Date(email.sent_at).toLocaleDateString()}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="p-4 pt-2">
-                    <p className="text-sm line-clamp-2">
-                      {email.text_content || 'No preview available'}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12">
-              <Calendar className="h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-center mb-4">No emails synced yet</p>
-              <Button onClick={() => syncEmails()}>Sync Emails Now</Button>
-            </div>
-          )}
+                    </CardHeader>
+                    <CardContent className="p-4 pt-2">
+                      <p className="text-sm line-clamp-2">
+                        {email.text_content || 'No preview available'}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Calendar className="h-12 w-12 text-gray-400 mb-4" />
+                <p className="text-center mb-4">No emails synced yet</p>
+                <Button onClick={() => syncEmails()}>Sync Emails Now</Button>
+              </div>
+            )}
+          </ScrollArea>
         </CardContent>
         {emails?.length > 0 && (
           <CardFooter className="border-t p-4 flex justify-center">

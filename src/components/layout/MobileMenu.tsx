@@ -26,6 +26,7 @@ import {
 import { NotificationSidebar } from "@/components/notifications/NotificationSidebar";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 export function MobileMenu() {
   const [open, setOpen] = useState(false);
@@ -56,6 +57,18 @@ export function MobileMenu() {
     await supabase.auth.signOut();
     navigate("/auth");
   };
+
+  useEffect(() => {
+    // Close mobile menu when navigating
+    const handleRouteChange = () => {
+      setOpen(false);
+    };
+
+    window.addEventListener('popstate', handleRouteChange);
+    return () => {
+      window.removeEventListener('popstate', handleRouteChange);
+    };
+  }, []);
 
   useEffect(() => {
     const channel = supabase
@@ -94,9 +107,12 @@ export function MobileMenu() {
           </SheetTrigger>
           <SheetContent 
             side="left" 
-            className="w-[280px] p-0 border-none bg-[#111111] text-white z-[200]"
+            className={cn(
+              "w-[280px] p-0 border-none bg-[#111111] text-white z-[200] overflow-hidden",
+              "max-w-[100vw] sheet-content"
+            )}
           >
-            <div className="flex flex-col h-[100vh] bg-[#111111] overflow-y-auto">
+            <div className="flex flex-col h-[100vh] bg-[#111111] overflow-y-auto overflow-x-hidden">
               <div className="flex items-center justify-between p-4 border-b border-sidebar-border">
                 <div className="flex items-center gap-4">
                   <img 
@@ -116,7 +132,7 @@ export function MobileMenu() {
                 </Button>
               </div>
               
-              <div className="flex-1 overflow-y-auto no-scrollbar">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden no-scrollbar">
                 <MenuSection title="Persönlich" items={personalItems} onNavigate={handleNavigation} />
                 <div className="h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent my-2" />
                 <MenuSection title="Teams & Gruppen" items={teamItems} onNavigate={handleNavigation} />

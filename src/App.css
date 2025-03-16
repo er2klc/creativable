@@ -1,13 +1,28 @@
+
 #root {
   margin: 0 auto;
   text-align: center;
+  overflow-x: hidden;
+  max-width: 100vw;
 }
 
+/* Fix container width */
 .container {
-padding-right: 0px !important;
-padding-right: 0px !important;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding-left: 1rem !important;
+  padding-right: 1rem !important;
 }
 
+/* Ensure body doesn't scroll horizontally */
+body {
+  overflow-x: hidden;
+  max-width: 100vw;
+  position: relative;
+}
+
+/* Keep existing logo styles */
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -38,13 +53,7 @@ padding-right: 0px !important;
   }
 }
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
+/* ... keep existing code (card and docs styles) */
 
 /* Gradient text utility */
 .text-gradient {
@@ -53,40 +62,16 @@ padding-right: 0px !important;
   color: transparent;
 }
 
-/* Animation classes for reactions */
-.bounce-blue {
-  animation: bounce 0.3s ease-in-out;
-}
+/* ... keep existing code (animation classes) */
 
-.pulse-red {
-  animation: pulse 0.3s ease-in-out;
-}
-
-.bounce-yellow {
-  animation: bounce 0.3s ease-in-out;
-}
-
-.explode-green {
-  animation: explode 0.4s ease-out;
-}
-
-.pulse-purple {
-  animation: pulse 0.3s ease-in-out;
-}
-
-@keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-4px); }
-}
-
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-@keyframes explode {
-  0% { transform: scale(0.5); opacity: 0; }
-  50% { transform: scale(1.2); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 1; }
+/* Mobile-specific fixes */
+@media (max-width: 768px) {
+  .sheet-content {
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+  
+  .mobile-content {
+    padding-top: 4rem;
+  }
 }

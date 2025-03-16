@@ -8,14 +8,14 @@ export function EmailSettings() {
   const { settings } = useSettings();
 
   return (
-    <Card className="w-full">
+    <Card className="w-full overflow-hidden">
       <CardHeader>
         <CardTitle>Email Integration</CardTitle>
         <CardDescription>
           Configure your email settings to integrate with your inbox
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="overflow-x-auto">
         <Tabs defaultValue="imap" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="imap">IMAP Settings</TabsTrigger>
