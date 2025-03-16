@@ -24,7 +24,8 @@ export const LeadPhases = () => {
           pipelineQuery = pipelineQuery.eq('is_default', true);
         }
           
-        const { data: pipelineData, error: pipelineError } = await pipelineQuery.single();
+        // Use let instead of const for pipelineData since we need to reassign it later
+        let { data: pipelineData, error: pipelineError } = await pipelineQuery.single();
 
         if (pipelineError || !pipelineData) {
           // Fallback to any pipeline this user has
