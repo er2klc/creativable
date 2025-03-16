@@ -1,4 +1,3 @@
-
 import { useChat } from "ai/react";
 import { toast } from "sonner";
 import { useCallback, useState } from "react";
@@ -91,6 +90,11 @@ export const useChatMessages = ({
       // Füge dann die leere Assistentennachricht hinzu
       setMessages(prev => [...prev, assistantMessage]);
 
+      // Limit messages to prevent context length issues (keeping last 10 messages)
+      const recentMessages = messages.length > 10 
+        ? [...messages.slice(0, 1), ...messages.slice(-9)] // Keep system prompt + last 9 messages
+        : messages;
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
         headers: {
@@ -101,7 +105,7 @@ export const useChatMessages = ({
         body: JSON.stringify({
           messages: [
             { role: 'system', content: systemMessage },
-            ...messages.filter(m => m.role !== 'system'),
+            ...recentMessages.filter(m => m.role !== 'system'),
             { role: 'user', content: currentInput }
           ],
           teamId: currentTeamId,

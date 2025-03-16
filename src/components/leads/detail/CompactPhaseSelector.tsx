@@ -31,6 +31,25 @@ export function CompactPhaseSelector({
     updateLeadPipeline
   } = usePipelineManagement(lead.pipeline_id);
 
+  // Function to generate phase colors based on index to provide defaults
+  const getPhaseColor = (index: number) => {
+    const colors = [
+      '#3b82f6', // blue-500
+      '#6366f1', // indigo-500
+      '#8b5cf6', // violet-500
+      '#d946ef', // fuchsia-500
+      '#ec4899', // pink-500
+      '#f43f5e', // rose-500
+      '#ef4444', // red-500
+      '#f97316', // orange-500
+      '#f59e0b', // amber-500
+      '#84cc16', // lime-500
+      '#10b981', // emerald-500
+      '#14b8a6', // teal-500
+    ];
+    return colors[index % colors.length];
+  };
+
   const handlePipelineChange = (pipelineId: string) => {
     setSelectedPipelineId(pipelineId);
   };
@@ -91,6 +110,10 @@ export function CompactPhaseSelector({
                     isPast ? "bg-blue-200" : "bg-white border-2 border-gray-200",
                     hasAnalysis && "ring-2 ring-purple-500"
                   )}
+                  style={{
+                    backgroundColor: isActive ? getPhaseColor(index) : 
+                                    isPast ? `${getPhaseColor(index)}40` : undefined
+                  }}
                   title={hasAnalysis ? (settings?.language === "en" ? "Analysis exists" : "Analyse existiert") : ""}
                 >
                   {index + 1}
