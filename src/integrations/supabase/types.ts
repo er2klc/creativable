@@ -934,42 +934,57 @@ export type Database = {
       imap_settings: {
         Row: {
           created_at: string | null
+          historical_sync_progress: number | null
           host: string
           id: string
           last_error: string | null
+          last_sync_date: string | null
           last_verification_status: string | null
           last_verified_at: string | null
+          max_historical_emails: number | null
           password: string
           port: number
           secure: boolean
+          sync_start_date: string | null
+          syncing_historical: boolean | null
           updated_at: string | null
           user_id: string
           username: string
         }
         Insert: {
           created_at?: string | null
+          historical_sync_progress?: number | null
           host: string
           id?: string
           last_error?: string | null
+          last_sync_date?: string | null
           last_verification_status?: string | null
           last_verified_at?: string | null
+          max_historical_emails?: number | null
           password: string
           port: number
           secure?: boolean
+          sync_start_date?: string | null
+          syncing_historical?: boolean | null
           updated_at?: string | null
           user_id: string
           username: string
         }
         Update: {
           created_at?: string | null
+          historical_sync_progress?: number | null
           host?: string
           id?: string
           last_error?: string | null
+          last_sync_date?: string | null
           last_verification_status?: string | null
           last_verified_at?: string | null
+          max_historical_emails?: number | null
           password?: string
           port?: number
           secure?: boolean
+          sync_start_date?: string | null
+          syncing_historical?: boolean | null
           updated_at?: string | null
           user_id?: string
           username?: string

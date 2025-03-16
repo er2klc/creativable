@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -40,6 +41,7 @@ import { Switch } from "@/components/ui/switch";
 import { Loader2, Mail, Shield, AlertCircle, CheckCircle2, Info, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
+import { ImapSettings } from "./ImapSettings";
 
 const smtpSchema = z.object({
   host: z.string().min(1, "SMTP Server ist erforderlich"),
@@ -51,26 +53,14 @@ const smtpSchema = z.object({
   secure: z.boolean().default(true)
 });
 
-const imapSchema = z.object({
-  host: z.string().min(1, "IMAP Server ist erforderlich"),
-  port: z.coerce.number().min(1, "Port ist erforderlich"),
-  username: z.string().min(1, "Benutzername ist erforderlich"),
-  password: z.string().min(1, "Passwort ist erforderlich"),
-  secure: z.boolean().default(true)
-});
-
 type SmtpFormData = z.infer<typeof smtpSchema>;
-type ImapFormData = z.infer<typeof imapSchema>;
 
 export function EmailSettings() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const [testingSmtp, setTestingSmtp] = useState(false);
-  const [testingImap, setTestingImap] = useState(false);
   const [smtpStatus, setSmtpStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [imapStatus, setImapStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [smtpErrorMessage, setSmtpErrorMessage] = useState<string | null>(null);
-  const [imapErrorMessage, setImapErrorMessage] = useState<string | null>(null);
   const [smtpTestStages, setSmtpTestStages] = useState<Array<{name: string, success: boolean, message: string}>>([]);
   const [retryCount, setRetryCount] = useState(0);
 
@@ -79,19 +69,6 @@ export function EmailSettings() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('smtp_settings')
-        .select('*')
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
-    },
-  });
-
-  const { data: imapSettings, isLoading: imapLoading } = useQuery({
-    queryKey: ['imap-settings'],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from('imap_settings')
         .select('*')
         .single();
 
@@ -109,17 +86,6 @@ export function EmailSettings() {
       password: "",
       from_email: "",
       from_name: "",
-      secure: true
-    }
-  });
-
-  const imapForm = useForm<ImapFormData>({
-    resolver: zodResolver(imapSchema),
-    defaultValues: {
-      host: "",
-      port: 993,
-      username: "",
-      password: "",
       secure: true
     }
   });
@@ -176,54 +142,6 @@ export function EmailSettings() {
     }
   });
 
-  const updateImapSettings = useMutation({
-    mutationFn: async (data: ImapFormData) => {
-      if (!user) throw new Error("User not authenticated");
-
-      const { data: existingSettings } = await supabase
-        .from('imap_settings')
-        .select('id')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
-      if (existingSettings) {
-        const { error } = await supabase
-          .from('imap_settings')
-          .update({
-            host: data.host,
-            port: data.port,
-            username: data.username,
-            password: data.password,
-            secure: data.secure
-          })
-          .eq('user_id', user.id);
-
-        if (error) throw error;
-      } else {
-        const { error } = await supabase
-          .from('imap_settings')
-          .insert({
-            host: data.host,
-            port: data.port,
-            username: data.username,
-            password: data.password,
-            secure: data.secure,
-            user_id: user.id
-          });
-
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['imap-settings'] });
-      toast.success("IMAP Einstellungen wurden gespeichert");
-    },
-    onError: (error) => {
-      console.error("Error saving IMAP settings:", error);
-      toast.error("Fehler beim Speichern der IMAP Einstellungen: " + error.message);
-    }
-  });
-
   useEffect(() => {
     if (smtpSettings) {
       smtpForm.reset({
@@ -238,24 +156,8 @@ export function EmailSettings() {
     }
   }, [smtpSettings, smtpForm]);
 
-  useEffect(() => {
-    if (imapSettings) {
-      imapForm.reset({
-        host: imapSettings.host || "",
-        port: imapSettings.port || 993,
-        username: imapSettings.username || "",
-        password: imapSettings.password || "",
-        secure: imapSettings.secure !== undefined ? imapSettings.secure : true
-      });
-    }
-  }, [imapSettings, imapForm]);
-
   const onSubmitSmtp = (data: SmtpFormData) => {
     updateSmtpSettings.mutate(data);
-  };
-
-  const onSubmitImap = (data: ImapFormData) => {
-    updateImapSettings.mutate(data);
   };
 
   const testSmtpConnection = async () => {
@@ -314,51 +216,6 @@ export function EmailSettings() {
   const retrySmtpTest = () => {
     setRetryCount(prevCount => prevCount + 1);
     testSmtpConnection();
-  };
-
-  const testImapConnection = async () => {
-    const values = imapForm.getValues();
-    if (!values.host || !values.port || !values.username || !values.password) {
-      toast.error("Bitte füllen Sie alle erforderlichen IMAP-Felder aus");
-      return;
-    }
-
-    setTestingImap(true);
-    setImapStatus('idle');
-    setImapErrorMessage(null);
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('test-imap-connection', {
-        body: {
-          host: values.host,
-          port: values.port,
-          username: values.username,
-          password: values.password,
-          secure: values.secure
-        }
-      });
-
-      if (error) {
-        console.error("IMAP test function error:", error);
-        throw new Error(`Fehler bei der Ausführung: ${error.message}`);
-      }
-      
-      if (data.success) {
-        setImapStatus('success');
-        toast.success("IMAP Verbindung erfolgreich");
-      } else {
-        setImapStatus('error');
-        setImapErrorMessage(data.details || "Unbekannter Fehler");
-        toast.error("IMAP Verbindung fehlgeschlagen");
-      }
-    } catch (error) {
-      console.error("Error testing IMAP connection:", error);
-      setImapStatus('error');
-      setImapErrorMessage(error.message || "Verbindungsfehler");
-      toast.error("Fehler beim Testen der IMAP Verbindung: " + error.message);
-    } finally {
-      setTestingImap(false);
-    }
   };
 
   const displayConnectionError = (message: string | null) => {
@@ -525,12 +382,6 @@ export function EmailSettings() {
         smtpForm.setValue('port', provider.smtp.port);
         smtpForm.setValue('secure', provider.smtp.secure);
         
-        if (imapForm) {
-          imapForm.setValue('host', provider.imap.host);
-          imapForm.setValue('port', provider.imap.port);
-          imapForm.setValue('secure', provider.imap.secure);
-        }
-        
         if (provider.note) {
           toast.info(`${provider.name} Konfiguration: ${provider.note}`, { duration: 6000 });
         }
@@ -538,7 +389,7 @@ export function EmailSettings() {
     }
   }, [smtpForm.watch('username'), smtpForm.watch('host')]);
 
-  if (smtpLoading || imapLoading) {
+  if (smtpLoading) {
     return (
       <div className="flex items-center justify-center h-40">
         <Loader2 className="h-8 w-8 animate-spin text-gray-500" />
@@ -816,165 +667,9 @@ export function EmailSettings() {
                       <Mail className="h-5 w-5" />
                       <span>IMAP Einstellungen (E-Mail empfangen)</span>
                     </div>
-                    <div className="ml-auto mr-4">
-                      {imapStatus === 'success' && (
-                        <CheckCircle2 className="h-5 w-5 text-green-500" />
-                      )}
-                      {imapStatus === 'error' && (
-                        <AlertCircle className="h-5 w-5 text-red-500" />
-                      )}
-                    </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <Form {...imapForm}>
-                      <form onSubmit={imapForm.handleSubmit(onSubmitImap)} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={imapForm.control}
-                            name="host"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>IMAP Server</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="imap.example.com" {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                  z.B. imap.gmail.com, outlook.office365.com
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={imapForm.control}
-                            name="port"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Port</FormLabel>
-                                <FormControl>
-                                  <Input type="number" {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                  Standard Ports: 993 (SSL/TLS), 143 (STARTTLS)
-                                  Bei Verbindungsproblemen bitte SSL/TLS auf Port 993 verwenden.
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={imapForm.control}
-                            name="username"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Benutzername</FormLabel>
-                                <FormControl>
-                                  <Input placeholder="name@example.com" {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                  Meist Ihre vollständige E-Mail-Adresse
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={imapForm.control}
-                            name="password"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Passwort</FormLabel>
-                                <FormControl>
-                                  <Input type="password" {...field} />
-                                </FormControl>
-                                <FormDescription>
-                                  Bei aktivierter 2FA oft ein App-Passwort erforderlich
-                                </FormDescription>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-
-                        <FormField
-                          control={imapForm.control}
-                          name="secure"
-                          render={({ field }) => (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                              <div className="space-y-0.5">
-                                <FormLabel className="text-base">
-                                  SSL/TLS Verschlüsselung verwenden
-                                </FormLabel>
-                                <FormDescription>
-                                  Empfohlen für die meisten E-Mail-Server (Port 993). Deaktivieren für STARTTLS (Port 143).
-                                </FormDescription>
-                              </div>
-                              <FormControl>
-                                <Switch
-                                  checked={field.value}
-                                  onCheckedChange={field.onChange}
-                                />
-                              </FormControl>
-                            </FormItem>
-                          )}
-                        />
-
-                        {imapStatus === 'error' && imapErrorMessage && (
-                          <Alert variant="destructive">
-                            <AlertCircle className="h-4 w-4" />
-                            <AlertTitle>Verbindungsfehler</AlertTitle>
-                            <AlertDescription>
-                              {displayConnectionError(imapErrorMessage)}
-                            </AlertDescription>
-                          </Alert>
-                        )}
-                        
-                        {imapStatus === 'success' && (
-                          <Alert className="mt-4 bg-green-50 border-green-200">
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                            <AlertTitle className="text-green-800">Verbindung erfolgreich</AlertTitle>
-                            <AlertDescription className="text-green-600">
-                              Die IMAP-Verbindung wurde erfolgreich hergestellt. Ihre E-Mail-Konfiguration funktioniert korrekt.
-                            </AlertDescription>
-                          </Alert>
-                        )}
-
-                        <div className="flex items-center justify-end space-x-2">
-                          <Button 
-                            type="button" 
-                            variant="outline" 
-                            onClick={testImapConnection}
-                            disabled={testingImap}
-                          >
-                            {testingImap ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Verbindung wird getestet...
-                              </>
-                            ) : (
-                              <>
-                                <Shield className="mr-2 h-4 w-4" />
-                                Verbindung testen
-                              </>
-                            )}
-                          </Button>
-                          <Button 
-                            type="submit" 
-                            disabled={updateImapSettings.isPending}
-                          >
-                            {updateImapSettings.isPending ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Speichern...
-                              </>
-                            ) : "Speichern"}
-                          </Button>
-                        </div>
-                      </form>
-                    </Form>
+                    <ImapSettings getProviderSettings={getProviderSettings} />
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>

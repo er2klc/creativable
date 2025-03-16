@@ -14,6 +14,7 @@ interface SyncResult {
   emailsCount?: number;
   error?: string;
   details?: string;
+  progress?: number;
 }
 
 interface EmailMessage {
@@ -48,10 +49,23 @@ interface ImapSettings {
   disableCompression?: boolean;
 }
 
-async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefresh = false, retryCount = 0): Promise<SyncResult> {
+interface SyncOptions {
+  forceRefresh?: boolean;
+  historicalSync?: boolean;
+  startDate?: Date;
+  maxEmails?: number;
+}
+
+async function fetchEmails(
+  imapSettings: ImapSettings, 
+  userId: string, 
+  options: SyncOptions = {}, 
+  retryCount = 0
+): Promise<SyncResult> {
   console.log(`[Attempt ${retryCount + 1}] Connecting to IMAP server: ${imapSettings.host}:${imapSettings.port} (secure: ${imapSettings.secure})`);
   
   const client = new ImapFlow(imapSettings);
+  const maxEmails = options.maxEmails || (options.forceRefresh ? 20 : 10);
   
   try {
     // Connect with timeout
@@ -73,26 +87,37 @@ async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefr
     console.log(`Mailbox opened with ${mailbox.exists} messages`);
     
     // Determine how many emails to fetch
-    let fetchCount = forceRefresh ? 20 : 10; // Fetch more if force refresh
-    const totalEmails = mailbox.exists;
-    fetchCount = Math.min(fetchCount, totalEmails);
+    let fetchCount = Math.min(maxEmails, mailbox.exists);
     
     if (fetchCount === 0) {
       return {
         success: true,
         message: "No emails found in inbox",
-        emailsCount: 0
+        emailsCount: 0,
+        progress: 100
       };
     }
     
-    // Get the most recent emails
-    const fetchOptions = {
-      // Get the last X emails, using sequence numbers
-      seq: `${Math.max(1, totalEmails - fetchCount + 1)}:${totalEmails}`,
-      envelope: true,
-      bodyStructure: true,
-      source: true
-    };
+    // Prepare fetch options - handling historical sync if requested
+    let fetchOptions;
+    
+    if (options.historicalSync && options.startDate) {
+      console.log(`Historical sync requested from date: ${options.startDate.toISOString()}`);
+      fetchOptions = {
+        since: options.startDate,
+        envelope: true,
+        bodyStructure: true,
+        source: true
+      };
+    } else {
+      // Get the most recent emails, using sequence numbers
+      fetchOptions = {
+        seq: `${Math.max(1, mailbox.exists - fetchCount + 1)}:${mailbox.exists}`,
+        envelope: true,
+        bodyStructure: true,
+        source: true
+      };
+    }
     
     const emails = [];
     let counter = 0;
@@ -100,6 +125,12 @@ async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefr
     // Fetch messages
     for await (const message of client.fetch(fetchOptions)) {
       console.log(`Processing message #${message.seq}`);
+      
+      // Report progress
+      const progress = Math.floor((counter / fetchCount) * 100);
+      if (counter % 5 === 0) {
+        console.log(`Sync progress: ${progress}%`);
+      }
       
       // Extract email data
       const parsedEmail = {
@@ -160,6 +191,12 @@ async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefr
       } catch (parseError) {
         console.error("Error processing email:", parseError);
       }
+      
+      // Limit the number of emails processed
+      if (counter >= maxEmails) {
+        console.log(`Reached maximum email count (${maxEmails}), stopping fetch`);
+        break;
+      }
     }
     
     await client.logout();
@@ -168,7 +205,8 @@ async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefr
     return {
       success: true,
       message: `Successfully synced ${counter} emails`,
-      emailsCount: counter
+      emailsCount: counter,
+      progress: 100
     };
     
   } catch (error) {
@@ -195,7 +233,7 @@ async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefr
           },
           connectionTimeout: imapSettings.connectionTimeout * 1.5, // Increase timeout
         };
-        return fetchEmails(newSettings, userId, forceRefresh, retryCount + 1);
+        return fetchEmails(newSettings, userId, options, retryCount + 1);
       } 
       // For second retry: try with very permissive settings and longer timeout
       else {
@@ -211,7 +249,7 @@ async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefr
           greetTimeout: 30000,
           socketTimeout: 60000
         };
-        return fetchEmails(newSettings, userId, forceRefresh, retryCount + 1);
+        return fetchEmails(newSettings, userId, options, retryCount + 1);
       }
     }
     
@@ -233,7 +271,8 @@ async function fetchEmails(imapSettings: ImapSettings, userId: string, forceRefr
       success: false,
       message: friendlyMessage,
       error: error.message,
-      details: errorDetails
+      details: errorDetails,
+      progress: 0
     };
   } finally {
     // Ensure client is closed
@@ -262,7 +301,12 @@ serve(async (req) => {
       requestData = { force_refresh: false };
     }
 
-    const { force_refresh } = requestData;
+    const { 
+      force_refresh = false,
+      historical_sync = false,
+      sync_start_date = null,
+      max_emails = 100
+    } = requestData;
 
     // Get the user's JWT from the request
     const authHeader = req.headers.get('authorization') || '';
@@ -331,8 +375,31 @@ serve(async (req) => {
       disableCompression: false // Keep compression enabled by default
     };
 
+    // Prepare sync options
+    const syncOptions: SyncOptions = {
+      forceRefresh: force_refresh,
+      maxEmails: max_emails || settings.max_emails || 100
+    };
+    
+    // Handle historical sync
+    if (historical_sync || settings.historical_sync) {
+      syncOptions.historicalSync = true;
+      
+      // Get start date from request or from settings
+      const startDateStr = sync_start_date || settings.historical_sync_date;
+      if (startDateStr) {
+        syncOptions.startDate = new Date(startDateStr);
+        console.log(`Historical sync enabled with start date: ${syncOptions.startDate}`);
+      } else {
+        // Default to 30 days ago if no date specified
+        syncOptions.startDate = new Date();
+        syncOptions.startDate.setDate(syncOptions.startDate.getDate() - 30);
+        console.log(`Historical sync enabled with default start date: ${syncOptions.startDate}`);
+      }
+    }
+
     // Fetch emails
-    const result = await fetchEmails(imapConfig, userId, force_refresh);
+    const result = await fetchEmails(imapConfig, userId, syncOptions);
 
     return new Response(JSON.stringify(result), {
       headers: {
@@ -349,6 +416,7 @@ serve(async (req) => {
       success: false,
       message: "Failed to sync emails",
       error: error.message,
+      progress: 0
     };
 
     return new Response(JSON.stringify(result), {
