@@ -69,7 +69,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     });
   };
 
-  // Fetch existing settings mit Retry-Limit, Timeout und besserer Fehlerbehandlung
+  // Fetch existing settings with exponential backoff
   const fetchSettings = useCallback(async () => {
     if (!user || fetchAborted || !isMountedRef.current) {
       setLoadingSettings(false);
@@ -190,20 +190,51 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
           })
           .eq('id', existingSettingsId);
       } else {
-        // Insert new record
-        operation = supabase
+        // Check if a record already exists for this user
+        const { data: existingData, error: checkError } = await supabase
           .from('imap_settings')
-          .insert({
-            user_id: user.id,
-            host: values.host,
-            port: values.port,
-            username: values.username,
-            password: values.password,
-            secure: values.secure,
-            max_emails: values.max_emails,
-            historical_sync: values.historical_sync,
-            historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
-          });
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw checkError;
+        }
+        
+        if (existingData?.id) {
+          // Update the existing record if found
+          operation = supabase
+            .from('imap_settings')
+            .update({
+              host: values.host,
+              port: values.port,
+              username: values.username,
+              password: values.password,
+              secure: values.secure,
+              max_emails: values.max_emails,
+              historical_sync: values.historical_sync,
+              historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
+            })
+            .eq('id', existingData.id);
+            
+          // Update local state to reflect we have an existing record
+          setExistingSettingsId(existingData.id);
+        } else {
+          // Insert new record only if we're sure none exists
+          operation = supabase
+            .from('imap_settings')
+            .insert({
+              user_id: user.id,
+              host: values.host,
+              port: values.port,
+              username: values.username,
+              password: values.password,
+              secure: values.secure,
+              max_emails: values.max_emails,
+              historical_sync: values.historical_sync,
+              historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
+            });
+        }
       }
 
       const { error, data } = await operation;
@@ -664,7 +695,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
           <div className="pt-6 flex justify-end">
             <Button type="submit" disabled={isSaving} className="min-w-[120px]">
-              {isSaving ? 'Speichern...' : 'Speichern'}
+              {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Speichern...</> : 'Speichern'}
             </Button>
           </div>
         </form>

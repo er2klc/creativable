@@ -208,6 +208,7 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
         user_id: user.id
       };
 
+      // Check if a record already exists for this user
       if (existingSettingsId) {
         const { error } = await supabase
           .from('smtp_settings')
@@ -220,14 +221,54 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
           toast.success("SMTP-Einstellungen wurden aktualisiert");
         }
       } else {
-        const { error } = await supabase
+        // Check if user has existing settings
+        const { data: existingData, error: checkError } = await supabase
           .from('smtp_settings')
-          .insert([dataWithUserId]);
-
-        if (error) throw error;
+          .select('id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+          
+        if (checkError && checkError.code !== 'PGRST116') {
+          throw checkError;
+        }
         
-        if (isMountedRef.current) {
-          toast.success("SMTP-Einstellungen wurden gespeichert");
+        if (existingData?.id) {
+          // Update existing settings
+          const { error } = await supabase
+            .from('smtp_settings')
+            .update(dataWithUserId)
+            .eq('id', existingData.id);
+  
+          if (error) throw error;
+          
+          // Set existing ID for future updates
+          setExistingSettingsId(existingData.id);
+          
+          if (isMountedRef.current) {
+            toast.success("SMTP-Einstellungen wurden aktualisiert");
+          }
+        } else {
+          // Insert new settings
+          const { error } = await supabase
+            .from('smtp_settings')
+            .insert([dataWithUserId]);
+  
+          if (error) throw error;
+          
+          if (isMountedRef.current) {
+            toast.success("SMTP-Einstellungen wurden gespeichert");
+          }
+          
+          // Refresh to get the new ID
+          const { data: newData } = await supabase
+            .from('smtp_settings')
+            .select('id')
+            .eq('user_id', user.id)
+            .single();
+            
+          if (newData) {
+            setExistingSettingsId(newData.id);
+          }
         }
       }
 
@@ -785,7 +826,17 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
                   <span>Verifiziert</span>
                 </div>
               )}
-              <Button type="submit" className="bg-primary hover:bg-primary/90">Speichern</Button>
+              <Button 
+                type="submit" 
+                disabled={isSaving} 
+                className="bg-primary hover:bg-primary/90"
+              >
+                {isSaving ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Speichern...</>
+                ) : (
+                  'Speichern'
+                )}
+              </Button>
             </div>
           </div>
         </form>

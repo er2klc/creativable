@@ -5,12 +5,14 @@ import { useSupabaseClient, useSessionContext } from '@supabase/auth-helpers-rea
 export const useAuth = () => {
   const [user, setUser] = useState(null);
   const supabaseClient = useSupabaseClient();
-  const { session } = useSessionContext();
+  const { session, isLoading: sessionLoading } = useSessionContext();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
   // Memoize the fetchUser function to prevent recreation on each render
   const fetchUser = useCallback(async () => {
+    if (sessionLoading) return; // Wait for session to be determined
+    
     setIsLoading(true);
     try {
       if (session?.user) {
@@ -25,11 +27,15 @@ export const useAuth = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [session]);
+  }, [session, sessionLoading]);
 
   useEffect(() => {
     fetchUser();
   }, [fetchUser]); // Only depends on the memoized fetchUser function
 
-  return { user, isLoading, error };
+  return { 
+    user, 
+    isLoading: isLoading || sessionLoading, 
+    error 
+  };
 };

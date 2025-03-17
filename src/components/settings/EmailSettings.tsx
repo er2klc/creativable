@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImapSettings } from "./ImapSettings";
 import { SmtpSettings } from "./SmtpSettings";
@@ -11,7 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { testTableAccess, testEmailTablesAccess } from "@/utils/debug-helper";
+import { testEmailTablesAccess } from "@/utils/debug-helper";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function EmailSettings() {
@@ -32,17 +33,15 @@ export function EmailSettings() {
   const [checkAttempted, setCheckAttempted] = useState(false);
   const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isMountedRef = useRef(true);
+  const settingsLoadedRef = useRef(false);
 
-  // Debug-Funktion
-  const debugTables = async () => {
-    const results = await testEmailTablesAccess();
-    console.log('Email tables access test results:', results);
-    return results;
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
   };
-
+  
   // Check if email is configured - using a memoized function to prevent excessive rerenders
   const checkEmailConfig = useCallback(async () => {
-    if (!user || !isMountedRef.current) {
+    if (!user || !isMountedRef.current || settingsLoadedRef.current) {
       setIsLoading(false);
       return;
     }
@@ -50,7 +49,6 @@ export function EmailSettings() {
     // Timeout setzen, um sicherzustellen, dass wir nicht in einem Loading-State hängen bleiben
     const timeoutId = setTimeout(() => {
       if (isMountedRef.current) {
-        console.warn("Email config check timed out after 10 seconds");
         setIsLoading(false);
         setFetchError("Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es später erneut.");
       }
@@ -72,7 +70,7 @@ export function EmailSettings() {
         setLastCheckTime(now);
       
         // Testen Sie zuerst die Tabellenzugriffsrechte
-        const tablesTest = await debugTables();
+        const tablesTest = await testEmailTablesAccess();
         console.info("Table access test results:", tablesTest);
         
         if (!tablesTest.imap_settings.success || !tablesTest.smtp_settings.success) {
@@ -88,7 +86,7 @@ export function EmailSettings() {
           .from('imap_settings')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
           
         if (imapError && imapError.code !== 'PGRST116') {
           console.error('Error fetching IMAP settings:', imapError);
@@ -100,7 +98,7 @@ export function EmailSettings() {
           .from('smtp_settings')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
           
         if (smtpError && smtpError.code !== 'PGRST116') {
           console.error('Error fetching SMTP settings:', smtpError);
@@ -108,8 +106,8 @@ export function EmailSettings() {
         }
         
         if (isMountedRef.current) {
-          setImapSettings(imapData);
-          setSmtpSettings(smtpData);
+          setImapSettings(imapData || null);
+          setSmtpSettings(smtpData || null);
           
           // Consider email as connected if both IMAP and SMTP are configured
           const isConfigured = !!(imapData?.host && smtpData?.host);
@@ -128,6 +126,7 @@ export function EmailSettings() {
           }
           
           setFetchError(null);
+          settingsLoadedRef.current = true;
         }
       }
     } catch (error: any) {
@@ -147,6 +146,7 @@ export function EmailSettings() {
   // Einmalige Initialisierung nach dem Laden
   useEffect(() => {
     isMountedRef.current = true;
+    settingsLoadedRef.current = false;
     
     // Nur einmal nach dem Mounting den ersten Check durchführen
     if (!checkAttempted && user) {
@@ -169,10 +169,6 @@ export function EmailSettings() {
       }
     };
   }, [checkEmailConfig, user, checkAttempted]);
-
-  const handleTabChange = (value: string) => {
-    setActiveTab(value);
-  };
   
   const disconnectEmail = async () => {
     if (!user) return;
@@ -204,6 +200,7 @@ export function EmailSettings() {
       setImapSettings(null);
       setSmtpSettings(null);
       setEmailConnected(false);
+      settingsLoadedRef.current = false;
       
       toast.success("E-Mail-Verbindung wurde getrennt");
     } catch (error) {
@@ -256,7 +253,7 @@ export function EmailSettings() {
     }
   };
 
-  // Wenn ein Fehler aufgetreten ist, zeige es dem Benutzer
+  // Wenn ein Ladefehler aufgetreten ist, zeige es dem Benutzer
   if (fetchError && !isLoading) {
     return (
       <div className="space-y-6">
@@ -274,6 +271,7 @@ export function EmailSettings() {
                 onClick={() => {
                   setFetchError(null);
                   setCheckAttempted(false);
+                  settingsLoadedRef.current = false;
                   checkEmailConfig();
                 }}
                 className="mt-2"
@@ -293,12 +291,14 @@ export function EmailSettings() {
           <TabsContent value="imap">
             <ImapSettings onSettingsSaved={() => {
               setCheckAttempted(false);
+              settingsLoadedRef.current = false;
               checkEmailConfig();
             }} />
           </TabsContent>
           <TabsContent value="smtp">
             <SmtpSettings onSettingsSaved={() => {
               setCheckAttempted(false);
+              settingsLoadedRef.current = false;
               checkEmailConfig();
             }} />
           </TabsContent>
@@ -491,17 +491,21 @@ export function EmailSettings() {
             <div className="pt-4">
               <Tabs defaultValue="imap" value={activeTab} onValueChange={handleTabChange}>
                 <TabsList className="mb-4">
-                  <TabsTrigger value="imap">IMAP-Einstellungen</TabsTrigger>
-                  <TabsTrigger value="smtp">SMTP-Einstellungen</TabsTrigger>
+                  <TabsTrigger value="imap">IMAP-Einstellungen bearbeiten</TabsTrigger>
+                  <TabsTrigger value="smtp">SMTP-Einstellungen bearbeiten</TabsTrigger>
                 </TabsList>
                 
                 <TabsContent value="imap">
                   <ImapSettings onSettingsSaved={() => {
+                    setCheckAttempted(false);
+                    settingsLoadedRef.current = false;
                     checkEmailConfig();
                   }} />
                 </TabsContent>
                 <TabsContent value="smtp">
                   <SmtpSettings onSettingsSaved={() => {
+                    setCheckAttempted(false);
+                    settingsLoadedRef.current = false;
                     checkEmailConfig();
                   }} />
                 </TabsContent>
@@ -570,26 +574,9 @@ export function EmailSettings() {
                 <ImapSettings onSettingsSaved={() => {
                   // Refresh email config
                   if (user) {
-                    const checkImapConfig = async () => {
-                      const { data } = await supabase
-                        .from('imap_settings')
-                        .select('*')
-                        .eq('user_id', user.id)
-                        .single();
-                      
-                      setImapSettings(data);
-                      
-                      // Update connected status if both IMAP and SMTP are configured
-                      if (data?.host && smtpSettings?.host) {
-                        setEmailConnected(true);
-                        try {
-                          await updateSettings.mutate({ email_configured: true });
-                        } catch (error) {
-                          console.warn('Could not update email_configured status:', error);
-                        }
-                      }
-                    };
-                    checkImapConfig();
+                    setCheckAttempted(false);
+                    settingsLoadedRef.current = false;
+                    checkEmailConfig();
                   }
                 }} />
               </TabsContent>
@@ -610,26 +597,9 @@ export function EmailSettings() {
                 <SmtpSettings onSettingsSaved={() => {
                   // Refresh email config
                   if (user) {
-                    const checkSmtpConfig = async () => {
-                      const { data } = await supabase
-                        .from('smtp_settings')
-                        .select('*')
-                        .eq('user_id', user.id)
-                        .single();
-                      
-                      setSmtpSettings(data);
-                      
-                      // Update connected status if both IMAP and SMTP are configured
-                      if (imapSettings?.host && data?.host) {
-                        setEmailConnected(true);
-                        try {
-                          await updateSettings.mutate({ email_configured: true });
-                        } catch (error) {
-                          console.warn('Could not update email_configured status:', error);
-                        }
-                      }
-                    };
-                    checkSmtpConfig();
+                    setCheckAttempted(false);
+                    settingsLoadedRef.current = false;
+                    checkEmailConfig();
                   }
                 }} />
               </TabsContent>
