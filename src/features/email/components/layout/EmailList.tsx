@@ -35,6 +35,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import { toast } from 'sonner';
 
 interface EmailListProps {
   folder: string;
@@ -43,7 +44,7 @@ interface EmailListProps {
 }
 
 export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListProps) {
-  // Using the hook and providing both possible folder identifiers
+  // Using the hook and providing the folder path
   const { 
     emails = [], // Default to empty array to prevent undefined
     isLoading, 
@@ -51,12 +52,15 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
     syncInProgress,
     markAsRead,
     markAsStarred
-  } = useEmailMessages(null, folder); // Using folderPath
+  } = useEmailMessages(null, folder); // Pass folder as the second argument
   
   const [searchQuery, setSearchQuery] = useState('');
   
-  const formatDate = (date: Date) => {
-    if (!date) return "";
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "";
+    
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return "";
     
     const today = new Date();
     const isToday = date.getDate() === today.getDate() &&
@@ -89,6 +93,18 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
   const handleToggleStarred = (e: React.MouseEvent, emailId: string, isStarred: boolean) => {
     e.stopPropagation();
     markAsStarred(emailId, !isStarred);
+  };
+
+  // Handle sync with error boundary
+  const handleSyncEmails = async () => {
+    try {
+      await syncEmails(true);
+    } catch (error) {
+      console.error("Error syncing emails:", error);
+      toast.error("Failed to sync emails", {
+        description: "There was an error syncing your emails. Please try again later."
+      });
+    }
   };
 
   return (
@@ -134,7 +150,7 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
             variant="outline" 
             size="icon" 
             disabled={syncInProgress}
-            onClick={() => syncEmails(true)}
+            onClick={handleSyncEmails}
             title="E-Mails aktualisieren"
           >
             {syncInProgress ? (
@@ -184,7 +200,7 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  onClick={() => syncEmails(true)}
+                  onClick={handleSyncEmails}
                   disabled={syncInProgress}
                 >
                   {syncInProgress ? (
@@ -218,13 +234,13 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
                 {/* Email actions and metadata */}
                 <div className="flex flex-col items-center gap-1 mt-1">
                   <button
-                    onClick={(e) => handleToggleStarred(e, email.id, email.is_starred || false)}
+                    onClick={(e) => handleToggleStarred(e, email.id, email.starred || false)}
                     className="text-muted-foreground hover:text-foreground focus:outline-none"
                   >
                     <Star 
                       className={cn(
                         "h-4 w-4", 
-                        email.is_starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                        email.starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
                       )} 
                     />
                   </button>
