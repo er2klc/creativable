@@ -4,12 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Settings } from "@/integrations/supabase/types/settings";
 import { toast } from "sonner";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export const useSettings = () => {
   const queryClient = useQueryClient();
+  // Tracking ob der Fehler bereits angezeigt wurde
+  const [hasShownError, setHasShownError] = useState(false);
 
-  const { data: settings, isLoading, refetch: refetchSettings } = useQuery({
+  const { data: settings, isLoading, error, refetch: refetchSettings } = useQuery({
     queryKey: ["settings"],
     queryFn: async () => {
       try {
@@ -70,78 +72,90 @@ export const useSettings = () => {
 
         return data;
       } catch (error) {
+        // Nur einmal einen Toast anzeigen
+        if (!hasShownError) {
+          setHasShownError(true);
+          toast.error("Fehler beim Laden der Einstellungen. Bitte aktualisieren Sie die Seite.");
+        }
+        
         console.error("Error fetching settings:", {
           message: error.message,
           details: error.stack,
           hint: error.hint || "",
           code: error.code || ""
         });
+        
         throw error;
       }
     },
-    retry: 3,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
-    // Add staleTime to prevent frequent refetches
-    staleTime: 30000, // 30 seconds
+    retry: 1, // Nur einmal wiederholen statt 3 mal
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Kürzere max Verzögerung
+    staleTime: 60000, // 1 Minute statt 30 Sekunden
     // Don't refetch automatically on window focus
     refetchOnWindowFocus: false,
   });
 
   // Safely handle column existence checks without repeated API calls
   const safeSettingsUpdate = useCallback(async (newSettings: Partial<Settings>) => {
-    const { data: { user } } = await supabase.auth.getUser();
-      
-    if (!user) {
-      throw new Error("No user found");
-    }
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+        
+      if (!user) {
+        throw new Error("No user found");
+      }
 
-    // Create a safe copy of the settings to update
-    const safeSettings = { ...newSettings };
-    
-    // Handle email columns specifically
-    const emailColumns = ['email_configured', 'last_email_sync', 'email_sync_enabled'];
-    
-    for (const column of emailColumns) {
-      if (column in safeSettings) {
-        try {
-          // Try to update just this column in a separate query to test if it exists
-          const { error } = await supabase
-            .from("settings")
-            .update({ [column]: safeSettings[column] })
-            .eq("user_id", user.id);
-            
-          if (error && error.message.includes("column")) {
-            console.warn(`${column} column doesn't exist in settings table`);
+      // Create a safe copy of the settings to update
+      const safeSettings = { ...newSettings };
+      
+      // Handle email columns specifically
+      const emailColumns = ['email_configured', 'last_email_sync', 'email_sync_enabled'];
+      
+      for (const column of emailColumns) {
+        if (column in safeSettings) {
+          try {
+            // Try to update just this column in a separate query to test if it exists
+            const { error } = await supabase
+              .from("settings")
+              .update({ [column]: safeSettings[column] })
+              .eq("user_id", user.id);
+              
+            if (error && error.message.includes("column")) {
+              console.warn(`${column} column doesn't exist in settings table`);
+              delete safeSettings[column];
+            }
+          } catch (error) {
+            console.warn(`Error checking ${column} column:`, error);
             delete safeSettings[column];
           }
-        } catch (error) {
-          console.warn(`Error checking ${column} column:`, error);
-          delete safeSettings[column];
         }
       }
-    }
-    
-    // Only proceed with update if there are properties to update
-    if (Object.keys(safeSettings).length === 0) {
-      return settings;
-    }
+      
+      // Only proceed with update if there are properties to update
+      if (Object.keys(safeSettings).length === 0) {
+        return settings;
+      }
 
-    const { data, error } = await supabase
-      .from("settings")
-      .update(safeSettings)
-      .eq("user_id", user.id)
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from("settings")
+        .update(safeSettings)
+        .eq("user_id", user.id)
+        .select()
+        .single();
 
-    if (error) {
+      if (error) {
+        throw error;
+      }
+
+      if (safeSettings.openai_api_key) {
+        console.info("✅ OpenAI API Key updated successfully");
+      }
+
+      return data;
+    } catch (error) {
+      console.error("Error in safeSettingsUpdate:", error);
+      toast.error("Fehler beim Aktualisieren der Einstellungen");
       throw error;
     }
-
-    if (safeSettings.openai_api_key) {
-      console.info("✅ OpenAI API Key updated successfully");
-    }
-
-    return data;
   }, [settings]);
 
   const updateSettings = useMutation({
@@ -171,6 +185,7 @@ export const useSettings = () => {
   return {
     settings,
     isLoading,
+    error,
     updateSettings,
     refetchSettings,
   };

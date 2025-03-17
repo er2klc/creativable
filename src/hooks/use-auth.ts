@@ -1,12 +1,33 @@
-import { useContext } from "react";
-import { AuthContext } from "@/providers/auth/AuthContext";
+import { useEffect, useState } from 'react';
+import { useSupabaseClient, useSessionContext } from '@supabase/auth-helpers-react';
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  const [user, setUser] = useState(null);
+  const { supabaseClient } = useSupabaseClient();
+  const { session } = useSessionContext();
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
-  return context;
+  useEffect(() => {
+    const fetchUser = async () => {
+      setIsLoading(true);
+      try {
+        if (session?.user) {
+          setUser(session.user);
+        } else {
+          // Wenn keine Session vorhanden ist, setzen wir den User auf null
+          setUser(null);
+        }
+      } catch (err: any) {
+        setError(err);
+        console.error("Auth error:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchUser();
+  }, [session, supabaseClient]);
+
+  return { user, isLoading, error };
 };

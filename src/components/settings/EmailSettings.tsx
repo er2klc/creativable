@@ -23,13 +23,29 @@ export function EmailSettings() {
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
+  const [lastCheckTime, setLastCheckTime] = useState<number>(0);
+  // Fehler-State, um wiederholte Fehler zu vermeiden
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  // Flags um zu verhindern, dass zu viele Anfragen gestellt werden
+  const [checkAttempted, setCheckAttempted] = useState(false);
+  const [skipNextEffect, setSkipNextEffect] = useState(false);
   
   // Check if email is configured - using a memoized function to prevent excessive rerenders
   const checkEmailConfig = useCallback(async () => {
-    if (!user) return;
+    if (!user || checkAttempted) return;
     
     try {
       setIsLoading(true);
+      setCheckAttempted(true);
+      
+      // Verhindere zu häufige Anfragen (mindestens 5 Sekunden zwischen Aufrufen)
+      const now = Date.now();
+      if (now - lastCheckTime < 5000) {
+        console.log("Skipping check - too soon since last check");
+        return;
+      }
+      
+      setLastCheckTime(now);
       
       // Check IMAP settings
       const { data: imapData, error: imapError } = await supabase
@@ -40,6 +56,7 @@ export function EmailSettings() {
         
       if (imapError && imapError.code !== 'PGRST116') {
         console.error('Error fetching IMAP settings:', imapError);
+        setFetchError(imapError.message);
       }
       
       // Check SMTP settings
@@ -51,6 +68,7 @@ export function EmailSettings() {
         
       if (smtpError && smtpError.code !== 'PGRST116') {
         console.error('Error fetching SMTP settings:', smtpError);
+        if (!fetchError) setFetchError(smtpError.message);
       }
       
       setImapSettings(imapData);
@@ -62,6 +80,7 @@ export function EmailSettings() {
       
       // Update settings if connection status has changed
       if (settings && isConfigured !== !!settings.email_configured) {
+        setSkipNextEffect(true);
         updateSettings.mutate({ 
           email_configured: isConfigured 
         });
@@ -71,15 +90,23 @@ export function EmailSettings() {
       if (imapData?.last_sync_at) {
         setLastSyncTime(imapData.last_sync_at);
       }
+    } catch (error) {
+      console.error('Error checking email config:', error);
+      setFetchError(error.message || "Unbekannter Fehler");
     } finally {
       setIsLoading(false);
     }
-  }, [user, updateSettings, settings]);
+  }, [user, updateSettings, settings, lastCheckTime, checkAttempted, fetchError]);
   
-  // Only run email config check once when component mounts or when user changes
+  // Effekt, der einmalig nach dem Rendern ausgeführt wird
   useEffect(() => {
+    if (!user || isLoading || skipNextEffect) {
+      if (skipNextEffect) setSkipNextEffect(false);
+      return;
+    }
+    
     checkEmailConfig();
-  }, [checkEmailConfig, user]);
+  }, [checkEmailConfig, user, isLoading, skipNextEffect]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -166,6 +193,66 @@ export function EmailSettings() {
       setIsSyncing(false);
     }
   };
+
+  // Wenn ein Fehler aufgetreten ist, zeige es dem Benutzer
+  if (fetchError && !isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md mb-6">
+          <div className="flex items-start">
+            <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2 flex-shrink-0" />
+            <div>
+              <h3 className="text-sm font-medium text-red-800">Fehler beim Laden der E-Mail-Einstellungen</h3>
+              <p className="text-sm text-red-700 mt-1">
+                {fetchError}
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setFetchError(null);
+                  setCheckAttempted(false);
+                  checkEmailConfig();
+                }}
+                className="mt-2"
+              >
+                Erneut versuchen
+              </Button>
+            </div>
+          </div>
+        </div>
+        
+        <Tabs defaultValue="imap" value={activeTab} onValueChange={handleTabChange}>
+          <TabsList className="mb-4">
+            <TabsTrigger value="imap">IMAP-Einstellungen</TabsTrigger>
+            <TabsTrigger value="smtp">SMTP-Einstellungen</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="imap">
+            <ImapSettings onSettingsSaved={() => {
+              setCheckAttempted(false);
+              checkEmailConfig();
+            }} />
+          </TabsContent>
+          <TabsContent value="smtp">
+            <SmtpSettings onSettingsSaved={() => {
+              setCheckAttempted(false);
+              checkEmailConfig();
+            }} />
+          </TabsContent>
+        </Tabs>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   // Connection state view - Shown when email is configured
   const ConnectedView = () => (
@@ -456,14 +543,5 @@ export function EmailSettings() {
     </div>
   );
   
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return emailConnected ? <ConnectedView /> : <ConfigurationView />;
 }
