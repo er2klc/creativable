@@ -135,6 +135,13 @@ export default function Messages() {
       setSyncInProgress(true);
       setSyncProgress(0);
       
+      // Get the current user session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error(sessionError?.message || "No active session found");
+      }
+      
       // Prepare sync options
       const syncOptions = {
         force_refresh: forceRefresh,
@@ -143,18 +150,19 @@ export default function Messages() {
         max_emails: maxEmails
       };
       
-      // Call the sync-emails function
+      // Call the sync-emails function with proper authorization
       const response = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${user.session?.access_token}`
+          'Authorization': `Bearer ${sessionData.session.access_token}`
         },
         body: JSON.stringify(syncOptions)
       });
       
       if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
       
       const result = await response.json();

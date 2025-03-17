@@ -45,19 +45,6 @@ export function useEmailMessages(folderId: string | null, folderPath: string | n
       if (!user || (!folderId && !folderPath)) return [];
       
       try {
-        // Check if emails table exists
-        const { error: tableCheckError } = await supabase
-          .from('emails')
-          .select('id')
-          .limit(1)
-          .single();
-        
-        // If table doesn't exist, return empty array rather than throwing an error
-        if (tableCheckError && tableCheckError.code === '42P01') {
-          console.warn("emails table doesn't exist yet");
-          return [];
-        }
-        
         let query = supabase
           .from("emails")
           .select("*")
@@ -107,20 +94,31 @@ export function useEmailMessages(folderId: string | null, folderPath: string | n
       setSyncInProgress(true);
       toast.info("Synchronizing emails...");
       
-      // Add your email sync logic here, e.g.:
-      const response = await fetch("https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${user.session?.access_token}`
-        },
-        body: JSON.stringify({
-          force_refresh: forceRefresh
-        })
-      });
+      // Get the current user session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error(sessionError?.message || "No active session found");
+      }
+      
+      // Call the sync-emails edge function with proper authorization
+      const response = await fetch(
+        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${sessionData.session.access_token}`
+          },
+          body: JSON.stringify({
+            force_refresh: forceRefresh
+          })
+        }
+      );
       
       if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
       
       const result = await response.json();

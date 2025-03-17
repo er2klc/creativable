@@ -28,20 +28,28 @@ export function useFolderSync() {
     try {
       setIsSyncing(true);
       
-      // Call the sync-folders edge function to fetch and store folders
+      // Get the current user session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error(sessionError?.message || "No active session found");
+      }
+      
+      // Call the sync-folders edge function with proper authorization
       const response = await fetch(
         "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-folders",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user?.session?.access_token}`
+            "Authorization": `Bearer ${sessionData.session.access_token}`
           }
         }
       );
       
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
       
       const result = await response.json();

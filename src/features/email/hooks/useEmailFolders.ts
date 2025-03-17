@@ -47,27 +47,17 @@ export function useEmailFolders() {
       
       try {
         // Check if email_folders table exists
-        const { error: tableCheckError } = await supabase
-          .from('email_folders')
-          .select('id')
-          .limit(1)
-          .single();
-        
-        // If table doesn't exist, return empty data rather than throwing an error
-        if (tableCheckError && tableCheckError.code === '42P01') {
-          console.warn("email_folders table doesn't exist yet");
-          return emptyFolders;
-        }
-        
-        // Get folders from database
         const { data, error } = await supabase
-          .from("email_folders")
+          .from('email_folders')
           .select("*")
           .eq("user_id", user.id)
           .order("type", { ascending: true })
           .order("name", { ascending: true });
         
-        if (error) throw error;
+        if (error) {
+          console.error("Error fetching email folders:", error);
+          return emptyFolders;
+        }
         
         // Group by type for better organization
         const organizedFolders = groupFoldersByType(data || []);
@@ -103,20 +93,28 @@ export function useEmailFolders() {
     try {
       setSyncInProgress(true);
       
-      // Call the sync-folders edge function to sync folders
+      // Get the current user session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error(sessionError?.message || "No active session found");
+      }
+      
+      // Call the sync-folders edge function with proper authorization
       const response = await fetch(
         "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-folders",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${user?.session?.access_token}`
+            "Authorization": `Bearer ${sessionData.session.access_token}`
           }
         }
       );
       
       if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
       
       const result = await response.json();
