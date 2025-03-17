@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { EmailSidebar } from './EmailSidebar';
 import { EmailList } from './EmailList';
 import { EmailViewer } from './EmailViewer';
@@ -10,8 +10,14 @@ export interface EmailLayoutProps {
 }
 
 export function EmailLayout({ userEmail }: EmailLayoutProps) {
-  const [selectedFolder, setSelectedFolder] = React.useState('inbox');
+  // Default to inbox as starting folder
+  const [selectedFolder, setSelectedFolder] = React.useState('INBOX');
   const [selectedEmailId, setSelectedEmailId] = React.useState<string | null>(null);
+  
+  // Reset selected email when folder changes
+  useEffect(() => {
+    setSelectedEmailId(null);
+  }, [selectedFolder]);
 
   return (
     <div className="grid h-full grid-cols-[240px_350px_1fr] overflow-hidden">

@@ -1,9 +1,12 @@
 
 import React from 'react';
+import { useEmailViewer } from '../../hooks/useEmailViewer';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
-import { Reply, Forward, Trash, CornerUpRight, Download, Star, MoreVertical } from 'lucide-react';
+import { ArrowLeft, Archive, Clock, Mail, Reply, Star, Trash, User } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 
 interface EmailViewerProps {
   emailId: string | null;
@@ -11,177 +14,150 @@ interface EmailViewerProps {
 }
 
 export function EmailViewer({ emailId, userEmail }: EmailViewerProps) {
-  // State to simulate email loading
-  const [isLoading, setIsLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    if (emailId) {
-      setIsLoading(true);
-      // Simulate email loading
-      const timer = setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [emailId]);
-
+  const { email, isLoading } = useEmailViewer(emailId);
+  
   if (!emailId) {
     return (
-      <div className="flex items-center justify-center h-full text-center p-8">
-        <div className="max-w-md space-y-2">
-          <h3 className="text-xl font-medium">Keine E-Mail ausgewählt</h3>
-          <p className="text-muted-foreground">
-            Wählen Sie eine E-Mail aus der Liste aus, um diese anzuzeigen.
-          </p>
-        </div>
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-muted-foreground">
+        <Mail className="h-12 w-12 mb-4 text-muted-foreground/50" />
+        <h3 className="text-lg font-medium mb-2">Keine E-Mail ausgewählt</h3>
+        <p>Wählen Sie eine E-Mail aus der Liste aus, um sie hier anzuzeigen.</p>
       </div>
     );
   }
-
+  
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  // Mock email data - in a real implementation, this would come from a query hook
-  const email = {
-    id: '1',
-    from: {
-      name: 'Max Mustermann',
-      email: 'max@example.com',
-    },
-    to: [
-      { name: 'Me', email: userEmail || 'me@example.com' },
-    ],
-    cc: [],
-    bcc: [],
-    subject: 'Meeting am Donnerstag',
-    date: new Date(2023, 4, 15, 9, 30),
-    body: `<p>Hallo,</p>
-           <p>lass uns am Donnerstag um 14 Uhr treffen, um das neue Projekt zu besprechen.</p>
-           <p>Hier sind die Themen, die wir abdecken sollten:</p>
-           <ul>
-             <li>Projektzeitplan</li>
-             <li>Ressourcenplanung</li>
-             <li>Budgetübersicht</li>
-             <li>Risikomanagement</li>
-           </ul>
-           <p>Bitte bestätige mir, ob der Termin für dich passt.</p>
-           <p>Viele Grüße,<br>Max</p>`,
-    attachments: [
-      { name: 'Projektübersicht.pdf', size: '2.4 MB', type: 'application/pdf' },
-      { name: 'Meetingnotizen.docx', size: '1.1 MB', type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' },
-    ],
-  };
-
-  return (
-    <div className="flex flex-col h-full">
-      {/* Email header */}
-      <div className="p-4 border-b">
-        <div className="flex justify-between items-start mb-4">
-          <div>
-            <h2 className="text-xl font-semibold">{email.subject}</h2>
-          </div>
-          <div className="flex gap-2">
-            <Button variant="ghost" size="icon">
-              <Star className="h-4 w-4" />
-            </Button>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
+      <div className="p-6 space-y-6">
+        <div className="flex items-center justify-between">
+          <Skeleton className="h-7 w-1/3" />
+          <div className="space-x-2">
+            <Skeleton className="h-9 w-9 inline-block" />
+            <Skeleton className="h-9 w-9 inline-block" />
+            <Skeleton className="h-9 w-9 inline-block" />
           </div>
         </div>
         
-        <div className="flex items-start gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback>{email.from.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          
-          <div className="flex-1 min-w-0">
-            <div className="flex items-baseline justify-between">
-              <p className="font-medium">{email.from.name}</p>
-              <span className="text-sm text-muted-foreground">
-                {email.date.toLocaleString('de-DE', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
-              </span>
+        <div className="space-y-4">
+          <div className="flex items-start space-x-3">
+            <Skeleton className="h-10 w-10 rounded-full" />
+            <div className="flex-1 space-y-2">
+              <Skeleton className="h-5 w-1/4" />
+              <Skeleton className="h-4 w-1/3" />
             </div>
-            
-            <p className="text-sm text-muted-foreground">
-              An: {email.to.map(recipient => recipient.name).join(', ')}
-            </p>
-            
-            {email.cc.length > 0 && (
-              <p className="text-sm text-muted-foreground">
-                CC: {email.cc.map(recipient => recipient.name).join(', ')}
-              </p>
-            )}
+          </div>
+          
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-2/3" />
+          
+          <div className="pt-4">
+            <Skeleton className="h-48 w-full" />
           </div>
         </div>
       </div>
-      
-      {/* Email actions */}
-      <div className="p-2 border-b flex gap-2">
-        <Button variant="outline" size="sm">
-          <Reply className="h-4 w-4 mr-2" />
-          Antworten
+    );
+  }
+  
+  if (!email) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-6 text-center text-muted-foreground">
+        <Mail className="h-12 w-12 mb-4 text-muted-foreground/50" />
+        <h3 className="text-lg font-medium mb-2">E-Mail nicht gefunden</h3>
+        <p>Die ausgewählte E-Mail ist nicht verfügbar oder wurde gelöscht.</p>
+      </div>
+    );
+  }
+  
+  // Get initials for avatar
+  const getInitials = (name: string): string => {
+    return name
+      .split(' ')
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 2);
+  };
+  
+  // Format relative time
+  const getRelativeTime = (date: Date): string => {
+    return formatDistanceToNow(date, {
+      addSuffix: true,
+      locale: de
+    });
+  };
+  
+  return (
+    <div className="h-full flex flex-col">
+      {/* Email toolbar */}
+      <div className="p-3 border-b flex items-center justify-between">
+        <Button variant="ghost" size="icon">
+          <ArrowLeft className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm">
-          <CornerUpRight className="h-4 w-4 mr-2" />
-          Allen antworten
-        </Button>
-        <Button variant="outline" size="sm">
-          <Forward className="h-4 w-4 mr-2" />
-          Weiterleiten
-        </Button>
-        <Button variant="outline" size="sm" className="ml-auto text-destructive">
-          <Trash className="h-4 w-4" />
-        </Button>
+        
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="icon">
+            <Archive className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Trash className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Star className={email.is_starred ? "h-4 w-4 fill-yellow-400 text-yellow-400" : "h-4 w-4"} />
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Reply className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       
-      {/* Email body */}
-      <div className="flex-1 p-6 overflow-auto">
-        <div 
-          className="prose prose-sm max-w-none dark:prose-invert"
-          dangerouslySetInnerHTML={{ __html: email.body }}
-        />
-      </div>
-      
-      {/* Attachments */}
-      {email.attachments && email.attachments.length > 0 && (
-        <div className="p-4 border-t">
-          <h3 className="text-sm font-medium mb-2">Anhänge ({email.attachments.length})</h3>
-          <div className="flex flex-wrap gap-2">
-            {email.attachments.map((attachment, index) => (
-              <div key={index} className="flex items-center border rounded-md p-2 bg-muted/30">
-                <div className="mr-2">
-                  {attachment.type.includes('pdf') ? (
-                    <div className="h-8 w-8 bg-red-100 text-red-800 flex items-center justify-center rounded">PDF</div>
-                  ) : attachment.type.includes('word') ? (
-                    <div className="h-8 w-8 bg-blue-100 text-blue-800 flex items-center justify-center rounded">DOC</div>
-                  ) : (
-                    <div className="h-8 w-8 bg-gray-100 flex items-center justify-center rounded">FILE</div>
-                  )}
+      <div className="overflow-y-auto flex-1 p-6">
+        {/* Email header */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-6">{email.subject || "(Kein Betreff)"}</h2>
+          
+          <div className="flex items-start space-x-3">
+            <Avatar>
+              <AvatarFallback>
+                {getInitials(email.from_name || email.from_email)}
+              </AvatarFallback>
+            </Avatar>
+            
+            <div className="flex-1">
+              <div className="flex justify-between items-baseline">
+                <div>
+                  <p className="font-medium">{email.from_name || email.from_email}</p>
+                  <p className="text-sm text-muted-foreground">
+                    <span>{email.from_email}</span>
+                  </p>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{attachment.name}</p>
-                  <p className="text-xs text-muted-foreground">{attachment.size}</p>
+                
+                <div className="text-sm text-muted-foreground flex items-center">
+                  <Clock className="mr-1 h-3 w-3" />
+                  {getRelativeTime(email.sent_at)}
                 </div>
-                <Button variant="ghost" size="icon" className="ml-2">
-                  <Download className="h-4 w-4" />
-                </Button>
               </div>
-            ))}
+              
+              <div className="mt-2 text-sm text-muted-foreground">
+                <span className="inline-flex items-center mr-2">
+                  <User className="mr-1 h-3 w-3" />
+                  An:
+                </span>
+                {email.to_name ? `${email.to_name} <${email.to_email}>` : email.to_email || userEmail}
+              </div>
+            </div>
           </div>
         </div>
-      )}
+        
+        {/* Email content */}
+        <div className="mb-6 border-t pt-6">
+          {email.html_content ? (
+            <div dangerouslySetInnerHTML={{ __html: email.html_content }} />
+          ) : (
+            <pre className="whitespace-pre-wrap font-sans">{email.text_content || email.content || "Kein Inhalt"}</pre>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
