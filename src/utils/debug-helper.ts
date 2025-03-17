@@ -102,6 +102,63 @@ export const testEmailTablesAccess = async () => {
 };
 
 /**
+ * Helper to check email configuration status
+ */
+export const checkEmailConfigStatus = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      console.error('No authenticated user for email config check');
+      return { success: false, error: 'No authenticated user', isConfigured: false };
+    }
+    
+    // Check both IMAP and SMTP settings
+    const [imapResult, smtpResult] = await Promise.all([
+      supabase.from('imap_settings').select('*').eq('user_id', user.id).maybeSingle(),
+      supabase.from('smtp_settings').select('*').eq('user_id', user.id).maybeSingle()
+    ]);
+    
+    if (imapResult.error && imapResult.error.code !== 'PGRST116') {
+      console.error('Error checking IMAP settings:', imapResult.error);
+      return { 
+        success: false, 
+        error: imapResult.error.message,
+        isConfigured: false 
+      };
+    }
+    
+    if (smtpResult.error && smtpResult.error.code !== 'PGRST116') {
+      console.error('Error checking SMTP settings:', smtpResult.error);
+      return { 
+        success: false, 
+        error: smtpResult.error.message,
+        isConfigured: false 
+      };
+    }
+    
+    // Both settings must exist and have valid host information
+    const isConfigured = Boolean(
+      imapResult.data?.host && smtpResult.data?.host
+    );
+    
+    return { 
+      success: true, 
+      isConfigured,
+      imapSettings: imapResult.data || null,
+      smtpSettings: smtpResult.data || null
+    };
+  } catch (error: any) {
+    console.error('Exception checking email config:', error);
+    return { 
+      success: false, 
+      error: error.message,
+      isConfigured: false 
+    };
+  }
+};
+
+/**
  * Helper to check service quotas
  */
 export const checkServiceQuota = async () => {
@@ -193,6 +250,7 @@ export const ensureEmailTablesExist = async () => {
  */
 export const emailDebugHelper = {
   testTablesAccess: testEmailTablesAccess,
+  checkEmailConfigStatus,
   checkUserRights: async () => {
     const { data: { user } } = await supabase.auth.getUser();
     

@@ -1,9 +1,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
-import { useSupabaseClient, useSessionContext } from '@supabase/auth-helpers-react';
+import { useSupabaseClient, useSessionContext, User } from '@supabase/auth-helpers-react';
 
 export const useAuth = () => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<User | null>(null);
   const supabaseClient = useSupabaseClient();
   const { session, isLoading: sessionLoading } = useSessionContext();
   const [isLoading, setIsLoading] = useState(true);
