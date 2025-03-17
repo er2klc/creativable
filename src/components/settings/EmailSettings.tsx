@@ -22,6 +22,8 @@ export function EmailSettings() {
   const [smtpSettings, setSmtpSettings] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
   
   // Check if email is configured
   useEffect(() => {
@@ -60,9 +62,14 @@ export function EmailSettings() {
         const isConfigured = !!(imapData?.host && smtpData?.host);
         setEmailConnected(isConfigured);
         
-        // Update smtp_configured in settings if needed
-        if (isConfigured && !settings?.smtp_configured) {
-          updateSettings.mutate({ smtp_configured: true });
+        // Update email_configured in settings if needed and it exists in the database
+        if (isConfigured && settings && settings.email_configured !== true) {
+          try {
+            await updateSettings.mutate({ email_configured: true });
+          } catch (error) {
+            // Gracefully handle case where column doesn't exist yet
+            console.warn('Could not update email_configured status:', error);
+          }
         }
         
         // Set last sync time (for display purposes)
@@ -77,7 +84,7 @@ export function EmailSettings() {
     };
     
     checkEmailConfig();
-  }, [user, settings?.smtp_configured, updateSettings]);
+  }, [user, settings, updateSettings]);
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -85,6 +92,7 @@ export function EmailSettings() {
   
   const disconnectEmail = async () => {
     if (!user) return;
+    setIsDisconnecting(true);
     
     try {
       // Delete IMAP settings
@@ -104,7 +112,11 @@ export function EmailSettings() {
       }
       
       // Update settings
-      updateSettings.mutate({ smtp_configured: false });
+      try {
+        await updateSettings.mutate({ email_configured: false });
+      } catch (error) {
+        console.warn('Could not update email_configured status:', error);
+      }
       
       // Reset state
       setImapSettings(null);
@@ -115,12 +127,15 @@ export function EmailSettings() {
     } catch (error) {
       console.error('Error disconnecting email:', error);
       toast.error("Fehler beim Trennen der E-Mail-Verbindung");
+    } finally {
+      setIsDisconnecting(false);
     }
   };
   
   const triggerSync = async () => {
     if (!user) return;
     
+    setIsSyncing(true);
     toast.info("E-Mail-Synchronisation wurde gestartet", {
       description: "Dies kann einige Minuten dauern."
     });
@@ -136,18 +151,21 @@ export function EmailSettings() {
       toast.success("E-Mail-Synchronisation erfolgreich");
       
       // Update last sync time
-      setLastSyncTime(new Date().toISOString());
+      const now = new Date().toISOString();
+      setLastSyncTime(now);
       
       // Update IMAP settings with new sync time
       if (imapSettings?.id) {
         await supabase
           .from('imap_settings')
-          .update({ last_sync_at: new Date().toISOString() })
+          .update({ last_sync_at: now })
           .eq('id', imapSettings.id);
       }
     } catch (error) {
       console.error('Error syncing emails:', error);
       toast.error("Fehler bei der E-Mail-Synchronisation");
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -186,7 +204,7 @@ export function EmailSettings() {
             <div className="flex justify-between items-center">
               <div>
                 <h3 className="text-base font-medium">Verbundenes Konto</h3>
-                <p className="text-sm text-muted-foreground mt-1">{imapSettings?.username || 'E-Mail-Adresse'}</p>
+                <p className="text-sm text-muted-foreground mt-1">{imapSettings?.username || smtpSettings?.from_email || 'E-Mail-Adresse'}</p>
               </div>
               <div className="flex gap-2">
                 <Button 
@@ -194,18 +212,26 @@ export function EmailSettings() {
                   size="sm" 
                   className="flex items-center gap-1.5"
                   onClick={triggerSync}
+                  disabled={isSyncing}
                 >
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  Synchronisieren
+                  {isSyncing ? (
+                    <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Synchronisiere...</>
+                  ) : (
+                    <><RefreshCw className="h-3.5 w-3.5" /> Synchronisieren</>
+                  )}
                 </Button>
                 <Button 
                   variant="destructive" 
                   size="sm" 
                   className="flex items-center gap-1.5"
                   onClick={disconnectEmail}
+                  disabled={isDisconnecting}
                 >
-                  <XCircle className="h-3.5 w-3.5" />
-                  Trennen
+                  {isDisconnecting ? (
+                    <><XCircle className="h-3.5 w-3.5" /> Trennen...</>
+                  ) : (
+                    <><XCircle className="h-3.5 w-3.5" /> Trennen</>
+                  )}
                 </Button>
               </div>
             </div>
@@ -279,6 +305,48 @@ export function EmailSettings() {
                 </div>
               </div>
             </div>
+            
+            <div className="pt-4">
+              <Tabs defaultValue="imap" value={activeTab} onValueChange={handleTabChange}>
+                <TabsList className="mb-4">
+                  <TabsTrigger value="imap">IMAP-Einstellungen</TabsTrigger>
+                  <TabsTrigger value="smtp">SMTP-Einstellungen</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="imap">
+                  <ImapSettings onSettingsSaved={() => {
+                    const checkImapConfig = async () => {
+                      if (!user) return;
+                      
+                      const { data } = await supabase
+                        .from('imap_settings')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .single();
+                      
+                      setImapSettings(data);
+                    };
+                    checkImapConfig();
+                  }} />
+                </TabsContent>
+                <TabsContent value="smtp">
+                  <SmtpSettings onSettingsSaved={() => {
+                    const checkSmtpConfig = async () => {
+                      if (!user) return;
+                      
+                      const { data } = await supabase
+                        .from('smtp_settings')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .single();
+                      
+                      setSmtpSettings(data);
+                    };
+                    checkSmtpConfig();
+                  }} />
+                </TabsContent>
+              </Tabs>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -341,7 +409,6 @@ export function EmailSettings() {
               <TabsContent value="imap" className="m-0">
                 <ImapSettings onSettingsSaved={() => {
                   // Refresh email config
-                  const { user } = useAuth();
                   if (user) {
                     const checkImapConfig = async () => {
                       const { data } = await supabase
@@ -351,6 +418,16 @@ export function EmailSettings() {
                         .single();
                       
                       setImapSettings(data);
+                      
+                      // Update connected status if both IMAP and SMTP are configured
+                      if (data?.host && smtpSettings?.host) {
+                        setEmailConnected(true);
+                        try {
+                          await updateSettings.mutate({ email_configured: true });
+                        } catch (error) {
+                          console.warn('Could not update email_configured status:', error);
+                        }
+                      }
                     };
                     checkImapConfig();
                   }
@@ -372,7 +449,6 @@ export function EmailSettings() {
                 )}
                 <SmtpSettings onSettingsSaved={() => {
                   // Refresh email config
-                  const { user } = useAuth();
                   if (user) {
                     const checkSmtpConfig = async () => {
                       const { data } = await supabase
@@ -382,6 +458,16 @@ export function EmailSettings() {
                         .single();
                       
                       setSmtpSettings(data);
+                      
+                      // Update connected status if both IMAP and SMTP are configured
+                      if (imapSettings?.host && data?.host) {
+                        setEmailConnected(true);
+                        try {
+                          await updateSettings.mutate({ email_configured: true });
+                        } catch (error) {
+                          console.warn('Could not update email_configured status:', error);
+                        }
+                      }
                     };
                     checkSmtpConfig();
                   }

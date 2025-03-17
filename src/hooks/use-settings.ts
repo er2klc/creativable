@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Settings } from "@/integrations/supabase/types/settings";
@@ -48,6 +49,7 @@ export const useSettings = () => {
             registration_step: 1,
             registration_completed: false,
             whatsapp_number: phoneNumber,
+            email_configured: false,
           };
 
           const { data: createdSettings, error: createError } = await supabase
@@ -85,6 +87,30 @@ export const useSettings = () => {
       
       if (!user) {
         throw new Error("No user found");
+      }
+
+      // Check if email_configured is being set and the column exists
+      if ('email_configured' in newSettings) {
+        try {
+          const { error } = await supabase
+            .from("settings")
+            .update({ email_configured: newSettings.email_configured })
+            .eq("user_id", user.id);
+            
+          if (error && error.code === 'PGRST204') {
+            // Column doesn't exist, remove it from the update
+            delete newSettings.email_configured;
+            console.warn("email_configured column doesn't exist in settings table");
+          }
+        } catch (error) {
+          console.warn("Error checking email_configured column:", error);
+          delete newSettings.email_configured;
+        }
+      }
+
+      // Only proceed with update if there are properties to update
+      if (Object.keys(newSettings).length === 0) {
+        return settings;
       }
 
       const { data, error } = await supabase
