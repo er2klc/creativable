@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,21 +26,22 @@ export default function Messages() {
   const { settings } = useSettings();
   const [isConfigured, setIsConfigured] = useState(false);
   const [isCheckingConfig, setIsCheckingConfig] = useState(true);
+  const configCheckAttemptedRef = useRef(false);
 
   // Check email configuration
   useEffect(() => {
     let isMounted = true;
     
     const checkConfig = async () => {
-      if (!user) {
+      if (!user || configCheckAttemptedRef.current) {
         if (isMounted) {
           setIsCheckingConfig(false);
-          setIsConfigured(false);
         }
         return;
       }
       
       try {
+        configCheckAttemptedRef.current = true;
         setIsCheckingConfig(true);
         const configStatus = await checkEmailConfigStatus();
         
@@ -173,6 +174,13 @@ export default function Messages() {
       setSyncInProgress(false);
     }
   };
+
+  // Reset config check when authentication changes
+  useEffect(() => {
+    if (!user) {
+      configCheckAttemptedRef.current = false;
+    }
+  }, [user]);
 
   if (!user) {
     return (

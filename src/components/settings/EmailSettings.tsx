@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImapSettings } from "./ImapSettings";
 import { SmtpSettings } from "./SmtpSettings";
@@ -28,6 +29,7 @@ export function EmailSettings() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const isMountedRef = useRef(true);
   const settingsLoadedRef = useRef(false);
+  const loadAttemptedRef = useRef(false);
   const [showSettingsForm, setShowSettingsForm] = useState(false);
 
   const handleTabChange = (value: string) => {
@@ -36,12 +38,13 @@ export function EmailSettings() {
 
   // Load email settings with better error handling
   const loadEmailSettings = useCallback(async () => {
-    if (!user || !isMountedRef.current || settingsLoadedRef.current) {
-      setIsLoading(false);
+    // Only attempt to load settings once, until explicitly reset
+    if (!user || !isMountedRef.current || settingsLoadedRef.current || loadAttemptedRef.current) {
       return;
     }
-
+    
     try {
+      loadAttemptedRef.current = true;
       setIsLoading(true);
       console.log("Loading email settings...");
 
@@ -89,8 +92,7 @@ export function EmailSettings() {
   // Initialize the component
   useEffect(() => {
     isMountedRef.current = true;
-    settingsLoadedRef.current = false;
-
+    
     if (user) {
       loadEmailSettings();
     }
@@ -98,7 +100,7 @@ export function EmailSettings() {
     return () => {
       isMountedRef.current = false;
     };
-  }, [loadEmailSettings, user]);
+  }, [user, loadEmailSettings]);
 
   const disconnectEmail = async () => {
     if (!user) return;
@@ -131,6 +133,7 @@ export function EmailSettings() {
       setSmtpSettings(null);
       setEmailConnected(false);
       settingsLoadedRef.current = false;
+      loadAttemptedRef.current = false; // Reset load attempt flag so we can load again
 
       toast.success("E-Mail-Verbindung wurde getrennt");
     } catch (error) {
@@ -183,6 +186,15 @@ export function EmailSettings() {
     }
   };
 
+  const handleSettingsSaved = () => {
+    // Reset load flags to force a refresh of settings
+    settingsLoadedRef.current = false;
+    loadAttemptedRef.current = false;
+    
+    // Re-check email config
+    loadEmailSettings();
+  };
+
   // If there was an error loading settings, show error message
   if (fetchError && !isLoading) {
     return (
@@ -201,6 +213,7 @@ export function EmailSettings() {
                 onClick={() => {
                   setFetchError(null);
                   settingsLoadedRef.current = false;
+                  loadAttemptedRef.current = false;
                   loadEmailSettings();
                 }}
                 className="mt-2"
@@ -412,16 +425,10 @@ export function EmailSettings() {
                   </TabsList>
                   
                   <TabsContent value="imap">
-                    <ImapSettings onSettingsSaved={() => {
-                      settingsLoadedRef.current = false;
-                      loadEmailSettings();
-                    }} />
+                    <ImapSettings onSettingsSaved={handleSettingsSaved} />
                   </TabsContent>
                   <TabsContent value="smtp">
-                    <SmtpSettings onSettingsSaved={() => {
-                      settingsLoadedRef.current = false;
-                      loadEmailSettings();
-                    }} />
+                    <SmtpSettings onSettingsSaved={handleSettingsSaved} />
                   </TabsContent>
                 </Tabs>
               </div>
@@ -486,13 +493,7 @@ export function EmailSettings() {
             
             <div className="p-6">
               <TabsContent value="imap" className="m-0">
-                <ImapSettings onSettingsSaved={() => {
-                  // Refresh email config
-                  if (user) {
-                    settingsLoadedRef.current = false;
-                    loadEmailSettings();
-                  }
-                }} />
+                <ImapSettings onSettingsSaved={handleSettingsSaved} />
               </TabsContent>
               <TabsContent value="smtp" className="m-0">
                 {!imapSettings?.host && (
@@ -508,13 +509,7 @@ export function EmailSettings() {
                     </div>
                   </div>
                 )}
-                <SmtpSettings onSettingsSaved={() => {
-                  // Refresh email config
-                  if (user) {
-                    settingsLoadedRef.current = false;
-                    loadEmailSettings();
-                  }
-                }} />
+                <SmtpSettings onSettingsSaved={handleSettingsSaved} />
               </TabsContent>
             </div>
           </Tabs>

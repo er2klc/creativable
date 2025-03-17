@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSupabaseClient, useSessionContext, User } from '@supabase/auth-helpers-react';
 
 export const useAuth = () => {
@@ -8,13 +8,16 @@ export const useAuth = () => {
   const { session, isLoading: sessionLoading } = useSessionContext();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const fetchAttemptedRef = useRef(false);
 
   // Memoize the fetchUser function to prevent recreation on each render
   const fetchUser = useCallback(async () => {
-    if (sessionLoading) return; // Wait for session to be determined
+    if (sessionLoading || fetchAttemptedRef.current) return; // Wait for session to be determined
     
-    setIsLoading(true);
     try {
+      fetchAttemptedRef.current = true;
+      setIsLoading(true);
+      
       if (session?.user) {
         setUser(session.user);
       } else {
@@ -28,6 +31,13 @@ export const useAuth = () => {
       setIsLoading(false);
     }
   }, [session, sessionLoading]);
+
+  // Reset fetch attempt flag when session changes
+  useEffect(() => {
+    if (session?.user?.id !== user?.id) {
+      fetchAttemptedRef.current = false;
+    }
+  }, [session?.user?.id, user?.id]);
 
   useEffect(() => {
     fetchUser();
