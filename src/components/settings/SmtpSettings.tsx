@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, Mail, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle2, Mail, AlertCircle, ServerIcon } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Switch } from "@/components/ui/switch";
 import { smtpSettingsSchema } from "./schemas/smtp-settings-schema";
@@ -164,7 +164,7 @@ export function SmtpSettings() {
         .eq('user_id', user.id);
       
       toast.success("SMTP-Verbindung erfolgreich getestet");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error testing SMTP connection:', error);
       setLastTestError(error.message || "Verbindung fehlgeschlagen");
       setIsVerified(false);
@@ -190,29 +190,34 @@ export function SmtpSettings() {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin" />
-            <span className="ml-2">Lade Einstellungen...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex items-center justify-center p-12">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Lade Einstellungen...</p>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>SMTP-Einstellungen</CardTitle>
-        <CardDescription>
-          Konfigurieren Sie Ihre E-Mail-Server-Einstellungen für den E-Mail-Versand
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+    <div className="animate-fade-in">
+      <div className="mb-6">
+        <h2 className="text-lg font-medium mb-2">SMTP-Einstellungen</h2>
+        <p className="text-muted-foreground text-sm">
+          Konfigurieren Sie Ihre SMTP-Server-Einstellungen für den E-Mail-Versand. 
+          Diese Einstellungen ermöglichen es der App, E-Mails in Ihrem Namen zu versenden.
+        </p>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="bg-white p-6 rounded-md shadow-sm border">
+            <h3 className="text-base font-semibold mb-4 flex items-center">
+              <ServerIcon className="h-4 w-4 mr-2 text-primary" />
+              Server-Einstellungen
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="host"
@@ -220,7 +225,7 @@ export function SmtpSettings() {
                   <FormItem>
                     <FormLabel>SMTP Server</FormLabel>
                     <FormControl>
-                      <Input placeholder="smtp.gmail.com" {...field} />
+                      <Input placeholder="smtp.gmail.com" className="bg-gray-50" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -237,6 +242,7 @@ export function SmtpSettings() {
                       <Input 
                         type="number" 
                         placeholder="587" 
+                        className="bg-gray-50"
                         {...field} 
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
@@ -246,8 +252,15 @@ export function SmtpSettings() {
                 )}
               />
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white p-6 rounded-md shadow-sm border">
+            <h3 className="text-base font-semibold mb-4 flex items-center">
+              <Mail className="h-4 w-4 mr-2 text-primary" />
+              Zugangsdaten
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="username"
@@ -255,7 +268,7 @@ export function SmtpSettings() {
                   <FormItem>
                     <FormLabel>Benutzername</FormLabel>
                     <FormControl>
-                      <Input placeholder="your@email.com" {...field} />
+                      <Input placeholder="your@email.com" className="bg-gray-50" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -269,15 +282,22 @@ export function SmtpSettings() {
                   <FormItem>
                     <FormLabel>Passwort</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input type="password" className="bg-gray-50" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+          </div>
 
-            <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white p-6 rounded-md shadow-sm border">
+            <h3 className="text-base font-semibold mb-4 flex items-center">
+              <Mail className="h-4 w-4 mr-2 text-primary" />
+              Absender-Einstellungen
+            </h3>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="from_email"
@@ -285,7 +305,7 @@ export function SmtpSettings() {
                   <FormItem>
                     <FormLabel>Absender E-Mail</FormLabel>
                     <FormControl>
-                      <Input placeholder="your@email.com" {...field} />
+                      <Input placeholder="your@email.com" className="bg-gray-50" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -299,75 +319,76 @@ export function SmtpSettings() {
                   <FormItem>
                     <FormLabel>Absender Name</FormLabel>
                     <FormControl>
-                      <Input placeholder="John Doe" {...field} />
+                      <Input placeholder="John Doe" className="bg-gray-50" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+          </div>
 
-            <FormField
-              control={form.control}
-              name="secure"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>SSL/TLS verwenden</FormLabel>
-                    <FormDescription>
-                      Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen)
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="secure"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 bg-white shadow-sm">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>SSL/TLS verwenden</FormLabel>
+                  <FormDescription>
+                    Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen)
+                  </FormDescription>
+                </div>
+              </FormItem>
+            )}
+          />
 
-            {lastTestError && (
-              <div className="bg-red-50 border border-red-200 rounded-md p-4 mt-4">
-                <div className="flex items-start">
-                  <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2" />
-                  <div>
-                    <h3 className="text-sm font-medium text-red-800">Verbindungsfehler</h3>
-                    <p className="text-sm text-red-700 mt-1">{lastTestError}</p>
-                  </div>
+          {lastTestError && (
+            <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+              <div className="flex">
+                <AlertCircle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+                <div>
+                  <h3 className="text-sm font-medium text-red-800">Verbindungsfehler</h3>
+                  <p className="text-sm text-red-700 mt-1">{lastTestError}</p>
                 </div>
               </div>
-            )}
-
-            <div className="flex justify-between pt-4">
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={testConnection}
-                disabled={isTestingConnection}
-              >
-                {isTestingConnection ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Mail className="mr-2 h-4 w-4" />
-                )}
-                Verbindung testen
-              </Button>
-
-              <div className="flex space-x-2">
-                {isVerified && (
-                  <div className="flex items-center text-green-500">
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                    <span>Verifiziert</span>
-                  </div>
-                )}
-                <Button type="submit">Speichern</Button>
-              </div>
             </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          )}
+
+          <div className="flex justify-between pt-4">
+            <Button 
+              type="button" 
+              variant="outline"
+              onClick={testConnection}
+              disabled={isTestingConnection}
+              className="flex items-center gap-2"
+            >
+              {isTestingConnection ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Mail className="h-4 w-4" />
+              )}
+              Verbindung testen
+            </Button>
+
+            <div className="flex space-x-2 items-center">
+              {isVerified && (
+                <div className="flex items-center text-green-600">
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  <span>Verifiziert</span>
+                </div>
+              )}
+              <Button type="submit" className="bg-primary hover:bg-primary/90">Speichern</Button>
+            </div>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 }
