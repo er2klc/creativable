@@ -1,7 +1,9 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export interface EmailMessage {
   id: string;
@@ -21,7 +23,7 @@ export interface EmailMessage {
   sent_at: Date | null;
   received_at: Date | null;
   read: boolean;
-  starred: boolean;
+  is_starred: boolean; // renamed from starred to is_starred to match EmailList
   has_attachments: boolean;
   flags: any;
   headers: any;
@@ -29,8 +31,15 @@ export interface EmailMessage {
 
 export function useEmailMessages(folderId: string | null, folderPath: string | null) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [syncInProgress, setSyncInProgress] = useState(false);
 
-  return useQuery({
+  const { 
+    data: emails = [], // Default to empty array to prevent undefined errors
+    isLoading, 
+    error,
+    refetch
+  } = useQuery({
     queryKey: ["emails", user?.id, folderId, folderPath],
     queryFn: async () => {
       if (!user || (!folderId && !folderPath)) return [];
@@ -89,4 +98,147 @@ export function useEmailMessages(folderId: string | null, folderPath: string | n
     },
     enabled: !!user && !!(folderId || folderPath)
   });
+
+  // Add syncEmails function to manually refresh emails
+  const syncEmails = async (forceRefresh = false) => {
+    if (!user || syncInProgress) return;
+    
+    try {
+      setSyncInProgress(true);
+      toast.info("Synchronizing emails...");
+      
+      // Add your email sync logic here, e.g.:
+      const response = await fetch("https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${user.session?.access_token}`
+        },
+        body: JSON.stringify({
+          force_refresh: forceRefresh
+        })
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success("Emails synchronized successfully");
+        // Refetch emails
+        refetch();
+      } else {
+        throw new Error(result.message || "Failed to sync emails");
+      }
+    } catch (error: any) {
+      toast.error("Failed to synchronize emails", {
+        description: error.message || "An error occurred"
+      });
+      console.error("Email sync error:", error);
+    } finally {
+      setSyncInProgress(false);
+    }
+  };
+
+  // Add mutation for marking emails as read/unread
+  const markAsReadMutation = useMutation({
+    mutationFn: async ({ emailId, read }: { emailId: string, read: boolean }) => {
+      if (!user) throw new Error("User not authenticated");
+      
+      const { error } = await supabase
+        .from("emails")
+        .update({ read })
+        .eq("id", emailId)
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      
+      // Also update folder unread counts if marking as read
+      if (read) {
+        const email = emails.find(e => e.id === emailId);
+        if (email?.folder) {
+          await supabase
+            .from("email_folders")
+            .update({ 
+              unread_messages: supabase.rpc('decrement', { x: 1 }) 
+            })
+            .eq("path", email.folder)
+            .eq("user_id", user.id);
+        }
+      }
+      
+      return { emailId, read };
+    },
+    onSuccess: (data) => {
+      // Update local state
+      queryClient.setQueryData(
+        ["emails", user?.id, folderId, folderPath], 
+        (oldData: EmailMessage[] = []) => 
+          oldData.map(email => 
+            email.id === data.emailId 
+              ? { ...email, read: data.read } 
+              : email
+          )
+      );
+    },
+    onError: (error) => {
+      console.error("Error marking email as read/unread:", error);
+      toast.error("Failed to update email status");
+    }
+  });
+
+  // Add mutation for marking emails as starred/unstarred
+  const markAsStarredMutation = useMutation({
+    mutationFn: async ({ emailId, starred }: { emailId: string, starred: boolean }) => {
+      if (!user) throw new Error("User not authenticated");
+      
+      const { error } = await supabase
+        .from("emails")
+        .update({ is_starred: starred })
+        .eq("id", emailId)
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      
+      return { emailId, starred };
+    },
+    onSuccess: (data) => {
+      // Update local state
+      queryClient.setQueryData(
+        ["emails", user?.id, folderId, folderPath],
+        (oldData: EmailMessage[] = []) => 
+          oldData.map(email => 
+            email.id === data.emailId 
+              ? { ...email, is_starred: data.starred } 
+              : email
+          )
+      );
+    },
+    onError: (error) => {
+      console.error("Error marking email as starred/unstarred:", error);
+      toast.error("Failed to update email status");
+    }
+  });
+
+  // Simple wrapper functions for the mutations
+  const markAsRead = (emailId: string, read: boolean) => {
+    markAsReadMutation.mutate({ emailId, read });
+  };
+  
+  const markAsStarred = (emailId: string, starred: boolean) => {
+    markAsStarredMutation.mutate({ emailId, starred });
+  };
+
+  return {
+    emails, // This will always be an array (never undefined)
+    isLoading,
+    error,
+    syncEmails,
+    syncInProgress,
+    markAsRead,
+    markAsStarred,
+    refetch
+  };
 }

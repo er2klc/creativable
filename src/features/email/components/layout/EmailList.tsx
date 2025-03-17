@@ -43,18 +43,21 @@ interface EmailListProps {
 }
 
 export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListProps) {
+  // Using the hook and providing both possible folder identifiers
   const { 
-    emails, 
+    emails = [], // Default to empty array to prevent undefined
     isLoading, 
     syncEmails, 
     syncInProgress,
     markAsRead,
     markAsStarred
-  } = useEmailMessages(folder);
+  } = useEmailMessages(null, folder); // Using folderPath
   
   const [searchQuery, setSearchQuery] = useState('');
   
   const formatDate = (date: Date) => {
+    if (!date) return "";
+    
     const today = new Date();
     const isToday = date.getDate() === today.getDate() &&
                     date.getMonth() === today.getMonth() &&
@@ -68,7 +71,7 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
   };
 
   // Filter emails based on search query
-  const filteredEmails = searchQuery
+  const filteredEmails = searchQuery && emails
     ? emails.filter(email => 
         email.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         email.from_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -209,6 +212,7 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
                 selectedEmailId === email.id && "bg-muted",
                 !email.read && "bg-blue-50 dark:bg-blue-950/20"
               )}
+              onClick={() => onSelectEmail(email.id)}
             >
               <div className="flex items-start gap-2">
                 {/* Email actions and metadata */}
@@ -239,7 +243,6 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
                 {/* Email content */}
                 <div 
                   className="flex-1 min-w-0 cursor-pointer"
-                  onClick={() => onSelectEmail(email.id)}
                 >
                   <div className="flex items-baseline justify-between gap-2">
                     <p className={cn(
@@ -249,7 +252,7 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
                       {email.from_name || email.from_email}
                     </p>
                     <span className="shrink-0 text-xs text-muted-foreground flex items-center gap-1">
-                      {formatDate(email.sent_at)}
+                      {email.sent_at ? formatDate(email.sent_at) : ''}
                     </span>
                   </div>
                   
