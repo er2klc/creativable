@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImapSettings } from "./ImapSettings";
 import { SmtpSettings } from "./SmtpSettings";
@@ -62,12 +61,14 @@ export function EmailSettings() {
         const isConfigured = !!(imapData?.host && smtpData?.host);
         setEmailConnected(isConfigured);
         
-        // Update email_configured in settings if needed and it exists in the database
-        if (isConfigured && settings && settings.email_configured !== true) {
+        // Try to update email_configured in settings if needed
+        if (isConfigured && settings) {
           try {
+            // We'll attempt to update the email_configured field
+            // The error handling in useSettings hook will manage if the column doesn't exist
             await updateSettings.mutate({ email_configured: true });
           } catch (error) {
-            // Gracefully handle case where column doesn't exist yet
+            // Error will be handled by the mutation's onError
             console.warn('Could not update email_configured status:', error);
           }
         }
@@ -85,7 +86,7 @@ export function EmailSettings() {
     
     checkEmailConfig();
   }, [user, settings, updateSettings]);
-  
+
   const handleTabChange = (value: string) => {
     setActiveTab(value);
   };

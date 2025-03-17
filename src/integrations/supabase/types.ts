@@ -2478,6 +2478,8 @@ export type Database = {
           company_name: string | null
           created_at: string | null
           default_message_template: string | null
+          email_configured: boolean | null
+          email_sync_enabled: boolean | null
           facebook_auth_token: string | null
           facebook_connected: boolean | null
           id: string
@@ -2486,6 +2488,7 @@ export type Database = {
           instagram_auth_token: string | null
           instagram_connected: boolean | null
           language: string | null
+          last_email_sync: string | null
           linkedin_auth_token: string | null
           linkedin_connected: boolean | null
           network_marketing_id: string | null
@@ -2494,6 +2497,7 @@ export type Database = {
           registration_company_name: string | null
           registration_completed: boolean | null
           registration_step: number | null
+          smtp_configured: boolean | null
           superchat_api_key: string | null
           target_audience: string | null
           tiktok_auth_token: string | null
@@ -2511,6 +2515,8 @@ export type Database = {
           company_name?: string | null
           created_at?: string | null
           default_message_template?: string | null
+          email_configured?: boolean | null
+          email_sync_enabled?: boolean | null
           facebook_auth_token?: string | null
           facebook_connected?: boolean | null
           id?: string
@@ -2519,6 +2525,7 @@ export type Database = {
           instagram_auth_token?: string | null
           instagram_connected?: boolean | null
           language?: string | null
+          last_email_sync?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
           network_marketing_id?: string | null
@@ -2527,6 +2534,7 @@ export type Database = {
           registration_company_name?: string | null
           registration_completed?: boolean | null
           registration_step?: number | null
+          smtp_configured?: boolean | null
           superchat_api_key?: string | null
           target_audience?: string | null
           tiktok_auth_token?: string | null
@@ -2544,6 +2552,8 @@ export type Database = {
           company_name?: string | null
           created_at?: string | null
           default_message_template?: string | null
+          email_configured?: boolean | null
+          email_sync_enabled?: boolean | null
           facebook_auth_token?: string | null
           facebook_connected?: boolean | null
           id?: string
@@ -2552,6 +2562,7 @@ export type Database = {
           instagram_auth_token?: string | null
           instagram_connected?: boolean | null
           language?: string | null
+          last_email_sync?: string | null
           linkedin_auth_token?: string | null
           linkedin_connected?: boolean | null
           network_marketing_id?: string | null
@@ -2560,6 +2571,7 @@ export type Database = {
           registration_company_name?: string | null
           registration_completed?: boolean | null
           registration_step?: number | null
+          smtp_configured?: boolean | null
           superchat_api_key?: string | null
           target_audience?: string | null
           tiktok_auth_token?: string | null
