@@ -11,8 +11,10 @@ import { toast } from 'sonner';
 import { DatePicker } from '@/components/ui/date-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 
 interface ImapSettingsProps {
   onSettingsSaved?: () => void;
@@ -29,6 +31,9 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
   const [fetchAborted, setFetchAborted] = useState(false);
   const isMountedRef = useRef(true);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { syncFolders } = useFolderSync();
+  const [testingConnection, setTestingConnection] = useState(false);
+  const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
 
   // Initialize the form
   const form = useForm<ImapSettingsFormData>({
@@ -44,6 +49,19 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
       historical_sync_date: undefined,
     },
   });
+
+  // Update port when secure setting changes
+  const watchSecure = form.watch('secure');
+  useEffect(() => {
+    // Default port for secure is 993, for insecure is 143
+    const defaultPort = watchSecure ? 993 : 143;
+    
+    // Only auto-change port if it has a standard value
+    const currentPort = form.getValues('port');
+    if (currentPort === 993 || currentPort === 143) {
+      form.setValue('port', defaultPort);
+    }
+  }, [watchSecure, form]);
 
   // Fetch mit Timeout-Funktion
   const fetchWithTimeout = async (fetchFunction: () => Promise<any>, timeoutMs: number = 10000) => {
@@ -166,6 +184,82 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     };
   }, [user, fetchSettings, fetchAborted]);
 
+  // Test connection function
+  const testConnection = async () => {
+    if (!user || isSaving || testingConnection) return;
+    
+    setTestingConnection(true);
+    setTestResult(null);
+    
+    try {
+      const values = form.getValues();
+      
+      // Get the current user session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error(sessionError?.message || "No active session found");
+      }
+      
+      // Call test-imap-connection edge function
+      const response = await fetch(
+        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/test-imap-connection",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${sessionData.session.access_token}`,
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            host: values.host,
+            port: values.port,
+            username: values.username,
+            password: values.password,
+            secure: values.secure,
+            use_saved_settings: false
+          })
+        }
+      );
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setTestResult({
+          success: true,
+          message: "Connection successful! IMAP server is reachable."
+        });
+        toast.success("IMAP Connection Test Successful", {
+          description: "Successfully connected to the IMAP server"
+        });
+      } else {
+        setTestResult({
+          success: false,
+          message: result.error || "Could not connect to IMAP server"
+        });
+        toast.error("IMAP Connection Test Failed", {
+          description: result.error || "Could not connect to IMAP server"
+        });
+      }
+    } catch (error: any) {
+      console.error("Error testing connection:", error);
+      setTestResult({
+        success: false,
+        message: error.message || "An unexpected error occurred"
+      });
+      toast.error("IMAP Connection Test Failed", {
+        description: error.message || "An unexpected error occurred"
+      });
+    } finally {
+      setTestingConnection(false);
+    }
+  };
+
   const onSubmit = async (values: ImapSettingsFormData) => {
     if (!user || isSaving || !isMountedRef.current) return;
 
@@ -187,6 +281,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
             max_emails: values.max_emails,
             historical_sync: values.historical_sync,
             historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
+            updated_at: new Date().toISOString()
           })
           .eq('id', existingSettingsId);
       } else {
@@ -252,6 +347,19 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
         toast.success("IMAP-Einstellungen gespeichert", {
           description: "Ihre E-Mail-Einstellungen wurden erfolgreich gespeichert."
         });
+
+        // After saving settings, try to sync folders to verify settings work
+        try {
+          const syncResult = await syncFolders(true);
+          if (syncResult.success) {
+            toast.success("Connection Verified", {
+              description: `Successfully synced ${syncResult.folderCount || 0} folders from your email account`
+            });
+          }
+        } catch (syncError) {
+          // Don't show an error toast here since syncFolders already does that
+          console.error("Error during initial sync:", syncError);
+        }
 
         if (onSettingsSaved) {
           onSettingsSaved();
@@ -528,6 +636,26 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
         </p>
       </div>
 
+      {testResult && (
+        <Alert variant={testResult.success ? "success" : "destructive"} className="mb-6">
+          <div className="flex items-start gap-2">
+            {testResult.success ? (
+              <CheckCircle className="h-5 w-5 mt-0.5" />
+            ) : (
+              <AlertCircle className="h-5 w-5 mt-0.5" />
+            )}
+            <div>
+              <AlertTitle>
+                {testResult.success ? "Connection Successful" : "Connection Failed"}
+              </AlertTitle>
+              <AlertDescription>
+                {testResult.message}
+              </AlertDescription>
+            </div>
+          </div>
+        </Alert>
+      )}
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <div className="bg-white p-6 rounded-md shadow-sm border">
@@ -562,6 +690,9 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                         onChange={(e) => field.onChange(Number(e.target.value))}
                       />
                     </FormControl>
+                    <FormDescription className="text-xs">
+                      Standard: 993 (SSL/TLS), 143 (unverschlüsselt)
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -596,6 +727,9 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                     <FormControl>
                       <Input type="password" className="bg-gray-50" {...field} />
                     </FormControl>
+                    <FormDescription className="text-xs">
+                      Für GMail nutzen Sie bitte ein App-Passwort.
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -620,7 +754,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                   <div className="space-y-1 leading-none">
                     <FormLabel>SSL/TLS verwenden</FormLabel>
                     <FormDescription>
-                      Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen)
+                      Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen).
+                      Bei Verbindungsproblemen können Sie versuchen, diese Einstellung zu ändern.
                     </FormDescription>
                   </div>
                 </FormItem>
@@ -693,9 +828,27 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
             )}
           </div>
 
-          <div className="pt-6 flex justify-end">
-            <Button type="submit" disabled={isSaving} className="min-w-[120px]">
-              {isSaving ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Speichern...</> : 'Speichern'}
+          <div className="pt-6 flex justify-between">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={testConnection} 
+              disabled={testingConnection || isSaving}
+              className="min-w-[120px]"
+            >
+              {testingConnection ? 
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Teste Verbindung...</> : 
+                'Verbindung testen'}
+            </Button>
+            
+            <Button 
+              type="submit" 
+              disabled={isSaving || testingConnection} 
+              className="min-w-[120px]"
+            >
+              {isSaving ? 
+                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Speichern...</> : 
+                'Speichern'}
             </Button>
           </div>
         </form>

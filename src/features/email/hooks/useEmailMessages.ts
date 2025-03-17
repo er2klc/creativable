@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,6 +32,7 @@ export function useEmailMessages(folderId: string | null, folderPath: string | n
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [syncInProgress, setSyncInProgress] = useState(false);
+  const [lastSyncError, setLastSyncError] = useState<string | null>(null);
 
   const { 
     data: emails = [], // Default to empty array to prevent undefined errors
@@ -92,6 +92,7 @@ export function useEmailMessages(folderId: string | null, folderPath: string | n
     
     try {
       setSyncInProgress(true);
+      setLastSyncError(null);
       toast.info("Synchronizing emails...");
       
       // Get the current user session
@@ -108,31 +109,66 @@ export function useEmailMessages(folderId: string | null, folderPath: string | n
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${sessionData.session.access_token}`
+            "Authorization": `Bearer ${sessionData.session.access_token}`,
+            "Accept": "application/json"
           },
           body: JSON.stringify({
-            force_refresh: forceRefresh
+            force_refresh: forceRefresh,
+            folder: folderPath,
+            max_retries: 2
           })
         }
       );
       
       if (!response.ok) {
-        const errorText = await response.text();
+        let errorText;
+        try {
+          errorText = await response.text();
+        } catch (e) {
+          errorText = response.statusText;
+        }
         throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
       
       const result = await response.json();
       
       if (result.success) {
-        toast.success("Emails synchronized successfully");
+        toast.success("Emails synchronized successfully", {
+          description: result.emailsCount 
+            ? `Fetched ${result.emailsCount} emails` 
+            : undefined
+        });
+        
         // Refetch emails
         refetch();
+        // Also refetch folder counts
+        queryClient.invalidateQueries({ queryKey: ["email-folders", user.id] });
       } else {
+        // Store error message for the UI
+        setLastSyncError(result.message || "Failed to sync emails");
         throw new Error(result.message || "Failed to sync emails");
       }
     } catch (error: any) {
-      toast.error("Failed to synchronize emails", {
-        description: error.message || "An error occurred"
+      let errorMessage = "Failed to synchronize emails";
+      
+      // Format more specific errors for better UX
+      if (error.message) {
+        if (error.message.includes("authenticate") || error.message.includes("auth")) {
+          errorMessage = "Authentication failed. Please check your email credentials.";
+        } else if (error.message.includes("TLS") || error.message.includes("SSL")) {
+          errorMessage = "Secure connection failed. Try changing the SSL/TLS settings.";
+        } else if (error.message.includes("greeting")) {
+          errorMessage = "Server didn't respond correctly. Try different port or security settings.";
+        } else if (error.message.includes("timeout")) {
+          errorMessage = "Connection timed out. The server took too long to respond.";
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      setLastSyncError(errorMessage);
+      toast.error("Sync Failed", {
+        description: errorMessage
       });
       console.error("Email sync error:", error);
     } finally {
@@ -230,11 +266,12 @@ export function useEmailMessages(folderId: string | null, folderPath: string | n
   };
 
   return {
-    emails, // This will always be an array (never undefined)
+    emails, 
     isLoading,
     error,
     syncEmails,
     syncInProgress,
+    lastSyncError,
     markAsRead,
     markAsStarred,
     refetch

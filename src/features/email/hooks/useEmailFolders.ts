@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
+import { useFolderSync } from "./useFolderSync";
 
 export interface EmailFolder {
   id: string;
@@ -33,7 +34,7 @@ const emptyFolders: OrganizedFolders = {
 export function useEmailFolders() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [syncInProgress, setSyncInProgress] = useState(false);
+  const { syncFolders, isSyncing, lastError } = useFolderSync();
   
   const {
     data: folders,
@@ -87,55 +88,31 @@ export function useEmailFolders() {
     };
   };
 
-  const syncFolders = async () => {
-    if (!user || syncInProgress) return;
+  const refreshFolders = async (forceRetry = false) => {
+    if (!user) return;
     
     try {
-      setSyncInProgress(true);
+      toast.info("Synchronizing email folders...");
       
-      // Get the current user session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        throw new Error(sessionError?.message || "No active session found");
-      }
-      
-      // Call the sync-folders edge function with proper authorization
-      const response = await fetch(
-        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-folders",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${sessionData.session.access_token}`
-          }
-        }
-      );
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-      }
-      
-      const result = await response.json();
+      const result = await syncFolders(forceRetry);
       
       if (result.success) {
         toast.success("Folders Synchronized", {
-          description: `Successfully synced ${result.folders?.length || 0} email folders`,
+          description: `Successfully synced ${result.folderCount || 0} email folders`,
         });
         
         // Refresh the folders list
         await queryClient.invalidateQueries({ queryKey: ["email-folders", user.id] });
       } else {
-        throw new Error(result.message || "Failed to sync folders");
+        toast.error("Folder Synchronization Failed", {
+          description: result.error || "An error occurred while syncing email folders",
+        });
       }
     } catch (error: any) {
       console.error("Folder sync error:", error);
       toast.error("Sync Failed", {
         description: error.message || "An error occurred while syncing email folders",
       });
-    } finally {
-      setSyncInProgress(false);
     }
   };
 
@@ -143,8 +120,9 @@ export function useEmailFolders() {
     folders: folders || emptyFolders,
     isLoading,
     error,
-    syncFolders,
-    syncInProgress,
+    syncFolders: refreshFolders,
+    syncInProgress: isSyncing,
+    lastSyncError: lastError,
     refetch
   };
 }
