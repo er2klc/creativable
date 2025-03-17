@@ -1,11 +1,10 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImapSettings } from "./ImapSettings";
 import { SmtpSettings } from "./SmtpSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
 import { Mail, Info, AlertCircle, CheckCircle, RefreshCw, XCircle, Loader2 } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -31,8 +30,8 @@ export function EmailSettings() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   // Flags um zu verhindern, dass zu viele Anfragen gestellt werden
   const [checkAttempted, setCheckAttempted] = useState(false);
-  const [skipNextEffect, setSkipNextEffect] = useState(false);
-  const [fetchTimeoutId, setFetchTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const checkTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
 
   // Debug-Funktion
   const debugTables = async () => {
@@ -43,16 +42,18 @@ export function EmailSettings() {
 
   // Check if email is configured - using a memoized function to prevent excessive rerenders
   const checkEmailConfig = useCallback(async () => {
-    if (!user) {
+    if (!user || !isMountedRef.current) {
       setIsLoading(false);
       return;
     }
     
     // Timeout setzen, um sicherzustellen, dass wir nicht in einem Loading-State hängen bleiben
     const timeoutId = setTimeout(() => {
-      console.warn("Email config check timed out after 10 seconds");
-      setIsLoading(false);
-      setFetchError("Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es später erneut.");
+      if (isMountedRef.current) {
+        console.warn("Email config check timed out after 10 seconds");
+        setIsLoading(false);
+        setFetchError("Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es später erneut.");
+      }
     }, 10000);
 
     try {
@@ -67,97 +68,107 @@ export function EmailSettings() {
         return;
       }
       
-      setLastCheckTime(now);
+      if (isMountedRef.current) {
+        setLastCheckTime(now);
       
-      // Testen Sie zuerst die Tabellenzugriffsrechte
-      const tablesTest = await debugTables();
-      console.info("Table access test results:", tablesTest);
-      
-      if (!tablesTest.imap_settings.success || !tablesTest.smtp_settings.success) {
-        console.error("Table access failed:", 
-          !tablesTest.imap_settings.success ? tablesTest.imap_settings.message : "",
-          !tablesTest.smtp_settings.success ? tablesTest.smtp_settings.message : "");
+        // Testen Sie zuerst die Tabellenzugriffsrechte
+        const tablesTest = await debugTables();
+        console.info("Table access test results:", tablesTest);
         
-        throw new Error("Zugriffsfehler auf Datenbank-Tabellen. Bitte kontaktieren Sie den Support.");
-      }
-      
-      // Check IMAP settings
-      const { data: imapData, error: imapError } = await supabase
-        .from('imap_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+        if (!tablesTest.imap_settings.success || !tablesTest.smtp_settings.success) {
+          console.error("Table access failed:", 
+            !tablesTest.imap_settings.success ? tablesTest.imap_settings.message : "",
+            !tablesTest.smtp_settings.success ? tablesTest.smtp_settings.message : "");
+          
+          throw new Error("Zugriffsfehler auf Datenbank-Tabellen. Bitte kontaktieren Sie den Support.");
+        }
         
-      if (imapError && imapError.code !== 'PGRST116') {
-        console.error('Error fetching IMAP settings:', imapError);
-        setFetchError(imapError.message);
-      }
-      
-      // Check SMTP settings
-      const { data: smtpData, error: smtpError } = await supabase
-        .from('smtp_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+        // Check IMAP settings
+        const { data: imapData, error: imapError } = await supabase
+          .from('imap_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (imapError && imapError.code !== 'PGRST116') {
+          console.error('Error fetching IMAP settings:', imapError);
+          setFetchError(imapError.message);
+        }
         
-      if (smtpError && smtpError.code !== 'PGRST116') {
-        console.error('Error fetching SMTP settings:', smtpError);
-        if (!fetchError) setFetchError(smtpError.message);
+        // Check SMTP settings
+        const { data: smtpData, error: smtpError } = await supabase
+          .from('smtp_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+          
+        if (smtpError && smtpError.code !== 'PGRST116') {
+          console.error('Error fetching SMTP settings:', smtpError);
+          if (!fetchError) setFetchError(smtpError.message);
+        }
+        
+        if (isMountedRef.current) {
+          setImapSettings(imapData);
+          setSmtpSettings(smtpData);
+          
+          // Consider email as connected if both IMAP and SMTP are configured
+          const isConfigured = !!(imapData?.host && smtpData?.host);
+          setEmailConnected(isConfigured);
+          
+          // Update settings if connection status has changed and settings exist
+          if (settings && isConfigured !== !!settings.email_configured) {
+            await updateSettings.mutateAsync({ 
+              email_configured: isConfigured 
+            });
+          }
+          
+          // Set last sync time (for display purposes)
+          if (imapData?.last_sync_at) {
+            setLastSyncTime(imapData.last_sync_at);
+          }
+          
+          setFetchError(null);
+        }
       }
-      
-      setImapSettings(imapData);
-      setSmtpSettings(smtpData);
-      
-      // Consider email as connected if both IMAP and SMTP are configured
-      const isConfigured = !!(imapData?.host && smtpData?.host);
-      setEmailConnected(isConfigured);
-      
-      // Update settings if connection status has changed
-      if (settings && isConfigured !== !!settings.email_configured) {
-        setSkipNextEffect(true);
-        updateSettings.mutate({ 
-          email_configured: isConfigured 
-        });
-      }
-      
-      // Set last sync time (for display purposes)
-      if (imapData?.last_sync_at) {
-        setLastSyncTime(imapData.last_sync_at);
-      }
-      
-      setFetchError(null);
     } catch (error: any) {
       console.error('Error checking email config:', error);
-      setFetchError(error.message || "Unbekannter Fehler beim Prüfen der E-Mail-Konfiguration");
+      if (isMountedRef.current) {
+        setFetchError(error.message || "Unbekannter Fehler beim Prüfen der E-Mail-Konfiguration");
+      }
     } finally {
       clearTimeout(timeoutId);
-      setFetchTimeoutId(null);
-      setIsLoading(false);
-      setCheckAttempted(true);
+      if (isMountedRef.current) {
+        setIsLoading(false);
+        setCheckAttempted(true);
+      }
     }
   }, [user, updateSettings, settings, lastCheckTime, fetchError]);
   
-  // Effekt, der einmalig nach dem Rendern ausgeführt wird
+  // Einmalige Initialisierung nach dem Laden
   useEffect(() => {
-    if (!user || skipNextEffect) {
-      if (skipNextEffect) setSkipNextEffect(false);
-      return;
+    isMountedRef.current = true;
+    
+    // Nur einmal nach dem Mounting den ersten Check durchführen
+    if (!checkAttempted && user) {
+      if (checkTimeoutRef.current) {
+        clearTimeout(checkTimeoutRef.current);
+      }
+      
+      checkTimeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current && !checkAttempted) {
+          checkEmailConfig();
+        }
+      }, 500);
     }
     
-    const timeoutId = setTimeout(() => {
-      if (!checkAttempted) {
-        checkEmailConfig();
-      }
-    }, 500);
-    
-    setFetchTimeoutId(timeoutId);
-    
+    // Cleanup-Funktion
     return () => {
-      if (fetchTimeoutId) {
-        clearTimeout(fetchTimeoutId);
+      isMountedRef.current = false;
+      if (checkTimeoutRef.current) {
+        clearTimeout(checkTimeoutRef.current);
       }
     };
-  }, [checkEmailConfig, user, skipNextEffect, checkAttempted, fetchTimeoutId]);
+  }, [checkEmailConfig, user, checkAttempted]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);

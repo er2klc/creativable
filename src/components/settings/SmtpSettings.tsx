@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, Mail, AlertCircle, ServerIcon } from "lucide-react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Switch } from "@/components/ui/switch";
 import { smtpSettingsSchema } from "./schemas/smtp-settings-schema";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,7 +35,8 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
   const fetchAttemptsRef = useRef(0);
   const maxFetchAttempts = 3;
   const [fetchAborted, setFetchAborted] = useState(false);
-  const [loadTimeoutId, setLoadTimeoutId] = useState<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const form = useForm<SmtpSettingsFormData>({
     resolver: zodResolver(smtpSettingsSchema),
@@ -51,49 +52,62 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
   });
 
   // Fetch mit Timeout-Funktion
-  const fetchWithTimeout = async (fetchFunction: () => Promise<any>, timeoutMs: number = 10000) => {
-    let timeoutId: NodeJS.Timeout;
-    
-    const timeoutPromise = new Promise((_, reject) => {
-      timeoutId = setTimeout(() => {
+  const fetchWithTimeout = useCallback(async (fetchFunction: () => Promise<any>, timeoutMs: number = 10000) => {
+    return new Promise(async (resolve, reject) => {
+      timeoutRef.current = setTimeout(() => {
         reject(new Error("Die Anfrage hat das Zeitlimit überschritten"));
       }, timeoutMs);
+      
+      try {
+        const result = await fetchFunction();
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        resolve(result);
+      } catch (error) {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        reject(error);
+      }
     });
-    
-    try {
-      const result = await Promise.race([fetchFunction(), timeoutPromise]);
-      clearTimeout(timeoutId);
-      return result;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      throw error;
-    }
-  };
+  }, []);
 
   // Lade existierende SMTP Einstellungen mit Timeout und Retry-Logik
-  const loadSmtpSettings = async () => {
+  const loadSmtpSettings = useCallback(async () => {
     try {
+      if (!isMountedRef.current || fetchAborted) {
+        setIsLoading(false);
+        return;
+      }
+      
       fetchAttemptsRef.current += 1;
       
       // Timeout-Schutz für das Laden
-      if (loadTimeoutId) {
-        clearTimeout(loadTimeoutId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
       
-      const timeoutId = setTimeout(() => {
-        console.warn("SMTP settings load timed out");
-        setIsLoading(false);
-        setLoadError("Das Laden der SMTP-Einstellungen hat zu lange gedauert. Bitte versuchen Sie es später erneut.");
-        setFetchAborted(true);
+      // Neuen Timeout setzen
+      timeoutRef.current = setTimeout(() => {
+        if (isMountedRef.current) {
+          console.warn("SMTP settings load timed out");
+          setIsLoading(false);
+          setLoadError("Das Laden der SMTP-Einstellungen hat zu lange gedauert. Bitte versuchen Sie es später erneut.");
+          setFetchAborted(true);
+        }
       }, 8000);
-      
-      setLoadTimeoutId(timeoutId);
       
       const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user || fetchAborted) {
+      if (!user || fetchAborted || !isMountedRef.current) {
         setIsLoading(false);
-        clearTimeout(timeoutId);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
         return;
       }
       
@@ -112,51 +126,56 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
         return { settings, error };
       }, 5000);
       
-      if (result.settings) {
-        form.reset(result.settings);
-        setExistingSettingsId(result.settings.id);
-        if (result.settings.last_verified_at) {
-          setIsVerified(true);
+      if (isMountedRef.current) {
+        if (result.settings) {
+          form.reset(result.settings);
+          setExistingSettingsId(result.settings.id);
+          if (result.settings.last_verified_at) {
+            setIsVerified(true);
+          }
         }
+        
+        setLoadError(null);
       }
       
-      setLoadError(null);
-      clearTimeout(timeoutId);
-      setLoadTimeoutId(null);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
     } catch (error: any) {
       console.error('Error loading SMTP settings:', error);
       
       // Exponentielles Backoff für Retries
-      if (fetchAttemptsRef.current < maxFetchAttempts && !fetchAborted) {
+      if (fetchAttemptsRef.current < maxFetchAttempts && !fetchAborted && isMountedRef.current) {
         const backoffTime = Math.min(1000 * Math.pow(2, fetchAttemptsRef.current - 1), 8000);
         console.log(`Retry in ${backoffTime}ms (attempt ${fetchAttemptsRef.current}/${maxFetchAttempts})`);
         
         setTimeout(() => {
-          if (!fetchAborted) {
+          if (isMountedRef.current && !fetchAborted) {
             loadSmtpSettings();
           }
         }, backoffTime);
-      } else {
+      } else if (isMountedRef.current) {
         setLoadError(error.message || "Maximale Anzahl von Versuchen überschritten. Bitte laden Sie die Seite neu.");
-        if (loadTimeoutId) {
-          clearTimeout(loadTimeoutId);
-          setLoadTimeoutId(null);
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
         }
         setIsLoading(false);
       }
     }
-  };
+  }, [fetchWithTimeout, form, fetchAborted]);
 
   // Lade existierende SMTP Einstellungen
   useEffect(() => {
-    let isMounted = true; // Verhindert Updates nach Unmount
+    isMountedRef.current = true;
     
     const initLoad = async () => {
       try {
         setIsLoading(true);
         await loadSmtpSettings();
       } finally {
-        if (isMounted) {
+        if (isMountedRef.current) {
           setIsLoading(false);
         }
       }
@@ -165,16 +184,16 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
     initLoad();
     
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
       setFetchAborted(true);
-      if (loadTimeoutId) {
-        clearTimeout(loadTimeoutId);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
-  }, []);
+  }, [loadSmtpSettings]);
 
   const onSubmit = async (formData: SmtpSettingsFormData) => {
-    if (isSaving) return; // Verhindere Doppelklicks
+    if (isSaving || !isMountedRef.current) return; // Verhindere Doppelklicks
     
     setIsSaving(true);
     try {
@@ -196,33 +215,45 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
           .eq('id', existingSettingsId);
 
         if (error) throw error;
-        toast.success("SMTP-Einstellungen wurden aktualisiert");
+        
+        if (isMountedRef.current) {
+          toast.success("SMTP-Einstellungen wurden aktualisiert");
+        }
       } else {
         const { error } = await supabase
           .from('smtp_settings')
           .insert([dataWithUserId]);
 
         if (error) throw error;
-        toast.success("SMTP-Einstellungen wurden gespeichert");
+        
+        if (isMountedRef.current) {
+          toast.success("SMTP-Einstellungen wurden gespeichert");
+        }
       }
 
       // Zurücksetzen des Verbindungsstatus wenn kritische Parameter geändert wurden
-      setIsVerified(false);
-      
-      // Call the onSettingsSaved callback if provided
-      if (onSettingsSaved) {
-        onSettingsSaved();
+      if (isMountedRef.current) {
+        setIsVerified(false);
+        
+        // Call the onSettingsSaved callback if provided
+        if (onSettingsSaved) {
+          onSettingsSaved();
+        }
       }
     } catch (error: any) {
       console.error('Error saving SMTP settings:', error);
-      toast.error(`Fehler beim Speichern der SMTP-Einstellungen: ${error.message || "Unbekannter Fehler"}`);
+      if (isMountedRef.current) {
+        toast.error(`Fehler beim Speichern der SMTP-Einstellungen: ${error.message || "Unbekannter Fehler"}`);
+      }
     } finally {
-      setIsSaving(false);
+      if (isMountedRef.current) {
+        setIsSaving(false);
+      }
     }
   };
 
   const testConnection = async () => {
-    if (isTestingConnection) return; // Verhindere Doppelklicks
+    if (isTestingConnection || !isMountedRef.current) return; // Verhindere Doppelklicks
     
     setIsTestingConnection(true);
     setLastTestError(null);
@@ -256,48 +287,54 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
       if (error) throw error;
       
       // If we got here, the connection was successful
-      setIsVerified(true);
-      
-      // Update verification timestamp in database
-      if (existingSettingsId) {
-        await supabase
-          .from('smtp_settings')
-          .update({ 
-            last_verified_at: new Date().toISOString(),
-            last_verification_status: 'success'
-          })
-          .eq('id', existingSettingsId);
-      }
-      
-      toast.success("SMTP-Verbindung erfolgreich getestet");
-      
-      // Call the onSettingsSaved callback if provided
-      if (onSettingsSaved) {
-        onSettingsSaved();
-      }
-    } catch (error: any) {
-      console.error('Error testing SMTP connection:', error);
-      setLastTestError(error.message || "Verbindung fehlgeschlagen");
-      setIsVerified(false);
-      
-      // Update verification status in database
-      if (existingSettingsId) {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
+      if (isMountedRef.current) {
+        setIsVerified(true);
+        
+        // Update verification timestamp in database
+        if (existingSettingsId) {
           await supabase
             .from('smtp_settings')
             .update({ 
               last_verified_at: new Date().toISOString(),
-              last_verification_status: 'failed',
-              last_error: error.message
+              last_verification_status: 'success'
             })
             .eq('id', existingSettingsId);
         }
+        
+        toast.success("SMTP-Verbindung erfolgreich getestet");
+        
+        // Call the onSettingsSaved callback if provided
+        if (onSettingsSaved) {
+          onSettingsSaved();
+        }
       }
-      
-      toast.error(`Fehler beim Testen der SMTP-Verbindung: ${error.message || "Unbekannter Fehler"}`);
+    } catch (error: any) {
+      console.error('Error testing SMTP connection:', error);
+      if (isMountedRef.current) {
+        setLastTestError(error.message || "Verbindung fehlgeschlagen");
+        setIsVerified(false);
+        
+        // Update verification status in database
+        if (existingSettingsId) {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            await supabase
+              .from('smtp_settings')
+              .update({ 
+                last_verified_at: new Date().toISOString(),
+                last_verification_status: 'failed',
+                last_error: error.message
+              })
+              .eq('id', existingSettingsId);
+          }
+        }
+        
+        toast.error(`Fehler beim Testen der SMTP-Verbindung: ${error.message || "Unbekannter Fehler"}`);
+      }
     } finally {
-      setIsTestingConnection(false);
+      if (isMountedRef.current) {
+        setIsTestingConnection(false);
+      }
     }
   };
 

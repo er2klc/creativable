@@ -37,7 +37,7 @@ export const testTableAccess = async (tableName: string) => {
 };
 
 /**
- * Hilfsfunktion zum Testen aller E-Mail-bezogenen Tabellen
+ * Optimierte Hilfsfunktion zum Testen aller E-Mail-bezogenen Tabellen
  */
 export const testEmailTablesAccess = async () => {
   try {
@@ -61,17 +61,25 @@ export const testEmailTablesAccess = async () => {
     console.log("Authenticated user ID:", user.id);
     
     // Teste jede Tabelle und sammle die Ergebnisse
+    const [settingsResult, imapResult, smtpResult, emailsResult] = await Promise.all([
+      testTableAccess('settings'),
+      testTableAccess('imap_settings'),
+      testTableAccess('smtp_settings'),
+      testTableAccess('emails')
+    ]);
+    
     const results = {
-      settings: await testTableAccess('settings'),
-      imap_settings: await testTableAccess('imap_settings'),
-      smtp_settings: await testTableAccess('smtp_settings'),
-      emails: await testTableAccess('emails'),
+      settings: settingsResult,
+      imap_settings: imapResult,
+      smtp_settings: smtpResult,
+      emails: emailsResult,
       success: true // Wird unten aktualisiert, wenn ein Test fehlschlägt
     };
     
     // Überprüfe, ob einer der Tests fehlgeschlagen ist
-    const hasFailure = Object.values(results).some(
-      result => typeof result === 'object' && 'success' in result && !result.success
+    const hasFailure = [results.settings, results.imap_settings, 
+                        results.smtp_settings, results.emails].some(
+      result => !result.success
     );
     
     results.success = !hasFailure;

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -26,6 +27,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
   const fetchAttemptsRef = useRef(0);
   const maxFetchAttempts = 3;
   const [fetchAborted, setFetchAborted] = useState(false);
+  const isMountedRef = useRef(true);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Initialize the form
   const form = useForm<ImapSettingsFormData>({
@@ -44,27 +47,31 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
   // Fetch mit Timeout-Funktion
   const fetchWithTimeout = async (fetchFunction: () => Promise<any>, timeoutMs: number = 10000) => {
-    let timeoutId: NodeJS.Timeout;
-    
-    const timeoutPromise = new Promise((_, reject) => {
-      timeoutId = setTimeout(() => {
+    return new Promise(async (resolve, reject) => {
+      timeoutRef.current = setTimeout(() => {
         reject(new Error("Die Anfrage hat das Zeitlimit überschritten"));
       }, timeoutMs);
+      
+      try {
+        const result = await fetchFunction();
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        resolve(result);
+      } catch (error) {
+        if (timeoutRef.current) {
+          clearTimeout(timeoutRef.current);
+          timeoutRef.current = null;
+        }
+        reject(error);
+      }
     });
-    
-    try {
-      const result = await Promise.race([fetchFunction(), timeoutPromise]);
-      clearTimeout(timeoutId);
-      return result;
-    } catch (error) {
-      clearTimeout(timeoutId);
-      throw error;
-    }
   };
 
   // Fetch existing settings mit Retry-Limit, Timeout und besserer Fehlerbehandlung
   const fetchSettings = useCallback(async () => {
-    if (!user || fetchAborted) {
+    if (!user || fetchAborted || !isMountedRef.current) {
       setLoadingSettings(false);
       return;
     }
@@ -87,40 +94,42 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
         return { data, error };
       }, 5000); // 5 Sekunden Timeout
       
-      if (result.data) {
-        setExistingSettingsId(result.data.id);
-        form.reset({
-          host: result.data.host || '',
-          port: result.data.port || 993,
-          username: result.data.username || '',
-          password: result.data.password || '',
-          secure: result.data.secure !== undefined ? result.data.secure : true,
-          max_emails: result.data.max_emails || 100,
-          historical_sync: result.data.historical_sync || false,
-          historical_sync_date: result.data.historical_sync_date ? new Date(result.data.historical_sync_date) : undefined,
-        });
+      if (isMountedRef.current) {
+        if (result.data) {
+          setExistingSettingsId(result.data.id);
+          form.reset({
+            host: result.data.host || '',
+            port: result.data.port || 993,
+            username: result.data.username || '',
+            password: result.data.password || '',
+            secure: result.data.secure !== undefined ? result.data.secure : true,
+            max_emails: result.data.max_emails || 100,
+            historical_sync: result.data.historical_sync || false,
+            historical_sync_date: result.data.historical_sync_date ? new Date(result.data.historical_sync_date) : undefined,
+          });
+        }
+        
+        setLoadError(null);
       }
-      
-      setLoadError(null);
     } catch (error: any) {
       console.error('Error loading IMAP settings:', error);
       
       // Nur begrenzte Anzahl von Versuchen
-      if (fetchAttemptsRef.current < maxFetchAttempts) {
+      if (fetchAttemptsRef.current < maxFetchAttempts && isMountedRef.current) {
         const backoffTime = Math.min(1000 * Math.pow(2, fetchAttemptsRef.current - 1), 8000); // Exponentielles Backoff
         console.log(`Retry in ${backoffTime}ms (attempt ${fetchAttemptsRef.current}/${maxFetchAttempts})`);
         
         setTimeout(() => {
-          if (!fetchAborted) {
+          if (isMountedRef.current && !fetchAborted) {
             fetchSettings();
           }
         }, backoffTime);
-      } else {
+      } else if (isMountedRef.current) {
         setLoadError(error.message || "Maximale Anzahl von Versuchen überschritten. Bitte laden Sie die Seite neu.");
         setFetchAborted(true);
       }
     } finally {
-      if (fetchAttemptsRef.current >= maxFetchAttempts || fetchAborted) {
+      if ((fetchAttemptsRef.current >= maxFetchAttempts || fetchAborted) && isMountedRef.current) {
         setLoadingSettings(false);
       }
     }
@@ -128,18 +137,18 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
   // Fetch settings on component mount mit Clean-Up
   useEffect(() => {
-    let isMounted = true;
+    isMountedRef.current = true;
     
     const initFetch = async () => {
-      if (user && isMounted && !fetchAborted) {
+      if (user && isMountedRef.current && !fetchAborted) {
         await fetchSettings();
         
         // Stelle sicher, dass wir nicht in loading hängen bleiben
-        if (isMounted) {
+        if (isMountedRef.current) {
           setLoadingSettings(false);
         }
       } else {
-        if (isMounted) {
+        if (isMountedRef.current) {
           setLoadingSettings(false);
         }
       }
@@ -149,13 +158,16 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     
     // Clean-Up Funktion
     return () => {
-      isMounted = false;
+      isMountedRef.current = false;
       setFetchAborted(true);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
     };
   }, [user, fetchSettings, fetchAborted]);
 
   const onSubmit = async (values: ImapSettingsFormData) => {
-    if (!user || isSaving) return;
+    if (!user || isSaving || !isMountedRef.current) return;
 
     setIsSaving(true);
 
@@ -205,20 +217,26 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
         setExistingSettingsId(data[0].id);
       }
 
-      toast.success("IMAP-Einstellungen gespeichert", {
-        description: "Ihre E-Mail-Einstellungen wurden erfolgreich gespeichert."
-      });
+      if (isMountedRef.current) {
+        toast.success("IMAP-Einstellungen gespeichert", {
+          description: "Ihre E-Mail-Einstellungen wurden erfolgreich gespeichert."
+        });
 
-      if (onSettingsSaved) {
-        onSettingsSaved();
+        if (onSettingsSaved) {
+          onSettingsSaved();
+        }
       }
     } catch (error: any) {
       console.error('Error saving settings:', error);
-      toast.error("Fehler beim Speichern der Einstellungen", {
-        description: error.message || "Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut."
-      });
+      if (isMountedRef.current) {
+        toast.error("Fehler beim Speichern der Einstellungen", {
+          description: error.message || "Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut."
+        });
+      }
     } finally {
-      setIsSaving(false);
+      if (isMountedRef.current) {
+        setIsSaving(false);
+      }
     }
   };
 
