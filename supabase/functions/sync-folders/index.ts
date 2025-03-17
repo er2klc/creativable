@@ -95,7 +95,31 @@ async function fetchFolders(imapSettings: any, userId: string): Promise<SyncResu
     
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
     
-    // First delete existing folders
+    // First, check if the email_folders table exists
+    try {
+      const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/email_folders?limit=1`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          'apikey': SUPABASE_SERVICE_ROLE_KEY
+        }
+      });
+      
+      // If the table doesn't exist, return an error
+      if (!checkResponse.ok && checkResponse.status === 404) {
+        throw new Error("email_folders table does not exist. Please run the migration first.");
+      }
+    } catch (error) {
+      console.error("Error checking email_folders table:", error);
+      return {
+        success: false,
+        message: "Failed to verify email_folders table exists",
+        error: error.message
+      };
+    }
+    
+    // Delete existing folders
     const deleteResponse = await fetch(`${SUPABASE_URL}/rest/v1/email_folders?user_id=eq.${userId}`, {
       method: 'DELETE',
       headers: {
@@ -143,7 +167,7 @@ async function fetchFolders(imapSettings: any, userId: string): Promise<SyncResu
       error: error.message
     };
   } finally {
-    if (client.usable) {
+    if (client && client.usable) {
       client.close();
     }
   }

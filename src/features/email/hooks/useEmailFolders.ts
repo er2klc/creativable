@@ -103,18 +103,15 @@ export function useEmailFolders() {
     try {
       setSyncInProgress(true);
       
-      // Call the sync-emails edge function to sync folders
+      // Call the sync-folders edge function to sync folders
       const response = await fetch(
-        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
+        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-folders",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${user?.session?.access_token}`
-          },
-          body: JSON.stringify({
-            force_refresh: true
-          })
+          }
         }
       );
       
@@ -126,7 +123,7 @@ export function useEmailFolders() {
       
       if (result.success) {
         toast.success("Folders Synchronized", {
-          description: `Successfully synced ${result.folderCount || 0} email folders`,
+          description: `Successfully synced ${result.folders?.length || 0} email folders`,
         });
         
         // Refresh the folders list

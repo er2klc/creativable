@@ -642,6 +642,48 @@ export type Database = {
           },
         ]
       }
+      email_folders: {
+        Row: {
+          created_at: string | null
+          flags: Json | null
+          id: string
+          name: string
+          path: string
+          special_use: string | null
+          total_messages: number | null
+          type: string
+          unread_messages: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          flags?: Json | null
+          id?: string
+          name: string
+          path: string
+          special_use?: string | null
+          total_messages?: number | null
+          type: string
+          unread_messages?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          flags?: Json | null
+          id?: string
+          name?: string
+          path?: string
+          special_use?: string | null
+          total_messages?: number | null
+          type?: string
+          unread_messages?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       email_label_assignments: {
         Row: {
           created_at: string | null
@@ -5003,6 +5045,12 @@ export type Database = {
           presentation_url?: string
         }
         Returns: Json
+      }
+      decrement: {
+        Args: {
+          x: number
+        }
+        Returns: number
       }
       delete_team_cascade: {
         Args: {

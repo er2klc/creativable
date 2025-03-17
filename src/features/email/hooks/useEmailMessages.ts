@@ -1,201 +1,92 @@
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useState } from "react";
 
 export interface EmailMessage {
   id: string;
+  user_id: string;
   message_id: string;
-  subject: string;
-  from_name: string;
-  from_email: string;
-  to_email: string;
-  to_name: string;
-  cc?: string[];
-  bcc?: string[];
-  sent_at: Date;
-  received_at: Date;
-  content: string;
+  folder: string;
+  subject: string | null;
+  from_name: string | null;
+  from_email: string | null;
+  to_name: string | null;
+  to_email: string | null;
+  cc: string[] | null;
+  bcc: string[] | null;
+  content: string | null;
   html_content: string | null;
   text_content: string | null;
+  sent_at: Date | null;
+  received_at: Date | null;
   read: boolean;
-  folder: string;
+  starred: boolean;
   has_attachments: boolean;
-  is_starred: boolean;
+  flags: any;
+  headers: any;
 }
 
-export function useEmailMessages(folder: string) {
+export function useEmailMessages(folderId: string | null, folderPath: string | null) {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [syncInProgress, setSyncInProgress] = useState(false);
-  const [syncProgress, setSyncProgress] = useState(0);
-  
-  const {
-    data: emails,
-    isLoading,
-    error,
-    refetch
-  } = useQuery({
-    queryKey: ["emails", user?.id, folder],
+
+  return useQuery({
+    queryKey: ["emails", user?.id, folderId, folderPath],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user || (!folderId && !folderPath)) return [];
       
       try {
-        // Get emails for the specified folder
-        const { data, error } = await supabase
+        // Check if emails table exists
+        const { error: tableCheckError } = await supabase
+          .from('emails')
+          .select('id')
+          .limit(1)
+          .single();
+        
+        // If table doesn't exist, return empty array rather than throwing an error
+        if (tableCheckError && tableCheckError.code === '42P01') {
+          console.warn("emails table doesn't exist yet");
+          return [];
+        }
+        
+        let query = supabase
           .from("emails")
           .select("*")
-          .eq("user_id", user.id)
-          .eq("folder", folder)
-          .order("sent_at", { ascending: false });
+          .eq("user_id", user.id);
+        
+        if (folderPath) {
+          query = query.eq("folder", folderPath);
+        } else if (folderId) {
+          // Get folder path from ID first
+          const { data: folderData } = await supabase
+            .from("email_folders")
+            .select("path")
+            .eq("id", folderId)
+            .single();
+          
+          if (folderData?.path) {
+            query = query.eq("folder", folderData.path);
+          }
+        }
+        
+        // Order by received date, newest first
+        query = query.order("received_at", { ascending: false });
+        
+        const { data, error } = await query;
         
         if (error) throw error;
         
-        // Format dates properly
-        const formattedEmails = (data || []).map(email => ({
+        // Format dates and return
+        return (data || []).map(email => ({
           ...email,
-          sent_at: new Date(email.sent_at),
-          received_at: new Date(email.received_at)
+          sent_at: email.sent_at ? new Date(email.sent_at) : null,
+          received_at: email.received_at ? new Date(email.received_at) : null
         }));
-        
-        return formattedEmails as EmailMessage[];
       } catch (err: any) {
         console.error("Error fetching emails:", err);
         return [];
       }
     },
-    enabled: !!user && !!folder
+    enabled: !!user && !!(folderId || folderPath)
   });
-
-  const syncEmails = async (forceRefresh = false) => {
-    if (!user || syncInProgress) return;
-    
-    try {
-      setSyncInProgress(true);
-      setSyncProgress(0);
-      
-      // Call the sync-emails edge function
-      const response = await fetch(
-        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${user?.session?.access_token}`
-          },
-          body: JSON.stringify({
-            force_refresh: forceRefresh,
-            folder: folder
-          })
-        }
-      );
-      
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      
-      // Update progress
-      if (result.progress) {
-        setSyncProgress(result.progress);
-      }
-      
-      if (result.success) {
-        toast.success("Sync Successful", {
-          description: result.message || `Successfully synced ${result.emailsCount || 0} emails`,
-        });
-        
-        // Refresh the emails list
-        await queryClient.invalidateQueries({ queryKey: ["emails", user.id, folder] });
-        
-        // Also refresh folder counts
-        await queryClient.invalidateQueries({ queryKey: ["email-folders", user.id] });
-      } else {
-        throw new Error(result.message || "Failed to sync emails");
-      }
-    } catch (error: any) {
-      console.error("Email sync error:", error);
-      toast.error("Sync Failed", {
-        description: error.message || "An error occurred while syncing emails",
-      });
-    } finally {
-      setSyncInProgress(false);
-    }
-  };
-
-  const markAsRead = async (emailId: string, isRead = true) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from("emails")
-        .update({ read: isRead })
-        .eq("id", emailId)
-        .eq("user_id", user.id);
-      
-      if (error) throw error;
-      
-      // Update the cache
-      queryClient.setQueryData(
-        ["emails", user.id, folder],
-        (oldData: EmailMessage[] = []) => {
-          return oldData.map(email => 
-            email.id === emailId ? { ...email, read: isRead } : email
-          );
-        }
-      );
-      
-      // Update folder unread count
-      queryClient.invalidateQueries({ queryKey: ["email-folders", user.id] });
-    } catch (error: any) {
-      console.error("Error marking email as read:", error);
-      toast.error("Failed to update email", {
-        description: error.message || "Please try again"
-      });
-    }
-  };
-  
-  const markAsStarred = async (emailId: string, isStarred = true) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from("emails")
-        .update({ starred: isStarred })
-        .eq("id", emailId)
-        .eq("user_id", user.id);
-      
-      if (error) throw error;
-      
-      // Update the cache
-      queryClient.setQueryData(
-        ["emails", user.id, folder],
-        (oldData: EmailMessage[] = []) => {
-          return oldData.map(email => 
-            email.id === emailId ? { ...email, is_starred: isStarred } : email
-          );
-        }
-      );
-    } catch (error: any) {
-      console.error("Error starring email:", error);
-      toast.error("Failed to update email", {
-        description: error.message || "Please try again"
-      });
-    }
-  };
-
-  return {
-    emails: emails || [],
-    isLoading,
-    error,
-    syncEmails,
-    syncInProgress,
-    syncProgress,
-    refetch,
-    markAsRead,
-    markAsStarred
-  };
 }

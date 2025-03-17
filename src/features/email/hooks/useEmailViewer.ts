@@ -42,8 +42,8 @@ export function useEmailViewer(emailId: string | null) {
         // Format dates
         return {
           ...data,
-          sent_at: new Date(data.sent_at),
-          received_at: new Date(data.received_at)
+          sent_at: data.sent_at ? new Date(data.sent_at) : null,
+          received_at: data.received_at ? new Date(data.received_at) : null
         } as EmailMessage;
       } catch (err: any) {
         console.error("Error fetching email:", err);
