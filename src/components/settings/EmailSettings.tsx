@@ -4,7 +4,7 @@ import { SmtpSettings } from "./SmtpSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
 import { Mail, Info, AlertCircle, CheckCircle, RefreshCw, XCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -24,68 +24,62 @@ export function EmailSettings() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   
-  // Check if email is configured
-  useEffect(() => {
-    const checkEmailConfig = async () => {
-      if (!user) return;
-      
-      try {
-        setIsLoading(true);
-        
-        // Check IMAP settings
-        const { data: imapData, error: imapError } = await supabase
-          .from('imap_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (imapError && imapError.code !== 'PGRST116') {
-          console.error('Error fetching IMAP settings:', imapError);
-        }
-        
-        // Check SMTP settings
-        const { data: smtpData, error: smtpError } = await supabase
-          .from('smtp_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
-          
-        if (smtpError && smtpError.code !== 'PGRST116') {
-          console.error('Error fetching SMTP settings:', smtpError);
-        }
-        
-        setImapSettings(imapData);
-        setSmtpSettings(smtpData);
-        
-        // Consider email as connected if both IMAP and SMTP are configured
-        const isConfigured = !!(imapData?.host && smtpData?.host);
-        setEmailConnected(isConfigured);
-        
-        // Try to update email_configured in settings if needed
-        if (isConfigured && settings) {
-          try {
-            // We'll attempt to update the email_configured field
-            // The error handling in useSettings hook will manage if the column doesn't exist
-            await updateSettings.mutate({ email_configured: true });
-          } catch (error) {
-            // Error will be handled by the mutation's onError
-            console.warn('Could not update email_configured status:', error);
-          }
-        }
-        
-        // Set last sync time (for display purposes)
-        if (imapData?.last_sync_at) {
-          setLastSyncTime(imapData.last_sync_at);
-        }
-      } catch (error) {
-        console.error('Error checking email config:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Check if email is configured - using a memoized function to prevent excessive rerenders
+  const checkEmailConfig = useCallback(async () => {
+    if (!user) return;
     
+    try {
+      setIsLoading(true);
+      
+      // Check IMAP settings
+      const { data: imapData, error: imapError } = await supabase
+        .from('imap_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (imapError && imapError.code !== 'PGRST116') {
+        console.error('Error fetching IMAP settings:', imapError);
+      }
+      
+      // Check SMTP settings
+      const { data: smtpData, error: smtpError } = await supabase
+        .from('smtp_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (smtpError && smtpError.code !== 'PGRST116') {
+        console.error('Error fetching SMTP settings:', smtpError);
+      }
+      
+      setImapSettings(imapData);
+      setSmtpSettings(smtpData);
+      
+      // Consider email as connected if both IMAP and SMTP are configured
+      const isConfigured = !!(imapData?.host && smtpData?.host);
+      setEmailConnected(isConfigured);
+      
+      // Update settings if connection status has changed
+      if (settings && isConfigured !== !!settings.email_configured) {
+        updateSettings.mutate({ 
+          email_configured: isConfigured 
+        });
+      }
+      
+      // Set last sync time (for display purposes)
+      if (imapData?.last_sync_at) {
+        setLastSyncTime(imapData.last_sync_at);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, updateSettings, settings]);
+  
+  // Only run email config check once when component mounts or when user changes
+  useEffect(() => {
     checkEmailConfig();
-  }, [user, settings, updateSettings]);
+  }, [checkEmailConfig, user]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -113,11 +107,9 @@ export function EmailSettings() {
       }
       
       // Update settings
-      try {
-        await updateSettings.mutate({ email_configured: false });
-      } catch (error) {
-        console.warn('Could not update email_configured status:', error);
-      }
+      await updateSettings.mutateAsync({ 
+        email_configured: false 
+      });
       
       // Reset state
       setImapSettings(null);
@@ -162,6 +154,11 @@ export function EmailSettings() {
           .update({ last_sync_at: now })
           .eq('id', imapSettings.id);
       }
+      
+      // Update app settings with new sync time (if the column exists)
+      updateSettings.mutate({ 
+        last_email_sync: now 
+      });
     } catch (error) {
       console.error('Error syncing emails:', error);
       toast.error("Fehler bei der E-Mail-Synchronisation");
@@ -316,34 +313,12 @@ export function EmailSettings() {
                 
                 <TabsContent value="imap">
                   <ImapSettings onSettingsSaved={() => {
-                    const checkImapConfig = async () => {
-                      if (!user) return;
-                      
-                      const { data } = await supabase
-                        .from('imap_settings')
-                        .select('*')
-                        .eq('user_id', user.id)
-                        .single();
-                      
-                      setImapSettings(data);
-                    };
-                    checkImapConfig();
+                    checkEmailConfig();
                   }} />
                 </TabsContent>
                 <TabsContent value="smtp">
                   <SmtpSettings onSettingsSaved={() => {
-                    const checkSmtpConfig = async () => {
-                      if (!user) return;
-                      
-                      const { data } = await supabase
-                        .from('smtp_settings')
-                        .select('*')
-                        .eq('user_id', user.id)
-                        .single();
-                      
-                      setSmtpSettings(data);
-                    };
-                    checkSmtpConfig();
+                    checkEmailConfig();
                   }} />
                 </TabsContent>
               </Tabs>

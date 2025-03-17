@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Settings } from "@/integrations/supabase/types/settings";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useCallback } from "react";
 
 export const useSettings = () => {
   const queryClient = useQueryClient();
@@ -43,7 +45,7 @@ export const useSettings = () => {
           const { data: userMetadata } = await supabase.auth.getUser();
           const phoneNumber = userMetadata.user?.phone || userMetadata.user?.user_metadata?.phoneNumber || null;
           
-          // Initial settings without email_configured
+          // Initial settings
           const newSettings = {
             user_id: user.id,
             language: "Deutsch",
@@ -79,103 +81,86 @@ export const useSettings = () => {
     },
     retry: 3,
     retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+    // Add staleTime to prevent frequent refetches
+    staleTime: 30000, // 30 seconds
+    // Don't refetch automatically on window focus
+    refetchOnWindowFocus: false,
   });
 
+  // Safely handle column existence checks without repeated API calls
+  const safeSettingsUpdate = useCallback(async (newSettings: Partial<Settings>) => {
+    const { data: { user } } = await supabase.auth.getUser();
+      
+    if (!user) {
+      throw new Error("No user found");
+    }
+
+    // Create a safe copy of the settings to update
+    const safeSettings = { ...newSettings };
+    
+    // Handle email columns specifically
+    const emailColumns = ['email_configured', 'last_email_sync', 'email_sync_enabled'];
+    
+    for (const column of emailColumns) {
+      if (column in safeSettings) {
+        try {
+          // Try to update just this column in a separate query to test if it exists
+          const { error } = await supabase
+            .from("settings")
+            .update({ [column]: safeSettings[column] })
+            .eq("user_id", user.id);
+            
+          if (error && error.message.includes("column")) {
+            console.warn(`${column} column doesn't exist in settings table`);
+            delete safeSettings[column];
+          }
+        } catch (error) {
+          console.warn(`Error checking ${column} column:`, error);
+          delete safeSettings[column];
+        }
+      }
+    }
+    
+    // Only proceed with update if there are properties to update
+    if (Object.keys(safeSettings).length === 0) {
+      return settings;
+    }
+
+    const { data, error } = await supabase
+      .from("settings")
+      .update(safeSettings)
+      .eq("user_id", user.id)
+      .select()
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    if (safeSettings.openai_api_key) {
+      console.info("✅ OpenAI API Key updated successfully");
+    }
+
+    return data;
+  }, [settings]);
+
   const updateSettings = useMutation({
-    mutationFn: async (newSettings: Partial<Settings>) => {
-      const { data: { user } } = await supabase.auth.getUser();
+    mutationFn: safeSettingsUpdate,
+    onSuccess: (data, variables) => {
+      // Only show toast for non-automatic updates (user-initiated)
+      // We'll determine this by checking if it's an email setting - those are automated
+      const isEmailSetting = 
+        'email_configured' in variables ||
+        'last_email_sync' in variables ||
+        'email_sync_enabled' in variables;
+        
+      // Update cache with the new data without triggering a refetch
+      queryClient.setQueryData(["settings"], data);
       
-      if (!user) {
-        throw new Error("No user found");
+      // Only show toast for non-email settings updates
+      if (!isEmailSetting) {
+        toast.success("Einstellungen wurden gespeichert");
       }
-
-      // Create a safe copy of the settings to update
-      const safeSettings = { ...newSettings };
-      
-      // Handle email_configured specifically
-      if ('email_configured' in safeSettings) {
-        try {
-          // Try to update just the email_configured column in a separate query
-          // to test if it exists
-          const { error } = await supabase
-            .from("settings")
-            .update({ email_configured: safeSettings.email_configured })
-            .eq("user_id", user.id);
-            
-          if (error) {
-            console.warn("email_configured column doesn't exist in settings table");
-            // Remove it from the update if the column doesn't exist
-            delete safeSettings.email_configured;
-          }
-        } catch (error) {
-          console.warn("Error checking email_configured column:", error);
-          delete safeSettings.email_configured;
-        }
-      }
-      
-      // Handle last_email_sync specifically
-      if ('last_email_sync' in safeSettings) {
-        try {
-          // Try to update just the last_email_sync column in a separate query
-          const { error } = await supabase
-            .from("settings")
-            .update({ last_email_sync: safeSettings.last_email_sync })
-            .eq("user_id", user.id);
-            
-          if (error) {
-            console.warn("last_email_sync column doesn't exist in settings table");
-            delete safeSettings.last_email_sync;
-          }
-        } catch (error) {
-          console.warn("Error checking last_email_sync column:", error);
-          delete safeSettings.last_email_sync;
-        }
-      }
-      
-      // Handle email_sync_enabled specifically
-      if ('email_sync_enabled' in safeSettings) {
-        try {
-          // Try to update just the email_sync_enabled column in a separate query
-          const { error } = await supabase
-            .from("settings")
-            .update({ email_sync_enabled: safeSettings.email_sync_enabled })
-            .eq("user_id", user.id);
-            
-          if (error) {
-            console.warn("email_sync_enabled column doesn't exist in settings table");
-            delete safeSettings.email_sync_enabled;
-          }
-        } catch (error) {
-          console.warn("Error checking email_sync_enabled column:", error);
-          delete safeSettings.email_sync_enabled;
-        }
-      }
-
-      // Only proceed with update if there are properties to update
-      if (Object.keys(safeSettings).length === 0) {
-        return settings;
-      }
-
-      const { data, error } = await supabase
-        .from("settings")
-        .update(safeSettings)
-        .eq("user_id", user.id)
-        .select()
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      if (safeSettings.openai_api_key) {
-        console.info("✅ OpenAI API Key updated successfully");
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["settings"] });
-      toast.success("Einstellungen wurden gespeichert");
     },
     onError: (error) => {
       console.error("Error updating settings:", error);
