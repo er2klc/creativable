@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ImapFlow } from 'npm:imapflow@1.0.98';
+import { simpleParser } from 'npm:mailparser@3.6.5';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,19 +13,10 @@ interface SyncResult {
   success: boolean;
   message: string;
   emailsCount?: number;
+  folderCount?: number;
   error?: string;
   details?: string;
   progress?: number;
-}
-
-interface EmailMessage {
-  id: string;
-  from: { value: Array<{ address: string; name: string }> };
-  to: { value: Array<{ address: string; name: string }> };
-  subject: string;
-  text?: string;
-  html?: string;
-  date: Date;
 }
 
 interface ImapSettings {
@@ -54,6 +46,160 @@ interface SyncOptions {
   historicalSync?: boolean;
   startDate?: Date;
   maxEmails?: number;
+  folder?: string;
+}
+
+async function syncEmailFolders(
+  imapSettings: ImapSettings,
+  userId: string,
+  retryCount = 0
+): Promise<SyncResult> {
+  console.log(`[Attempt ${retryCount + 1}] Getting email folders from: ${imapSettings.host}:${imapSettings.port}`);
+  
+  const client = new ImapFlow(imapSettings);
+  
+  try {
+    await client.connect();
+    console.log("Successfully connected to IMAP server for folder synchronization");
+    
+    const folderList = await client.list();
+    console.log(`Found ${folderList.length} folders`);
+    
+    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
+    
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Missing Supabase environment variables");
+    }
+    
+    // Group folders by type
+    const specialFolders = {
+      inbox: null,
+      sent: null,
+      drafts: null,
+      trash: null,
+      spam: null,
+      archive: null,
+    };
+    
+    // Try to identify special folders
+    for (const folder of folderList) {
+      if (folder.specialUse) {
+        if (folder.specialUse === '\\Inbox') specialFolders.inbox = folder;
+        if (folder.specialUse === '\\Sent') specialFolders.sent = folder;
+        if (folder.specialUse === '\\Drafts') specialFolders.drafts = folder;
+        if (folder.specialUse === '\\Trash') specialFolders.trash = folder;
+        if (folder.specialUse === '\\Junk') specialFolders.spam = folder;
+        if (folder.specialUse === '\\Archive') specialFolders.archive = folder;
+      } else {
+        // Try to identify by common folder names
+        const folderName = folder.name.toLowerCase();
+        if (folderName.includes('inbox') && !specialFolders.inbox) specialFolders.inbox = folder;
+        if ((folderName.includes('sent') || folderName.includes('gesend')) && !specialFolders.sent) specialFolders.sent = folder;
+        if ((folderName.includes('draft') || folderName.includes('entwu')) && !specialFolders.drafts) specialFolders.drafts = folder;
+        if ((folderName.includes('trash') || folderName.includes('papier') || folderName.includes('müll')) && !specialFolders.trash) specialFolders.trash = folder;
+        if ((folderName.includes('spam') || folderName.includes('junk')) && !specialFolders.spam) specialFolders.spam = folder;
+        if (folderName.includes('archiv') && !specialFolders.archive) specialFolders.archive = folder;
+      }
+    }
+    
+    // Create folder entries in the database
+    for (const folder of folderList) {
+      let folderType = 'regular';
+      let specialUse = null;
+      
+      // Check if this is a special folder
+      if (folder === specialFolders.inbox) {
+        folderType = 'inbox';
+        specialUse = '\\Inbox';
+      } else if (folder === specialFolders.sent) {
+        folderType = 'sent';
+        specialUse = '\\Sent';
+      } else if (folder === specialFolders.drafts) {
+        folderType = 'drafts';
+        specialUse = '\\Drafts';
+      } else if (folder === specialFolders.trash) {
+        folderType = 'trash';
+        specialUse = '\\Trash';
+      } else if (folder === specialFolders.spam) {
+        folderType = 'spam';
+        specialUse = '\\Junk';
+      } else if (folder === specialFolders.archive) {
+        folderType = 'archive';
+        specialUse = '\\Archive';
+      } else if (folder.specialUse) {
+        specialUse = folder.specialUse;
+      }
+      
+      try {
+        const mailbox = await client.status(folder.path, { messages: true, unseen: true });
+        
+        // Store folder in database
+        const folderData = {
+          user_id: userId,
+          name: folder.name,
+          path: folder.path,
+          type: folderType,
+          special_use: specialUse,
+          flags: folder.flags || [],
+          total_messages: mailbox.messages,
+          unread_messages: mailbox.unseen
+        };
+        
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/email_folders`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            'apikey': SUPABASE_SERVICE_ROLE_KEY,
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify(folderData)
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Failed to store folder: ${errorText}`);
+        }
+      } catch (folderError) {
+        console.error(`Error processing folder ${folder.path}:`, folderError);
+      }
+    }
+    
+    await client.logout();
+    
+    return {
+      success: true,
+      message: `Successfully synced ${folderList.length} email folders`,
+      folderCount: folderList.length
+    };
+  } catch (error) {
+    console.error("IMAP folder sync error:", error);
+    
+    if (retryCount < 1) {
+      console.log(`Retrying folder sync (${retryCount + 1}/1)...`);
+      const newSettings = {
+        ...imapSettings,
+        secure: !imapSettings.secure,
+        port: imapSettings.secure ? 143 : 993,
+        tls: {
+          ...imapSettings.tls,
+          rejectUnauthorized: false
+        }
+      };
+      return syncEmailFolders(newSettings, userId, retryCount + 1);
+    }
+    
+    return {
+      success: false,
+      message: "Failed to sync email folders",
+      error: error.message,
+      details: error.stack || "Unknown error during folder sync"
+    };
+  } finally {
+    if (client.usable) {
+      client.close();
+    }
+  }
 }
 
 async function fetchEmails(
@@ -66,6 +212,7 @@ async function fetchEmails(
   
   const client = new ImapFlow(imapSettings);
   const maxEmails = options.maxEmails || (options.forceRefresh ? 20 : 10);
+  const folder = options.folder || 'INBOX';
   
   try {
     // Connect with timeout
@@ -83,7 +230,7 @@ async function fetchEmails(
     console.log("Successfully connected to IMAP server");
     
     // Select the mailbox
-    const mailbox = await client.mailboxOpen('INBOX');
+    const mailbox = await client.mailboxOpen(folder);
     console.log(`Mailbox opened with ${mailbox.exists} messages`);
     
     // Determine how many emails to fetch
@@ -92,7 +239,7 @@ async function fetchEmails(
     if (fetchCount === 0) {
       return {
         success: true,
-        message: "No emails found in inbox",
+        message: "No emails found in mailbox",
         emailsCount: 0,
         progress: 100
       };
@@ -132,26 +279,46 @@ async function fetchEmails(
         console.log(`Sync progress: ${progress}%`);
       }
       
-      // Extract email data
-      const parsedEmail = {
-        message_id: message.envelope.messageId,
-        from_email: message.envelope.from?.[0]?.address || "unknown@example.com",
-        from_name: message.envelope.from?.[0]?.name || "",
-        to_email: message.envelope.to?.[0]?.address || "",
-        to_name: message.envelope.to?.[0]?.name || "",
-        subject: message.envelope.subject || "(No Subject)",
-        content: message.source.toString(),
-        html_content: null as string | null,
-        text_content: null as string | null,
-        sent_at: message.envelope.date,
-        received_at: new Date(),
-        user_id: userId,
-        folder: "inbox",
-        read: false
-      };
-      
-      // Try to parse content
       try {
+        // Parse email with mailparser
+        const parsed = await simpleParser(message.source);
+        
+        // Extract email data
+        const parsedEmail = {
+          message_id: message.envelope.messageId,
+          folder: folder,
+          subject: parsed.subject || "(No Subject)",
+          from_name: parsed.from?.value[0]?.name || "",
+          from_email: parsed.from?.value[0]?.address || "",
+          to_name: parsed.to?.value[0]?.name || "",
+          to_email: parsed.to?.value[0]?.address || "",
+          cc: parsed.cc?.value.map(addr => addr.address) || [],
+          bcc: parsed.bcc?.value.map(addr => addr.address) || [],
+          content: message.source.toString(),
+          html_content: parsed.html || null,
+          text_content: parsed.text || null,
+          sent_at: parsed.date || message.envelope.date,
+          received_at: new Date(),
+          user_id: userId,
+          read: message.flags.includes("\\Seen"),
+          starred: message.flags.includes("\\Flagged"),
+          has_attachments: parsed.attachments && parsed.attachments.length > 0,
+          flags: message.flags,
+          headers: Object.fromEntries(
+            Object.entries(parsed.headers).map(([key, value]) => {
+              // Handle array headers
+              if (Array.isArray(value)) {
+                return [key, value];
+              }
+              // Convert Map to object if needed
+              if (value instanceof Map) {
+                return [key, Object.fromEntries(value)];
+              }
+              return [key, value];
+            })
+          )
+        };
+        
         const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
         
         // Store email in database using upsert to avoid duplicates
@@ -163,22 +330,7 @@ async function fetchEmails(
             'apikey': SUPABASE_SERVICE_ROLE_KEY,
             'Prefer': 'resolution=merge-duplicates'
           },
-          body: JSON.stringify({
-            message_id: parsedEmail.message_id,
-            from_email: parsedEmail.from_email,
-            from_name: parsedEmail.from_name,
-            to_email: parsedEmail.to_email,
-            to_name: parsedEmail.to_name,
-            subject: parsedEmail.subject,
-            content: parsedEmail.content,
-            html_content: parsedEmail.html_content,
-            text_content: parsedEmail.text_content,
-            sent_at: parsedEmail.sent_at,
-            received_at: parsedEmail.received_at,
-            user_id: parsedEmail.user_id,
-            folder: parsedEmail.folder,
-            read: parsedEmail.read
-          })
+          body: JSON.stringify(parsedEmail)
         });
         
         if (!response.ok) {
@@ -197,6 +349,28 @@ async function fetchEmails(
         console.log(`Reached maximum email count (${maxEmails}), stopping fetch`);
         break;
       }
+    }
+    
+    // Update the unread count for the folder
+    try {
+      const mailboxStatus = await client.status(folder, { unseen: true });
+      const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
+      
+      await fetch(`${SUPABASE_URL}/rest/v1/email_folders?path=eq.${encodeURIComponent(folder)}&user_id=eq.${userId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+        },
+        body: JSON.stringify({
+          unread_messages: mailboxStatus.unseen,
+          total_messages: mailboxStatus.messages,
+          updated_at: new Date().toISOString()
+        })
+      });
+    } catch (statusError) {
+      console.error("Error updating folder status:", statusError);
     }
     
     await client.logout();
@@ -305,7 +479,8 @@ serve(async (req) => {
       force_refresh = false,
       historical_sync = false,
       sync_start_date = null,
-      max_emails = 100
+      max_emails = 100,
+      folder = 'INBOX'
     } = requestData;
 
     // Get the user's JWT from the request
@@ -375,10 +550,27 @@ serve(async (req) => {
       disableCompression: false // Keep compression enabled by default
     };
 
+    // First sync folders if force refresh or it's a periodic sync
+    let folderResult = { success: true };
+    if (force_refresh || !requestData.folder) {
+      folderResult = await syncEmailFolders(imapConfig, userId);
+      
+      if (!folderResult.success) {
+        return new Response(JSON.stringify(folderResult), {
+          headers: {
+            "Content-Type": "application/json",
+            ...corsHeaders,
+          },
+          status: 200, // Return 200 even on error to get the error details on frontend
+        });
+      }
+    }
+
     // Prepare sync options
     const syncOptions: SyncOptions = {
       forceRefresh: force_refresh,
-      maxEmails: max_emails || settings.max_emails || 100
+      maxEmails: max_emails || settings.max_emails || 100,
+      folder: folder
     };
     
     // Handle historical sync
@@ -399,7 +591,13 @@ serve(async (req) => {
     }
 
     // Fetch emails
-    const result = await fetchEmails(imapConfig, userId, syncOptions);
+    const emailResult = await fetchEmails(imapConfig, userId, syncOptions);
+    
+    // Combine results
+    const result = {
+      ...emailResult,
+      folderCount: folderResult.folderCount
+    };
 
     return new Response(JSON.stringify(result), {
       headers: {
@@ -412,7 +610,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Email sync error:", error);
     
-    const result: SyncResult = {
+    const result = {
       success: false,
       message: "Failed to sync emails",
       error: error.message,

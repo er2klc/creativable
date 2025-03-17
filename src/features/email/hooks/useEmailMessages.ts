@@ -13,6 +13,8 @@ export interface EmailMessage {
   from_email: string;
   to_email: string;
   to_name: string;
+  cc?: string[];
+  bcc?: string[];
   sent_at: Date;
   received_at: Date;
   content: string;
@@ -20,8 +22,8 @@ export interface EmailMessage {
   text_content: string | null;
   read: boolean;
   folder: string;
-  has_attachments?: boolean;
-  is_starred?: boolean;
+  has_attachments: boolean;
+  is_starred: boolean;
 }
 
 export function useEmailMessages(folder: string) {
@@ -108,6 +110,9 @@ export function useEmailMessages(folder: string) {
         
         // Refresh the emails list
         await queryClient.invalidateQueries({ queryKey: ["emails", user.id, folder] });
+        
+        // Also refresh folder counts
+        await queryClient.invalidateQueries({ queryKey: ["email-folders", user.id] });
       } else {
         throw new Error(result.message || "Failed to sync emails");
       }
@@ -142,8 +147,40 @@ export function useEmailMessages(folder: string) {
           );
         }
       );
+      
+      // Update folder unread count
+      queryClient.invalidateQueries({ queryKey: ["email-folders", user.id] });
     } catch (error: any) {
       console.error("Error marking email as read:", error);
+      toast.error("Failed to update email", {
+        description: error.message || "Please try again"
+      });
+    }
+  };
+  
+  const markAsStarred = async (emailId: string, isStarred = true) => {
+    if (!user) return;
+    
+    try {
+      const { error } = await supabase
+        .from("emails")
+        .update({ starred: isStarred })
+        .eq("id", emailId)
+        .eq("user_id", user.id);
+      
+      if (error) throw error;
+      
+      // Update the cache
+      queryClient.setQueryData(
+        ["emails", user.id, folder],
+        (oldData: EmailMessage[] = []) => {
+          return oldData.map(email => 
+            email.id === emailId ? { ...email, is_starred: isStarred } : email
+          );
+        }
+      );
+    } catch (error: any) {
+      console.error("Error starring email:", error);
       toast.error("Failed to update email", {
         description: error.message || "Please try again"
       });
@@ -158,6 +195,7 @@ export function useEmailMessages(folder: string) {
     syncInProgress,
     syncProgress,
     refetch,
-    markAsRead
+    markAsRead,
+    markAsStarred
   };
 }

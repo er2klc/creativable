@@ -1,12 +1,40 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, Search, Filter, Clock, Paperclip, Star, Loader2 } from 'lucide-react';
+import { 
+  Archive,
+  CheckCircle2, 
+  Download, 
+  Filter, 
+  Loader2, 
+  Mail, 
+  MailX, 
+  Paperclip, 
+  RefreshCcw, 
+  Search, 
+  Star, 
+  Trash 
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEmailMessages } from '../../hooks/useEmailMessages';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface EmailListProps {
   folder: string;
@@ -15,7 +43,16 @@ interface EmailListProps {
 }
 
 export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListProps) {
-  const { emails, isLoading, syncEmails, syncInProgress } = useEmailMessages(folder);
+  const { 
+    emails, 
+    isLoading, 
+    syncEmails, 
+    syncInProgress,
+    markAsRead,
+    markAsStarred
+  } = useEmailMessages(folder);
+  
+  const [searchQuery, setSearchQuery] = useState('');
   
   const formatDate = (date: Date) => {
     const today = new Date();
@@ -30,27 +67,77 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
     }
   };
 
+  // Filter emails based on search query
+  const filteredEmails = searchQuery
+    ? emails.filter(email => 
+        email.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.from_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.from_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        email.text_content?.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    : emails;
+
+  // Email action handlers
+  const handleMarkAsRead = (e: React.MouseEvent, emailId: string, isRead: boolean) => {
+    e.stopPropagation();
+    markAsRead(emailId, !isRead);
+  };
+  
+  const handleToggleStarred = (e: React.MouseEvent, emailId: string, isStarred: boolean) => {
+    e.stopPropagation();
+    markAsStarred(emailId, !isStarred);
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-3 border-b">
         <div className="flex items-center space-x-2">
           <div className="relative flex-1">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="E-Mails durchsuchen..." className="pl-8" />
+            <Input 
+              placeholder="E-Mails durchsuchen..." 
+              className="pl-8" 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <Button variant="outline" size="icon">
-            <Filter className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon">
+                <Filter className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                <span>Gelesene anzeigen</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <MailX className="mr-2 h-4 w-4" />
+                <span>Ungelesene anzeigen</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem>
+                <Star className="mr-2 h-4 w-4" />
+                <span>Markierte anzeigen</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem>
+                <Paperclip className="mr-2 h-4 w-4" />
+                <span>Mit Anhang anzeigen</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button 
             variant="outline" 
             size="icon" 
             disabled={syncInProgress}
             onClick={() => syncEmails(true)}
+            title="E-Mails aktualisieren"
           >
             {syncInProgress ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCcw className="h-4 w-4" />
             )}
           </Button>
         </div>
@@ -72,51 +159,88 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
               </div>
             </div>
           ))
-        ) : emails.length === 0 ? (
+        ) : filteredEmails.length === 0 ? (
           // Empty state
           <div className="flex flex-col items-center justify-center h-full p-4 text-center text-muted-foreground">
-            <p className="mb-2">Keine E-Mails in diesem Ordner</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => syncEmails(true)}
-              disabled={syncInProgress}
-            >
-              {syncInProgress ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Synchronisieren...
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  E-Mails synchronisieren
-                </>
-              )}
-            </Button>
+            {searchQuery ? (
+              <>
+                <Search className="h-12 w-12 mb-4 text-muted-foreground/50" />
+                <p className="mb-2">Keine E-Mails gefunden für "{searchQuery}"</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setSearchQuery('')}
+                >
+                  Suche zurücksetzen
+                </Button>
+              </>
+            ) : (
+              <>
+                <Mail className="h-12 w-12 mb-4 text-muted-foreground/50" />
+                <p className="mb-2">Keine E-Mails in diesem Ordner</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => syncEmails(true)}
+                  disabled={syncInProgress}
+                >
+                  {syncInProgress ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Synchronisieren...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCcw className="mr-2 h-4 w-4" />
+                      E-Mails synchronisieren
+                    </>
+                  )}
+                </Button>
+              </>
+            )}
           </div>
         ) : (
           // Email list
-          emails.map((email) => (
-            <button
+          filteredEmails.map((email) => (
+            <div
               key={email.id}
               className={cn(
                 "w-full text-left px-4 py-3 border-b transition-colors hover:bg-muted/50 relative",
                 selectedEmailId === email.id && "bg-muted",
                 !email.read && "bg-blue-50 dark:bg-blue-950/20"
               )}
-              onClick={() => onSelectEmail(email.id)}
             >
               <div className="flex items-start gap-2">
-                <div className="mt-1">
-                  <Star 
-                    className={cn(
-                      "h-4 w-4", 
-                      email.is_starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
-                    )} 
-                  />
+                {/* Email actions and metadata */}
+                <div className="flex flex-col items-center gap-1 mt-1">
+                  <button
+                    onClick={(e) => handleToggleStarred(e, email.id, email.is_starred || false)}
+                    className="text-muted-foreground hover:text-foreground focus:outline-none"
+                  >
+                    <Star 
+                      className={cn(
+                        "h-4 w-4", 
+                        email.is_starred ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground"
+                      )} 
+                    />
+                  </button>
+                  <button
+                    onClick={(e) => handleMarkAsRead(e, email.id, email.read)}
+                    className="text-muted-foreground hover:text-foreground focus:outline-none"
+                  >
+                    {email.read ? (
+                      <Mail className="h-4 w-4" />
+                    ) : (
+                      <Mail className="h-4 w-4 fill-blue-400 text-blue-400" />
+                    )}
+                  </button>
                 </div>
-                <div className="flex-1 min-w-0">
+                
+                {/* Email content */}
+                <div 
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => onSelectEmail(email.id)}
+                >
                   <div className="flex items-baseline justify-between gap-2">
                     <p className={cn(
                       "truncate text-sm",
@@ -125,11 +249,7 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
                       {email.from_name || email.from_email}
                     </p>
                     <span className="shrink-0 text-xs text-muted-foreground flex items-center gap-1">
-                      {email.has_attachments && <Paperclip className="h-3 w-3" />}
-                      <span className="flex items-center">
-                        <Clock className="h-3 w-3 mr-1" />
-                        {formatDate(email.sent_at)}
-                      </span>
+                      {formatDate(email.sent_at)}
                     </span>
                   </div>
                   
@@ -140,15 +260,47 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail }: EmailListP
                     {email.subject || "(Kein Betreff)"}
                   </p>
                   
-                  <p className="truncate text-xs text-muted-foreground">
-                    {email.text_content || ""}
-                  </p>
+                  <div className="flex items-center">
+                    <p className="truncate text-xs text-muted-foreground flex-1">
+                      {email.text_content?.substring(0, 100) || ""}
+                    </p>
+                    
+                    {email.has_attachments && (
+                      <Paperclip className="h-3 w-3 ml-1 flex-shrink-0 text-muted-foreground" />
+                    )}
+                  </div>
                 </div>
               </div>
-            </button>
+            </div>
           ))
         )}
       </ScrollArea>
+      
+      {filteredEmails.length > 0 && (
+        <div className="p-2 border-t">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious href="#" />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">1</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#" isActive>
+                  2
+                </PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationLink href="#">3</PaginationLink>
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext href="#" />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }

@@ -51,6 +51,15 @@ export function useEmailViewer(emailId: string | null) {
           .update({ read: true })
           .eq("id", emailId)
           .eq("user_id", user.id);
+          
+        // Also update folder unread counts
+        await supabase
+          .from("email_folders")
+          .update({ 
+            unread_messages: supabase.rpc('decrement', { x: 1 }) 
+          })
+          .eq("path", email.folder)
+          .eq("user_id", user.id);
       } catch (error) {
         console.error("Error marking email as read:", error);
       }
