@@ -1,9 +1,10 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImapSettings } from "./ImapSettings";
 import { SmtpSettings } from "./SmtpSettings";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSettings } from "@/hooks/use-settings";
-import { Mail, Info, AlertCircle, CheckCircle, RefreshCw, XCircle } from "lucide-react";
+import { Mail, Info, AlertCircle, CheckCircle, RefreshCw, XCircle, Loader2 } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { testTableAccess, testEmailTablesAccess } from "@/utils/debug-helper";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function EmailSettings() {
   const { settings, updateSettings } = useSettings();
@@ -29,23 +32,54 @@ export function EmailSettings() {
   // Flags um zu verhindern, dass zu viele Anfragen gestellt werden
   const [checkAttempted, setCheckAttempted] = useState(false);
   const [skipNextEffect, setSkipNextEffect] = useState(false);
-  
+  const [fetchTimeoutId, setFetchTimeoutId] = useState<NodeJS.Timeout | null>(null);
+
+  // Debug-Funktion
+  const debugTables = async () => {
+    const results = await testEmailTablesAccess();
+    console.log('Email tables access test results:', results);
+    return results;
+  };
+
   // Check if email is configured - using a memoized function to prevent excessive rerenders
   const checkEmailConfig = useCallback(async () => {
-    if (!user || checkAttempted) return;
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
     
+    // Timeout setzen, um sicherzustellen, dass wir nicht in einem Loading-State hängen bleiben
+    const timeoutId = setTimeout(() => {
+      console.warn("Email config check timed out after 10 seconds");
+      setIsLoading(false);
+      setFetchError("Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es später erneut.");
+    }, 10000);
+
     try {
       setIsLoading(true);
-      setCheckAttempted(true);
       
-      // Verhindere zu häufige Anfragen (mindestens 5 Sekunden zwischen Aufrufen)
+      // Verhindere zu häufige Anfragen (mindestens 3 Sekunden zwischen Aufrufen)
       const now = Date.now();
-      if (now - lastCheckTime < 5000) {
+      if (now - lastCheckTime < 3000) {
         console.log("Skipping check - too soon since last check");
+        clearTimeout(timeoutId);
+        setIsLoading(false);
         return;
       }
       
       setLastCheckTime(now);
+      
+      // Testen Sie zuerst die Tabellenzugriffsrechte
+      const tablesTest = await debugTables();
+      console.info("Table access test results:", tablesTest);
+      
+      if (!tablesTest.imap_settings.success || !tablesTest.smtp_settings.success) {
+        console.error("Table access failed:", 
+          !tablesTest.imap_settings.success ? tablesTest.imap_settings.message : "",
+          !tablesTest.smtp_settings.success ? tablesTest.smtp_settings.message : "");
+        
+        throw new Error("Zugriffsfehler auf Datenbank-Tabellen. Bitte kontaktieren Sie den Support.");
+      }
       
       // Check IMAP settings
       const { data: imapData, error: imapError } = await supabase
@@ -90,23 +124,40 @@ export function EmailSettings() {
       if (imapData?.last_sync_at) {
         setLastSyncTime(imapData.last_sync_at);
       }
-    } catch (error) {
+      
+      setFetchError(null);
+    } catch (error: any) {
       console.error('Error checking email config:', error);
-      setFetchError(error.message || "Unbekannter Fehler");
+      setFetchError(error.message || "Unbekannter Fehler beim Prüfen der E-Mail-Konfiguration");
     } finally {
+      clearTimeout(timeoutId);
+      setFetchTimeoutId(null);
       setIsLoading(false);
+      setCheckAttempted(true);
     }
-  }, [user, updateSettings, settings, lastCheckTime, checkAttempted, fetchError]);
+  }, [user, updateSettings, settings, lastCheckTime, fetchError]);
   
   // Effekt, der einmalig nach dem Rendern ausgeführt wird
   useEffect(() => {
-    if (!user || isLoading || skipNextEffect) {
+    if (!user || skipNextEffect) {
       if (skipNextEffect) setSkipNextEffect(false);
       return;
     }
     
-    checkEmailConfig();
-  }, [checkEmailConfig, user, isLoading, skipNextEffect]);
+    const timeoutId = setTimeout(() => {
+      if (!checkAttempted) {
+        checkEmailConfig();
+      }
+    }, 500);
+    
+    setFetchTimeoutId(timeoutId);
+    
+    return () => {
+      if (fetchTimeoutId) {
+        clearTimeout(fetchTimeoutId);
+      }
+    };
+  }, [checkEmailConfig, user, skipNextEffect, checkAttempted, fetchTimeoutId]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -245,11 +296,46 @@ export function EmailSettings() {
     );
   }
 
-  // Loading state
+  // Loading state mit Skeleton-UI
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-full mb-6" />
+        
+        <Card className="w-full overflow-hidden border-0 shadow-md">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-6 w-24" />
+            </div>
+            <Skeleton className="h-4 w-2/3 mt-2" />
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <Skeleton className="h-5 w-40 mb-2" />
+                  <Skeleton className="h-4 w-60" />
+                </div>
+                <Skeleton className="h-10 w-32" />
+              </div>
+              
+              <Skeleton className="h-px w-full" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Skeleton className="h-5 w-32 mb-2" />
+                  <Skeleton className="h-32 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="h-5 w-32 mb-2" />
+                  <Skeleton className="h-32 w-full rounded-md" />
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

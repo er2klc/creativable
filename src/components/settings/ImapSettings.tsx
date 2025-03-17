@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +10,8 @@ import { toast } from 'sonner';
 import { DatePicker } from '@/components/ui/date-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ImapSettingsProps {
   onSettingsSaved?: () => void;
@@ -24,7 +24,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
   const [existingSettingsId, setExistingSettingsId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const fetchAttemptsRef = useRef(0);
-  const maxFetchAttempts = 2;
+  const maxFetchAttempts = 3;
+  const [fetchAborted, setFetchAborted] = useState(false);
 
   // Initialize the form
   const form = useForm<ImapSettingsFormData>({
@@ -41,9 +42,29 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     },
   });
 
-  // Fetch existing settings - mit Retry-Limit und besserer Fehlerbehandlung
+  // Fetch mit Timeout-Funktion
+  const fetchWithTimeout = async (fetchFunction: () => Promise<any>, timeoutMs: number = 10000) => {
+    let timeoutId: NodeJS.Timeout;
+    
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error("Die Anfrage hat das Zeitlimit überschritten"));
+      }, timeoutMs);
+    });
+    
+    try {
+      const result = await Promise.race([fetchFunction(), timeoutPromise]);
+      clearTimeout(timeoutId);
+      return result;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  };
+
+  // Fetch existing settings mit Retry-Limit, Timeout und besserer Fehlerbehandlung
   const fetchSettings = useCallback(async () => {
-    if (!user) {
+    if (!user || fetchAborted) {
       setLoadingSettings(false);
       return;
     }
@@ -51,57 +72,87 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     try {
       fetchAttemptsRef.current += 1;
       
-      const { data, error } = await supabase
-        .from('imap_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      const result = await fetchWithTimeout(async () => {
+        const { data, error } = await supabase
+          .from('imap_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
 
-      if (error) {
-        if (error.code !== 'PGRST116') {
+        if (error && error.code !== 'PGRST116') {
           console.error('Error fetching IMAP settings:', error);
-          setLoadError(`Fehler beim Laden der IMAP-Einstellungen: ${error.message}`);
-          return;
+          throw new Error(`Fehler beim Laden der IMAP-Einstellungen: ${error.message}`);
         }
-      }
 
-      if (data) {
-        setExistingSettingsId(data.id);
+        return { data, error };
+      }, 5000); // 5 Sekunden Timeout
+      
+      if (result.data) {
+        setExistingSettingsId(result.data.id);
         form.reset({
-          host: data.host || '',
-          port: data.port || 993,
-          username: data.username || '',
-          password: data.password || '',
-          secure: data.secure !== undefined ? data.secure : true,
-          max_emails: data.max_emails || 100,
-          historical_sync: data.historical_sync || false,
-          historical_sync_date: data.historical_sync_date ? new Date(data.historical_sync_date) : undefined,
+          host: result.data.host || '',
+          port: result.data.port || 993,
+          username: result.data.username || '',
+          password: result.data.password || '',
+          secure: result.data.secure !== undefined ? result.data.secure : true,
+          max_emails: result.data.max_emails || 100,
+          historical_sync: result.data.historical_sync || false,
+          historical_sync_date: result.data.historical_sync_date ? new Date(result.data.historical_sync_date) : undefined,
         });
       }
-    } catch (error) {
+      
+      setLoadError(null);
+    } catch (error: any) {
       console.error('Error loading IMAP settings:', error);
       
       // Nur begrenzte Anzahl von Versuchen
       if (fetchAttemptsRef.current < maxFetchAttempts) {
+        const backoffTime = Math.min(1000 * Math.pow(2, fetchAttemptsRef.current - 1), 8000); // Exponentielles Backoff
+        console.log(`Retry in ${backoffTime}ms (attempt ${fetchAttemptsRef.current}/${maxFetchAttempts})`);
+        
         setTimeout(() => {
-          fetchSettings();
-        }, 2000); // 2 Sekunden Pause zwischen Versuchen
+          if (!fetchAborted) {
+            fetchSettings();
+          }
+        }, backoffTime);
       } else {
-        setLoadError("Maximale Anzahl von Versuchen überschritten. Bitte laden Sie die Seite neu.");
+        setLoadError(error.message || "Maximale Anzahl von Versuchen überschritten. Bitte laden Sie die Seite neu.");
+        setFetchAborted(true);
       }
     } finally {
-      setLoadingSettings(false);
+      if (fetchAttemptsRef.current >= maxFetchAttempts || fetchAborted) {
+        setLoadingSettings(false);
+      }
     }
-  }, [user, form]);
+  }, [user, form, fetchAborted]);
 
-  // Fetch settings on component mount
+  // Fetch settings on component mount mit Clean-Up
   useEffect(() => {
-    if (user) {
-      fetchSettings();
-    } else {
-      setLoadingSettings(false);
-    }
-  }, [user, fetchSettings]);
+    let isMounted = true;
+    
+    const initFetch = async () => {
+      if (user && isMounted && !fetchAborted) {
+        await fetchSettings();
+        
+        // Stelle sicher, dass wir nicht in loading hängen bleiben
+        if (isMounted) {
+          setLoadingSettings(false);
+        }
+      } else {
+        if (isMounted) {
+          setLoadingSettings(false);
+        }
+      }
+    };
+    
+    initFetch();
+    
+    // Clean-Up Funktion
+    return () => {
+      isMounted = false;
+      setFetchAborted(true);
+    };
+  }, [user, fetchSettings, fetchAborted]);
 
   const onSubmit = async (values: ImapSettingsFormData) => {
     if (!user || isSaving) return;
@@ -190,6 +241,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                   setLoadError(null);
                   setLoadingSettings(true);
                   fetchAttemptsRef.current = 0;
+                  setFetchAborted(false);
                   fetchSettings();
                 }}
                 className="mt-2"
@@ -200,6 +252,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
           </div>
         </div>
         <div className="mt-6">
+          {/* Form anzeigen trotz Fehler, damit User die Werte manuell eingeben kann */}
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <div className="bg-white p-6 rounded-md shadow-sm border">
@@ -377,10 +430,41 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     );
   }
 
+  // Verbesserte Loading-Anzeige mit Skeleton statt einfachem Ladekreis
   if (loadingSettings) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+      <div className="space-y-6">
+        <div className="bg-white p-6 rounded-md shadow-sm border">
+          <Skeleton className="h-6 w-1/3 mb-4" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-white p-6 rounded-md shadow-sm border">
+          <Skeleton className="h-6 w-1/3 mb-4" />
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-1/4" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

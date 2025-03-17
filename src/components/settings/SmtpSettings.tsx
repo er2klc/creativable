@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, Mail, AlertCircle, ServerIcon } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Switch } from "@/components/ui/switch";
 import { smtpSettingsSchema } from "./schemas/smtp-settings-schema";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +18,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SmtpSettingsProps {
   onSettingsSaved?: () => void;
@@ -31,6 +32,10 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [existingSettingsId, setExistingSettingsId] = useState<string | null>(null);
+  const fetchAttemptsRef = useRef(0);
+  const maxFetchAttempts = 3;
+  const [fetchAborted, setFetchAborted] = useState(false);
+  const [loadTimeoutId, setLoadTimeoutId] = useState<NodeJS.Timeout | null>(null);
 
   const form = useForm<SmtpSettingsFormData>({
     resolver: zodResolver(smtpSettingsSchema),
@@ -45,21 +50,54 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
     }
   });
 
-  const watchSecure = form.watch("secure");
-
-  // Lade existierende SMTP Einstellungen
-  useEffect(() => {
-    let isMounted = true; // Verhindert Updates nach Unmount
+  // Fetch mit Timeout-Funktion
+  const fetchWithTimeout = async (fetchFunction: () => Promise<any>, timeoutMs: number = 10000) => {
+    let timeoutId: NodeJS.Timeout;
     
-    async function loadSmtpSettings() {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        
-        if (!user || !isMounted) {
-          setIsLoading(false);
-          return;
-        }
-        
+    const timeoutPromise = new Promise((_, reject) => {
+      timeoutId = setTimeout(() => {
+        reject(new Error("Die Anfrage hat das Zeitlimit überschritten"));
+      }, timeoutMs);
+    });
+    
+    try {
+      const result = await Promise.race([fetchFunction(), timeoutPromise]);
+      clearTimeout(timeoutId);
+      return result;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      throw error;
+    }
+  };
+
+  // Lade existierende SMTP Einstellungen mit Timeout und Retry-Logik
+  const loadSmtpSettings = async () => {
+    try {
+      fetchAttemptsRef.current += 1;
+      
+      // Timeout-Schutz für das Laden
+      if (loadTimeoutId) {
+        clearTimeout(loadTimeoutId);
+      }
+      
+      const timeoutId = setTimeout(() => {
+        console.warn("SMTP settings load timed out");
+        setIsLoading(false);
+        setLoadError("Das Laden der SMTP-Einstellungen hat zu lange gedauert. Bitte versuchen Sie es später erneut.");
+        setFetchAborted(true);
+      }, 8000);
+      
+      setLoadTimeoutId(timeoutId);
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user || fetchAborted) {
+        setIsLoading(false);
+        clearTimeout(timeoutId);
+        return;
+      }
+      
+      const result = await fetchWithTimeout(async () => {
         const { data: settings, error } = await supabase
           .from('smtp_settings')
           .select('*')
@@ -68,36 +106,72 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
 
         if (error && error.code !== 'PGRST116') {
           console.error('Error loading SMTP settings:', error);
-          setLoadError(error.message);
-          setIsLoading(false);
-          return;
+          throw new Error(`Fehler beim Laden der SMTP-Einstellungen: ${error.message}`);
         }
 
-        if (settings && isMounted) {
-          form.reset(settings);
-          setExistingSettingsId(settings.id);
-          if (settings.last_verified_at) {
-            setIsVerified(true);
+        return { settings, error };
+      }, 5000);
+      
+      if (result.settings) {
+        form.reset(result.settings);
+        setExistingSettingsId(result.settings.id);
+        if (result.settings.last_verified_at) {
+          setIsVerified(true);
+        }
+      }
+      
+      setLoadError(null);
+      clearTimeout(timeoutId);
+      setLoadTimeoutId(null);
+    } catch (error: any) {
+      console.error('Error loading SMTP settings:', error);
+      
+      // Exponentielles Backoff für Retries
+      if (fetchAttemptsRef.current < maxFetchAttempts && !fetchAborted) {
+        const backoffTime = Math.min(1000 * Math.pow(2, fetchAttemptsRef.current - 1), 8000);
+        console.log(`Retry in ${backoffTime}ms (attempt ${fetchAttemptsRef.current}/${maxFetchAttempts})`);
+        
+        setTimeout(() => {
+          if (!fetchAborted) {
+            loadSmtpSettings();
           }
+        }, backoffTime);
+      } else {
+        setLoadError(error.message || "Maximale Anzahl von Versuchen überschritten. Bitte laden Sie die Seite neu.");
+        if (loadTimeoutId) {
+          clearTimeout(loadTimeoutId);
+          setLoadTimeoutId(null);
         }
-      } catch (error) {
-        console.error('Error loading SMTP settings:', error);
-        if (isMounted) {
-          setLoadError(error.message || "Fehler beim Laden der Einstellungen");
-        }
+        setIsLoading(false);
+      }
+    }
+  };
+
+  // Lade existierende SMTP Einstellungen
+  useEffect(() => {
+    let isMounted = true; // Verhindert Updates nach Unmount
+    
+    const initLoad = async () => {
+      try {
+        setIsLoading(true);
+        await loadSmtpSettings();
       } finally {
         if (isMounted) {
           setIsLoading(false);
         }
       }
-    }
-
-    loadSmtpSettings();
+    };
+    
+    initLoad();
     
     return () => {
-      isMounted = false; // Cleanup, um Memory-Leaks zu verhindern
+      isMounted = false;
+      setFetchAborted(true);
+      if (loadTimeoutId) {
+        clearTimeout(loadTimeoutId);
+      }
     };
-  }, [form]);
+  }, []);
 
   const onSubmit = async (formData: SmtpSettingsFormData) => {
     if (isSaving) return; // Verhindere Doppelklicks
@@ -139,7 +213,7 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
       if (onSettingsSaved) {
         onSettingsSaved();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving SMTP settings:', error);
       toast.error(`Fehler beim Speichern der SMTP-Einstellungen: ${error.message || "Unbekannter Fehler"}`);
     } finally {
@@ -243,6 +317,8 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
                 onClick={() => {
                   setLoadError(null);
                   setIsLoading(true);
+                  fetchAttemptsRef.current = 0;
+                  setFetchAborted(false);
                   loadSmtpSettings();
                 }}
                 className="mt-2"
@@ -438,12 +514,50 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
     );
   }
 
+  // Verbesserte Loading-Anzeige
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-12">
-        <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Lade Einstellungen...</p>
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-2/3 mb-2" />
+        <Skeleton className="h-4 w-full mb-6" />
+        
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-md shadow-sm border">
+            <Skeleton className="h-5 w-64 mb-4" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Skeleton className="h-4 w-40 mb-2" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              
+              <div>
+                <Skeleton className="h-4 w-24 mb-2" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="bg-white p-6 rounded-md shadow-sm border">
+            <Skeleton className="h-5 w-48 mb-4" />
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Skeleton className="h-4 w-40 mb-2" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              
+              <div>
+                <Skeleton className="h-4 w-40 mb-2" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex justify-end gap-4">
+            <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-24" />
+          </div>
         </div>
       </div>
     );
