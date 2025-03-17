@@ -23,7 +23,7 @@ export interface EmailMessage {
   sent_at: Date | null;
   received_at: Date | null;
   read: boolean;
-  is_starred: boolean; // renamed from starred to is_starred to match EmailList
+  is_starred: boolean;
   has_attachments: boolean;
   flags: any;
   headers: any;

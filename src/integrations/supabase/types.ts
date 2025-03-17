@@ -881,6 +881,7 @@ export type Database = {
           in_reply_to: string | null
           lead_id: string | null
           read: boolean | null
+          received_at: string | null
           sent_at: string | null
           status: string
           subject: string
@@ -902,6 +903,7 @@ export type Database = {
           in_reply_to?: string | null
           lead_id?: string | null
           read?: boolean | null
+          received_at?: string | null
           sent_at?: string | null
           status?: string
           subject: string
@@ -923,6 +925,7 @@ export type Database = {
           in_reply_to?: string | null
           lead_id?: string | null
           read?: boolean | null
+          received_at?: string | null
           sent_at?: string | null
           status?: string
           subject?: string
