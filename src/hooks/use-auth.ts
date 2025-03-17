@@ -9,10 +9,21 @@ export const useAuth = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const fetchAttemptedRef = useRef(false);
+  const sessionIdRef = useRef<string | null>(null);
 
   // Memoize the fetchUser function to prevent recreation on each render
   const fetchUser = useCallback(async () => {
-    if (sessionLoading || fetchAttemptedRef.current) return; // Wait for session to be determined
+    // Skip if still loading session or if we've already fetched for this session
+    if (sessionLoading) return;
+    
+    // If session ID hasn't changed and we've already attempted to fetch, skip
+    const currentSessionId = session?.user?.id || null;
+    if (currentSessionId === sessionIdRef.current && fetchAttemptedRef.current) {
+      return;
+    }
+    
+    // Update session ID reference
+    sessionIdRef.current = currentSessionId;
     
     try {
       fetchAttemptedRef.current = true;
@@ -21,7 +32,7 @@ export const useAuth = () => {
       if (session?.user) {
         setUser(session.user);
       } else {
-        // Wenn keine Session vorhanden ist, setzen wir den User auf null
+        // If no session is present, set user to null
         setUser(null);
       }
     } catch (err: any) {
@@ -34,10 +45,10 @@ export const useAuth = () => {
 
   // Reset fetch attempt flag when session changes
   useEffect(() => {
-    if (session?.user?.id !== user?.id) {
+    if (session?.user?.id !== sessionIdRef.current) {
       fetchAttemptedRef.current = false;
     }
-  }, [session?.user?.id, user?.id]);
+  }, [session?.user?.id]);
 
   useEffect(() => {
     fetchUser();

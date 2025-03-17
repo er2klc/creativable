@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { useSettings } from '@/hooks/use-settings';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { checkEmailConfigStatus } from '@/utils/debug-helper';
+import { EmailLayout } from '@/features/email/components/layout/EmailLayout';
 
 export default function Messages() {
   const { user } = useAuth();
@@ -26,14 +26,14 @@ export default function Messages() {
   const { settings } = useSettings();
   const [isConfigured, setIsConfigured] = useState(false);
   const [isCheckingConfig, setIsCheckingConfig] = useState(true);
-  const configCheckAttemptedRef = useRef(false);
+  const configCheckCompletedRef = useRef(false);
 
-  // Check email configuration
+  // Check email configuration only once
   useEffect(() => {
     let isMounted = true;
     
     const checkConfig = async () => {
-      if (!user || configCheckAttemptedRef.current) {
+      if (!user || configCheckCompletedRef.current) {
         if (isMounted) {
           setIsCheckingConfig(false);
         }
@@ -41,17 +41,18 @@ export default function Messages() {
       }
       
       try {
-        configCheckAttemptedRef.current = true;
         setIsCheckingConfig(true);
         const configStatus = await checkEmailConfigStatus();
         
         if (isMounted) {
           setIsConfigured(configStatus.isConfigured);
+          configCheckCompletedRef.current = true;
         }
       } catch (error) {
         console.error("Error checking email config:", error);
         if (isMounted) {
           setIsConfigured(false);
+          configCheckCompletedRef.current = true;
         }
       } finally {
         if (isMounted) {
@@ -60,11 +61,22 @@ export default function Messages() {
       }
     };
     
-    checkConfig();
+    if (user && !configCheckCompletedRef.current) {
+      checkConfig();
+    } else {
+      setIsCheckingConfig(false);
+    }
     
     return () => {
       isMounted = false;
     };
+  }, [user]);
+
+  // Reset config check when authentication changes
+  useEffect(() => {
+    if (!user) {
+      configCheckCompletedRef.current = false;
+    }
   }, [user]);
 
   // Query for settings if configured
@@ -81,7 +93,7 @@ export default function Messages() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user && isConfigured,
+    enabled: !!user && isConfigured && !isCheckingConfig,
   });
 
   // Query for emails
@@ -98,7 +110,7 @@ export default function Messages() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user && isConfigured,
+    enabled: !!user && isConfigured && !isCheckingConfig,
   });
 
   // Set initial values from stored settings
@@ -175,13 +187,6 @@ export default function Messages() {
     }
   };
 
-  // Reset config check when authentication changes
-  useEffect(() => {
-    if (!user) {
-      configCheckAttemptedRef.current = false;
-    }
-  }, [user]);
-
   if (!user) {
     return (
       <div className="container mx-auto p-4 overflow-x-hidden">
@@ -252,132 +257,13 @@ export default function Messages() {
   }
 
   return (
-    <div className="container mx-auto p-4 overflow-x-hidden">
-      <Card className="w-full mb-6">
-        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between pb-2">
-          <div>
-            <CardTitle className="text-xl">Email Sync</CardTitle>
-            <CardDescription>Sync and manage your emails</CardDescription>
-          </div>
-          <div className="flex flex-wrap gap-2 mt-4 md:mt-0">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => syncEmails(true)}
-              disabled={syncInProgress}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${syncInProgress ? 'animate-spin' : ''}`} />
-              Force Refresh
-            </Button>
-            <Button 
-              variant="default" 
-              size="sm" 
-              onClick={() => syncEmails()}
-              disabled={syncInProgress}
-            >
-              <RefreshCw className={`h-4 w-4 mr-2 ${syncInProgress ? 'animate-spin' : ''}`} />
-              Sync Now
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {syncInProgress && (
-            <div className="mb-4">
-              <p className="text-sm text-gray-500 mb-2">Syncing emails... {syncProgress}%</p>
-              <Progress value={syncProgress} className="w-full" />
-            </div>
-          )}
-          
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <div className="flex items-center space-x-2">
-                <Switch 
-                  id="historical-sync"
-                  checked={historicalSync}
-                  onCheckedChange={setHistoricalSync}
-                />
-                <label 
-                  htmlFor="historical-sync"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Historical Sync
-                </label>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                Fetch emails from a specific date instead of just the most recent ones
-              </p>
-            </div>
-            
-            {historicalSync && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Start Date</label>
-                <DatePicker date={syncStartDate} setDate={setSyncStartDate} />
-              </div>
-            )}
-          </div>
+    <div className="container-fluid p-0 h-[calc(100vh-4rem)] overflow-hidden">
+      <Card className="w-full h-full rounded-none border-0 shadow-none">
+        <CardContent className="p-0 h-full">
+          <EmailLayout 
+            userEmail={imapSettings?.email || user?.email}
+          />
         </CardContent>
-      </Card>
-
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="text-xl">Your Messages</CardTitle>
-          <CardDescription>
-            {emails?.length || 0} emails synced from your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ScrollArea className="h-[60vh] px-4">
-            {isLoading ? (
-              <div className="animate-pulse space-y-4 py-4">
-                {[...Array(5)].map((_, i) => (
-                  <div key={i} className="p-4 border rounded-md">
-                    <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                    <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  </div>
-                ))}
-              </div>
-            ) : emails?.length ? (
-              <div className="space-y-4 py-4">
-                {emails.map((email) => (
-                  <Card key={email.id} className="overflow-hidden">
-                    <CardHeader className="p-4 pb-2">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <CardTitle className="text-base line-clamp-1">
-                            {email.subject || '(No Subject)'}
-                          </CardTitle>
-                          <CardDescription className="text-xs">
-                            From: {email.from_name || email.from_email}
-                          </CardDescription>
-                        </div>
-                        <div className="flex items-center text-xs text-gray-500">
-                          <Clock className="h-3 w-3 mr-1" />
-                          {new Date(email.sent_at).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="p-4 pt-2">
-                      <p className="text-sm line-clamp-2">
-                        {email.text_content || 'No preview available'}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12">
-                <Calendar className="h-12 w-12 text-gray-400 mb-4" />
-                <p className="text-center mb-4">No emails synced yet</p>
-                <Button onClick={() => syncEmails()}>Sync Emails Now</Button>
-              </div>
-            )}
-          </ScrollArea>
-        </CardContent>
-        {emails?.length > 0 && (
-          <CardFooter className="border-t p-4 flex justify-center">
-            <Button variant="outline">Load More</Button>
-          </CardFooter>
-        )}
       </Card>
     </div>
   );

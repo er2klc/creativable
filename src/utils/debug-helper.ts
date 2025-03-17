@@ -143,6 +143,8 @@ export const checkEmailConfigStatus = async () => {
       imapResult.data?.host && smtpResult.data?.host
     );
     
+    console.log("Email config status:", {success: true, isConfigured, imapSettings: imapResult.data || null, smtpSettings: smtpResult.data || null});
+    
     return { 
       success: true, 
       isConfigured,
