@@ -12,6 +12,7 @@ interface SyncResult {
   success: boolean;
   message: string;
   folders?: any[];
+  folderCount?: number;
   error?: string;
 }
 
@@ -47,25 +48,38 @@ async function fetchFolders(imapSettings: any, userId: string): Promise<SyncResu
     
     // Process the mailboxes
     for (const mailbox of list) {
+      // Safety check for object structure and flags
+      if (!mailbox) {
+        console.log("Skipping undefined mailbox");
+        continue;
+      }
+      
+      // Ensure flags is an array
+      const flags = Array.isArray(mailbox.flags) ? mailbox.flags : [];
+      
       // Skip some system folders
-      if (mailbox.flags.includes('\\Noselect')) {
+      if (flags.includes('\\Noselect')) {
         continue;
       }
       
       let folderType = "custom";
       
       // Determine folder type based on flags or name
-      if (mailbox.flags.includes('\\Inbox') || mailbox.path.toLowerCase() === 'inbox') {
+      // Case insensitive checking for folder types
+      const path = mailbox.path || '';
+      const pathLower = path.toLowerCase();
+      
+      if (flags.includes('\\Inbox') || pathLower === 'inbox') {
         folderType = "inbox";
-      } else if (mailbox.flags.includes('\\Sent') || /sent/i.test(mailbox.path)) {
+      } else if (flags.includes('\\Sent') || /sent/i.test(pathLower)) {
         folderType = "sent";
-      } else if (mailbox.flags.includes('\\Drafts') || /draft/i.test(mailbox.path)) {
+      } else if (flags.includes('\\Drafts') || /draft/i.test(pathLower)) {
         folderType = "drafts";
-      } else if (mailbox.flags.includes('\\Junk') || /spam|junk/i.test(mailbox.path)) {
+      } else if (flags.includes('\\Junk') || /spam|junk/i.test(pathLower)) {
         folderType = "spam";
-      } else if (mailbox.flags.includes('\\Trash') || /trash|deleted/i.test(mailbox.path)) {
+      } else if (flags.includes('\\Trash') || /trash|deleted/i.test(pathLower)) {
         folderType = "trash";
-      } else if (mailbox.flags.includes('\\Archive') || /archive/i.test(mailbox.path)) {
+      } else if (flags.includes('\\Archive') || /archive/i.test(pathLower)) {
         folderType = "archive";
       }
       
@@ -83,7 +97,7 @@ async function fetchFolders(imapSettings: any, userId: string): Promise<SyncResu
         path: mailbox.path,
         type: folderType,
         special_use: mailbox.specialUse || null,
-        flags: mailbox.flags,
+        flags: flags,
         total_messages: status?.messages || 0,
         unread_messages: status?.unseen || 0,
         user_id: userId
@@ -133,7 +147,7 @@ async function fetchFolders(imapSettings: any, userId: string): Promise<SyncResu
       console.error("Failed to delete existing folders:", await deleteResponse.text());
     }
     
-    // Then insert new folders
+    // Then insert new folders using a proper upsert pattern
     if (folderList.length > 0) {
       const response = await fetch(`${SUPABASE_URL}/rest/v1/email_folders`, {
         method: 'POST',
@@ -141,7 +155,7 @@ async function fetchFolders(imapSettings: any, userId: string): Promise<SyncResu
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
           'apikey': SUPABASE_SERVICE_ROLE_KEY,
-          'Prefer': 'return=minimal'
+          'Prefer': 'resolution=merge-duplicates'
         },
         body: JSON.stringify(folderList)
       });
@@ -153,10 +167,24 @@ async function fetchFolders(imapSettings: any, userId: string): Promise<SyncResu
       }
     }
     
+    // Update imap_settings with last sync time
+    await fetch(`${SUPABASE_URL}/rest/v1/imap_settings?user_id=eq.${userId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+      },
+      body: JSON.stringify({
+        last_sync_at: new Date().toISOString()
+      })
+    });
+    
     return {
       success: true,
       message: `Successfully synced ${folderList.length} folders`,
-      folders: folderList
+      folders: folderList,
+      folderCount: folderList.length
     };
     
   } catch (error) {
@@ -228,6 +256,38 @@ serve(async (req) => {
 
     // Fetch folders
     const result = await fetchFolders(imapSettings[0], userId);
+    
+    // After folder sync, initiate email sync if folders were successfully created
+    if (result.success && result.folderCount && result.folderCount > 0) {
+      try {
+        console.log("Starting email sync after successful folder sync");
+        
+        // Call the sync-emails function
+        const emailSyncResponse = await fetch(
+          `${SUPABASE_URL}/functions/v1/sync-emails`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${jwt}`,
+              "Accept": "application/json"
+            },
+            body: JSON.stringify({
+              force_refresh: true,
+              folder: "INBOX" // Start with inbox as default
+            })
+          }
+        );
+        
+        if (!emailSyncResponse.ok) {
+          console.error("Failed to sync emails:", await emailSyncResponse.text());
+        } else {
+          console.log("Email sync initiated successfully");
+        }
+      } catch (emailSyncError) {
+        console.error("Error initiating email sync:", emailSyncError);
+      }
+    }
 
     return new Response(JSON.stringify(result), {
       headers: {

@@ -1,5 +1,6 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { ImapFlow } from 'npm:imapflow@1.0.98';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -9,318 +10,264 @@ const corsHeaders = {
 
 interface TestResult {
   success: boolean;
+  message: string;
   error?: string;
   details?: string;
-  stages?: Array<{
-    name: string;
-    success: boolean;
-    message: string;
-  }>;
+  diagnostics?: {
+    secure: boolean;
+    port: number;
+    alternativeTried: boolean;
+    auth: boolean;
+  };
+}
+
+async function testIMAPConnection(settings: any): Promise<TestResult> {
+  console.log(`Testing connection to IMAP server: ${settings.host}:${settings.port} (secure: ${settings.secure})`);
+  
+  const diagnostics = {
+    secure: settings.secure,
+    port: settings.port,
+    alternativeTried: false,
+    auth: false
+  };
+  
+  const client = new ImapFlow({
+    host: settings.host,
+    port: settings.port,
+    secure: settings.secure,
+    auth: {
+      user: settings.username,
+      pass: settings.password
+    },
+    logger: false,
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: settings.connection_timeout || 30000,
+    greetTimeout: 15000,
+    socketTimeout: 30000
+  });
+  
+  try {
+    await client.connect();
+    console.log("Successfully connected to IMAP server");
+    
+    // Test authentication by listing mailboxes
+    diagnostics.auth = true;
+    const list = await client.list();
+    console.log(`Found ${list.length} mailboxes`);
+    
+    // Try to select INBOX to verify it's working
+    await client.mailboxOpen('INBOX');
+    console.log("Successfully selected INBOX");
+    
+    await client.logout();
+    
+    return {
+      success: true,
+      message: "Successfully connected to IMAP server",
+      diagnostics
+    };
+  } catch (error: any) {
+    console.error("IMAP connection test error:", error);
+    
+    // If it's a TLS/connection error and we haven't tried the alternative yet,
+    // try with the opposite secure setting
+    if (!diagnostics.alternativeTried && 
+        (error.message.includes("TLS") || 
+         error.message.includes("greeting") || 
+         error.message.includes("timeout") ||
+         error.message.includes("connection"))) {
+      
+      console.log("Trying alternative connection settings");
+      diagnostics.alternativeTried = true;
+      
+      // Close the current client if it's still usable
+      if (client && client.usable) {
+        await client.close();
+      }
+      
+      // Try the opposite secure setting
+      const altSecure = !settings.secure;
+      // Use the appropriate default port for the security setting
+      const altPort = altSecure ? 993 : 143;
+      
+      console.log(`Trying alternative connection: secure=${altSecure}, port=${altPort}`);
+      
+      const altClient = new ImapFlow({
+        host: settings.host,
+        port: altPort,
+        secure: altSecure,
+        auth: {
+          user: settings.username,
+          pass: settings.password
+        },
+        logger: false,
+        tls: {
+          rejectUnauthorized: false
+        },
+        connectionTimeout: settings.connection_timeout || 30000,
+        greetTimeout: 15000,
+        socketTimeout: 30000
+      });
+      
+      try {
+        await altClient.connect();
+        console.log("Successfully connected with alternative settings");
+        
+        // Test authentication
+        diagnostics.auth = true;
+        await altClient.list();
+        
+        await altClient.logout();
+        
+        // Update diagnostics with the working settings
+        diagnostics.secure = altSecure;
+        diagnostics.port = altPort;
+        
+        return {
+          success: true,
+          message: "Successfully connected with alternative settings",
+          details: `Connection successful using: secure=${altSecure}, port=${altPort}. Consider updating your settings.`,
+          diagnostics
+        };
+      } catch (altError) {
+        console.error("Alternative connection also failed:", altError);
+        
+        // If both attempts failed, return the original error
+        let errorMessage = "Failed to connect to IMAP server";
+        
+        if (error.message.includes("auth") || error.message.includes("login")) {
+          errorMessage = "Authentication failed. Please check your username and password.";
+        } else if (error.message.includes("certificate")) {
+          errorMessage = "Certificate verification failed. Try enabling/disabling SSL or checking server settings.";
+        } else if (error.message.includes("timeout") || error.message.includes("GREETING")) {
+          errorMessage = "Connection timed out. Server may be down or blocked.";
+        } else if (error.message.includes("connect")) {
+          errorMessage = "Could not connect to server. Check hostname and port.";
+        }
+        
+        return {
+          success: false,
+          message: errorMessage,
+          error: error.message,
+          details: `Both connection attempts failed. Original: ${error.message}, Alternative: ${altError.message}`,
+          diagnostics
+        };
+      } finally {
+        if (altClient && altClient.usable) {
+          altClient.close();
+        }
+      }
+    }
+    
+    // If no alternative was tried or it's not a connection issue, just return the error
+    let errorMessage = "Failed to connect to IMAP server";
+    
+    if (error.message.includes("auth") || error.message.includes("login")) {
+      errorMessage = "Authentication failed. Please check your username and password.";
+    } else if (error.message.includes("certificate")) {
+      errorMessage = "Certificate verification failed. Try enabling/disabling SSL.";
+    } else if (error.message.includes("timeout") || error.message.includes("GREETING")) {
+      errorMessage = "Connection timed out. Server may be down or wrong port/SSL settings.";
+    } else if (error.message.includes("connect")) {
+      errorMessage = "Could not connect to server. Check hostname and port.";
+    }
+    
+    return {
+      success: false,
+      message: errorMessage,
+      error: error.message,
+      diagnostics
+    };
+  } finally {
+    // Make sure to close the client
+    if (client && client.usable) {
+      client.close();
+    }
+  }
 }
 
 serve(async (req) => {
-  console.log("IMAP test function called");
-  
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  let stages: Array<{
-    name: string;
-    success: boolean;
-    message: string;
-  }> = [];
-
   try {
-    // Parse request body
-    let requestData;
-    try {
-      requestData = await req.json();
-      console.log("Request data received:", JSON.stringify({
-        ...requestData,
-        password: "********" // Don't log actual password
-      }, null, 2));
-    } catch (parseError) {
-      console.error("Failed to parse request:", parseError);
-      throw new Error(`Invalid request format: ${parseError.message}`);
+    // Parse the request
+    const { host, port, username, password, secure, connection_timeout, use_saved_settings, user_id } = await req.json();
+
+    // Validate required fields if not using saved settings
+    if (!use_saved_settings && (!host || !username || !password)) {
+      throw new Error("Missing required IMAP settings");
     }
 
-    const { host, port, username, password, secure, use_saved_settings } = requestData;
-    let imap_config;
-
-    // Step 1: Get IMAP settings
-    stages.push({
-      name: "Collecting IMAP Settings",
-      success: true,
-      message: use_saved_settings ? "Using saved IMAP settings from database" : "Using provided IMAP settings",
-    });
-
+    let testSettings;
+    
+    // If using saved settings, fetch them from the database
     if (use_saved_settings) {
-      // Fetch settings from database if using saved settings
+      if (!user_id) {
+        throw new Error("User ID is required when using saved settings");
+      }
+      
       const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
       
-      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-        throw new Error("Missing Supabase environment variables");
-      }
-
-      stages.push({
-        name: "Accessing Database",
-        success: true,
-        message: "Successfully accessed Supabase configuration",
-      });
-
-      // Get the user's JWT from the request
-      const authHeader = req.headers.get('authorization') || '';
-      const jwt = authHeader.replace('Bearer ', '');
-
-      if (!jwt) {
-        throw new Error("Authentication required");
-      }
-
-      // Get user information from the token
-      const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      const response = await fetch(`${SUPABASE_URL}/rest/v1/imap_settings?user_id=eq.${user_id}&select=*`, {
         headers: {
-          Authorization: `Bearer ${jwt}`,
-          apikey: SUPABASE_SERVICE_ROLE_KEY,
-        },
+          "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          "apikey": SUPABASE_SERVICE_ROLE_KEY,
+          "Content-Type": "application/json"
+        }
       });
-
-      const userData = await userResponse.json();
-      if (!userData.id) {
-        throw new Error("Failed to get user information");
-      }
-
-      const userId = userData.id;
-
-      // Query the database for the IMAP settings
-      const settingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/imap_settings?user_id=eq.${userId}&select=*`, {
-        headers: {
-          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          apikey: SUPABASE_SERVICE_ROLE_KEY,
-          "Content-Type": "application/json",
-        },
-      });
-
-      const settings = await settingsResponse.json();
       
-      if (!settings || settings.length === 0) {
-        throw new Error("No IMAP settings found for this user");
+      if (!response.ok) {
+        throw new Error(`Failed to fetch saved settings: ${response.statusText}`);
       }
-
-      imap_config = settings[0];
       
-      stages.push({
-        name: "Retrieving IMAP Settings",
-        success: true,
-        message: `Found IMAP settings for server: ${imap_config.host}:${imap_config.port}`,
-      });
+      const savedSettings = await response.json();
+      
+      if (!savedSettings || savedSettings.length === 0) {
+        throw new Error("No saved IMAP settings found");
+      }
+      
+      testSettings = savedSettings[0];
     } else {
-      // Use provided settings directly
-      imap_config = {
+      // Use the provided settings
+      testSettings = {
         host,
-        port: parseInt(port.toString()), // Ensure it's treated as a number
+        port: port || 993,
         username,
         password,
-        secure: secure === true || secure === "true",
+        secure: secure !== undefined ? secure : true,
+        connection_timeout: connection_timeout || 30000
       };
-      
-      stages.push({
-        name: "Validating IMAP Settings",
-        success: true,
-        message: `Using provided settings for server: ${imap_config.host}:${imap_config.port}`,
-      });
     }
 
-    // Step 2: Validate configuration
-    if (!imap_config.host || !imap_config.port || !imap_config.username || !imap_config.password) {
-      throw new Error("Incomplete IMAP configuration");
-    }
-
-    // Step 3: DNS resolution check
-    try {
-      stages.push({
-        name: "DNS Resolution",
-        success: false, // Will update to true if successful
-        message: "Starting DNS resolution test",
-      });
-      
-      const dnsStartTime = Date.now();
-      const dnsLookup = await Promise.race([
-        Deno.resolveDns(imap_config.host, "A"),
-        new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("DNS resolution timeout after 15 seconds")), 15000)
-        )
-      ]) as string[];
-      
-      const dnsEndTime = Date.now();
-      
-      stages[stages.length - 1] = {
-        name: "DNS Resolution",
-        success: true,
-        message: `Successfully resolved ${imap_config.host} to ${dnsLookup.join(", ")} in ${dnsEndTime - dnsStartTime}ms`,
-      };
-    } catch (error) {
-      console.error("DNS resolution error:", error);
-      stages[stages.length - 1] = {
-        name: "DNS Resolution",
-        success: false,
-        message: `Failed to resolve DNS for ${imap_config.host}: ${error.message}`,
-      };
-      throw new Error(`DNS resolution failed: ${error.message}`);
-    }
-
-    // Step 4: Create IMAP client - just log the config since we'll test directly with a TCP connection
-    stages.push({
-      name: "IMAP Client Creation",
-      success: true,
-      message: "Creating IMAP client configuration",
-    });
-
-    console.log("IMAP configuration:", JSON.stringify({
-      host: imap_config.host,
-      port: imap_config.port,
-      secure: imap_config.secure,
-      auth: {
-        user: imap_config.username,
-        pass: "********" // Don't log actual password
-      }
-    }, null, 2));
-
-    // Step 5: Attempt IMAP connection using TCP socket
-    stages.push({
-      name: "IMAP Connection",
-      success: false,
-      message: "Connecting to IMAP server...",
-    });
-
-    console.log(`Attempting to connect to IMAP server: ${imap_config.host}:${imap_config.port}`);
-    const connectionStartTime = Date.now();
-    
-    try {
-      // Create a connection with appropriate timeout
-      console.log("Establishing TCP connection...");
-      const conn = await Promise.race([
-        Deno.connect({
-          hostname: imap_config.host,
-          port: imap_config.port,
-        }),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error("Connection timeout after 30 seconds")), 30000)
-        )
-      ]) as Deno.Conn;
-
-      console.log("TCP connection established, waiting for server greeting...");
-      
-      // Read the initial greeting (should start with * OK)
-      const buf = new Uint8Array(1024);
-      const n = await Promise.race([
-        conn.read(buf),
-        new Promise<never>((_, reject) => 
-          setTimeout(() => reject(new Error("Timeout waiting for server greeting")), 20000)
-        )
-      ]) as number | null;
-      
-      // Check response
-      if (n === null) {
-        throw new Error("Server did not send any greeting");
-      }
-      
-      const greeting = new TextDecoder().decode(buf.subarray(0, n));
-      console.log("Server greeting:", greeting);
-      
-      if (!greeting.toUpperCase().includes("* OK") && !greeting.includes("* PREAUTH")) {
-        throw new Error(`Unexpected server greeting: ${greeting}`);
-      }
-      
-      // If the connection was successful, close it gracefully
-      try {
-        // Send LOGOUT command
-        await conn.write(new TextEncoder().encode("A1 LOGOUT\r\n"));
-        
-        // Read the response
-        const logoutBuf = new Uint8Array(1024);
-        await Promise.race([
-          conn.read(logoutBuf),
-          new Promise<never>((_, reject) => 
-            setTimeout(() => reject(new Error("Timeout waiting for logout response")), 10000)
-          )
-        ]);
-      } catch (e) {
-        console.warn("Failed to send LOGOUT command:", e);
-      }
-      
-      // Close the connection
-      conn.close();
-      
-      const connectionEndTime = Date.now();
-      console.log(`IMAP connection successful in ${connectionEndTime - connectionStartTime}ms`);
-
-      stages[stages.length - 1] = {
-        name: "IMAP Connection",
-        success: true,
-        message: `Successfully connected to ${imap_config.host}:${imap_config.port} in ${connectionEndTime - connectionStartTime}ms`,
-      };
-      
-      // Step 6: Authentication test
-      stages.push({
-        name: "IMAP Authentication",
-        success: true,
-        message: "Basic IMAP connection successful. Full authentication would be tested during actual mail fetching.",
-      });
-      
-      // Step 7: Connection cleanup
-      stages.push({
-        name: "Connection Cleanup",
-        success: true,
-        message: "IMAP connection closed properly",
-      });
-    } catch (connectError) {
-      console.error("IMAP connection error:", connectError);
-      stages[stages.length - 1] = {
-        name: "IMAP Connection",
-        success: false,
-        message: `Failed to connect to IMAP server: ${connectError.message}`,
-      };
-      throw new Error(`IMAP connection failed: ${connectError.message}`);
-    }
-
-    const result: TestResult = {
-      success: true,
-      stages,
-    };
-
-    console.log("IMAP test completed successfully");
+    // Test the connection
+    const result = await testIMAPConnection(testSettings);
 
     return new Response(JSON.stringify(result), {
       headers: {
         "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-      status: 200,
+        ...corsHeaders
+      }
     });
-  } catch (error) {
-    console.error("IMAP test error:", error);
+  } catch (error: any) {
+    console.error("Error processing request:", error);
     
-    // Add failure to the last stage if there was one in progress
-    if (stages.length > 0 && stages[stages.length - 1].success === false) {
-      stages[stages.length - 1].message = `Failed: ${error.message}`;
-    }
-
-    const result: TestResult = {
-      success: false,
-      error: error.message,
-      details: error.stack,
-      stages,
-    };
-
-    // Always return 200 even with error - frontend will handle the error state
-    return new Response(JSON.stringify(result), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-      status: 200, // Always return 200 so the frontend gets our detailed error info
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "Error processing request",
+        error: error.message
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
+        }
+      }
+    );
   }
 });

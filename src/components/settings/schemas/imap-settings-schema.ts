@@ -9,7 +9,9 @@ export const imapSettingsSchema = z.object({
   secure: z.boolean().default(true),
   max_emails: z.coerce.number().int().positive().default(100),
   historical_sync: z.boolean().default(false),
-  historical_sync_date: z.date().optional()
+  historical_sync_date: z.date().optional(),
+  auto_reconnect: z.boolean().default(true),
+  connection_timeout: z.coerce.number().int().positive().default(30000)
 });
 
 // Documentation for common IMAP servers
@@ -62,6 +64,27 @@ export const commonImapServers = [
     port: 993,
     secure: true,
     notes: "Use your full AOL email address as the username"
+  },
+  {
+    name: "Strato",
+    host: "imap.strato.de",
+    port: 993,
+    secure: true,
+    notes: "Use your full Strato email address as the username"
+  },
+  {
+    name: "1&1",
+    host: "imap.1und1.de",
+    port: 993,
+    secure: true,
+    notes: "Use your full 1&1 email address as the username"
+  },
+  {
+    name: "T-Online",
+    host: "secureimap.t-online.de",
+    port: 993,
+    secure: true,
+    notes: "For T-Online accounts, special formatting may be required for username"
   }
 ];
 

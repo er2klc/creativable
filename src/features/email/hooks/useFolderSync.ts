@@ -5,16 +5,18 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { EmailFolder } from "./useEmailFolders";
 
+interface SyncFolderResult {
+  success: boolean;
+  folderCount?: number;
+  error?: string;
+}
+
 export function useFolderSync() {
   const { user } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
 
-  const syncFolders = async (forceRetry = false): Promise<{
-    success: boolean;
-    folderCount?: number;
-    error?: string;
-  }> => {
+  const syncFolders = async (forceRetry = false): Promise<SyncFolderResult> => {
     if (!user) {
       toast.error("Authentication Error", {
         description: "You must be logged in to synchronize email folders",
@@ -107,6 +109,8 @@ export function useFolderSync() {
           userMessage = "Authentication failed. Please check your username and password.";
         } else if (error.message.includes("timeout")) {
           userMessage = "Connection timed out. The server took too long to respond.";
+        } else if (error.message.includes("includes is not a function")) {
+          userMessage = "Server response format error. Retrying might resolve this issue.";
         } else {
           userMessage = error.message;
         }
