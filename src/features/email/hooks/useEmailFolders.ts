@@ -17,6 +17,19 @@ export interface EmailFolder {
   unread_messages: number;
 }
 
+interface OrganizedFolders {
+  special: EmailFolder[];
+  regular: EmailFolder[];
+  all: EmailFolder[];
+}
+
+// Default empty state to prevent undefined errors
+const emptyFolders: OrganizedFolders = {
+  special: [],
+  regular: [],
+  all: []
+};
+
 export function useEmailFolders() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -30,9 +43,22 @@ export function useEmailFolders() {
   } = useQuery({
     queryKey: ["email-folders", user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) return emptyFolders;
       
       try {
+        // Check if email_folders table exists
+        const { error: tableCheckError } = await supabase
+          .from('email_folders')
+          .select('id')
+          .limit(1)
+          .single();
+        
+        // If table doesn't exist, return empty data rather than throwing an error
+        if (tableCheckError && tableCheckError.code === '42P01') {
+          console.warn("email_folders table doesn't exist yet");
+          return emptyFolders;
+        }
+        
         // Get folders from database
         const { data, error } = await supabase
           .from("email_folders")
@@ -48,14 +74,14 @@ export function useEmailFolders() {
         return organizedFolders;
       } catch (err: any) {
         console.error("Error fetching email folders:", err);
-        return [];
+        return emptyFolders;
       }
     },
     enabled: !!user
   });
 
   // Helper to group folders by type
-  const groupFoldersByType = (folders: EmailFolder[]) => {
+  const groupFoldersByType = (folders: EmailFolder[]): OrganizedFolders => {
     const specialFolders = folders.filter(folder => 
       ['inbox', 'sent', 'drafts', 'trash', 'spam', 'archive'].includes(folder.type)
     );
@@ -119,7 +145,7 @@ export function useEmailFolders() {
   };
 
   return {
-    folders: folders || { special: [], regular: [], all: [] },
+    folders: folders || emptyFolders,
     isLoading,
     error,
     syncFolders,

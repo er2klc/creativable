@@ -18,6 +18,19 @@ export function useEmailViewer(emailId: string | null) {
       if (!user || !emailId) return null;
       
       try {
+        // Check if emails table exists
+        const { error: tableCheckError } = await supabase
+          .from('emails')
+          .select('id')
+          .limit(1)
+          .single();
+        
+        // If table doesn't exist, return null rather than throwing an error
+        if (tableCheckError && tableCheckError.code === '42P01') {
+          console.warn("emails table doesn't exist yet");
+          return null;
+        }
+        
         const { data, error } = await supabase
           .from("emails")
           .select("*")
@@ -46,6 +59,19 @@ export function useEmailViewer(emailId: string | null) {
       if (!user || !emailId || !email || email.read) return;
       
       try {
+        // Check if emails table exists before updating
+        const { error: tableCheckError } = await supabase
+          .from('emails')
+          .select('id')
+          .limit(1)
+          .single();
+        
+        // If table doesn't exist, return rather than throwing an error
+        if (tableCheckError && tableCheckError.code === '42P01') {
+          console.warn("emails table doesn't exist yet");
+          return;
+        }
+        
         await supabase
           .from("emails")
           .update({ read: true })
