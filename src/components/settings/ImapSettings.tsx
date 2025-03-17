@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from 'sonner';
 import { DatePicker } from '@/components/ui/date-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -19,7 +19,6 @@ interface ImapSettingsProps {
 
 export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
   const { user } = useAuth();
-  const { toast } = useToast();
   const [isSaving, setIsSaving] = useState(false);
   const [loadingSettings, setLoadingSettings] = useState(true);
   const [existingSettingsId, setExistingSettingsId] = useState<string | null>(null);
@@ -130,9 +129,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
         setExistingSettingsId(data[0].id);
       }
 
-      toast({
-        title: 'Settings saved',
-        description: 'Your IMAP settings have been saved successfully.',
+      toast.success("IMAP-Einstellungen gespeichert", {
+        description: "Ihre E-Mail-Einstellungen wurden erfolgreich gespeichert."
       });
 
       if (onSettingsSaved) {
@@ -140,10 +138,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
       }
     } catch (error: any) {
       console.error('Error saving settings:', error);
-      toast({
-        title: 'Failed to save settings',
-        description: error.message || 'An error occurred while saving your settings.',
-        variant: 'destructive',
+      toast.error("Fehler beim Speichern der Einstellungen", {
+        description: error.message || "Bitte überprüfen Sie Ihre Eingaben und versuchen Sie es erneut."
       });
     } finally {
       setIsSaving(false);
@@ -152,17 +148,29 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
   const watchHistoricalSync = form.watch('historical_sync');
 
+  if (loadingSettings) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>IMAP Settings</CardTitle>
-        <CardDescription>
-          Configure your email account to fetch emails. This is required to sync your emails.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h2 className="text-lg font-medium mb-2">IMAP-Einstellungen</h2>
+        <p className="text-muted-foreground text-sm">
+          Konfigurieren Sie Ihre IMAP-Server-Einstellungen für den E-Mail-Empfang.
+          Diese Einstellungen ermöglichen es der App, E-Mails aus Ihrem Postfach abzurufen.
+        </p>
+      </div>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="bg-white p-6 rounded-md shadow-sm border">
+            <h3 className="text-base font-semibold mb-4">Server-Einstellungen</h3>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
@@ -171,7 +179,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                   <FormItem>
                     <FormLabel>IMAP Server</FormLabel>
                     <FormControl>
-                      <Input placeholder="imap.example.com" {...field} />
+                      <Input placeholder="imap.gmail.com" className="bg-gray-50" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -185,23 +193,32 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                   <FormItem>
                     <FormLabel>Port</FormLabel>
                     <FormControl>
-                      <Input type="number" {...field} />
+                      <Input 
+                        type="number" 
+                        className="bg-gray-50"
+                        {...field}
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+          </div>
 
+          <div className="bg-white p-6 rounded-md shadow-sm border">
+            <h3 className="text-base font-semibold mb-4">Zugangsdaten</h3>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <FormField
                 control={form.control}
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Benutzername</FormLabel>
                     <FormControl>
-                      <Input placeholder="user@example.com" {...field} />
+                      <Input placeholder="your@email.com" className="bg-gray-50" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -213,33 +230,37 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>Passwort</FormLabel>
                     <FormControl>
-                      <Input type="password" {...field} />
+                      <Input type="password" className="bg-gray-50" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-md shadow-sm border">
+            <h3 className="text-base font-semibold mb-4">Sync-Einstellungen</h3>
 
             <FormField
               control={form.control}
               name="secure"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel>Use Secure Connection (SSL/TLS)</FormLabel>
-                    <FormDescription>
-                      Enable for secure connections (usually port 993)
-                    </FormDescription>
-                  </div>
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-6">
                   <FormControl>
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>SSL/TLS verwenden</FormLabel>
+                    <FormDescription>
+                      Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen)
+                    </FormDescription>
+                  </div>
                 </FormItem>
               )}
             />
@@ -248,13 +269,18 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
               control={form.control}
               name="max_emails"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Maximum Emails to Sync</FormLabel>
+                <FormItem className="mb-6">
+                  <FormLabel>Maximale E-Mails pro Synchronisation</FormLabel>
                   <FormControl>
-                    <Input type="number" {...field} />
+                    <Input 
+                      type="number" 
+                      className="bg-gray-50 max-w-xs"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
                   </FormControl>
                   <FormDescription>
-                    Limit the number of emails to fetch in each sync
+                    Begrenzen Sie die Anzahl der E-Mails, die bei jeder Synchronisation abgerufen werden
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -265,19 +291,19 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
               control={form.control}
               name="historical_sync"
               render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel>Enable Historical Sync</FormLabel>
-                    <FormDescription>
-                      Fetch emails from a specific date instead of just the most recent ones
-                    </FormDescription>
-                  </div>
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-6">
                   <FormControl>
                     <Switch
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Historische Synchronisation</FormLabel>
+                    <FormDescription>
+                      E-Mails ab einem bestimmten Datum abrufen, nicht nur die neuesten
+                    </FormDescription>
+                  </div>
                 </FormItem>
               )}
             />
@@ -288,7 +314,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                 name="historical_sync_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Historical Sync Start Date</FormLabel>
+                    <FormLabel>Startdatum für historische Synchronisation</FormLabel>
                     <FormControl>
                       <DatePicker
                         date={field.value}
@@ -296,22 +322,22 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                       />
                     </FormControl>
                     <FormDescription>
-                      Fetch emails from this date forward
+                      E-Mails ab diesem Datum werden synchronisiert
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             )}
+          </div>
 
-            <div className="pt-6">
-              <Button type="submit" disabled={isSaving || loadingSettings}>
-                {isSaving ? 'Saving...' : 'Save Settings'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+          <div className="pt-6 flex justify-end">
+            <Button type="submit" disabled={isSaving} className="min-w-[120px]">
+              {isSaving ? 'Speichern...' : 'Speichern'}
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
   );
 }

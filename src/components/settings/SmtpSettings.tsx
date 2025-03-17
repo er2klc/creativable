@@ -22,7 +22,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-export function SmtpSettings() {
+interface SmtpSettingsProps {
+  onSettingsSaved?: () => void;
+}
+
+export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -47,9 +51,17 @@ export function SmtpSettings() {
   useEffect(() => {
     async function loadSmtpSettings() {
       try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setIsLoading(false);
+          return;
+        }
+        
         const { data: settings, error } = await supabase
           .from('smtp_settings')
           .select('*')
+          .eq('user_id', user.id)
           .single();
 
         if (error && error.code !== 'PGRST116') {
@@ -89,6 +101,7 @@ export function SmtpSettings() {
       const { data: existingSettings } = await supabase
         .from('smtp_settings')
         .select('id')
+        .eq('user_id', user.id)
         .single();
 
       if (existingSettings) {
@@ -110,6 +123,11 @@ export function SmtpSettings() {
 
       // Zurücksetzen des Verbindungsstatus wenn kritische Parameter geändert wurden
       setIsVerified(false);
+      
+      // Call the onSettingsSaved callback if provided
+      if (onSettingsSaved) {
+        onSettingsSaved();
+      }
     } catch (error) {
       console.error('Error saving SMTP settings:', error);
       toast.error("Fehler beim Speichern der SMTP-Einstellungen");
@@ -164,6 +182,11 @@ export function SmtpSettings() {
         .eq('user_id', user.id);
       
       toast.success("SMTP-Verbindung erfolgreich getestet");
+      
+      // Call the onSettingsSaved callback if provided
+      if (onSettingsSaved) {
+        onSettingsSaved();
+      }
     } catch (error: any) {
       console.error('Error testing SMTP connection:', error);
       setLastTestError(error.message || "Verbindung fehlgeschlagen");
