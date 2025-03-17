@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -551,7 +552,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                     </FormControl>
                     <FormDescription>
                       E-Mails ab diesem Datum werden synchronisiert
-                    </FormMessage>
+                    </FormDescription>
+                    <FormMessage />
                   </FormItem>
                 )}
               />
