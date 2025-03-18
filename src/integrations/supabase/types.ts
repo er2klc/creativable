@@ -978,6 +978,8 @@ export type Database = {
       }
       imap_settings: {
         Row: {
+          auto_reconnect: boolean | null
+          connection_timeout: number | null
           created_at: string | null
           historical_sync: boolean | null
           historical_sync_date: string | null
@@ -1002,6 +1004,8 @@ export type Database = {
           username: string
         }
         Insert: {
+          auto_reconnect?: boolean | null
+          connection_timeout?: number | null
           created_at?: string | null
           historical_sync?: boolean | null
           historical_sync_date?: string | null
@@ -1026,6 +1030,8 @@ export type Database = {
           username: string
         }
         Update: {
+          auto_reconnect?: boolean | null
+          connection_timeout?: number | null
           created_at?: string | null
           historical_sync?: boolean | null
           historical_sync_date?: string | null

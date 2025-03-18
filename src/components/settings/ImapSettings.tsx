@@ -758,25 +758,70 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
           <FormField
             control={form.control}
-            name="max_emails"
+            name="auto_reconnect"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Maximale Anzahl der E-Mails (pro Synchronisierung)</FormLabel>
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-6">
                 <FormControl>
-                  <Input
-                    type="number"
-                    className="bg-gray-50"
-                    {...field}
-                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
                   />
                 </FormControl>
-                <FormDescription>
-                  Legt fest, wie viele E-Mails bei einer Synchronisierung maximal geladen werden.
-                </FormDescription>
-                <FormMessage />
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Automatische Wiederverbindung</FormLabel>
+                  <FormDescription>
+                    Bei Verbindungsabbrüchen automatisch versuchen, die Verbindung wiederherzustellen.
+                  </FormDescription>
+                </div>
               </FormItem>
             )}
           />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <FormField
+              control={form.control}
+              name="max_emails"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Maximale Anzahl der E-Mails (pro Synchronisierung)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      className="bg-gray-50"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Legt fest, wie viele E-Mails bei einer Synchronisierung maximal geladen werden.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="connection_timeout"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Verbindungs-Timeout (in ms)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      className="bg-gray-50"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Zeit in Millisekunden, nach der eine Verbindung als fehlgeschlagen betrachtet wird.
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
 
           <div className="mt-6 flex gap-4">
             <Button
