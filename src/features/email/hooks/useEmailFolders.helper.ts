@@ -58,3 +58,46 @@ export function getFolderIcon(folderType: string): string {
     default: return 'Folder';
   }
 }
+
+/**
+ * Determines if a folder is a system folder that shouldn't be deleted
+ * @param folderType Folder type
+ */
+export function isSystemFolder(folderType: string): boolean {
+  // These are standard system folders that shouldn't be modified
+  return ['inbox', 'sent', 'drafts', 'trash', 'spam', 'archive'].includes(folderType);
+}
+
+/**
+ * Gets localized folder name based on type and current locale
+ * @param folderType Folder type
+ * @param locale Locale code (optional)
+ */
+export function getLocalizedFolderName(folderType: string, locale: string = 'en'): string {
+  const translations: Record<string, Record<string, string>> = {
+    en: {
+      inbox: 'Inbox',
+      sent: 'Sent',
+      drafts: 'Drafts',
+      trash: 'Trash',
+      spam: 'Spam',
+      archive: 'Archive',
+      regular: 'Folder'
+    },
+    de: {
+      inbox: 'Posteingang',
+      sent: 'Gesendet',
+      drafts: 'Entwürfe',
+      trash: 'Papierkorb',
+      spam: 'Spam',
+      archive: 'Archiv',
+      regular: 'Ordner'
+    }
+  };
+
+  // Default to English if locale not available
+  const localeTranslations = translations[locale] || translations.en;
+  
+  // Return translation or fallback to default "Folder"
+  return localeTranslations[folderType] || localeTranslations.regular;
+}

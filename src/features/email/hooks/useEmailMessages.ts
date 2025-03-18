@@ -31,28 +31,33 @@ interface EmailMessagesResult {
   emails: EmailMessage[];
   unreadCount: number;
   isLoading: boolean;
+  isError: boolean;
+  error: Error | null;
   syncInProgress: boolean;
   syncEmails: (forceRefresh?: boolean) => Promise<void>;
   markAsRead: (emailId: string, isRead: boolean) => Promise<void>;
   markAsStarred: (emailId: string, isStarred: boolean) => Promise<void>;
 }
 
-export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?: string): EmailMessagesResult {
+export function useEmailMessages(folderPath?: string | undefined): EmailMessagesResult {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [syncInProgress, setSyncInProgress] = useState(false);
   
-  // Use folderPath if provided, otherwise use oldFolderPath (for backward compatibility)
-  const effectiveFolderPath = folderPath || oldFolderPath;
-
-  const { data, isLoading } = useQuery({
-    queryKey: ["emails", user?.id, effectiveFolderPath],
+  // Query for emails in the current folder
+  const { 
+    data, 
+    isLoading, 
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["emails", user?.id, folderPath],
     queryFn: async () => {
-      if (!user || !effectiveFolderPath) {
+      if (!user || !folderPath) {
         return { emails: [], unreadCount: 0 };
       }
 
-      console.log("Fetching emails for folder:", effectiveFolderPath);
+      console.log("Fetching emails for folder:", folderPath);
 
       try {
         // Query emails for the current folder
@@ -60,7 +65,7 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
           .from('emails')
           .select("*")
           .eq("user_id", user.id)
-          .eq("folder", effectiveFolderPath)
+          .eq("folder", folderPath)
           .order("sent_at", { ascending: false });
 
         if (error) {
@@ -71,7 +76,7 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
         // Count unread messages
         const unreadCount = emails?.filter(email => !email.read)?.length || 0;
 
-        console.log(`Loaded ${emails?.length || 0} emails, ${unreadCount} unread`);
+        console.log(`Found ${emails?.length || 0} emails in folder ${folderPath}`);
         
         return {
           emails: emails || [],
@@ -82,21 +87,20 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
         throw err;
       }
     },
-    enabled: !!user && !!effectiveFolderPath,
+    enabled: !!user && !!folderPath,
     staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchInterval: 1000 * 60 * 5, // 5 minutes
   });
 
   // Function to synchronize emails for the current folder
   const syncEmails = async (forceRefresh = false) => {
-    if (!user || !effectiveFolderPath || syncInProgress) {
+    if (!user || !folderPath || syncInProgress) {
       console.log("Cannot sync: User or folder not defined, or sync already in progress");
       return;
     }
 
     try {
       setSyncInProgress(true);
-      console.log(`Starting email sync for folder: ${effectiveFolderPath}`);
+      console.log(`Syncing emails for folder: ${folderPath}`);
       
       // Get the current user session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -117,7 +121,8 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
           },
           body: JSON.stringify({
             force_refresh: forceRefresh,
-            folder: effectiveFolderPath
+            folder: folderPath,
+            max_emails: 100 // Increase from default 20
           })
         }
       );
@@ -130,13 +135,16 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
       const result = await response.json();
       
       if (result.success) {
-        console.log(`Sync successful for folder ${effectiveFolderPath}:`, result);
+        console.log(`Sync successful for folder ${folderPath}:`, result);
         toast.success("Email Synchronization Complete", {
           description: `Successfully synced ${result.emailsCount || 0} emails`
         });
         
         // Refresh the emails list
-        await queryClient.invalidateQueries({ queryKey: ["emails", user?.id, effectiveFolderPath] });
+        await queryClient.invalidateQueries({ queryKey: ["emails", user?.id, folderPath] });
+        
+        // Also refresh the folders list to update counts
+        queryClient.invalidateQueries({ queryKey: ['email-folders'] });
       } else {
         throw new Error(result.message || "Failed to sync emails");
       }
@@ -164,7 +172,10 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
       if (error) throw error;
       
       // Refresh email data
-      queryClient.invalidateQueries({ queryKey: ["emails", user.id, effectiveFolderPath] });
+      queryClient.invalidateQueries({ queryKey: ["emails", user.id, folderPath] });
+      
+      // Also refresh folders to update unread counts
+      queryClient.invalidateQueries({ queryKey: ['email-folders'] });
     } catch (error) {
       console.error('Error updating email read status:', error);
       toast.error("Failed to update email status");
@@ -185,7 +196,7 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
       if (error) throw error;
       
       // Refresh email data
-      queryClient.invalidateQueries({ queryKey: ["emails", user.id, effectiveFolderPath] });
+      queryClient.invalidateQueries({ queryKey: ["emails", user.id, folderPath] });
     } catch (error) {
       console.error('Error updating email starred status:', error);
       toast.error("Failed to update email status");
@@ -196,6 +207,8 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
     emails: data?.emails || [],
     unreadCount: data?.unreadCount || 0,
     isLoading,
+    isError,
+    error,
     syncInProgress,
     syncEmails,
     markAsRead,

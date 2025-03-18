@@ -1,2 +1,5 @@
 
 project_id = "agqaitxlmxztqyhpcjau"
+
+[global.env]
+NODE_OPTIONS = "--max-old-space-size=1024"

@@ -14,6 +14,7 @@ import { useSettings } from '@/hooks/use-settings';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { checkEmailConfigStatus } from '@/utils/debug-helper';
 import { EmailLayout } from '@/features/email/components/layout/EmailLayout';
+import { useEmailFolders } from '@/features/email/hooks/useEmailFolders';
 
 export default function Messages() {
   const { user } = useAuth();
@@ -22,6 +23,9 @@ export default function Messages() {
   const [isConfigured, setIsConfigured] = useState(false);
   const [isCheckingConfig, setIsCheckingConfig] = useState(true);
   const configCheckCompletedRef = useRef(false);
+  
+  // Get email folders to determine if we should auto-sync
+  const { folders, syncFolders } = useEmailFolders();
 
   // Check email configuration only once
   useEffect(() => {
@@ -42,6 +46,14 @@ export default function Messages() {
         if (isMounted) {
           setIsConfigured(configStatus.isConfigured);
           configCheckCompletedRef.current = true;
+          
+          // Auto-sync folders if configured but no folders exist
+          if (configStatus.isConfigured && folders.length === 0) {
+            console.log("Auto-syncing folders on initial load");
+            syncFolders().catch(err => {
+              console.error("Error during auto-sync:", err);
+            });
+          }
         }
       } catch (error) {
         console.error("Error checking email config:", error);
@@ -65,7 +77,7 @@ export default function Messages() {
     return () => {
       isMounted = false;
     };
-  }, [user]);
+  }, [user, folders.length, syncFolders]);
 
   // Reset config check when authentication changes
   useEffect(() => {
@@ -166,6 +178,9 @@ export default function Messages() {
         <CardContent className="p-0 h-full">
           <EmailLayout 
             userEmail={imapSettings?.username || user?.email}
+            initialFolderPath={folders.length > 0 ? 
+              folders.find(f => f.type === 'inbox')?.path || folders[0].path 
+              : 'INBOX'}
           />
         </CardContent>
       </Card>

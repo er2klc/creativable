@@ -2,7 +2,7 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, MoveHorizontal, X, Loader2 } from "lucide-react";
+import { RefreshCw, Search, MoveHorizontal, X, Loader2, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface DashboardHeaderProps {
@@ -16,6 +16,10 @@ interface DashboardHeaderProps {
   actionDisabled?: boolean;
   actionLoading?: boolean;
   actionIcon?: React.ReactNode;
+  secondaryActionLabel?: string;
+  onSecondaryAction?: () => void;
+  secondaryActionDisabled?: boolean;
+  secondaryActionIcon?: React.ReactNode;
   rightContent?: React.ReactNode;
 }
 
@@ -30,6 +34,10 @@ export function DashboardHeader({
   actionDisabled = false,
   actionLoading = false,
   actionIcon,
+  secondaryActionLabel,
+  onSecondaryAction,
+  secondaryActionDisabled = false,
+  secondaryActionIcon,
   rightContent
 }: DashboardHeaderProps) {
   return (
@@ -67,6 +75,18 @@ export function DashboardHeader({
               </Button>
             )}
           </div>
+        )}
+        
+        {onSecondaryAction && (
+          <Button 
+            variant="outline" 
+            size={secondaryActionLabel ? "default" : "icon"}
+            onClick={onSecondaryAction}
+            disabled={secondaryActionDisabled}
+          >
+            {secondaryActionIcon || <Plus className={cn("h-4 w-4", secondaryActionLabel && "mr-2")} />}
+            {secondaryActionLabel && secondaryActionLabel}
+          </Button>
         )}
         
         {onAction && (
