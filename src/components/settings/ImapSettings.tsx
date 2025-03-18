@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -35,6 +36,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
   const [testingConnection, setTestingConnection] = useState(false);
   const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
   const [fixingFolders, setFixingFolders] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   // Initialize the form
   const form = useForm<ImapSettingsFormData>({
@@ -97,6 +99,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
     try {
       fetchAttemptsRef.current += 1;
+      console.log(`Fetching IMAP settings attempt ${fetchAttemptsRef.current} for user ${user.id}`);
       
       const result = await fetchWithTimeout(async () => {
         const { data, error } = await supabase
@@ -115,6 +118,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
       
       if (isMountedRef.current) {
         if (result.data) {
+          console.log('IMAP settings found:', result.data);
           setExistingSettingsId(result.data.id);
           
           form.reset({
@@ -127,9 +131,12 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
             connection_timeout: result.data.connection_timeout || 30000,
             auto_reconnect: result.data.auto_reconnect !== undefined ? result.data.auto_reconnect : true,
           });
+        } else {
+          console.log('No IMAP settings found for user');
         }
         
         setLoadError(null);
+        setSettingsLoaded(true);
       }
     } catch (error: any) {
       console.error('Error loading IMAP settings:', error);
@@ -149,7 +156,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
         setFetchAborted(true);
       }
     } finally {
-      if ((fetchAttemptsRef.current >= maxFetchAttempts || fetchAborted) && isMountedRef.current) {
+      if (isMountedRef.current) {
         setLoadingSettings(false);
       }
     }
@@ -295,6 +302,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     setIsSaving(true);
 
     try {
+      console.log("Saving IMAP settings:", values);
       let operation;
       
       // Simplified data object without historical_sync fields
@@ -312,6 +320,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
       
       if (existingSettingsId) {
         // Update existing record
+        console.log(`Updating existing IMAP settings with ID: ${existingSettingsId}`);
         operation = supabase
           .from('imap_settings')
           .update(imapData)
@@ -330,6 +339,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
         
         if (existingData?.id) {
           // Update the existing record if found
+          console.log(`Found existing IMAP settings with ID: ${existingData.id}`);
           operation = supabase
             .from('imap_settings')
             .update(imapData)
@@ -339,6 +349,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
           setExistingSettingsId(existingData.id);
         } else {
           // Insert new record only if we're sure none exists
+          console.log("Creating new IMAP settings record");
           operation = supabase
             .from('imap_settings')
             .insert({
@@ -351,9 +362,12 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
       const { error, data } = await operation;
 
       if (error) {
+        console.error("Error saving settings:", error);
         throw error;
       }
 
+      console.log("Settings saved successfully:", data);
+      
       // If this is a new record, set the ID for future updates
       if (!existingSettingsId && data && Array.isArray(data) && data.length > 0) {
         setExistingSettingsId(data[0].id);
@@ -380,6 +394,10 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
           // Don't show an error toast here since syncFolders already does that
           console.error("Error during initial sync:", syncError);
         }
+
+        // Refresh settings after save to ensure we have latest data
+        fetchAttemptsRef.current = 0;
+        await fetchSettings();
 
         if (onSettingsSaved) {
           onSettingsSaved();
