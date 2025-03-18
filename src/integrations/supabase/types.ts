@@ -5401,6 +5401,12 @@ export type Database = {
           content_type: string
         }[]
       }
+      reset_imap_settings: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: boolean
+      }
       retry_failed_embeddings: {
         Args: Record<PropertyKey, never>
         Returns: undefined
