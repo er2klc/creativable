@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 import { fixDuplicateEmailFolders } from '@/utils/debug-helper';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader, CardContent } from '@/components/ui/card';
 
 interface ImapSettingsProps {
   onSettingsSaved?: () => void;
