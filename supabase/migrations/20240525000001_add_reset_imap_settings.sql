@@ -25,6 +25,10 @@ BEGIN
   -- Clean any existing email sync status
   DELETE FROM email_sync_status 
   WHERE user_id = user_id_param;
+  
+  -- Delete all email folders for clean start
+  DELETE FROM email_folders
+  WHERE user_id = user_id_param;
 
   RETURN TRUE;
 EXCEPTION

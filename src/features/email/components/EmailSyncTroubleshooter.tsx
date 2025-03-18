@@ -1,15 +1,17 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { AlertCircle, RefreshCw, Settings } from 'lucide-react';
+import { AlertCircle, RefreshCw, Settings, Trash2, History } from 'lucide-react';
 import { useFolderSync } from '../hooks/useFolderSync';
 import { useSettings } from '@/hooks/use-settings';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 export function EmailSyncTroubleshooter() {
-  const { syncFolders, resetEmailSync, isSyncing } = useFolderSync();
+  const { syncFolders, resetEmailSync, cleanupFolders, isSyncing, lastError } = useFolderSync();
   const { settings, isLoading } = useSettings();
+  const [showAdvanced, setShowAdvanced] = useState(false);
   
   const handleSync = async () => {
     await syncFolders(true);
@@ -18,6 +20,12 @@ export function EmailSyncTroubleshooter() {
   const handleReset = async () => {
     if (window.confirm("This will reset your email sync settings. You'll need to reconfigure your email settings. Continue?")) {
       await resetEmailSync();
+    }
+  };
+  
+  const handleCleanupFolders = async () => {
+    if (window.confirm("This will delete all your email folders and reset the sync state. You'll need to sync again. Continue?")) {
+      await cleanupFolders();
     }
   };
   
@@ -71,6 +79,16 @@ export function EmailSyncTroubleshooter() {
           </Alert>
         )}
         
+        {lastError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Sync Error</AlertTitle>
+            <AlertDescription>
+              {lastError}
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="space-y-2">
           <p>
             If you're experiencing issues with email synchronization, try these steps:
@@ -78,9 +96,50 @@ export function EmailSyncTroubleshooter() {
           <ol className="list-decimal ml-5 space-y-1">
             <li>Verify your IMAP settings are correct</li>
             <li>Refresh folder synchronization</li>
-            <li>If problems persist, reset sync settings</li>
+            <li>If problems persist, use the advanced tools below</li>
           </ol>
         </div>
+        
+        <Accordion type="single" collapsible className="w-full mt-4">
+          <AccordionItem value="advanced-tools">
+            <AccordionTrigger>
+              Advanced Troubleshooting Tools
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <Alert>
+                  <History className="h-4 w-4" />
+                  <AlertTitle>Advanced Tools</AlertTitle>
+                  <AlertDescription>
+                    These tools can help resolve persistent synchronization issues by cleaning up the system state.
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCleanupFolders}
+                    disabled={isSyncing}
+                    className="flex items-center gap-2"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Clean Up Folders
+                  </Button>
+                  
+                  <Button 
+                    variant="destructive" 
+                    onClick={handleReset}
+                    disabled={isSyncing}
+                    className="flex items-center gap-2"
+                  >
+                    <History className="h-4 w-4" />
+                    Reset Everything
+                  </Button>
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </CardContent>
       
       <CardFooter className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-end">
@@ -100,14 +159,6 @@ export function EmailSyncTroubleshooter() {
         >
           <RefreshCw className={`mr-2 h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
           {isSyncing ? 'Syncing...' : 'Sync Folders'}
-        </Button>
-        
-        <Button 
-          variant="destructive" 
-          onClick={handleReset} 
-          className="w-full sm:w-auto"
-        >
-          Reset Sync
         </Button>
       </CardFooter>
     </Card>

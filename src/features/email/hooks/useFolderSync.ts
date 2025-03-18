@@ -9,6 +9,7 @@ import { useSettings } from '@/hooks/use-settings';
 export function useFolderSync() {
   const { user } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
   const { settings, updateSettings } = useSettings();
   
   const syncFolders = useCallback(async (showToast = true) => {
@@ -19,15 +20,13 @@ export function useFolderSync() {
     
     try {
       setIsSyncing(true);
+      setLastError(null);
       
       if (showToast) {
         toast.info("Starting folder synchronization", {
           description: "Syncing email folders, this may take a moment..."
         });
       }
-      
-      // First try to fix any duplicate folders that might exist
-      await fixDuplicateEmailFolders(user.id);
       
       // Update settings to indicate email sync has been attempted
       if (settings && !settings.email_configured) {
@@ -73,7 +72,7 @@ export function useFolderSync() {
         console.log("Folder sync successful:", result);
         if (showToast) {
           toast.success("Folder Synchronization Complete", {
-            description: `Successfully synced ${result.folderCount || 0} folders`
+            description: `Successfully synced ${result.folderCount || 0} folders from your email account`
           });
         }
         
@@ -93,6 +92,8 @@ export function useFolderSync() {
       }
     } catch (error: any) {
       console.error("Error syncing folders:", error);
+      setLastError(error.message || "Failed to sync folders");
+      
       if (showToast) {
         toast.error("Folder Sync Failed", {
           description: error.message || "Failed to sync folders. Please try again or check your email settings."
@@ -111,7 +112,14 @@ export function useFolderSync() {
     if (!user) return { success: false, message: "User not logged in" };
     
     try {
-      // 1. Reset IMAP settings dates
+      setIsSyncing(true);
+      setLastError(null);
+      
+      toast.info("Resetting email sync settings", {
+        description: "Cleaning up sync state and preparing for fresh start..."
+      });
+      
+      // 1. Reset IMAP settings dates using our custom function
       const { error: updateError } = await supabase.rpc('reset_imap_settings', { 
         user_id_param: user.id 
       });
@@ -132,16 +140,59 @@ export function useFolderSync() {
       return { success: true, message: "Email sync reset successful" };
     } catch (error: any) {
       console.error("Error resetting email sync:", error);
+      setLastError(error.message || "Failed to reset email sync");
+      
       toast.error("Failed to reset email sync", {
         description: error.message || "An unexpected error occurred"
       });
       return { success: false, message: error.message || "Failed to reset email sync" };
+    } finally {
+      setIsSyncing(false);
     }
   }, [user, updateSettings]);
+  
+  const cleanupFolders = useCallback(async () => {
+    if (!user) return { success: false, message: "User not logged in" };
+    
+    try {
+      setIsSyncing(true);
+      setLastError(null);
+      
+      toast.info("Cleaning up email folders", {
+        description: "Removing duplicate folders and preparing for sync..."
+      });
+
+      // Delete all folders for a clean start
+      const { error: deleteError } = await supabase
+        .from('email_folders')
+        .delete()
+        .eq('user_id', user.id);
+      
+      if (deleteError) throw deleteError;
+      
+      toast.success("Folders cleaned up", {
+        description: "Successfully removed all folders. Please sync again for fresh data."
+      });
+      
+      return { success: true, message: "Folders cleanup successful" };
+    } catch (error: any) {
+      console.error("Error cleaning up folders:", error);
+      setLastError(error.message || "Failed to clean up folders");
+      
+      toast.error("Failed to clean up folders", {
+        description: error.message || "An unexpected error occurred"
+      });
+      return { success: false, message: error.message || "Failed to clean up folders" };
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [user]);
   
   return {
     syncFolders,
     resetEmailSync,
-    isSyncing
+    cleanupFolders,
+    isSyncing,
+    lastError
   };
 }
