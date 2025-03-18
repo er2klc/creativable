@@ -102,7 +102,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
           .from('imap_settings')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error && error.code !== 'PGRST116') {
           console.error('Error fetching IMAP settings:', error);
@@ -296,21 +296,24 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     try {
       let operation;
       
+      // Simplified data object without historical_sync fields
+      const imapData = {
+        host: values.host,
+        port: values.port,
+        username: values.username,
+        password: values.password,
+        secure: values.secure,
+        max_emails: values.max_emails,
+        connection_timeout: values.connection_timeout,
+        auto_reconnect: values.auto_reconnect,
+        updated_at: new Date().toISOString()
+      };
+      
       if (existingSettingsId) {
         // Update existing record
         operation = supabase
           .from('imap_settings')
-          .update({
-            host: values.host,
-            port: values.port,
-            username: values.username,
-            password: values.password,
-            secure: values.secure,
-            max_emails: values.max_emails,
-            connection_timeout: values.connection_timeout,
-            auto_reconnect: values.auto_reconnect,
-            updated_at: new Date().toISOString()
-          })
+          .update(imapData)
           .eq('id', existingSettingsId);
       } else {
         // Check if a record already exists for this user
@@ -328,16 +331,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
           // Update the existing record if found
           operation = supabase
             .from('imap_settings')
-            .update({
-              host: values.host,
-              port: values.port,
-              username: values.username,
-              password: values.password,
-              secure: values.secure,
-              max_emails: values.max_emails,
-              connection_timeout: values.connection_timeout,
-              auto_reconnect: values.auto_reconnect,
-            })
+            .update(imapData)
             .eq('id', existingData.id);
             
           // Update local state to reflect we have an existing record
@@ -348,14 +342,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
             .from('imap_settings')
             .insert({
               user_id: user.id,
-              host: values.host,
-              port: values.port,
-              username: values.username,
-              password: values.password,
-              secure: values.secure,
-              max_emails: values.max_emails,
-              connection_timeout: values.connection_timeout,
-              auto_reconnect: values.auto_reconnect,
+              ...imapData
             });
         }
       }
@@ -533,7 +520,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                         <FormLabel>SSL/TLS verwenden</FormLabel>
                         <FormDescription>
                           Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen).
-                          Bei Verbindungsproblemen können Sie versuchen, diese Einstellung zu ändern.
+                          Bei Verbindungsproblemen können Sie versuchen, diese Einstellung zu deaktivieren.
                         </FormDescription>
                       </div>
                     </FormItem>
@@ -544,73 +531,78 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                   control={form.control}
                   name="max_emails"
                   render={({ field }) => (
-                    <FormItem className="mb-6">
-                      <FormLabel>Maximale E-Mails pro Synchronisation</FormLabel>
+                    <FormItem>
+                      <FormLabel>Maximale Anzahl der E-Mails (pro Synchronisierung)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="number" 
-                          className="bg-gray-50 max-w-xs"
+                        <Input
+                          type="number"
+                          className="bg-gray-50"
                           {...field}
                           onChange={(e) => field.onChange(Number(e.target.value))}
                         />
                       </FormControl>
                       <FormDescription>
-                        Die Anzahl der E-Mails, die bei jeder Synchronisation abgerufen werden (Standardwert: 100)
+                        Legt fest, wie viele E-Mails bei einer Synchronisierung maximal geladen werden.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="auto_reconnect"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-6">
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel>Automatisch wieder verbinden</FormLabel>
-                        <FormDescription>
-                          Bei Verbindungsabbrüchen automatisch wieder verbinden
-                        </FormDescription>
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                <div className="mt-6 flex gap-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={testConnection}
+                    disabled={testingConnection}
+                    className="flex items-center gap-2"
+                  >
+                    {testingConnection ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    Verbindung testen
+                  </Button>
 
-                <FormField
-                  control={form.control}
-                  name="connection_timeout"
-                  render={({ field }) => (
-                    <FormItem className="mb-6">
-                      <FormLabel>Verbindungs-Timeout (ms)</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          className="bg-gray-50 max-w-xs"
-                          {...field}
-                          onChange={(e) => field.onChange(Number(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        Timeout für Verbindungsversuche in Millisekunden (Standardwert: 30000)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleFixFolders}
+                    disabled={fixingFolders}
+                    className="flex items-center gap-2"
+                  >
+                    {fixingFolders ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                    Ordnerprobleme beheben
+                  </Button>
+                </div>
+
+                {testResult && (
+                  <Alert
+                    variant={testResult.success ? "default" : "destructive"}
+                    className="mt-4"
+                  >
+                    {testResult.success ? (
+                      <CheckCircle className="h-4 w-4" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4" />
+                    )}
+                    <AlertTitle>
+                      {testResult.success
+                        ? "Connection Successful"
+                        : "Connection Failed"}
+                    </AlertTitle>
+                    <AlertDescription>{testResult.message}</AlertDescription>
+                  </Alert>
+                )}
               </div>
 
-              <div className="pt-6 flex justify-end">
-                <Button type="submit" disabled={isSaving} className="min-w-[120px]">
-                  {isSaving ? 'Speichern...' : 'Speichern'}
-                </Button>
-              </div>
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Speichern...
+                  </>
+                ) : (
+                  "Speichern"
+                )}
+              </Button>
             </form>
           </Form>
         </div>
@@ -618,293 +610,228 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     );
   }
 
-  // Verbesserte Loading-Anzeige mit Skeleton statt einfachem Ladekreis
+  // Loading state with Skeleton-UI
   if (loadingSettings) {
     return (
       <div className="space-y-6">
-        <div className="bg-white p-6 rounded-md shadow-sm border">
-          <Skeleton className="h-6 w-1/3 mb-4" />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-            
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-1/4" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-          </div>
-        </div>
+        <Skeleton className="h-8 w-3/4 mb-2" />
+        <Skeleton className="h-4 w-full mb-6" />
         
-        <div className="bg-white p-6 rounded-md shadow-sm border">
-          <Skeleton className="h-6 w-1/3 mb-4" />
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-10 w-full" />
+        <Card className="w-full overflow-hidden border-0 shadow-md">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 border-b">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-6 w-1/3" />
+              <Skeleton className="h-6 w-24" />
             </div>
-            
-            <div className="space-y-2">
-              <Skeleton className="h-4 w-1/4" />
-              <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-4 w-2/3 mt-2" />
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <Skeleton className="h-5 w-40 mb-2" />
+                  <Skeleton className="h-4 w-60" />
+                </div>
+                <Skeleton className="h-10 w-32" />
+              </div>
+              
+              <Skeleton className="h-px w-full" />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <Skeleton className="h-5 w-32 mb-2" />
+                  <Skeleton className="h-32 w-full rounded-md" />
+                </div>
+                <div>
+                  <Skeleton className="h-5 w-32 mb-2" />
+                  <Skeleton className="h-32 w-full rounded-md" />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="mb-6">
-        <h2 className="text-lg font-medium mb-2">IMAP-Einstellungen</h2>
-        <p className="text-muted-foreground text-sm">
-          Konfigurieren Sie Ihre IMAP-Server-Einstellungen für den E-Mail-Empfang.
-          Diese Einstellungen ermöglichen es der App, E-Mails aus Ihrem Postfach abzurufen.
-        </p>
-      </div>
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <div className="bg-white p-6 rounded-md shadow-sm border">
+          <h3 className="text-base font-semibold mb-4">Server-Einstellungen</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="host"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>IMAP Server</FormLabel>
+                  <FormControl>
+                    <Input placeholder="imap.gmail.com" className="bg-gray-50" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-      {testResult && (
-        <Alert variant={testResult.success ? "success" : "destructive"} className="mb-6">
-          <div className="flex items-start gap-2">
-            {testResult.success ? (
-              <CheckCircle className="h-5 w-5 mt-0.5" />
-            ) : (
-              <AlertCircle className="h-5 w-5 mt-0.5" />
+            <FormField
+              control={form.control}
+              name="port"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Port</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      className="bg-gray-50"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-md shadow-sm border">
+          <h3 className="text-base font-semibold mb-4">Zugangsdaten</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormField
+              control={form.control}
+              name="username"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Benutzername</FormLabel>
+                  <FormControl>
+                    <Input placeholder="your@email.com" className="bg-gray-50" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Passwort</FormLabel>
+                  <FormControl>
+                    <Input type="password" className="bg-gray-50" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-md shadow-sm border">
+          <h3 className="text-base font-semibold mb-4">Verbindungseinstellungen</h3>
+
+          <FormField
+            control={form.control}
+            name="secure"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-6">
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>SSL/TLS verwenden</FormLabel>
+                  <FormDescription>
+                    Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen).
+                    Bei Verbindungsproblemen können Sie versuchen, diese Einstellung zu deaktivieren.
+                  </FormDescription>
+                </div>
+              </FormItem>
             )}
-            <div>
-              <AlertTitle>
-                {testResult.success ? "Connection Successful" : "Connection Failed"}
-              </AlertTitle>
-              <AlertDescription>
-                {testResult.message}
-              </AlertDescription>
-            </div>
-          </div>
-        </Alert>
-      )}
+          />
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="bg-white p-6 rounded-md shadow-sm border">
-            <h3 className="text-base font-semibold mb-4">Server-Einstellungen</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="host"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>IMAP Server</FormLabel>
-                    <FormControl>
-                      <Input placeholder="imap.gmail.com" className="bg-gray-50" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          <FormField
+            control={form.control}
+            name="max_emails"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Maximale Anzahl der E-Mails (pro Synchronisierung)</FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    className="bg-gray-50"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Legt fest, wie viele E-Mails bei einer Synchronisierung maximal geladen werden.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-              <FormField
-                control={form.control}
-                name="port"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Port</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        className="bg-gray-50"
-                        {...field}
-                        onChange={(e) => field.onChange(Number(e.target.value))}
-                      />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Standard: 993 (SSL/TLS), 143 (unverschlüsselt)
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
+          <div className="mt-6 flex gap-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={testConnection}
+              disabled={testingConnection}
+              className="flex items-center gap-2"
+            >
+              {testingConnection ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Verbindung testen
+            </Button>
 
-          <div className="bg-white p-6 rounded-md shadow-sm border">
-            <h3 className="text-base font-semibold mb-4">Zugangsdaten</h3>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Benutzername</FormLabel>
-                    <FormControl>
-                      <Input placeholder="your@email.com" className="bg-gray-50" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Passwort</FormLabel>
-                    <FormControl>
-                      <Input type="password" className="bg-gray-50" {...field} />
-                    </FormControl>
-                    <FormDescription className="text-xs">
-                      Für GMail nutzen Sie bitte ein App-Passwort.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-md shadow-sm border">
-            <h3 className="text-base font-semibold mb-4">Verbindungseinstellungen</h3>
-
-            <FormField
-              control={form.control}
-              name="secure"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-6">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>SSL/TLS verwenden</FormLabel>
-                    <FormDescription>
-                      Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen).
-                      Bei Verbindungsproblemen können Sie versuchen, diese Einstellung zu ändern.
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="max_emails"
-              render={({ field }) => (
-                <FormItem className="mb-6">
-                  <FormLabel>Maximale E-Mails pro Synchronisation</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      className="bg-gray-50 max-w-xs"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Die Anzahl der E-Mails, die bei jeder Synchronisation abgerufen werden (Standardwert: 100)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="auto_reconnect"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-6">
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Automatisch wieder verbinden</FormLabel>
-                    <FormDescription>
-                      Bei Verbindungsabbrüchen automatisch wieder verbinden
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="connection_timeout"
-              render={({ field }) => (
-                <FormItem className="mb-6">
-                  <FormLabel>Verbindungs-Timeout (ms)</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="number" 
-                      className="bg-gray-50 max-w-xs"
-                      {...field}
-                      onChange={(e) => field.onChange(Number(e.target.value))}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Timeout für Verbindungsversuche in Millisekunden (Standardwert: 30000)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <div className="pt-4 flex justify-between">
-            <div className="flex gap-2">
-              <Button 
-                type="button" 
-                variant="outline" 
-                onClick={testConnection}
-                disabled={testingConnection || !form.getValues('host')}
-              >
-                {testingConnection ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verbindung wird getestet...
-                  </>
-                ) : (
-                  'Verbindung testen'
-                )}
-              </Button>
-              
-              <Button 
-                type="button" 
-                variant="outline"
-                onClick={handleFixFolders}
-                disabled={fixingFolders || !user}
-              >
-                {fixingFolders ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Ordner werden repariert...
-                  </>
-                ) : (
-                  'Ordnerprobleme beheben'
-                )}
-              </Button>
-            </div>
-            
-            <Button type="submit" disabled={isSaving} className="min-w-[120px]">
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Speichern...
-                </>
-              ) : 'Speichern'}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleFixFolders}
+              disabled={fixingFolders}
+              className="flex items-center gap-2"
+            >
+              {fixingFolders ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Ordnerprobleme beheben
             </Button>
           </div>
-        </form>
-      </Form>
-    </div>
+
+          {testResult && (
+            <Alert
+              variant={testResult.success ? "default" : "destructive"}
+              className="mt-4"
+            >
+              {testResult.success ? (
+                <CheckCircle className="h-4 w-4" />
+              ) : (
+                <AlertCircle className="h-4 w-4" />
+              )}
+              <AlertTitle>
+                {testResult.success
+                  ? "Connection Successful"
+                  : "Connection Failed"}
+              </AlertTitle>
+              <AlertDescription>{testResult.message}</AlertDescription>
+            </Alert>
+          )}
+        </div>
+
+        <Button type="submit" disabled={isSaving}>
+          {isSaving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Speichern...
+            </>
+          ) : (
+            "Speichern"
+          )}
+        </Button>
+      </form>
+    </Form>
   );
 }

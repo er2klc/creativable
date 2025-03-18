@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmailConfigStatus {
@@ -7,6 +8,10 @@ interface EmailConfigStatus {
   imapStatus?: string;
   smtpStatus?: string;
   userId?: string;
+  imapSettings?: any;
+  smtpSettings?: any;
+  success?: boolean;
+  error?: string;
 }
 
 export async function checkEmailConfigStatus(): Promise<EmailConfigStatus> {
@@ -18,6 +23,7 @@ export async function checkEmailConfigStatus(): Promise<EmailConfigStatus> {
         isConfigured: false,
         hasImapSettings: false,
         hasSmtpSettings: false,
+        success: false
       };
     }
     
@@ -35,12 +41,14 @@ export async function checkEmailConfigStatus(): Promise<EmailConfigStatus> {
       .eq('user_id', user.id)
       .maybeSingle();
       
+    // Validate IMAP settings
     const hasImapSettings = !!imapSettings && 
       !!imapSettings.host && 
       !!imapSettings.port && 
       !!imapSettings.username && 
       !!imapSettings.password;
       
+    // Validate SMTP settings
     const hasSmtpSettings = !!smtpSettings && 
       !!smtpSettings.host && 
       !!smtpSettings.port && 
@@ -60,7 +68,10 @@ export async function checkEmailConfigStatus(): Promise<EmailConfigStatus> {
       hasSmtpSettings,
       imapStatus: imapSettings ? 'configured' : 'not configured',
       smtpStatus: smtpSettings ? 'configured' : 'not configured',
-      userId: user.id
+      userId: user.id,
+      imapSettings,
+      smtpSettings,
+      success: true
     };
   } catch (error) {
     console.error("Error checking email configuration:", error);
@@ -68,6 +79,8 @@ export async function checkEmailConfigStatus(): Promise<EmailConfigStatus> {
       isConfigured: false,
       hasImapSettings: false,
       hasSmtpSettings: false,
+      error: error.message || "Unknown error checking configuration",
+      success: false
     };
   }
 }

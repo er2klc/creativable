@@ -243,7 +243,7 @@ async function fetchEmails(
   console.log(`Sync options:`, JSON.stringify(options));
   
   const client = new ImapFlow(imapSettings);
-  const maxEmails = options.maxEmails || (options.forceRefresh ? 100 : 20);
+  const maxEmails = options.maxEmails || 100;
   const folder = options.folder || 'INBOX';
   
   try {
@@ -277,34 +277,13 @@ async function fetchEmails(
       };
     }
     
-    // Prepare fetch options - handling historical sync if requested
-    let fetchOptions;
-    
-    if (options.historicalSync && options.startDate) {
-      console.log(`Historical sync requested from date: ${options.startDate.toISOString()}`);
-      
-      // Ensure startDate is not in the future
-      const now = new Date();
-      if (options.startDate > now) {
-        console.warn("Historical sync date was in the future, resetting to today's date");
-        options.startDate = now;
-      }
-      
-      fetchOptions = {
-        since: options.startDate,
-        envelope: true,
-        bodyStructure: true,
-        source: true
-      };
-    } else {
-      // Get the most recent emails, using sequence numbers
-      fetchOptions = {
-        seq: `${Math.max(1, mailbox.exists - fetchCount + 1)}:${mailbox.exists}`,
-        envelope: true,
-        bodyStructure: true,
-        source: true
-      };
-    }
+    // Always get the most recent emails first using sequence numbers
+    const fetchOptions = {
+      seq: `${Math.max(1, mailbox.exists - fetchCount + 1)}:${mailbox.exists}`,
+      envelope: true,
+      bodyStructure: true,
+      source: true
+    };
     
     console.log(`Fetch options:`, JSON.stringify(fetchOptions));
     
