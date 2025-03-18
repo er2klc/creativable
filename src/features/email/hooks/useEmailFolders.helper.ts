@@ -1,4 +1,3 @@
-
 // Helper functions for email folder operations
 
 /**
@@ -40,6 +39,18 @@ export function getFolderQueryPattern(folderPath: string): string {
   
   if (normalizedPath === 'SENT') {
     return '%SENT%,%GESENDET%';
+  }
+  
+  if (normalizedPath === 'DRAFTS') {
+    return '%DRAFT%,%ENTWURF%';
+  }
+  
+  if (normalizedPath === 'JUNK') {
+    return '%JUNK%,%SPAM%';
+  }
+  
+  if (normalizedPath === 'ARCHIVE') {
+    return '%ARCHIV%,%ARCHIVE%';
   }
   
   // For other folders, just use the original path for exact matching

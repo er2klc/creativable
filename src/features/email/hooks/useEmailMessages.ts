@@ -64,6 +64,7 @@ export function useEmailMessages(folderPath?: string | undefined): EmailMessages
         // Query emails for the current folder using improved matching
         // We need to consider multiple possible folder paths for special folders
         const folderQueryPattern = getFolderQueryPattern(folderPath);
+        console.log("Using folder query pattern:", folderQueryPattern);
         
         let query = supabase
           .from('emails')
@@ -81,10 +82,12 @@ export function useEmailMessages(folderPath?: string | undefined): EmailMessages
             filterExpr += `folder.ilike.${pattern}`;
           });
           
+          console.log("Using OR filter expression:", filterExpr);
           query = query.or(filterExpr);
         } else {
-          // For standard folders, use exact matching
-          query = query.eq("folder", folderPath);
+          // For standard folders, use exact matching with ilike for case-insensitivity
+          query = query.ilike("folder", folderQueryPattern);
+          console.log("Using ilike matching with pattern:", folderQueryPattern);
         }
         
         // Limit to 1000 emails max for large folders
