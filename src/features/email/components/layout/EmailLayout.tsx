@@ -1,21 +1,20 @@
 
 import React, { useState, useEffect } from "react";
-import { Split } from "@geoffcox/react-splitter";
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { useEmailFolders } from "@/features/email/hooks/useEmailFolders";
 import { useEmailMessages } from "@/features/email/hooks/useEmailMessages";
-import { Inbox, Send, Trash2, Archive, File, Plus, Folder } from "lucide-react";
+import { Inbox, Send, Trash2, Archive, File, Plus, Folder, RefreshCw, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getFolderIcon, formatFolderName } from "@/features/email/hooks/useEmailFolders.helper";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface EmailLayoutProps {
   userEmail?: string;
@@ -157,9 +156,9 @@ export function EmailLayout({ userEmail, initialFolderPath = "INBOX" }: EmailLay
       
       {/* Main email layout */}
       <div className="flex-1 overflow-hidden">
-        <Split initialPrimarySize="250px" minPrimarySize="180px" minSecondarySize="300px">
+        <ResizablePanelGroup direction="horizontal" className="h-full">
           {/* Folder sidebar */}
-          <div className="h-full flex flex-col border-r">
+          <ResizablePanel defaultSize={20} minSize={15} maxSize={30} className="h-full flex flex-col border-r">
             <div className="p-2 flex justify-between items-center border-b">
               <h3 className="text-sm font-medium">Folders</h3>
               <Button 
@@ -227,136 +226,142 @@ export function EmailLayout({ userEmail, initialFolderPath = "INBOX" }: EmailLay
                 </div>
               )}
             </ScrollArea>
-          </div>
+          </ResizablePanel>
+          
+          <ResizableHandle withHandle />
           
           {/* Email list and content */}
-          <Split initialPrimarySize="35%" minPrimarySize="200px" minSecondarySize="300px">
-            {/* Email list */}
-            <div className="h-full border-r">
-              {isEmailsLoading ? (
-                <div className="p-4 space-y-4">
-                  {[1, 2, 3, 4, 5].map(i => (
-                    <div key={i} className="space-y-2">
-                      <Skeleton className="h-5 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
-                      <Skeleton className="h-3 w-1/4" />
+          <ResizablePanel defaultSize={80} className="h-full">
+            <ResizablePanelGroup direction="horizontal" className="h-full">
+              {/* Email list */}
+              <ResizablePanel defaultSize={35} minSize={25} className="h-full border-r">
+                {isEmailsLoading ? (
+                  <div className="p-4 space-y-4">
+                    {[1, 2, 3, 4, 5].map(i => (
+                      <div key={i} className="space-y-2">
+                        <Skeleton className="h-5 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-3 w-1/4" />
+                      </div>
+                    ))}
+                  </div>
+                ) : filteredEmails.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-full p-4 text-center">
+                    <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-lg font-medium">No emails found</p>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      {searchQuery 
+                        ? "Try a different search term"
+                        : "There are no emails in this folder"}
+                    </p>
+                    <Button 
+                      onClick={() => syncEmails(true)}
+                      disabled={isEmailSyncing}
+                    >
+                      {isEmailSyncing ? (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                          Syncing...
+                        </>
+                      ) : (
+                        <>
+                          <RefreshCw className="h-4 w-4 mr-2" />
+                          Sync Emails
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-full">
+                    <div className="divide-y">
+                      {filteredEmails.map((email) => {
+                        const isSelected = email.id === selectedEmailId;
+                        return (
+                          <div
+                            key={email.id}
+                            className={cn(
+                              "p-3 cursor-pointer hover:bg-muted/50 transition-colors",
+                              isSelected && "bg-muted",
+                              !email.read && "bg-primary-50 dark:bg-primary-950/20"
+                            )}
+                            onClick={() => handleEmailSelect(email.id)}
+                          >
+                            <div className="flex justify-between">
+                              <div className="font-medium truncate">
+                                {email.from_name || email.from_email}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(email.sent_at).toLocaleDateString()}
+                              </div>
+                            </div>
+                            <div className={cn("truncate", !email.read && "font-semibold")}>
+                              {email.subject || "(No subject)"}
+                            </div>
+                            <div className="text-xs text-muted-foreground line-clamp-1">
+                              {email.text_content ? email.text_content.slice(0, 100) : ""}
+                            </div>
+                          </div>
+                        );
+                      })}
                     </div>
-                  ))}
-                </div>
-              ) : filteredEmails.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full p-4 text-center">
-                  <Inbox className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium">No emails found</p>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    {searchQuery 
-                      ? "Try a different search term"
-                      : "There are no emails in this folder"}
-                  </p>
-                  <Button 
-                    onClick={() => syncEmails(true)}
-                    disabled={isEmailSyncing}
-                  >
-                    {isEmailSyncing ? (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                        Syncing...
-                      </>
-                    ) : (
-                      <>
-                        <RefreshCw className="h-4 w-4 mr-2" />
-                        Sync Emails
-                      </>
-                    )}
-                  </Button>
-                </div>
-              ) : (
-                <ScrollArea className="h-full">
-                  <div className="divide-y">
-                    {filteredEmails.map((email) => {
-                      const isSelected = email.id === selectedEmailId;
+                  </ScrollArea>
+                )}
+              </ResizablePanel>
+              
+              <ResizableHandle withHandle />
+              
+              {/* Email content */}
+              <ResizablePanel defaultSize={65} className="h-full overflow-auto">
+                {selectedEmailId ? (
+                  <div className="p-4">
+                    {(() => {
+                      const email = emails.find(e => e.id === selectedEmailId);
+                      if (!email) return null;
+                      
                       return (
-                        <div
-                          key={email.id}
-                          className={cn(
-                            "p-3 cursor-pointer hover:bg-muted/50 transition-colors",
-                            isSelected && "bg-muted",
-                            !email.read && "bg-primary-50 dark:bg-primary-950/20"
-                          )}
-                          onClick={() => handleEmailSelect(email.id)}
-                        >
-                          <div className="flex justify-between">
-                            <div className="font-medium truncate">
-                              {email.from_name || email.from_email}
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {new Date(email.sent_at).toLocaleDateString()}
+                        <div className="space-y-4">
+                          <div>
+                            <h2 className="text-xl font-semibold">{email.subject || "(No subject)"}</h2>
+                            <div className="mt-2 flex justify-between items-center">
+                              <div>
+                                <div className="font-medium">{email.from_name || email.from_email}</div>
+                                <div className="text-sm text-muted-foreground">{email.from_email}</div>
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {new Date(email.sent_at).toLocaleString()}
+                              </div>
                             </div>
                           </div>
-                          <div className={cn("truncate", !email.read && "font-semibold")}>
-                            {email.subject || "(No subject)"}
-                          </div>
-                          <div className="text-xs text-muted-foreground line-clamp-1">
-                            {email.text_content ? email.text_content.slice(0, 100) : ""}
+                          
+                          <div className="border-t pt-4">
+                            {email.html_content ? (
+                              <div 
+                                dangerouslySetInnerHTML={{ __html: email.html_content }} 
+                                className="prose prose-sm max-w-none dark:prose-invert"
+                              />
+                            ) : (
+                              <pre className="whitespace-pre-wrap text-sm">
+                                {email.text_content || "No content"}
+                              </pre>
+                            )}
                           </div>
                         </div>
                       );
-                    })}
+                    })()}
                   </div>
-                </ScrollArea>
-              )}
-            </div>
-            
-            {/* Email content */}
-            <div className="h-full overflow-auto">
-              {selectedEmailId ? (
-                <div className="p-4">
-                  {(() => {
-                    const email = emails.find(e => e.id === selectedEmailId);
-                    if (!email) return null;
-                    
-                    return (
-                      <div className="space-y-4">
-                        <div>
-                          <h2 className="text-xl font-semibold">{email.subject || "(No subject)"}</h2>
-                          <div className="mt-2 flex justify-between items-center">
-                            <div>
-                              <div className="font-medium">{email.from_name || email.from_email}</div>
-                              <div className="text-sm text-muted-foreground">{email.from_email}</div>
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {new Date(email.sent_at).toLocaleString()}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="border-t pt-4">
-                          {email.html_content ? (
-                            <div 
-                              dangerouslySetInnerHTML={{ __html: email.html_content }} 
-                              className="prose prose-sm max-w-none dark:prose-invert"
-                            />
-                          ) : (
-                            <pre className="whitespace-pre-wrap text-sm">
-                              {email.text_content || "No content"}
-                            </pre>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-full">
-                  <Mail className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-lg font-medium">No email selected</p>
-                  <p className="text-sm text-muted-foreground">
-                    Select an email to view its contents
-                  </p>
-                </div>
-              )}
-            </div>
-          </Split>
-        </Split>
+                ) : (
+                  <div className="flex flex-col items-center justify-center h-full">
+                    <Mail className="h-12 w-12 text-muted-foreground mb-4" />
+                    <p className="text-lg font-medium">No email selected</p>
+                    <p className="text-sm text-muted-foreground">
+                      Select an email to view its contents
+                    </p>
+                  </div>
+                )}
+              </ResizablePanel>
+            </ResizablePanelGroup>
+          </ResizablePanel>
+        </ResizablePanelGroup>
       </div>
       
       {/* Create folder dialog */}
@@ -398,8 +403,3 @@ export function EmailLayout({ userEmail, initialFolderPath = "INBOX" }: EmailLay
     </div>
   );
 }
-
-// Helper icon components
-const Mail = ({ className }: { className?: string }) => {
-  return <Inbox className={className} />;
-};
