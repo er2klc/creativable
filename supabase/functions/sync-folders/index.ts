@@ -8,201 +8,301 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
+interface ImapSettings {
+  host: string;
+  port: number;
+  secure: boolean;
+  auth: {
+    user: string;
+    pass: string;
+  }
+  logger: boolean;
+  tls: {
+    rejectUnauthorized: boolean;
+    servername?: string;
+  };
+  connectionTimeout: number;
+  greetTimeout: number;
+  socketTimeout: number;
+  disableCompression?: boolean;
+}
+
+interface SyncFoldersRequest {
+  force_retry?: boolean;
+  detailed_logging?: boolean;
+}
+
 interface SyncResult {
   success: boolean;
   message: string;
-  folders?: any[];
   folderCount?: number;
   error?: string;
+  details?: string;
 }
 
-async function fetchFolders(imapSettings: any, userId: string): Promise<SyncResult> {
-  console.log(`Connecting to IMAP server: ${imapSettings.host}:${imapSettings.port}`);
+async function syncFolders(
+  imapSettings: ImapSettings,
+  userId: string,
+  options: SyncFoldersRequest = {},
+  retryCount = 0
+): Promise<SyncResult> {
+  const { detailed_logging = false } = options;
   
-  const client = new ImapFlow({
-    host: imapSettings.host,
-    port: imapSettings.port,
-    secure: imapSettings.secure,
-    auth: {
-      user: imapSettings.username,
-      pass: imapSettings.password
-    },
-    logger: false,
-    tls: {
-      rejectUnauthorized: false
-    },
-    connectionTimeout: 30000,
-    greetTimeout: 15000,
-    socketTimeout: 30000
-  });
+  if (detailed_logging) {
+    console.log(`[Attempt ${retryCount + 1}] Getting email folders from: ${imapSettings.host}:${imapSettings.port}`);
+    console.log(`IMAP Configuration:`, JSON.stringify({
+      host: imapSettings.host,
+      port: imapSettings.port,
+      secure: imapSettings.secure,
+      user: imapSettings.auth.user,
+      // Mask password for security
+      pass: "********",
+      tls: imapSettings.tls
+    }));
+  }
+  
+  const client = new ImapFlow(imapSettings);
   
   try {
     await client.connect();
-    console.log("Successfully connected to IMAP server");
+    console.log("Successfully connected to IMAP server for folder synchronization");
     
-    // Get list of mailboxes
-    const list = await client.list();
-    console.log(`Found ${list.length} mailboxes`);
-    
-    const folderList = [];
-    
-    // Process the mailboxes
-    for (const mailbox of list) {
-      // Safety check for object structure and flags
-      if (!mailbox) {
-        console.log("Skipping undefined mailbox");
-        continue;
-      }
-      
-      // Ensure flags is an array
-      const flags = Array.isArray(mailbox.flags) ? mailbox.flags : [];
-      
-      // Skip some system folders
-      if (flags.includes('\\Noselect')) {
-        continue;
-      }
-      
-      let folderType = "custom";
-      
-      // Determine folder type based on flags or name
-      // Case insensitive checking for folder types
-      const path = mailbox.path || '';
-      const pathLower = path.toLowerCase();
-      
-      if (flags.includes('\\Inbox') || pathLower === 'inbox') {
-        folderType = "inbox";
-      } else if (flags.includes('\\Sent') || /sent/i.test(pathLower)) {
-        folderType = "sent";
-      } else if (flags.includes('\\Drafts') || /draft/i.test(pathLower)) {
-        folderType = "drafts";
-      } else if (flags.includes('\\Junk') || /spam|junk/i.test(pathLower)) {
-        folderType = "spam";
-      } else if (flags.includes('\\Trash') || /trash|deleted/i.test(pathLower)) {
-        folderType = "trash";
-      } else if (flags.includes('\\Archive') || /archive/i.test(pathLower)) {
-        folderType = "archive";
-      }
-      
-      // Try to get message count for this mailbox
-      let status = null;
-      try {
-        status = await client.status(mailbox.path, { messages: true, unseen: true });
-      } catch (error) {
-        console.log(`Could not get status for ${mailbox.path}:`, error.message);
-      }
-      
-      // Add to folder list
-      folderList.push({
-        name: mailbox.name || mailbox.path.split('/').pop() || mailbox.path,
-        path: mailbox.path,
-        type: folderType,
-        special_use: mailbox.specialUse || null,
-        flags: flags,
-        total_messages: status?.messages || 0,
-        unread_messages: status?.unseen || 0,
-        user_id: userId
-      });
-    }
-    
-    await client.logout();
-    console.log("Successfully fetched and processed folders");
+    const folderList = await client.list();
+    console.log(`Found ${folderList.length} folders`);
     
     const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
     
-    // First, check if the email_folders table exists
-    try {
-      const checkResponse = await fetch(`${SUPABASE_URL}/rest/v1/email_folders?limit=1`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          'apikey': SUPABASE_SERVICE_ROLE_KEY
-        }
-      });
-      
-      // If the table doesn't exist, return an error
-      if (!checkResponse.ok && checkResponse.status === 404) {
-        throw new Error("email_folders table does not exist. Please run the migration first.");
-      }
-    } catch (error) {
-      console.error("Error checking email_folders table:", error);
-      return {
-        success: false,
-        message: "Failed to verify email_folders table exists",
-        error: error.message
-      };
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Missing Supabase environment variables");
     }
     
-    // Delete existing folders
-    const deleteResponse = await fetch(`${SUPABASE_URL}/rest/v1/email_folders?user_id=eq.${userId}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'apikey': SUPABASE_SERVICE_ROLE_KEY
-      }
-    });
+    // Group folders by type
+    const specialFolders = {
+      inbox: null,
+      sent: null,
+      drafts: null,
+      trash: null,
+      spam: null,
+      archive: null,
+    };
     
-    if (!deleteResponse.ok) {
-      console.error("Failed to delete existing folders:", await deleteResponse.text());
+    // Try to identify special folders
+    for (const folder of folderList) {
+      if (folder.specialUse) {
+        if (folder.specialUse === '\\Inbox') specialFolders.inbox = folder;
+        if (folder.specialUse === '\\Sent') specialFolders.sent = folder;
+        if (folder.specialUse === '\\Drafts') specialFolders.drafts = folder;
+        if (folder.specialUse === '\\Trash') specialFolders.trash = folder;
+        if (folder.specialUse === '\\Junk') specialFolders.spam = folder;
+        if (folder.specialUse === '\\Archive') specialFolders.archive = folder;
+      } else {
+        // Try to identify by common folder names
+        const folderName = folder.name.toLowerCase();
+        if (folderName.includes('inbox') && !specialFolders.inbox) specialFolders.inbox = folder;
+        if ((folderName.includes('sent') || folderName.includes('gesend')) && !specialFolders.sent) specialFolders.sent = folder;
+        if ((folderName.includes('draft') || folderName.includes('entwu')) && !specialFolders.drafts) specialFolders.drafts = folder;
+        if ((folderName.includes('trash') || folderName.includes('papier') || folderName.includes('müll')) && !specialFolders.trash) specialFolders.trash = folder;
+        if ((folderName.includes('spam') || folderName.includes('junk')) && !specialFolders.spam) specialFolders.spam = folder;
+        if (folderName.includes('archiv') && !specialFolders.archive) specialFolders.archive = folder;
+      }
     }
     
-    // Then insert new folders using a proper upsert pattern
-    if (folderList.length > 0) {
-      const response = await fetch(`${SUPABASE_URL}/rest/v1/email_folders`, {
-        method: 'POST',
+    // First, get all existing folders for this user to determine which ones need to be created/updated/deleted
+    const existingFoldersResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/email_folders?user_id=eq.${userId}&select=id,path`,
+      {
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
           'apikey': SUPABASE_SERVICE_ROLE_KEY,
-          'Prefer': 'resolution=merge-duplicates'
         },
-        body: JSON.stringify(folderList)
-      });
+      }
+    );
+    
+    const existingFolders = await existingFoldersResponse.json();
+    const existingFolderPaths = new Set(existingFolders.map(f => f.path));
+    
+    // Process each folder from IMAP
+    const processedFolders = [];
+    
+    for (const folder of folderList) {
+      let folderType = 'regular';
+      let specialUse = null;
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Failed to store folders:", errorText);
-        throw new Error(`Failed to store folders: ${errorText}`);
+      // Check if this is a special folder
+      if (folder === specialFolders.inbox) {
+        folderType = 'inbox';
+        specialUse = '\\Inbox';
+      } else if (folder === specialFolders.sent) {
+        folderType = 'sent';
+        specialUse = '\\Sent';
+      } else if (folder === specialFolders.drafts) {
+        folderType = 'drafts';
+        specialUse = '\\Drafts';
+      } else if (folder === specialFolders.trash) {
+        folderType = 'trash';
+        specialUse = '\\Trash';
+      } else if (folder === specialFolders.spam) {
+        folderType = 'spam';
+        specialUse = '\\Junk';
+      } else if (folder === specialFolders.archive) {
+        folderType = 'archive';
+        specialUse = '\\Archive';
+      } else if (folder.specialUse) {
+        specialUse = folder.specialUse;
+      }
+      
+      try {
+        const mailbox = await client.status(folder.path, { messages: true, unseen: true });
+        
+        if (existingFolderPaths.has(folder.path)) {
+          // Update existing folder
+          if (detailed_logging) {
+            console.log(`Updating existing folder: ${folder.path}`);
+          }
+          
+          const updateResponse = await fetch(
+            `${SUPABASE_URL}/rest/v1/email_folders?user_id=eq.${userId}&path=eq.${encodeURIComponent(folder.path)}`,
+            {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                'apikey': SUPABASE_SERVICE_ROLE_KEY,
+              },
+              body: JSON.stringify({
+                name: folder.name,
+                type: folderType,
+                special_use: specialUse,
+                flags: folder.flags || [],
+                total_messages: mailbox.messages,
+                unread_messages: mailbox.unseen,
+                updated_at: new Date().toISOString()
+              })
+            }
+          );
+          
+          if (!updateResponse.ok && detailed_logging) {
+            console.error(`Failed to update folder: ${await updateResponse.text()}`);
+          }
+        } else {
+          // Create new folder
+          if (detailed_logging) {
+            console.log(`Creating new folder: ${folder.path}`);
+          }
+          
+          const createResponse = await fetch(`${SUPABASE_URL}/rest/v1/email_folders`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+              'apikey': SUPABASE_SERVICE_ROLE_KEY
+            },
+            body: JSON.stringify({
+              user_id: userId,
+              name: folder.name,
+              path: folder.path,
+              type: folderType,
+              special_use: specialUse,
+              flags: folder.flags || [],
+              total_messages: mailbox.messages,
+              unread_messages: mailbox.unseen,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+          });
+          
+          if (!createResponse.ok && detailed_logging) {
+            console.error(`Failed to create folder: ${await createResponse.text()}`);
+          }
+        }
+        
+        processedFolders.push(folder.path);
+      } catch (folderError) {
+        console.error(`Error processing folder ${folder.path}:`, folderError);
       }
     }
     
-    // Update imap_settings with last sync time
-    await fetch(`${SUPABASE_URL}/rest/v1/imap_settings?user_id=eq.${userId}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'apikey': SUPABASE_SERVICE_ROLE_KEY,
-      },
-      body: JSON.stringify({
-        last_sync_at: new Date().toISOString()
-      })
-    });
+    // Check for folders that exist in the database but not on the IMAP server
+    for (const existingFolder of existingFolders) {
+      if (!processedFolders.includes(existingFolder.path)) {
+        // Delete folder from database that doesn't exist on server anymore
+        if (detailed_logging) {
+          console.log(`Deleting non-existent folder from database: ${existingFolder.path}`);
+        }
+        
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/email_folders?id=eq.${existingFolder.id}`,
+          {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+              'apikey': SUPABASE_SERVICE_ROLE_KEY,
+            }
+          }
+        );
+      }
+    }
+    
+    await client.logout();
     
     return {
       success: true,
-      message: `Successfully synced ${folderList.length} folders`,
-      folders: folderList,
+      message: `Successfully synced ${folderList.length} email folders`,
       folderCount: folderList.length
     };
-    
   } catch (error) {
-    console.error("IMAP error:", error);
+    console.error("IMAP folder sync error:", error);
+    
+    if (retryCount < 2) {
+      console.log(`Retrying folder sync (${retryCount + 1}/2)...`);
+      
+      // For first retry: try with different SSL settings
+      if (retryCount === 0) {
+        const newSettings = {
+          ...imapSettings,
+          secure: !imapSettings.secure, // Toggle secure setting
+          port: imapSettings.secure ? 143 : 993, // Toggle port based on secure setting
+          tls: {
+            ...imapSettings.tls,
+            rejectUnauthorized: false // Don't fail on invalid certificates for retry
+          },
+          connectionTimeout: imapSettings.connectionTimeout * 1.5 // Increase timeout
+        };
+        return syncFolders(newSettings, userId, options, retryCount + 1);
+      } 
+      // For second retry: try with very permissive settings and longer timeout
+      else {
+        const newSettings = {
+          ...imapSettings,
+          secure: true, // Force secure
+          port: 993, // Standard secure port
+          tls: {
+            rejectUnauthorized: false
+          },
+          disableCompression: true, // Try disabling compression
+          connectionTimeout: 60000, // Full minute timeout
+          greetTimeout: 30000,
+          socketTimeout: 60000
+        };
+        return syncFolders(newSettings, userId, options, retryCount + 1);
+      }
+    }
+    
     return {
       success: false,
-      message: "Failed to sync folders",
-      error: error.message
+      message: "Failed to sync email folders",
+      error: error.message,
+      details: error.stack || "Unknown error during folder sync"
     };
   } finally {
-    if (client && client.usable) {
+    if (client.usable) {
       client.close();
     }
   }
 }
 
 serve(async (req) => {
-  console.log("Folder sync function called");
+  console.log("Email folder sync function called");
   
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
@@ -210,6 +310,17 @@ serve(async (req) => {
   }
 
   try {
+    // Parse request body
+    let requestData: SyncFoldersRequest = {};
+    try {
+      requestData = await req.json();
+    } catch (parseError) {
+      // If there's no body or it can't be parsed, use default values
+      requestData = {};
+    }
+    
+    console.log("Request data received:", JSON.stringify(requestData));
+
     // Get the user's JWT from the request
     const authHeader = req.headers.get('authorization') || '';
     const jwt = authHeader.replace('Bearer ', '');
@@ -240,13 +351,16 @@ serve(async (req) => {
     const userId = userData.id;
 
     // Query the database for the IMAP settings
-    const imapSettingsResponse = await fetch(`${SUPABASE_URL}/rest/v1/imap_settings?user_id=eq.${userId}&select=*`, {
-      headers: {
-        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        apikey: SUPABASE_SERVICE_ROLE_KEY,
-        "Content-Type": "application/json",
-      },
-    });
+    const imapSettingsResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/imap_settings?user_id=eq.${userId}&select=*`,
+      {
+        headers: {
+          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          apikey: SUPABASE_SERVICE_ROLE_KEY,
+          "Content-Type": "application/json",
+        },
+      }
+    );
 
     const imapSettings = await imapSettingsResponse.json();
     
@@ -254,64 +368,72 @@ serve(async (req) => {
       throw new Error("No IMAP settings found for this user");
     }
 
-    // Fetch folders
-    const result = await fetchFolders(imapSettings[0], userId);
+    // Configure IMAP client with improved settings
+    const settings = imapSettings[0];
     
-    // After folder sync, initiate email sync if folders were successfully created
-    if (result.success && result.folderCount && result.folderCount > 0) {
-      try {
-        console.log("Starting email sync after successful folder sync");
-        
-        // Call the sync-emails function
-        const emailSyncResponse = await fetch(
-          `${SUPABASE_URL}/functions/v1/sync-emails`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${jwt}`,
-              "Accept": "application/json"
-            },
-            body: JSON.stringify({
-              force_refresh: true,
-              folder: "INBOX" // Start with inbox as default
-            })
-          }
-        );
-        
-        if (!emailSyncResponse.ok) {
-          console.error("Failed to sync emails:", await emailSyncResponse.text());
-        } else {
-          console.log("Email sync initiated successfully");
-        }
-      } catch (emailSyncError) {
-        console.error("Error initiating email sync:", emailSyncError);
-      }
-    }
-
-    return new Response(JSON.stringify(result), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
+    const imapConfig = {
+      host: settings.host,
+      port: settings.port,
+      secure: settings.secure,
+      auth: {
+        user: settings.username,
+        pass: settings.password
       },
-      status: 200,
+      logger: false,
+      tls: {
+        rejectUnauthorized: false,
+        servername: settings.host
+      },
+      connectionTimeout: 30000,
+      greetTimeout: 15000,
+      socketTimeout: 30000,
+      disableCompression: false
+    };
+
+    // Sync folders
+    const syncResult = await syncFolders(imapConfig, userId, requestData);
+    
+    // Update last sync time
+    await fetch(`${SUPABASE_URL}/rest/v1/imap_settings?id=eq.${settings.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+      },
+      body: JSON.stringify({
+        last_sync_date: new Date().toISOString()
+      })
     });
+
+    return new Response(
+      JSON.stringify(syncResult),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+        status: 200,
+      }
+    );
 
   } catch (error) {
     console.error("Folder sync error:", error);
     
-    const result: SyncResult = {
-      success: false,
-      message: "Failed to sync folders",
-      error: error.message
-    };
-
-    return new Response(JSON.stringify(result), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-      status: 200, // Always return 200 so the frontend gets our detailed error info
-    });
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "Failed to sync email folders",
+        error: error.message,
+        details: error.stack || "Unknown error"
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+        status: 200, // Return 200 even on error to get the error details on frontend
+      }
+    );
   }
 });

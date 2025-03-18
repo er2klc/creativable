@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -18,12 +19,6 @@ export default function Messages() {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [syncInProgress, setSyncInProgress] = useState(false);
-  const [syncProgress, setSyncProgress] = useState(0);
-  const [historicalSync, setHistoricalSync] = useState(false);
-  const [syncStartDate, setSyncStartDate] = useState<Date | undefined>(undefined);
-  const [maxEmails, setMaxEmails] = useState(100);
-  const { settings } = useSettings();
   const [isConfigured, setIsConfigured] = useState(false);
   const [isCheckingConfig, setIsCheckingConfig] = useState(true);
   const configCheckCompletedRef = useRef(false);
@@ -95,105 +90,6 @@ export default function Messages() {
     },
     enabled: !!user && isConfigured && !isCheckingConfig,
   });
-
-  // Query for emails
-  const { data: emails, isLoading } = useQuery({
-    queryKey: ['emails'],
-    queryFn: async () => {
-      if (!user) return [];
-      const { data, error } = await supabase
-        .from('emails')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('sent_at', { ascending: false });
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user && isConfigured && !isCheckingConfig,
-  });
-
-  // Set initial values from stored settings
-  useEffect(() => {
-    if (imapSettings) {
-      if (imapSettings.historical_sync) {
-        setHistoricalSync(true);
-      }
-      if (imapSettings.historical_sync_date) {
-        setSyncStartDate(new Date(imapSettings.historical_sync_date));
-      }
-      if (imapSettings.max_emails) {
-        setMaxEmails(imapSettings.max_emails);
-      }
-    }
-  }, [imapSettings]);
-
-  const syncEmails = async (forceRefresh = false) => {
-    if (!user) return;
-    
-    try {
-      setSyncInProgress(true);
-      setSyncProgress(0);
-      
-      // Get the current user session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        throw new Error(sessionError?.message || "No active session found");
-      }
-      
-      // Prepare sync options
-      const syncOptions = {
-        force_refresh: forceRefresh,
-        historical_sync: historicalSync,
-        sync_start_date: syncStartDate?.toISOString(),
-        max_emails: maxEmails
-      };
-      
-      // Call the sync-emails function with proper authorization
-      const response = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionData.session.access_token}`
-        },
-        body: JSON.stringify(syncOptions)
-      });
-      
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-      }
-      
-      const result = await response.json();
-      
-      // Update progress
-      if (result.progress) {
-        setSyncProgress(result.progress);
-      }
-      
-      if (result.success) {
-        toast({
-          title: 'Sync Successful',
-          description: result.message || `Successfully synced ${result.emailsCount || 0} emails`,
-        });
-        
-        // Refresh the emails list
-        await queryClient.invalidateQueries({ queryKey: ['emails'] });
-      } else {
-        throw new Error(result.message || 'Failed to sync emails');
-      }
-    } catch (error: any) {
-      console.error('Email sync error:', error);
-      toast({
-        title: 'Sync Failed',
-        description: error.message || 'An error occurred while syncing emails',
-        variant: 'destructive',
-      });
-    } finally {
-      setSyncInProgress(false);
-    }
-  };
 
   if (!user) {
     return (
@@ -269,7 +165,7 @@ export default function Messages() {
       <Card className="w-full h-full rounded-none border-0 shadow-none">
         <CardContent className="p-0 h-full">
           <EmailLayout 
-            userEmail={imapSettings?.email || user?.email}
+            userEmail={imapSettings?.username || user?.email}
           />
         </CardContent>
       </Card>

@@ -132,7 +132,7 @@ async function syncEmailFolders(
       try {
         const mailbox = await client.status(folder.path, { messages: true, unseen: true });
         
-        // Store folder in database with a proper UPSERT pattern
+        // Use a proper UPSERT pattern with ON CONFLICT DO UPDATE
         const response = await fetch(`${SUPABASE_URL}/rest/v1/email_folders`, {
           method: 'POST',
           headers: {
@@ -156,7 +156,40 @@ async function syncEmailFolders(
         
         if (!response.ok) {
           const errorText = await response.text();
+          
+          // Log the error but continue with other folders
           console.error(`Failed to store folder: ${errorText}`);
+          
+          // If it's a duplicate key error, try an update instead
+          if (errorText.includes('duplicate key value') || errorText.includes('23505')) {
+            console.log(`Attempting to update folder ${folder.path} instead of insert...`);
+            
+            const updateResponse = await fetch(`${SUPABASE_URL}/rest/v1/email_folders?user_id=eq.${userId}&path=eq.${encodeURIComponent(folder.path)}`, {
+              method: 'PATCH',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                'apikey': SUPABASE_SERVICE_ROLE_KEY,
+              },
+              body: JSON.stringify({
+                name: folder.name,
+                type: folderType,
+                special_use: specialUse,
+                flags: folder.flags || [],
+                total_messages: mailbox.messages,
+                unread_messages: mailbox.unseen,
+                updated_at: new Date().toISOString()
+              })
+            });
+            
+            if (!updateResponse.ok) {
+              console.error(`Failed to update folder: ${await updateResponse.text()}`);
+            } else {
+              console.log(`Successfully updated folder: ${folder.path}`);
+            }
+          }
+        } else {
+          console.log(`Successfully stored folder: ${folder.path}`);
         }
       } catch (folderError) {
         console.error(`Error processing folder ${folder.path}:`, folderError);
@@ -207,9 +240,10 @@ async function fetchEmails(
   retryCount = 0
 ): Promise<SyncResult> {
   console.log(`[Attempt ${retryCount + 1}] Connecting to IMAP server: ${imapSettings.host}:${imapSettings.port} (secure: ${imapSettings.secure})`);
+  console.log(`Sync options:`, JSON.stringify(options));
   
   const client = new ImapFlow(imapSettings);
-  const maxEmails = options.maxEmails || (options.forceRefresh ? 20 : 10);
+  const maxEmails = options.maxEmails || (options.forceRefresh ? 100 : 20);
   const folder = options.folder || 'INBOX';
   
   try {
@@ -271,6 +305,8 @@ async function fetchEmails(
         source: true
       };
     }
+    
+    console.log(`Fetch options:`, JSON.stringify(fetchOptions));
     
     const emails = [];
     let counter = 0;
@@ -545,6 +581,19 @@ serve(async (req) => {
       if (historicalDate > now) {
         console.warn("Historical sync date was in the future, resetting to today's date");
         settings.historical_sync_date = now.toISOString();
+        
+        // Update the setting in the database
+        await fetch(`${SUPABASE_URL}/rest/v1/imap_settings?id=eq.${settings.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            'apikey': SUPABASE_SERVICE_ROLE_KEY,
+          },
+          body: JSON.stringify({
+            historical_sync_date: now.toISOString()
+          })
+        });
       }
     }
     
@@ -620,6 +669,19 @@ serve(async (req) => {
 
     // Fetch emails
     const emailResult = await fetchEmails(imapConfig, userId, syncOptions);
+    
+    // Update last sync time
+    await fetch(`${SUPABASE_URL}/rest/v1/imap_settings?id=eq.${settings.id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+        'apikey': SUPABASE_SERVICE_ROLE_KEY,
+      },
+      body: JSON.stringify({
+        last_sync_date: new Date().toISOString()
+      })
+    });
     
     // Combine results
     const result = {
