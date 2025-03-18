@@ -23,6 +23,24 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   
+  // Fetch profile data for header
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
+      return data;
+    }
+  });
+  
   // Reset selected email when folder changes
   useEffect(() => {
     setSelectedEmailId(null);
@@ -104,8 +122,9 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
         onSearchChange={setSearchQuery}
         onRefresh={syncEmails}
         isSyncing={isSyncing}
+        profile={profile}
       />
-      <div className="grid flex-1 h-[calc(100%-4rem)] grid-cols-[240px_350px_1fr] overflow-hidden">
+      <div className="grid flex-1 h-[calc(100%-4rem)] mt-16 md:mt-16 grid-cols-[240px_350px_1fr] overflow-hidden">
         {/* Email Folders Sidebar */}
         <div className="border-r">
           <EmailSidebar 
