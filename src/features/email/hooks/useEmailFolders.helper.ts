@@ -8,7 +8,7 @@
 export function normalizeFolderPath(folderPath: string | undefined): string {
   if (!folderPath) return 'INBOX';
   
-  // Handle common folder name variations
+  // Convert to uppercase for case-insensitive comparison
   const normalizedPath = folderPath.toUpperCase();
   
   // Map standard folder names to their canonical form
@@ -20,7 +20,29 @@ export function normalizeFolderPath(folderPath: string | undefined): string {
   if (normalizedPath === 'JUNK' || normalizedPath.includes('JUNK') || normalizedPath.includes('SPAM')) return 'JUNK';
   if (normalizedPath === 'ARCHIVE' || normalizedPath.includes('ARCHIV')) return 'ARCHIVE';
   
-  // Return the original path if it doesn't match any standard folder
+  // If no standard mapping, return the original path
+  return folderPath;
+}
+
+/**
+ * Gets the DB query compatible pattern for folder path matching
+ * @param folderPath Folder path to match
+ */
+export function getFolderQueryPattern(folderPath: string): string {
+  // This handles cases where folder display names don't exactly match database paths
+  // For "Deleted Messages", we need to match paths like "Deleted Messages", "Trash", "TRASH", etc.
+  
+  const normalizedPath = normalizeFolderPath(folderPath);
+  
+  if (normalizedPath === 'TRASH') {
+    return '%TRASH%,%DELETED%,%PAPIERKORB%,%MÜLL%';
+  }
+  
+  if (normalizedPath === 'SENT') {
+    return '%SENT%,%GESENDET%';
+  }
+  
+  // For other folders, just use the original path for exact matching
   return folderPath;
 }
 

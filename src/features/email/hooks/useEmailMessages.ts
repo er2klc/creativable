@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { useState } from "react";
 import { toast } from "sonner";
+import { getFolderQueryPattern, normalizeFolderPath } from "./useEmailFolders.helper";
 
 export interface EmailMessage {
   id: string;
@@ -60,13 +61,36 @@ export function useEmailMessages(folderPath?: string | undefined): EmailMessages
       console.log("Fetching emails for folder:", folderPath);
 
       try {
-        // Query emails for the current folder
-        const { data: emails, error } = await supabase
+        // Query emails for the current folder using improved matching
+        // We need to consider multiple possible folder paths for special folders
+        const folderQueryPattern = getFolderQueryPattern(folderPath);
+        
+        let query = supabase
           .from('emails')
           .select("*")
           .eq("user_id", user.id)
-          .eq("folder", folderPath)
           .order("sent_at", { ascending: false });
+          
+        // If we have a comma-separated list of patterns, use OR filter
+        if (folderQueryPattern.includes(',')) {
+          const patterns = folderQueryPattern.split(',');
+          let filterExpr = '';
+          
+          patterns.forEach((pattern, index) => {
+            if (index > 0) filterExpr += ',';
+            filterExpr += `folder.ilike.${pattern}`;
+          });
+          
+          query = query.or(filterExpr);
+        } else {
+          // For standard folders, use exact matching
+          query = query.eq("folder", folderPath);
+        }
+        
+        // Limit to 1000 emails max for large folders
+        query = query.limit(1000);
+        
+        const { data: emails, error } = await query;
 
         if (error) {
           console.error("Error fetching emails:", error);
@@ -122,7 +146,7 @@ export function useEmailMessages(folderPath?: string | undefined): EmailMessages
           body: JSON.stringify({
             force_refresh: forceRefresh,
             folder: folderPath,
-            max_emails: 100 // Increase from default 20
+            max_emails: 500 // Increase from 100 to 500 for large folders
           })
         }
       );
