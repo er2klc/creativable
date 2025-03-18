@@ -1,52 +1,97 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { SearchBar } from "./SearchBar";
-import { supabase } from "@/integrations/supabase/client";
-import { HeaderActions } from "@/components/layout/HeaderActions";
-import { Home } from "lucide-react";
+import React from 'react';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { RefreshCw, Search, MoveHorizontal, X, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DashboardHeaderProps {
-  userEmail: string | undefined;
+  title: string;
+  description?: string;
+  searchQuery?: string;
+  searchPlaceholder?: string;
+  onSearchChange?: (query: string) => void;
+  actionLabel?: string;
+  onAction?: () => void;
+  actionDisabled?: boolean;
+  actionLoading?: boolean;
+  actionIcon?: React.ReactNode;
+  rightContent?: React.ReactNode;
 }
 
-export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
-  const { data: profile } = useQuery({
-    queryKey: ["profile"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .single();
-
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  const displayName = profile?.display_name || userEmail?.split('@')[0] || "Benutzer";
-
+export function DashboardHeader({ 
+  title,
+  description,
+  searchQuery = '',
+  searchPlaceholder = "Search...",
+  onSearchChange,
+  actionLabel,
+  onAction,
+  actionDisabled = false,
+  actionLoading = false,
+  actionIcon,
+  rightContent
+}: DashboardHeaderProps) {
   return (
-    <div className="fixed top-[64px] md:top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
-      <div className="w-full">
-        <div className="h-16 px-4 flex items-center">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full mt-8 md:mt-0">
-            <div className="flex items-center gap-2">
-              <Home className="h-5 w-5" />
-              <h1 className="text-lg md:text-xl font-semibold text-foreground">
-                Willkommen zurück, {displayName}! 👋
-              </h1>
-            </div>
-            <div className="w-full md:w-[400px]">
-              <SearchBar />
-            </div>
-            <HeaderActions profile={profile} userEmail={userEmail} />
+    <div className="p-4 border-b flex items-center justify-between bg-background">
+      <div className="flex-none">
+        <h1 className="text-xl font-semibold">
+          {title}
+          {description && (
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              {description}
+            </span>
+          )}
+        </h1>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        {onSearchChange && (
+          <div className="relative w-[300px]">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder={searchPlaceholder}
+              className="pl-8 w-full"
+              value={searchQuery}
+              onChange={(e) => onSearchChange(e.target.value)}
+            />
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-0.5 top-0.5 h-8 w-8"
+                onClick={() => onSearchChange('')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </div>
-        </div>
+        )}
+        
+        {onAction && (
+          <Button 
+            variant="outline" 
+            size={actionLabel ? "default" : "icon"}
+            onClick={onAction}
+            disabled={actionDisabled}
+          >
+            {actionLoading ? (
+              <>
+                <Loader2 className={cn("h-4 w-4 animate-spin", actionLabel && "mr-2")} />
+                {actionLabel && actionLabel}
+              </>
+            ) : (
+              <>
+                {actionIcon || <RefreshCw className={cn("h-4 w-4", actionLabel && "mr-2")} />}
+                {actionLabel && actionLabel}
+              </>
+            )}
+          </Button>
+        )}
+        
+        {rightContent}
       </div>
     </div>
   );
-};
+}
