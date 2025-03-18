@@ -149,7 +149,8 @@ export function useEmailMessages(folderPath?: string | undefined): EmailMessages
           body: JSON.stringify({
             force_refresh: forceRefresh,
             folder: folderPath,
-            max_emails: 500 // Increase from 100 to 500 for large folders
+            skip_historical: true, // Skip historical sync logic and always load most recent emails first
+            max_emails: 100 // Initial fetch gets the 100 most recent emails
           })
         }
       );
@@ -172,6 +173,12 @@ export function useEmailMessages(folderPath?: string | undefined): EmailMessages
         
         // Also refresh the folders list to update counts
         queryClient.invalidateQueries({ queryKey: ['email-folders'] });
+        
+        // If initial sync succeeded and there are more emails to fetch, start background sync
+        if (result.hasMoreEmails && result.emailsCount > 0) {
+          // Start background sync for older emails - this happens after we return success to user
+          backgroundSyncOlderEmails(sessionData.session.access_token, folderPath, result.lastSyncedId);
+        }
       } else {
         throw new Error(result.message || "Failed to sync emails");
       }
@@ -182,6 +189,57 @@ export function useEmailMessages(folderPath?: string | undefined): EmailMessages
       });
     } finally {
       setSyncInProgress(false);
+    }
+  };
+  
+  // Background sync function to get older emails
+  const backgroundSyncOlderEmails = async (accessToken: string, folder: string, lastEmailId?: string) => {
+    console.log(`Starting background sync for older emails in folder: ${folder}`);
+    
+    try {
+      const response = await fetch(
+        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${accessToken}`,
+            "Accept": "application/json"
+          },
+          body: JSON.stringify({
+            folder: folder,
+            background_sync: true, // Signal this is a background sync
+            max_emails: 200, // Get more emails in background
+            last_email_id: lastEmailId, // Continue from where we left off
+          })
+        }
+      );
+      
+      if (!response.ok) {
+        console.error("Background sync error:", await response.text());
+        return;
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        console.log(`Background sync fetched ${result.emailsCount} more emails`);
+        
+        // Quietly update the email list if we got more emails
+        if (result.emailsCount > 0) {
+          queryClient.invalidateQueries({ queryKey: ["emails", user?.id, folder] });
+          queryClient.invalidateQueries({ queryKey: ['email-folders'] });
+          
+          // If there are still more emails, continue background sync
+          if (result.hasMoreEmails) {
+            backgroundSyncOlderEmails(accessToken, folder, result.lastSyncedId);
+          }
+        }
+      } else {
+        console.error("Background sync failed:", result.message);
+      }
+    } catch (error) {
+      console.error("Error in background sync:", error);
     }
   };
 
