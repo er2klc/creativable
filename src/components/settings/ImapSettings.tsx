@@ -115,6 +115,16 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
       if (isMountedRef.current) {
         if (result.data) {
           setExistingSettingsId(result.data.id);
+          
+          // Process historical_sync_date to ensure it's not in the future
+          let historicalSyncDate = result.data.historical_sync_date ? new Date(result.data.historical_sync_date) : undefined;
+          
+          // If the date is in the future, set it to today
+          if (historicalSyncDate && historicalSyncDate > new Date()) {
+            console.warn("Historical sync date was in the future, resetting to today's date");
+            historicalSyncDate = new Date();
+          }
+          
           form.reset({
             host: result.data.host || '',
             port: result.data.port || 993,
@@ -123,7 +133,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
             secure: result.data.secure !== undefined ? result.data.secure : true,
             max_emails: result.data.max_emails || 100,
             historical_sync: result.data.historical_sync || false,
-            historical_sync_date: result.data.historical_sync_date ? new Date(result.data.historical_sync_date) : undefined,
+            historical_sync_date: historicalSyncDate,
           });
         }
         
@@ -262,6 +272,21 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
   const onSubmit = async (values: ImapSettingsFormData) => {
     if (!user || isSaving || !isMountedRef.current) return;
+
+    // Validate historical_sync_date if historical_sync is enabled
+    if (values.historical_sync && values.historical_sync_date) {
+      const now = new Date();
+      
+      // If the date is in the future, set it to today
+      if (values.historical_sync_date > now) {
+        console.warn("Historical sync date was in the future, resetting to today's date");
+        values.historical_sync_date = new Date();
+        form.setValue('historical_sync_date', new Date());
+        toast.warning("Historical sync date cannot be in the future", {
+          description: "The date has been reset to today"
+        });
+      }
+    }
 
     setIsSaving(true);
 
@@ -809,21 +834,35 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
               <FormField
                 control={form.control}
                 name="historical_sync_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Startdatum für historische Synchronisation</FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      E-Mails ab diesem Datum werden synchronisiert
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  // Ensure historical_sync_date is not in the future
+                  const handleDateChange = (date: Date | undefined) => {
+                    // If date is in the future, set it to today
+                    if (date && date > new Date()) {
+                      date = new Date();
+                      toast.warning("Historical sync date cannot be in the future", {
+                        description: "The date has been reset to today"
+                      });
+                    }
+                    field.onChange(date);
+                  };
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel>Startdatum für historische Synchronisation</FormLabel>
+                      <FormControl>
+                        <DatePicker
+                          date={field.value}
+                          setDate={handleDateChange}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        E-Mails ab diesem Datum werden synchronisiert (muss in der Vergangenheit liegen)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             )}
           </div>

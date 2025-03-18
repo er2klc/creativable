@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ImapFlow } from 'npm:imapflow@1.0.98';
 import { simpleParser } from 'npm:mailparser@3.6.5';
@@ -102,7 +101,7 @@ async function syncEmailFolders(
       }
     }
     
-    // Create folder entries in the database
+    // Create folder entries in the database - use proper UPSERT pattern
     for (const folder of folderList) {
       let folderType = 'regular';
       let specialUse = null;
@@ -133,18 +132,7 @@ async function syncEmailFolders(
       try {
         const mailbox = await client.status(folder.path, { messages: true, unseen: true });
         
-        // Store folder in database
-        const folderData = {
-          user_id: userId,
-          name: folder.name,
-          path: folder.path,
-          type: folderType,
-          special_use: specialUse,
-          flags: folder.flags || [],
-          total_messages: mailbox.messages,
-          unread_messages: mailbox.unseen
-        };
-        
+        // Store folder in database with a proper UPSERT pattern
         const response = await fetch(`${SUPABASE_URL}/rest/v1/email_folders`, {
           method: 'POST',
           headers: {
@@ -153,7 +141,17 @@ async function syncEmailFolders(
             'apikey': SUPABASE_SERVICE_ROLE_KEY,
             'Prefer': 'resolution=merge-duplicates'
           },
-          body: JSON.stringify(folderData)
+          body: JSON.stringify({
+            user_id: userId,
+            name: folder.name,
+            path: folder.path,
+            type: folderType,
+            special_use: specialUse,
+            flags: folder.flags || [],
+            total_messages: mailbox.messages,
+            unread_messages: mailbox.unseen,
+            updated_at: new Date().toISOString()
+          })
         });
         
         if (!response.ok) {
@@ -250,6 +248,14 @@ async function fetchEmails(
     
     if (options.historicalSync && options.startDate) {
       console.log(`Historical sync requested from date: ${options.startDate.toISOString()}`);
+      
+      // Ensure startDate is not in the future
+      const now = new Date();
+      if (options.startDate > now) {
+        console.warn("Historical sync date was in the future, resetting to today's date");
+        options.startDate = now;
+      }
+      
       fetchOptions = {
         since: options.startDate,
         envelope: true,
@@ -529,6 +535,19 @@ serve(async (req) => {
 
     // Configure IMAP client with improved settings
     const settings = imapSettings[0];
+    
+    // Validate historical_sync_date if present
+    if (settings.historical_sync && settings.historical_sync_date) {
+      const historicalDate = new Date(settings.historical_sync_date);
+      const now = new Date();
+      
+      // If the date is in the future, reset it to today
+      if (historicalDate > now) {
+        console.warn("Historical sync date was in the future, resetting to today's date");
+        settings.historical_sync_date = now.toISOString();
+      }
+    }
+    
     const imapConfig = {
       host: settings.host,
       port: settings.port,
@@ -573,14 +592,23 @@ serve(async (req) => {
       folder: folder
     };
     
-    // Handle historical sync
+    // Handle historical sync - validate the date first
     if (historical_sync || settings.historical_sync) {
       syncOptions.historicalSync = true;
       
       // Get start date from request or from settings
-      const startDateStr = sync_start_date || settings.historical_sync_date;
+      let startDateStr = sync_start_date || settings.historical_sync_date;
       if (startDateStr) {
-        syncOptions.startDate = new Date(startDateStr);
+        let startDate = new Date(startDateStr);
+        const now = new Date();
+        
+        // Ensure the date is not in the future
+        if (startDate > now) {
+          console.warn("Historical sync date was in the future, resetting to today's date");
+          startDate = now;
+        }
+        
+        syncOptions.startDate = startDate;
         console.log(`Historical sync enabled with start date: ${syncOptions.startDate}`);
       } else {
         // Default to 30 days ago if no date specified
