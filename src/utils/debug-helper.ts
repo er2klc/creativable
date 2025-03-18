@@ -120,7 +120,12 @@ export async function fixDuplicateEmailFolders(userId: string) {
     
     // Group folders by path
     const foldersByPath: Record<string, any[]> = {};
-    folders?.forEach(folder => {
+    
+    if (!folders || folders.length === 0) {
+      return { success: true, message: "No folders found to check for duplicates", deletedCount: 0 };
+    }
+    
+    folders.forEach(folder => {
       if (!foldersByPath[folder.path]) {
         foldersByPath[folder.path] = [];
       }
@@ -129,6 +134,8 @@ export async function fixDuplicateEmailFolders(userId: string) {
     
     // Find and delete duplicates, keeping the newest one
     let deletedCount = 0;
+    const deletionPromises = [];
+    
     for (const path in foldersByPath) {
       const pathFolders = foldersByPath[path];
       if (pathFolders.length > 1) {
@@ -139,19 +146,36 @@ export async function fixDuplicateEmailFolders(userId: string) {
         
         // Delete all but the newest
         for (let i = 1; i < pathFolders.length; i++) {
-          const { error: deleteError } = await supabase
+          // Check if the folder exists before trying to delete it
+          const { data: folderExists } = await supabase
             .from('email_folders')
-            .delete()
-            .eq('id', pathFolders[i].id);
+            .select('id')
+            .eq('id', pathFolders[i].id)
+            .maybeSingle();
             
-          if (!deleteError) {
-            deletedCount++;
+          if (folderExists) {
+            const deletePromise = supabase
+              .from('email_folders')
+              .delete()
+              .eq('id', pathFolders[i].id)
+              .then(({ error: deleteError }) => {
+                if (!deleteError) {
+                  deletedCount++;
+                } else {
+                  console.error(`Error deleting duplicate folder ${pathFolders[i].id}:`, deleteError);
+                }
+              });
+              
+            deletionPromises.push(deletePromise);
           } else {
-            console.error(`Error deleting duplicate folder ${pathFolders[i].id}:`, deleteError);
+            console.log(`Folder with id ${pathFolders[i].id} no longer exists, skipping`);
           }
         }
       }
     }
+    
+    // Wait for all deletion operations to complete
+    await Promise.all(deletionPromises);
     
     return { 
       success: true, 
