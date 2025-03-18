@@ -117,7 +117,8 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
           },
           body: JSON.stringify({
             force_refresh: forceRefresh,
-            folder: effectiveFolderPath
+            folder: effectiveFolderPath,
+            load_latest: true // Always load the latest emails first
           })
         }
       );

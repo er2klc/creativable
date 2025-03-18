@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,13 +7,13 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
-import { DatePicker } from '@/components/ui/date-picker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { AlertCircle, Loader2, CheckCircle } from 'lucide-react';
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useFolderSync } from '@/features/email/hooks/useFolderSync';
+import { fixDuplicateEmailFolders } from '@/utils/debug-helper';
 
 interface ImapSettingsProps {
   onSettingsSaved?: () => void;
@@ -34,6 +33,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
   const { syncFolders } = useFolderSync();
   const [testingConnection, setTestingConnection] = useState(false);
   const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
+  const [fixingFolders, setFixingFolders] = useState(false);
 
   // Initialize the form
   const form = useForm<ImapSettingsFormData>({
@@ -45,8 +45,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
       password: '',
       secure: true,
       max_emails: 100,
-      historical_sync: false,
-      historical_sync_date: undefined,
+      connection_timeout: 30000,
+      auto_reconnect: true,
     },
   });
 
@@ -116,15 +116,6 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
         if (result.data) {
           setExistingSettingsId(result.data.id);
           
-          // Process historical_sync_date to ensure it's not in the future
-          let historicalSyncDate = result.data.historical_sync_date ? new Date(result.data.historical_sync_date) : undefined;
-          
-          // If the date is in the future, set it to today
-          if (historicalSyncDate && historicalSyncDate > new Date()) {
-            console.warn("Historical sync date was in the future, resetting to today's date");
-            historicalSyncDate = new Date();
-          }
-          
           form.reset({
             host: result.data.host || '',
             port: result.data.port || 993,
@@ -132,8 +123,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
             password: result.data.password || '',
             secure: result.data.secure !== undefined ? result.data.secure : true,
             max_emails: result.data.max_emails || 100,
-            historical_sync: result.data.historical_sync || false,
-            historical_sync_date: historicalSyncDate,
+            connection_timeout: result.data.connection_timeout || 30000,
+            auto_reconnect: result.data.auto_reconnect !== undefined ? result.data.auto_reconnect : true,
           });
         }
         
@@ -270,23 +261,35 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     }
   };
 
-  const onSubmit = async (values: ImapSettingsFormData) => {
-    if (!user || isSaving || !isMountedRef.current) return;
-
-    // Validate historical_sync_date if historical_sync is enabled
-    if (values.historical_sync && values.historical_sync_date) {
-      const now = new Date();
+  // Fix duplicate email folders
+  const handleFixFolders = async () => {
+    if (!user || fixingFolders) return;
+    
+    setFixingFolders(true);
+    try {
+      const result = await fixDuplicateEmailFolders(user.id);
       
-      // If the date is in the future, set it to today
-      if (values.historical_sync_date > now) {
-        console.warn("Historical sync date was in the future, resetting to today's date");
-        values.historical_sync_date = new Date();
-        form.setValue('historical_sync_date', new Date());
-        toast.warning("Historical sync date cannot be in the future", {
-          description: "The date has been reset to today"
+      if (result.success) {
+        toast.success("Folders Fixed", {
+          description: result.message
+        });
+      } else {
+        toast.error("Error Fixing Folders", {
+          description: "An error occurred while attempting to fix duplicate folders"
         });
       }
+    } catch (error: any) {
+      console.error("Error fixing folders:", error);
+      toast.error("Error Fixing Folders", {
+        description: error.message || "An unexpected error occurred"
+      });
+    } finally {
+      setFixingFolders(false);
     }
+  };
+
+  const onSubmit = async (values: ImapSettingsFormData) => {
+    if (!user || isSaving || !isMountedRef.current) return;
 
     setIsSaving(true);
 
@@ -304,8 +307,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
             password: values.password,
             secure: values.secure,
             max_emails: values.max_emails,
-            historical_sync: values.historical_sync,
-            historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
+            connection_timeout: values.connection_timeout,
+            auto_reconnect: values.auto_reconnect,
             updated_at: new Date().toISOString()
           })
           .eq('id', existingSettingsId);
@@ -332,8 +335,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
               password: values.password,
               secure: values.secure,
               max_emails: values.max_emails,
-              historical_sync: values.historical_sync,
-              historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
+              connection_timeout: values.connection_timeout,
+              auto_reconnect: values.auto_reconnect,
             })
             .eq('id', existingData.id);
             
@@ -351,8 +354,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
               password: values.password,
               secure: values.secure,
               max_emails: values.max_emails,
-              historical_sync: values.historical_sync,
-              historical_sync_date: values.historical_sync_date ? values.historical_sync_date.toISOString() : null,
+              connection_timeout: values.connection_timeout,
+              auto_reconnect: values.auto_reconnect,
             });
         }
       }
@@ -375,6 +378,10 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
         // After saving settings, try to sync folders to verify settings work
         try {
+          // First try to fix any duplicate folders
+          await handleFixFolders();
+          
+          // Then sync folders
           const syncResult = await syncFolders(true);
           if (syncResult.success) {
             toast.success("Connection Verified", {
@@ -403,8 +410,6 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
       }
     }
   };
-
-  const watchHistoricalSync = form.watch('historical_sync');
 
   // Wenn ein Ladefehler aufgetreten ist, zeigen wir eine Meldung an
   if (loadError) {
@@ -511,7 +516,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
               </div>
 
               <div className="bg-white p-6 rounded-md shadow-sm border">
-                <h3 className="text-base font-semibold mb-4">Sync-Einstellungen</h3>
+                <h3 className="text-base font-semibold mb-4">Verbindungseinstellungen</h3>
 
                 <FormField
                   control={form.control}
@@ -527,7 +532,8 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                       <div className="space-y-1 leading-none">
                         <FormLabel>SSL/TLS verwenden</FormLabel>
                         <FormDescription>
-                          Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen)
+                          Aktivieren Sie diese Option für eine verschlüsselte Verbindung (empfohlen).
+                          Bei Verbindungsproblemen können Sie versuchen, diese Einstellung zu ändern.
                         </FormDescription>
                       </div>
                     </FormItem>
@@ -549,7 +555,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                         />
                       </FormControl>
                       <FormDescription>
-                        Begrenzen Sie die Anzahl der E-Mails, die bei jeder Synchronisation abgerufen werden
+                        Die Anzahl der E-Mails, die bei jeder Synchronisation abgerufen werden (Standardwert: 100)
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -558,7 +564,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
                 <FormField
                   control={form.control}
-                  name="historical_sync"
+                  name="auto_reconnect"
                   render={({ field }) => (
                     <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-6">
                       <FormControl>
@@ -568,36 +574,36 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                         />
                       </FormControl>
                       <div className="space-y-1 leading-none">
-                        <FormLabel>Historische Synchronisation</FormLabel>
+                        <FormLabel>Automatisch wieder verbinden</FormLabel>
                         <FormDescription>
-                          E-Mails ab einem bestimmten Datum abrufen, nicht nur die neuesten
+                          Bei Verbindungsabbrüchen automatisch wieder verbinden
                         </FormDescription>
                       </div>
                     </FormItem>
                   )}
                 />
 
-                {watchHistoricalSync && (
-                  <FormField
-                    control={form.control}
-                    name="historical_sync_date"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Startdatum für historische Synchronisation</FormLabel>
-                        <FormControl>
-                          <DatePicker
-                            date={field.value}
-                            setDate={field.onChange}
-                          />
-                        </FormControl>
-                        <FormDescription>
-                          E-Mails ab diesem Datum werden synchronisiert
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
+                <FormField
+                  control={form.control}
+                  name="connection_timeout"
+                  render={({ field }) => (
+                    <FormItem className="mb-6">
+                      <FormLabel>Verbindungs-Timeout (ms)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          className="bg-gray-50 max-w-xs"
+                          {...field}
+                          onChange={(e) => field.onChange(Number(e.target.value))}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Timeout für Verbindungsversuche in Millisekunden (Standardwert: 30000)
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="pt-6 flex justify-end">
@@ -763,7 +769,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
           </div>
 
           <div className="bg-white p-6 rounded-md shadow-sm border">
-            <h3 className="text-base font-semibold mb-4">Sync-Einstellungen</h3>
+            <h3 className="text-base font-semibold mb-4">Verbindungseinstellungen</h3>
 
             <FormField
               control={form.control}
@@ -802,7 +808,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                     />
                   </FormControl>
                   <FormDescription>
-                    Begrenzen Sie die Anzahl der E-Mails, die bei jeder Synchronisation abgerufen werden
+                    Die Anzahl der E-Mails, die bei jeder Synchronisation abgerufen werden (Standardwert: 100)
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -811,7 +817,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
 
             <FormField
               control={form.control}
-              name="historical_sync"
+              name="auto_reconnect"
               render={({ field }) => (
                 <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4 mb-6">
                   <FormControl>
@@ -821,73 +827,80 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
                     />
                   </FormControl>
                   <div className="space-y-1 leading-none">
-                    <FormLabel>Historische Synchronisation</FormLabel>
+                    <FormLabel>Automatisch wieder verbinden</FormLabel>
                     <FormDescription>
-                      E-Mails ab einem bestimmten Datum abrufen, nicht nur die neuesten
+                      Bei Verbindungsabbrüchen automatisch wieder verbinden
                     </FormDescription>
                   </div>
                 </FormItem>
               )}
             />
 
-            {watchHistoricalSync && (
-              <FormField
-                control={form.control}
-                name="historical_sync_date"
-                render={({ field }) => {
-                  // Ensure historical_sync_date is not in the future
-                  const handleDateChange = (date: Date | undefined) => {
-                    // If date is in the future, set it to today
-                    if (date && date > new Date()) {
-                      date = new Date();
-                      toast.warning("Historical sync date cannot be in the future", {
-                        description: "The date has been reset to today"
-                      });
-                    }
-                    field.onChange(date);
-                  };
-                  
-                  return (
-                    <FormItem>
-                      <FormLabel>Startdatum für historische Synchronisation</FormLabel>
-                      <FormControl>
-                        <DatePicker
-                          date={field.value}
-                          setDate={handleDateChange}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        E-Mails ab diesem Datum werden synchronisiert (muss in der Vergangenheit liegen)
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  );
-                }}
-              />
-            )}
+            <FormField
+              control={form.control}
+              name="connection_timeout"
+              render={({ field }) => (
+                <FormItem className="mb-6">
+                  <FormLabel>Verbindungs-Timeout (ms)</FormLabel>
+                  <FormControl>
+                    <Input 
+                      type="number" 
+                      className="bg-gray-50 max-w-xs"
+                      {...field}
+                      onChange={(e) => field.onChange(Number(e.target.value))}
+                    />
+                  </FormControl>
+                  <FormDescription>
+                    Timeout für Verbindungsversuche in Millisekunden (Standardwert: 30000)
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
           </div>
 
-          <div className="pt-6 flex justify-between">
-            <Button 
-              type="button" 
-              variant="outline" 
-              onClick={testConnection} 
-              disabled={testingConnection || isSaving}
-              className="min-w-[120px]"
-            >
-              {testingConnection ? 
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Teste Verbindung...</> : 
-                'Verbindung testen'}
-            </Button>
+          <div className="pt-4 flex justify-between">
+            <div className="flex gap-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={testConnection}
+                disabled={testingConnection || !form.getValues('host')}
+              >
+                {testingConnection ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Verbindung wird getestet...
+                  </>
+                ) : (
+                  'Verbindung testen'
+                )}
+              </Button>
+              
+              <Button 
+                type="button" 
+                variant="outline"
+                onClick={handleFixFolders}
+                disabled={fixingFolders || !user}
+              >
+                {fixingFolders ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Ordner werden repariert...
+                  </>
+                ) : (
+                  'Ordnerprobleme beheben'
+                )}
+              </Button>
+            </div>
             
-            <Button 
-              type="submit" 
-              disabled={isSaving || testingConnection} 
-              className="min-w-[120px]"
-            >
-              {isSaving ? 
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Speichern...</> : 
-                'Speichern'}
+            <Button type="submit" disabled={isSaving} className="min-w-[120px]">
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Speichern...
+                </>
+              ) : 'Speichern'}
             </Button>
           </div>
         </form>

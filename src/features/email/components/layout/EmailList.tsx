@@ -6,7 +6,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
-import { Paperclip, Star, Loader2, AlertCircle, MailOpen, Mail } from 'lucide-react';
+import { Paperclip, Star, Loader2, AlertCircle, MailOpen, Mail, RefreshCw } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from "sonner";
 
@@ -93,6 +93,7 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail, searchQuery 
         <AlertCircle className="h-8 w-8 text-destructive mb-2" />
         <p className="text-red-500 mb-2">Error loading emails</p>
         <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw className="h-4 w-4 mr-2" />
           Retry
         </Button>
       </div>
@@ -106,6 +107,17 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail, searchQuery 
         <p className="mb-2 text-center">No emails found in this folder</p>
         {searchQuery && (
           <p className="text-sm text-center">Try a different search term</p>
+        )}
+        {!searchQuery && (
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="mt-2"
+            onClick={() => refetch()}
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         )}
       </div>
     );

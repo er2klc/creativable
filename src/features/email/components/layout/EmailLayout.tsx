@@ -9,6 +9,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 
 export interface EmailLayoutProps {
   userEmail?: string;
@@ -22,6 +23,7 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const { syncFolders } = useFolderSync();
   
   // Fetch profile data for header
   const { data: profile } = useQuery({
@@ -44,14 +46,23 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   // Reset selected email when folder changes
   useEffect(() => {
     setSelectedEmailId(null);
+    
+    // Auto sync when folder changes
+    syncEmails(false);
   }, [selectedFolder]);
 
   // Function to sync emails for the current folder
-  const syncEmails = async () => {
+  const syncEmails = async (showLoadingToast = true) => {
     if (!user) return;
     
     try {
       setIsSyncing(true);
+      
+      if (showLoadingToast) {
+        toast.info("Syncing Emails", {
+          description: "Fetching your latest emails..."
+        });
+      }
       
       // Get the current user session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -63,7 +74,8 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
       // Prepare sync options
       const syncOptions = {
         force_refresh: true,
-        folder: selectedFolder
+        folder: selectedFolder,
+        load_latest: true
       };
       
       // Call the sync-emails function with proper authorization
@@ -107,12 +119,17 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   useEffect(() => {
     const syncInterval = setInterval(() => {
       if (!isSyncing) {
-        syncEmails();
+        syncEmails(false); // Don't show loading toast for automatic syncs
       }
     }, 5 * 60 * 1000); // 5 minutes
     
     return () => clearInterval(syncInterval);
   }, [selectedFolder, isSyncing]);
+
+  // Initial folder sync when component mounts
+  useEffect(() => {
+    syncFolders(false);  // Silent sync of folders on mount
+  }, []);
 
   return (
     <div className="flex flex-col h-full">

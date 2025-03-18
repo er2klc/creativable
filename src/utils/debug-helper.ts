@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmailConfigStatus {
@@ -89,6 +88,65 @@ export async function debugEmailFolders(userId: string) {
     return { success: true, folderCount: data?.length || 0, folders: data };
   } catch (error) {
     console.error("Error debugging email folders:", error);
+    return { success: false, error };
+  }
+}
+
+export async function fixDuplicateEmailFolders(userId: string) {
+  try {
+    // Get all folders for the user to find duplicates
+    const { data: folders, error } = await supabase
+      .from('email_folders')
+      .select('*')
+      .eq('user_id', userId);
+    
+    if (error) {
+      console.error("Error fetching folders for duplicate check:", error);
+      return { success: false, error };
+    }
+    
+    // Group folders by path
+    const foldersByPath: Record<string, any[]> = {};
+    folders?.forEach(folder => {
+      if (!foldersByPath[folder.path]) {
+        foldersByPath[folder.path] = [];
+      }
+      foldersByPath[folder.path].push(folder);
+    });
+    
+    // Find and delete duplicates, keeping the newest one
+    let deletedCount = 0;
+    for (const path in foldersByPath) {
+      const pathFolders = foldersByPath[path];
+      if (pathFolders.length > 1) {
+        // Sort by created_at, keeping newest
+        pathFolders.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        
+        // Delete all but the newest
+        for (let i = 1; i < pathFolders.length; i++) {
+          const { error: deleteError } = await supabase
+            .from('email_folders')
+            .delete()
+            .eq('id', pathFolders[i].id);
+            
+          if (!deleteError) {
+            deletedCount++;
+          } else {
+            console.error(`Error deleting duplicate folder ${pathFolders[i].id}:`, deleteError);
+          }
+        }
+      }
+    }
+    
+    return { 
+      success: true, 
+      message: `Removed ${deletedCount} duplicate folders`,
+      deletedCount 
+    };
+  } catch (error) {
+    console.error("Error fixing duplicate folders:", error);
     return { success: false, error };
   }
 }

@@ -8,8 +8,6 @@ export const imapSettingsSchema = z.object({
   password: z.string().min(1, "Passwort ist erforderlich"),
   secure: z.boolean().default(true),
   max_emails: z.coerce.number().int().positive().default(100),
-  historical_sync: z.boolean().default(false),
-  historical_sync_date: z.date().optional(),
   auto_reconnect: z.boolean().default(true),
   connection_timeout: z.coerce.number().int().positive().default(30000)
 });
