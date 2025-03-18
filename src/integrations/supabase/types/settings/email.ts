@@ -1,17 +1,17 @@
 
 export interface EmailSettings {
   /**
-   * Indicates if email settings are configured and connected
+   * Whether email is properly configured
    */
   email_configured?: boolean;
   
   /**
-   * Last email synchronization timestamp
+   * The last time email was synced
    */
   last_email_sync?: string;
   
   /**
-   * Configuration status for email features
+   * Whether email syncing is enabled
    */
   email_sync_enabled?: boolean;
 }

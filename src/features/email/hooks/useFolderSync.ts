@@ -4,10 +4,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { toast } from 'sonner';
 import { fixDuplicateEmailFolders } from '@/utils/debug-helper';
+import { useSettings } from '@/hooks/use-settings';
 
 export function useFolderSync() {
   const { user } = useAuth();
   const [isSyncing, setIsSyncing] = useState(false);
+  const { settings, updateSettings } = useSettings();
   
   const syncFolders = async (showToast = true) => {
     if (!user || isSyncing) {
@@ -20,6 +22,14 @@ export function useFolderSync() {
       
       // First try to fix any duplicate folders that might exist
       await fixDuplicateEmailFolders(user.id);
+      
+      // Update settings to indicate email sync has been attempted
+      if (settings && !settings.email_configured) {
+        updateSettings.mutate({
+          email_configured: true,
+          last_email_sync: new Date().toISOString()
+        });
+      }
       
       // Get the current user session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
@@ -59,6 +69,12 @@ export function useFolderSync() {
             description: `Successfully synced ${result.folderCount || 0} folders`
           });
         }
+        
+        // Update settings with successful sync
+        updateSettings.mutate({
+          last_email_sync: new Date().toISOString(),
+          email_sync_enabled: true
+        });
         
         return {
           success: true, 
