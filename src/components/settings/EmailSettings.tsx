@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ImapSettings } from "./ImapSettings";
 import { SmtpSettings } from "./SmtpSettings";
@@ -14,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { checkEmailConfigStatus } from "@/utils/debug-helper";
 import { Skeleton } from "@/components/ui/skeleton";
+import { EmailDiagnostics } from "./EmailDiagnostics";
 
 export function EmailSettings() {
   const { settings, updateSettings } = useSettings();
@@ -518,5 +518,25 @@ export function EmailSettings() {
     </div>
   );
   
-  return emailConnected ? <ConnectedView /> : <ConfigurationView />;
+  return (
+    <Tabs defaultValue="imap" className="space-y-6">
+      <TabsList className="grid w-full grid-cols-3">
+        <TabsTrigger value="imap">IMAP Settings</TabsTrigger>
+        <TabsTrigger value="smtp">SMTP Settings</TabsTrigger>
+        <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
+      </TabsList>
+      
+      <TabsContent value="imap" className="space-y-4">
+        <ImapSettings onSettingsSaved={handleSettingsSaved} />
+      </TabsContent>
+      
+      <TabsContent value="smtp" className="space-y-4">
+        <SmtpSettings onSettingsSaved={handleSettingsSaved} />
+      </TabsContent>
+      
+      <TabsContent value="diagnostics" className="space-y-4">
+        <EmailDiagnostics />
+      </TabsContent>
+    </Tabs>
+  );
 }
