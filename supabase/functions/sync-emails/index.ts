@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ImapFlow } from 'npm:imapflow@1.0.98';
 import { simpleParser } from 'npm:mailparser@3.6.5';
@@ -17,8 +16,6 @@ interface SyncResult {
   error?: string;
   details?: string;
   progress?: number;
-  hasMoreEmails?: boolean;
-  lastSyncedId?: string;
 }
 
 interface ImapSettings {
@@ -49,9 +46,6 @@ interface SyncOptions {
   startDate?: Date;
   maxEmails?: number;
   folder?: string;
-  backgroundSync?: boolean;
-  lastEmailId?: string;
-  skipHistorical?: boolean;
 }
 
 async function syncEmailFolders(
@@ -271,130 +265,38 @@ async function fetchEmails(
     const mailbox = await client.mailboxOpen(folder);
     console.log(`Mailbox opened with ${mailbox.exists} messages`);
     
-    // If there are no emails in the mailbox, return early
-    if (mailbox.exists === 0) {
-      await client.logout();
+    // Determine how many emails to fetch
+    let fetchCount = Math.min(maxEmails, mailbox.exists);
+    
+    if (fetchCount === 0) {
       return {
         success: true,
         message: "No emails found in mailbox",
         emailsCount: 0,
-        hasMoreEmails: false,
         progress: 100
       };
     }
     
-    // Determine fetch options based on sync type
+    // Prepare fetch options - handling historical sync if requested
     let fetchOptions;
-    let fetchCount = Math.min(maxEmails, mailbox.exists);
-    let hasMoreEmails = mailbox.exists > fetchCount;
     
-    // Check if this is a background sync continuing from a previous sync
-    if (options.backgroundSync && options.lastEmailId) {
-      console.log(`Background sync requested with last email ID: ${options.lastEmailId}`);
+    if (options.historicalSync && options.startDate) {
+      console.log(`Historical sync requested from date: ${options.startDate.toISOString()}`);
       
-      // Try to find existing email in database to determine starting point
-      const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
-      const emailResponse = await fetch(
-        `${SUPABASE_URL}/rest/v1/emails?id=eq.${options.lastEmailId}&select=message_id`,
-        {
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            'apikey': SUPABASE_SERVICE_ROLE_KEY,
-          }
-        }
-      );
-      
-      if (!emailResponse.ok) {
-        console.error("Failed to fetch reference email:", await emailResponse.text());
-        throw new Error("Failed to find reference email for background sync");
+      // Ensure startDate is not in the future
+      const now = new Date();
+      if (options.startDate > now) {
+        console.warn("Historical sync date was in the future, resetting to today's date");
+        options.startDate = now;
       }
       
-      const emailData = await emailResponse.json();
-      if (!emailData || emailData.length === 0) {
-        console.error("Reference email not found");
-        throw new Error("Reference email not found for background sync");
-      }
-      
-      // Get existing emails to determine what we've already synced
-      const existingEmailsResponse = await fetch(
-        `${SUPABASE_URL}/rest/v1/emails?user_id=eq.${userId}&folder=eq.${encodeURIComponent(folder)}&select=id,message_id&order=sent_at.desc`,
-        {
-          headers: {
-            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            'apikey': SUPABASE_SERVICE_ROLE_KEY,
-          }
-        }
-      );
-      
-      if (!existingEmailsResponse.ok) {
-        console.error("Failed to fetch existing emails:", await existingEmailsResponse.text());
-        throw new Error("Failed to fetch existing emails for background sync");
-      }
-      
-      const existingEmails = await existingEmailsResponse.json();
-      console.log(`Found ${existingEmails.length} existing emails in database for this folder`);
-      
-      // Search for all messages in the mailbox
-      console.log("Finding all message IDs in mailbox to determine fetch range");
-      const messages = [];
-      for await (const message of client.fetch({ seq: `1:*` }, { uid: true, envelope: true })) {
-        messages.push({ seq: message.seq, uid: message.uid, id: message.envelope.messageId });
-      }
-      console.log(`Found ${messages.length} messages in mailbox`);
-      
-      // Sort by sequence number descending (newest first)
-      messages.sort((a, b) => b.seq - a.seq);
-      
-      // Find already synced messages
-      const syncedMessageIds = new Set(existingEmails.map(e => e.message_id));
-      
-      // Filter out messages we already have
-      const unSyncedMessages = messages.filter(m => !syncedMessageIds.has(m.id));
-      console.log(`Found ${unSyncedMessages.length} unsynchronized messages`);
-      
-      if (unSyncedMessages.length === 0) {
-        await client.logout();
-        return {
-          success: true,
-          message: "All emails already synchronized",
-          emailsCount: 0,
-          hasMoreEmails: false,
-          progress: 100
-        };
-      }
-      
-      // Take the next batch of messages
-      const batchSize = Math.min(maxEmails, unSyncedMessages.length);
-      const messagesToFetch = unSyncedMessages.slice(0, batchSize);
-      
-      // Create a seq range for the messages to fetch
-      if (messagesToFetch.length > 0) {
-        const seqNumbers = messagesToFetch.map(m => m.seq);
-        const minSeq = Math.min(...seqNumbers);
-        const maxSeq = Math.max(...seqNumbers);
-        fetchOptions = {
-          seq: `${minSeq}:${maxSeq}`,
-          envelope: true,
-          bodyStructure: true,
-          source: true
-        };
-        fetchCount = messagesToFetch.length;
-        hasMoreEmails = unSyncedMessages.length > messagesToFetch.length;
-      } else {
-        // If no messages to fetch, return success
-        await client.logout();
-        return {
-          success: true,
-          message: "No new emails to synchronize",
-          emailsCount: 0,
-          hasMoreEmails: false,
-          progress: 100
-        };
-      }
+      fetchOptions = {
+        since: options.startDate,
+        envelope: true,
+        bodyStructure: true,
+        source: true
+      };
     } else {
-      // For initial sync, always get the most recent emails first (ignore historical sync date)
-      console.log(`Initial sync requesting ${fetchCount} emails from ${mailbox.exists} total`);
-      
       // Get the most recent emails, using sequence numbers
       fetchOptions = {
         seq: `${Math.max(1, mailbox.exists - fetchCount + 1)}:${mailbox.exists}`,
@@ -408,7 +310,6 @@ async function fetchEmails(
     
     const emails = [];
     let counter = 0;
-    let lastSyncedId = null;
     
     // Fetch messages
     for await (const message of client.fetch(fetchOptions)) {
@@ -478,33 +379,7 @@ async function fetchEmails(
           const errorText = await response.text();
           console.error(`Failed to store email: ${errorText}`);
         } else {
-          // Get the ID of the inserted/updated email
-          const result = await response.json();
           counter++;
-          
-          // Store the inserted ID as the last synced ID
-          if (result && result.length > 0 && result[0].id) {
-            lastSyncedId = result[0].id;
-          } else {
-            // If we can't get the ID from the response, query for it
-            const emailQuery = await fetch(
-              `${SUPABASE_URL}/rest/v1/emails?message_id=eq.${encodeURIComponent(parsedEmail.message_id)}&user_id=eq.${userId}&select=id`,
-              {
-                headers: {
-                  'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-                  'apikey': SUPABASE_SERVICE_ROLE_KEY,
-                }
-              }
-            );
-            
-            if (emailQuery.ok) {
-              const emailData = await emailQuery.json();
-              if (emailData.length > 0) {
-                lastSyncedId = emailData[0].id;
-              }
-            }
-          }
-          
           emails.push(parsedEmail);
         }
       } catch (parseError) {
@@ -536,23 +411,6 @@ async function fetchEmails(
           updated_at: new Date().toISOString()
         })
       });
-      
-      // Update last sync tracking record
-      await fetch(`${SUPABASE_URL}/rest/v1/email_sync_status`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          'apikey': SUPABASE_SERVICE_ROLE_KEY,
-          'Prefer': 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify({
-          user_id: userId,
-          folder: folder,
-          last_sync_time: new Date().toISOString(),
-          items_synced: counter
-        })
-      });
     } catch (statusError) {
       console.error("Error updating folder status:", statusError);
     }
@@ -564,9 +422,7 @@ async function fetchEmails(
       success: true,
       message: `Successfully synced ${counter} emails`,
       emailsCount: counter,
-      progress: 100,
-      hasMoreEmails: hasMoreEmails,
-      lastSyncedId: lastSyncedId
+      progress: 100
     };
     
   } catch (error) {
@@ -666,10 +522,7 @@ serve(async (req) => {
       historical_sync = false,
       sync_start_date = null,
       max_emails = 100,
-      folder = 'INBOX',
-      background_sync = false,
-      last_email_id = null,
-      skip_historical = false
+      folder = 'INBOX'
     } = requestData;
 
     // Get the user's JWT from the request
@@ -785,14 +638,11 @@ serve(async (req) => {
     const syncOptions: SyncOptions = {
       forceRefresh: force_refresh,
       maxEmails: max_emails || settings.max_emails || 100,
-      folder: folder,
-      backgroundSync: background_sync,
-      lastEmailId: last_email_id,
-      skipHistorical: skip_historical
+      folder: folder
     };
     
-    // Handle historical sync - but only if not explicitly skipped
-    if (!skip_historical && (historical_sync || settings.historical_sync)) {
+    // Handle historical sync - validate the date first
+    if (historical_sync || settings.historical_sync) {
       syncOptions.historicalSync = true;
       
       // Get start date from request or from settings
