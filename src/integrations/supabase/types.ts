@@ -875,18 +875,27 @@ export type Database = {
           created_at: string | null
           direction: string
           error_message: string | null
+          flags: Json | null
           folder: string
           from_email: string
+          from_name: string | null
+          has_attachments: boolean | null
+          headers: Json | null
+          html_content: string | null
           id: string
           in_reply_to: string | null
           lead_id: string | null
+          message_id: string | null
           read: boolean | null
           received_at: string | null
           sent_at: string | null
+          starred: boolean | null
           status: string
           subject: string
+          text_content: string | null
           thread_id: string | null
           to_email: string
+          to_name: string | null
           user_id: string
         }
         Insert: {
@@ -897,18 +906,27 @@ export type Database = {
           created_at?: string | null
           direction: string
           error_message?: string | null
+          flags?: Json | null
           folder?: string
           from_email: string
+          from_name?: string | null
+          has_attachments?: boolean | null
+          headers?: Json | null
+          html_content?: string | null
           id?: string
           in_reply_to?: string | null
           lead_id?: string | null
+          message_id?: string | null
           read?: boolean | null
           received_at?: string | null
           sent_at?: string | null
+          starred?: boolean | null
           status?: string
           subject: string
+          text_content?: string | null
           thread_id?: string | null
           to_email: string
+          to_name?: string | null
           user_id: string
         }
         Update: {
@@ -919,18 +937,27 @@ export type Database = {
           created_at?: string | null
           direction?: string
           error_message?: string | null
+          flags?: Json | null
           folder?: string
           from_email?: string
+          from_name?: string | null
+          has_attachments?: boolean | null
+          headers?: Json | null
+          html_content?: string | null
           id?: string
           in_reply_to?: string | null
           lead_id?: string | null
+          message_id?: string | null
           read?: boolean | null
           received_at?: string | null
           sent_at?: string | null
+          starred?: boolean | null
           status?: string
           subject?: string
+          text_content?: string | null
           thread_id?: string | null
           to_email?: string
+          to_name?: string | null
           user_id?: string
         }
         Relationships: [
@@ -5070,6 +5097,12 @@ export type Database = {
           team_id_param: string
         }
         Returns: undefined
+      }
+      fix_duplicate_email_folders: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: Json
       }
       generate_elevate_invite_code: {
         Args: Record<PropertyKey, never>
