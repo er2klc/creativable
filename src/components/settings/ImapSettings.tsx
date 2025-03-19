@@ -70,18 +70,20 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
   const fetchWithTimeout = async (fetchFunction: () => Promise<any>, timeoutMs: number = 10000) => {
     return new Promise(async (resolve, reject) => {
       timeoutRef.current = setTimeout(() => {
-        reject(new Error("Die Anfrage hat das Zeitlimit überschritten"));
+        if (isMountedRef.current) {
+          reject(new Error("Die Anfrage hat das Zeitlimit überschritten"));
+        }
       }, timeoutMs);
       
       try {
         const result = await fetchFunction();
-        if (timeoutRef.current) {
+        if (timeoutRef.current && isMountedRef.current) {
           clearTimeout(timeoutRef.current);
           timeoutRef.current = null;
         }
         resolve(result);
       } catch (error) {
-        if (timeoutRef.current) {
+        if (timeoutRef.current && isMountedRef.current) {
           clearTimeout(timeoutRef.current);
           timeoutRef.current = null;
         }
@@ -114,13 +116,14 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
         }
 
         return { data, error };
-      }, 5000); // 5 Sekunden Timeout
+      }, 8000); // Increased timeout to 8 seconds
       
       if (isMountedRef.current) {
         if (result.data) {
           console.log('IMAP settings found:', result.data);
           setExistingSettingsId(result.data.id);
           
+          // Explicitly reset form with found settings
           form.reset({
             host: result.data.host || '',
             port: result.data.port || 993,
@@ -131,8 +134,26 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
             connection_timeout: result.data.connection_timeout || 30000,
             auto_reconnect: result.data.auto_reconnect !== undefined ? result.data.auto_reconnect : true,
           });
+          
+          // Force update form values if they aren't being set correctly
+          Object.keys(result.data).forEach(key => {
+            if (key in form.getValues() && form.getValues()[key] !== result.data[key]) {
+              form.setValue(key as any, result.data[key]);
+            }
+          });
         } else {
           console.log('No IMAP settings found for user');
+          // Reset form to default values
+          form.reset({
+            host: '',
+            port: 993,
+            username: '',
+            password: '',
+            secure: true,
+            max_emails: 100,
+            connection_timeout: 30000,
+            auto_reconnect: true,
+          });
         }
         
         setLoadError(null);
@@ -168,6 +189,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     
     const initFetch = async () => {
       if (user && isMountedRef.current && !fetchAborted) {
+        setLoadingSettings(true); // Ensure loading state is set
         await fetchSettings();
         
         // Stelle sicher, dass wir nicht in loading hängen bleiben
@@ -189,9 +211,17 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
       setFetchAborted(true);
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
       }
     };
   }, [user, fetchSettings, fetchAborted]);
+
+  // Debug: Log form values on change
+  useEffect(() => {
+    if (settingsLoaded) {
+      console.log('Current form values:', form.getValues());
+    }
+  }, [form, settingsLoaded]);
 
   // Test connection function
   const testConnection = async () => {
@@ -202,6 +232,7 @@ export function ImapSettings({ onSettingsSaved }: ImapSettingsProps) {
     
     try {
       const values = form.getValues();
+      console.log('Testing connection with:', values);
       
       // Get the current user session
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
