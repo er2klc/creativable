@@ -16,12 +16,6 @@ function debugLog(...args: any[]) {
   }
 }
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-};
-
 interface SyncResult {
   success: boolean;
   message: string;
@@ -255,8 +249,8 @@ async function syncEmails(
     
     // Process messages in batches for better performance and progress tracking
     const batchSize = batchProcessing ? maxBatchSize : maxToSync;
-    const totalMessages = sequenceTo - sequenceFrom + 1;
-    const totalBatches = Math.ceil(totalMessages / batchSize);
+    const totalEmails = sequenceTo - sequenceFrom + 1;
+    const totalBatches = Math.ceil(totalEmails / batchSize);
     
     debugLog(`Processing in ${totalBatches} batches of ${batchSize} emails`);
     
@@ -286,7 +280,7 @@ async function syncEmails(
           processedEmails++;
           
           // Calculate progress percentage
-          const progress = Math.floor((processedEmails / totalMessages) * 100);
+          const progress = Math.floor((processedEmails / totalEmails) * 100);
           
           // Get message ID and check if it already exists
           const messageId = message.envelope.messageId;
@@ -381,7 +375,7 @@ async function syncEmails(
           }
           
           // Store sync progress for tracking
-          if (processedEmails % 5 === 0 || processedEmails === totalMessages) {
+          if (processedEmails % 5 === 0 || processedEmails === totalEmails) {
             // Store progress in Redis
             // This is simplified - you might want to use a more persistent storage for production
             try {
@@ -410,7 +404,7 @@ async function syncEmails(
       }
       
       // Update progress after batch
-      debugLog(`Completed batch ${batchNum + 1}/${totalBatches}, processed ${processedEmails}/${totalMessages} emails`);
+      debugLog(`Completed batch ${batchNum + 1}/${totalBatches}, processed ${processedEmails}/${totalEmails} emails`);
     }
     
     // Insert any remaining emails
