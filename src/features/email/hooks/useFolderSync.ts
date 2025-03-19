@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -77,6 +78,17 @@ export function useFolderSync() {
         console.error("Error checking time discrepancy:", timeError);
       }
       
+      // Fix duplicate folders before syncing
+      try {
+        const fixResult = await fixDuplicateEmailFolders(user.id);
+        if (fixResult.success && fixResult.message.includes("Fixed") && parseInt(fixResult.message.split(" ")[1]) > 0) {
+          console.log("Fixed duplicate folders:", fixResult.message);
+        }
+      } catch (fixError) {
+        console.error("Error fixing duplicate folders:", fixError);
+        // Continue with sync even if fix fails
+      }
+      
       // Update settings to indicate email sync has been attempted
       if (settings && !settings.email_configured) {
         await updateSettings.mutateAsync({
@@ -105,9 +117,9 @@ export function useFolderSync() {
         throw new Error(`Error fetching IMAP settings: ${imapError.message}`);
       }
       
-      // Call the sync-emails edge function specifically for folder sync
+      // Call the sync-folders edge function for folder sync
       const response = await fetch(
-        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
+        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-folders",
         {
           method: "POST",
           headers: {
@@ -117,22 +129,12 @@ export function useFolderSync() {
           },
           body: JSON.stringify({
             force_refresh: true,
-            folder_sync_only: true,
+            detailed_logging: true,
             timestamp: new Date().toISOString(), // Add timestamp to prevent caching
             disable_certificate_validation: true, // Add this flag to disable certificate validation
             ignore_date_validation: true, // Add this flag to ignore date validation
             debug: true, // Enable debug mode for more verbose logging
-            incremental_connection: true, // Enable incremental connection
             connection_timeout: imapSettings.connection_timeout || 60000, // Use configured timeout or default to 60 seconds
-            max_batch_size: 25, // Process emails in smaller batches
-            historical_sync: imapSettings.historical_sync ?? true, // Use historical sync setting if available
-            progressive_loading: imapSettings.progressive_loading ?? true, // Use progressive loading if available
-            max_emails: imapSettings.max_emails || 500, // Use configured max emails or default to 500
-            tls_options: {
-              rejectUnauthorized: false,
-              enableTrace: true,
-              minVersion: "TLSv1"
-            }
           })
         }
       );
@@ -200,7 +202,7 @@ export function useFolderSync() {
     }
   }, [user, isSyncing, settings, updateSettings]);
   
-  // New function to sync emails from inbox after folder sync
+  // Function to sync emails from inbox after folder sync
   const syncEmailsFromInbox = useCallback(async () => {
     if (!user) return;
     
