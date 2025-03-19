@@ -107,7 +107,15 @@ export function useFolderSync() {
             timestamp: new Date().toISOString(), // Add timestamp to prevent caching
             disable_certificate_validation: true, // Add this flag to disable certificate validation
             ignore_date_validation: true, // Add this flag to ignore date validation
-            debug: true // Enable debug mode for more verbose logging
+            debug: true, // Enable debug mode for more verbose logging
+            incremental_connection: true, // Enable incremental connection
+            connection_timeout: 60000, // Increase timeout to 60 seconds
+            max_batch_size: 25, // Process emails in smaller batches
+            tls_options: {
+              rejectUnauthorized: false,
+              enableTrace: true,
+              minVersion: "TLSv1"
+            }
           })
         }
       );
@@ -175,7 +183,7 @@ export function useFolderSync() {
   }, [user, isSyncing, settings, updateSettings]);
   
   // New function to sync emails from inbox after folder sync
-  const syncEmailsFromInbox = async () => {
+  const syncEmailsFromInbox = useCallback(async () => {
     if (!user) return;
     
     console.log("Attempting to sync emails from inbox");
@@ -203,8 +211,18 @@ export function useFolderSync() {
           timestamp: new Date().toISOString(),
           disable_certificate_validation: true,
           ignore_date_validation: true,
-          max_emails: 50, // Limit to 50 emails for initial sync
-          debug: true
+          max_emails: 25, // Limit to 25 emails for initial sync
+          batch_processing: true, // Enable batch processing
+          max_batch_size: 10, // Process in smaller batches
+          connection_timeout: 60000, // Increase timeout to 60 seconds
+          retry_attempts: 3, // Number of retry attempts
+          debug: true,
+          tls_options: {
+            rejectUnauthorized: false,
+            enableTrace: true,
+            minVersion: "TLSv1"
+          },
+          incremental_connection: true // Enable incremental connection
         })
       }
     );
@@ -228,7 +246,7 @@ export function useFolderSync() {
       console.error("Inbox sync failed:", result.message, result.error);
       throw new Error(result.message || "Failed to sync inbox");
     }
-  };
+  }, [user]);
   
   const resetEmailSync = useCallback(async () => {
     if (!user) {

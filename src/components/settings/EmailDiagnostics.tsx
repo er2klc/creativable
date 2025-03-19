@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
-import { AlertCircle, AlertTriangle, Bug, Check, RefreshCw, XCircle, Clock, Inbox } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Bug, Check, RefreshCw, XCircle, Clock, Inbox, Server, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 import { checkEmailConfigStatus } from "@/utils/debug-helper";
 import { cleanupDuplicateImapSettings } from "@/utils/debug-helper";
+import { Progress } from "@/components/ui/progress";
 
 export function EmailDiagnostics() {
   const { user } = useAuth();
@@ -23,6 +24,8 @@ export function EmailDiagnostics() {
   const [dbTime, setDbTime] = useState<string | null>(null);
   const [timeDiscrepancy, setTimeDiscrepancy] = useState(false);
   const [discrepancyMinutes, setDiscrepancyMinutes] = useState(0);
+  const [isSyncingInbox, setSyncingInbox] = useState(false);
+  const [syncProgress, setSyncProgress] = useState(0);
   const { resetEmailSync, syncFolders, syncEmailsFromInbox } = useFolderSync();
 
   useEffect(() => {
@@ -97,13 +100,40 @@ export function EmailDiagnostics() {
   };
   
   const handleSyncInbox = async () => {
+    if (isSyncingInbox) return;
+    
+    setSyncingInbox(true);
+    setSyncProgress(10); // Start progress
+    
     try {
+      // Set initial progress updates
+      const progressInterval = setInterval(() => {
+        setSyncProgress(prev => {
+          if (prev < 90) return prev + 5;
+          return prev;
+        });
+      }, 1500);
+      
       await syncEmailsFromInbox();
+      clearInterval(progressInterval);
+      setSyncProgress(100);
+      
       toast.success('Inbox synced successfully');
       loadDiagnosticData();
+      
+      // Reset progress after 2 seconds
+      setTimeout(() => {
+        setSyncProgress(0);
+        setSyncingInbox(false);
+      }, 2000);
     } catch (error) {
       console.error('Error syncing inbox:', error);
-      toast.error('Failed to sync inbox');
+      toast.error('Failed to sync inbox', {
+        description: error.message || 'Please check your IMAP settings or try again later'
+      });
+      clearInterval(progressInterval);
+      setSyncProgress(0);
+      setSyncingInbox(false);
     }
   };
 
@@ -198,7 +228,9 @@ export function EmailDiagnostics() {
           
               <div className="border rounded-md p-4">
                 <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-medium">IMAP Settings</h3>
+                  <h3 className="font-medium flex items-center gap-1">
+                    <Server className="h-4 w-4" /> IMAP Settings
+                  </h3>
                   <Button
                     variant="outline"
                     size="sm"
@@ -222,6 +254,14 @@ export function EmailDiagnostics() {
                         </span>
                       ) : 'Not started'}
                     </p>
+                    {imapSettings.sync_status === 'error' && imapSettings.sync_error && (
+                      <div className="mt-2 p-2 bg-red-50 rounded border border-red-200">
+                        <p className="text-xs font-medium text-red-800">Error Details:</p>
+                        <pre className="text-xs mt-1 text-red-700 whitespace-pre-wrap break-words">
+                          {imapSettings.sync_error}
+                        </pre>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <p className="text-amber-500 flex items-center gap-1">
@@ -231,7 +271,9 @@ export function EmailDiagnostics() {
               </div>
               
               <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">SMTP Settings</h3>
+                <h3 className="font-medium mb-2 flex items-center gap-1">
+                  <Shield className="h-4 w-4" /> SMTP Settings
+                </h3>
                 {smtpSettings ? (
                   <div className="space-y-2 text-sm">
                     <p><span className="text-muted-foreground">Host:</span> {smtpSettings.host}</p>
@@ -255,7 +297,9 @@ export function EmailDiagnostics() {
               </div>
             
               <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">Sync Statistics</h3>
+                <h3 className="font-medium mb-2 flex items-center gap-1">
+                  <Inbox className="h-4 w-4" /> Sync Statistics
+                </h3>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-muted-foreground text-sm">Email Count</p>
@@ -264,6 +308,30 @@ export function EmailDiagnostics() {
                   <div>
                     <p className="text-muted-foreground text-sm">Folder Count</p>
                     <p className="text-xl font-medium">{folderCount !== null ? folderCount : '...'}</p>
+                  </div>
+                </div>
+                
+                {/* Add connection health check */}
+                <div className="mt-4">
+                  <p className="text-muted-foreground text-sm mb-1">Connection Health</p>
+                  <div className="flex items-center gap-2">
+                    {imapSettings?.sync_status === 'success' ? (
+                      <Check className="h-4 w-4 text-green-500" />
+                    ) : imapSettings?.sync_status === 'error' ? (
+                      <XCircle className="h-4 w-4 text-red-500" />
+                    ) : (
+                      <AlertCircle className="h-4 w-4 text-amber-500" />
+                    )}
+                    
+                    <span className={
+                      imapSettings?.sync_status === 'success' ? 'text-green-500' :
+                      imapSettings?.sync_status === 'error' ? 'text-red-500' : 
+                      'text-amber-500'
+                    }>
+                      {imapSettings?.sync_status === 'success' ? 'Healthy' :
+                       imapSettings?.sync_status === 'error' ? 'Connection Issues' : 
+                       'Unknown Status'}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -299,6 +367,19 @@ export function EmailDiagnostics() {
               )}
             </div>
             
+            {/* Add sync progress indicator */}
+            {syncProgress > 0 && (
+              <div className="border rounded-md p-4">
+                <h3 className="font-medium mb-2">Current Sync Progress</h3>
+                <Progress value={syncProgress} className="mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  {syncProgress < 100 
+                    ? `Syncing emails... ${syncProgress}% complete`
+                    : 'Sync complete!'}
+                </p>
+              </div>
+            )}
+            
             <div className="flex flex-wrap justify-between items-center gap-2 mt-4">
               <Button 
                 variant="outline" 
@@ -324,9 +405,10 @@ export function EmailDiagnostics() {
                   variant="outline"
                   onClick={handleSyncInbox}
                   className="flex items-center gap-2"
+                  disabled={isSyncingInbox}
                 >
-                  <Inbox className="w-4 h-4" />
-                  Sync Inbox
+                  <Inbox className={`w-4 h-4 ${isSyncingInbox ? 'animate-pulse' : ''}`} />
+                  {isSyncingInbox ? 'Syncing...' : 'Sync Inbox'}
                 </Button>
                 
                 <Button 

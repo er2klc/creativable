@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmailConfigStatus {
@@ -246,6 +247,76 @@ export async function cleanupDuplicateImapSettings(): Promise<{ success: boolean
     return {
       success: false,
       message: error.message || "Ein unerwarteter Fehler ist aufgetreten"
+    };
+  }
+}
+
+// New function to validate IMAP credentials
+export async function validateImapCredentials(settings: {
+  host: string;
+  port: number;
+  username: string;
+  password: string;
+  secure: boolean;
+}): Promise<{ success: boolean; message: string }> {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      return {
+        success: false,
+        message: "No active session found. Please log in."
+      };
+    }
+    
+    const response = await fetch(
+      "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/test-imap-connection",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          host: settings.host,
+          port: settings.port,
+          username: settings.username,
+          password: settings.password,
+          secure: settings.secure,
+          tls_options: {
+            rejectUnauthorized: false,
+            enableTrace: true,
+            minVersion: "TLSv1"
+          },
+          timeout: 20000 // 20 seconds timeout
+        })
+      }
+    );
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+    }
+    
+    const result = await response.json();
+    
+    if (result.success) {
+      return {
+        success: true,
+        message: "Successfully connected to IMAP server."
+      };
+    } else {
+      return {
+        success: false,
+        message: result.error || "Could not connect to IMAP server."
+      };
+    }
+  } catch (error) {
+    console.error("Error validating IMAP credentials:", error);
+    return {
+      success: false,
+      message: error.message || "An unexpected error occurred while validating IMAP credentials."
     };
   }
 }
