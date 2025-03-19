@@ -30,6 +30,11 @@ BEGIN
   DELETE FROM email_folders
   WHERE user_id = user_id_param;
 
+  -- Delete all emails for a completely fresh start
+  -- This is important to prevent issues with mixed dates or corrupted data
+  DELETE FROM emails
+  WHERE user_id = user_id_param;
+
   RETURN TRUE;
 EXCEPTION
   WHEN OTHERS THEN

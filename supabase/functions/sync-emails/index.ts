@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ImapFlow } from 'npm:imapflow@1.0.98';
 import { simpleParser } from 'npm:mailparser@3.6.5';
@@ -47,12 +46,33 @@ interface SyncOptions {
   folderSyncOnly?: boolean;
 }
 
+// Add this new date validation function
+function isDateInFuture(date: Date): boolean {
+  const currentDate = new Date();
+  return date > currentDate;
+}
+
+// Add this near the top of the file
+const debugMode = true; // Set to true for additional logging
+
 // Function to sync email folders
 async function syncEmailFolders(
   imapSettings: ImapSettings,
   userId: string,
   retryCount = 0
 ): Promise<SyncResult> {
+  // Check for system time issues
+  const currentTime = new Date();
+  if (isDateInFuture(currentTime)) {
+    console.error(`SYSTEM TIME ERROR: System time appears to be in the future: ${currentTime.toISOString()}`);
+    return {
+      success: false,
+      message: "System time error: Your system clock appears to be set to a future date, which can cause authentication failures",
+      error: "System time is set to a future date",
+      details: `Current system time: ${currentTime.toISOString()}`
+    };
+  }
+
   console.log(`[Attempt ${retryCount + 1}] Getting email folders from: ${imapSettings.host}:${imapSettings.port}`);
   
   const client = new ImapFlow(imapSettings);
@@ -355,6 +375,19 @@ async function fetchEmails(
   options: SyncOptions = {}, 
   retryCount = 0
 ): Promise<SyncResult> {
+  // Check for system time issues
+  const currentTime = new Date();
+  if (isDateInFuture(currentTime)) {
+    console.error(`SYSTEM TIME ERROR: System time appears to be in the future: ${currentTime.toISOString()}`);
+    return {
+      success: false,
+      message: "System time error: Your system clock appears to be set to a future date, which can cause authentication failures",
+      error: "System time is set to a future date",
+      details: `Current system time: ${currentTime.toISOString()}`
+    };
+  }
+
+  // Original function continues
   console.log(`[Attempt ${retryCount + 1}] Connecting to IMAP server: ${imapSettings.host}:${imapSettings.port} (secure: ${imapSettings.secure})`);
   console.log(`Sync options:`, JSON.stringify(options));
   
@@ -408,12 +441,9 @@ async function fetchEmails(
     
     // Fetch messages
     for await (const message of client.fetch(fetchOptions)) {
-      console.log(`Processing message #${message.seq}`);
-      
-      // Report progress
-      const progress = Math.floor((counter / fetchCount) * 100);
-      if (counter % 5 === 0) {
-        console.log(`Sync progress: ${progress}%`);
+      if (debugMode) {
+        console.log(`Processing message #${message.seq}, messageId: ${message.envelope.messageId}, date: ${message.envelope.date}`);
+        console.log(`Message flags: ${JSON.stringify(message.flags)}`);
       }
       
       try {
@@ -708,12 +738,12 @@ serve(async (req) => {
   console.log("Email sync function called");
   
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
+  if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-
+  
   try {
-    // Parse request body
+    // Parse the request body
     let requestData;
     try {
       requestData = await req.json();
@@ -860,84 +890,4 @@ serve(async (req) => {
     // Prepare sync options
     const syncOptions: SyncOptions = {
       forceRefresh: force_refresh,
-      maxEmails: max_emails || settings.max_emails || 100,
-      folder: folder,
-      folderSyncOnly: folder_sync_only
-    };
-    
-    // Handle historical sync - validate the date first
-    if (historical_sync || settings.historical_sync) {
-      syncOptions.historicalSync = true;
-      
-      // Get start date from request or from settings
-      let startDateStr = sync_start_date || settings.historical_sync_date;
-      if (startDateStr) {
-        let startDate = new Date(startDateStr);
-        const now = new Date();
-        
-        // Ensure the date is not in the future
-        if (startDate > now) {
-          console.warn("Historical sync date was in the future, resetting to today's date");
-          startDate = now;
-        }
-        
-        syncOptions.startDate = startDate;
-        console.log(`Historical sync enabled with start date: ${syncOptions.startDate}`);
-      } else {
-        // Default to 30 days ago if no date specified
-        syncOptions.startDate = new Date();
-        syncOptions.startDate.setDate(syncOptions.startDate.getDate() - 30);
-        console.log(`Historical sync enabled with default start date: ${syncOptions.startDate}`);
-      }
-    }
-
-    // Fetch emails
-    const emailResult = await fetchEmails(imapConfig, userId, syncOptions);
-    
-    // Update last sync time
-    await fetch(`${SUPABASE_URL}/rest/v1/imap_settings?id=eq.${settings.id}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        'apikey': SUPABASE_SERVICE_ROLE_KEY,
-        'Prefer': 'return=minimal'
-      },
-      body: JSON.stringify({
-        last_sync_date: new Date().toISOString()
-      })
-    });
-    
-    // Combine results
-    const result = {
-      ...emailResult,
-      folderCount: folderResult.folderCount
-    };
-
-    return new Response(JSON.stringify(result), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-      status: 200,
-    });
-
-  } catch (error) {
-    console.error("Email sync error:", error);
-    
-    const result = {
-      success: false,
-      message: "Failed to sync emails",
-      error: error.message,
-      progress: 0
-    };
-
-    return new Response(JSON.stringify(result), {
-      headers: {
-        "Content-Type": "application/json",
-        ...corsHeaders,
-      },
-      status: 200, // Always return 200 so the frontend gets our detailed error info
-    });
-  }
-});
+      maxEmails: max_emails || settings.max_emails || 1

@@ -43,6 +43,8 @@ export function useFolderSync() {
         throw new Error(sessionError?.message || "No active session found");
       }
       
+      console.log("Starting email folder sync with timestamp:", new Date().toISOString());
+      
       // Call the sync-emails edge function specifically for folder sync
       const response = await fetch(
         "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
@@ -56,17 +58,20 @@ export function useFolderSync() {
           body: JSON.stringify({
             force_refresh: true,
             folder_sync_only: true,
-            timestamp: new Date().toISOString() // Add timestamp to prevent caching
+            timestamp: new Date().toISOString(), // Add timestamp to prevent caching
+            debug: true // Enable debug mode for more verbose logging
           })
         }
       );
       
       if (!response.ok) {
         const errorText = await response.text();
+        console.error("Folder sync API error:", response.status, errorText);
         throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
       
       const result = await response.json();
+      console.log("Folder sync result:", result);
       
       if (result.success) {
         console.log("Folder sync successful:", result);
@@ -88,6 +93,7 @@ export function useFolderSync() {
           folderCount: result.folderCount || 0
         };
       } else {
+        console.error("Folder sync failed:", result.message, result.error);
         throw new Error(result.message || "Failed to sync folders");
       }
     } catch (error: any) {
@@ -119,12 +125,19 @@ export function useFolderSync() {
         description: "Cleaning up sync state and preparing for fresh start..."
       });
       
+      console.log("Initiating complete email sync reset for user:", user.id);
+      
       // 1. Reset IMAP settings dates using our custom function
       const { error: updateError } = await supabase.rpc('reset_imap_settings', { 
         user_id_param: user.id 
       });
       
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error("Error resetting IMAP settings:", updateError);
+        throw updateError;
+      }
+      
+      console.log("Successfully reset IMAP settings");
       
       // 2. Update app settings
       await updateSettings.mutateAsync({
@@ -132,6 +145,8 @@ export function useFolderSync() {
         email_sync_enabled: false,
         last_email_sync: null
       });
+      
+      console.log("App settings updated to reflect reset");
       
       toast.success("Email sync settings reset", {
         description: "Please reconfigure your email settings and try syncing again"
