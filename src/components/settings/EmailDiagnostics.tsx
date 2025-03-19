@@ -1,16 +1,18 @@
-
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { AlertCircle, AlertTriangle, Bug, Check, RefreshCw, XCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFolderSync } from '@/features/email/hooks/useFolderSync';
+import { checkEmailConfigStatus } from "@/utils/debug-helper";
+import { cleanupDuplicateImapSettings } from "@/utils/debug-helper";
 
 export function EmailDiagnostics() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [isCleaning, setIsCleaning] = useState(false);
   const [imapSettings, setImapSettings] = useState<any>(null);
   const [smtpSettings, setSmtpSettings] = useState<any>(null);
   const [emailCount, setEmailCount] = useState<number | null>(null);
@@ -93,6 +95,34 @@ export function EmailDiagnostics() {
     }
   };
 
+  const handleCleanupDuplicates = async () => {
+    if (!user || isCleaning) return;
+    
+    setIsCleaning(true);
+    try {
+      const result = await cleanupDuplicateImapSettings();
+      
+      if (result.success) {
+        toast.success("IMAP-Einstellungen bereinigt", {
+          description: result.message
+        });
+        // Aktualisiere die Anzeige
+        loadDiagnosticData();
+      } else {
+        toast.error("Fehler beim Bereinigen", {
+          description: result.message
+        });
+      }
+    } catch (error) {
+      console.error("Fehler beim Bereinigen der IMAP-Einstellungen:", error);
+      toast.error("Fehler beim Bereinigen", {
+        description: "Ein unerwarteter Fehler ist aufgetreten"
+      });
+    } finally {
+      setIsCleaning(false);
+    }
+  };
+
   const formatTimestamp = (timestamp: string | null) => {
     if (!timestamp) return 'Never';
     try {
@@ -103,16 +133,16 @@ export function EmailDiagnostics() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Bug className="w-4 h-4" />
-            Email Integration Diagnostics
-          </CardTitle>
+        <CardHeader>
+          <CardTitle>Email Integration Diagnostics</CardTitle>
+          <CardDescription>
+            Überprüfen Sie den Status Ihrer E-Mail-Integration
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
+          <div className="space-y-6">
             {timeDiscrepancy && (
               <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
                 <div className="flex">
@@ -155,7 +185,17 @@ export function EmailDiagnostics() {
               </div>
           
               <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">IMAP Settings</h3>
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-medium">IMAP Settings</h3>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCleanupDuplicates}
+                    disabled={isCleaning}
+                  >
+                    {isCleaning ? "Bereinige..." : "Doppelte Einträge bereinigen"}
+                  </Button>
+                </div>
                 {imapSettings ? (
                   <div className="space-y-2 text-sm">
                     <p><span className="text-muted-foreground">Host:</span> {imapSettings.host}</p>

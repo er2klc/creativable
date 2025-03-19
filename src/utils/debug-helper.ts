@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmailConfigStatus {
@@ -185,5 +184,68 @@ export async function fixDuplicateEmailFolders(userId: string) {
   } catch (error) {
     console.error("Error fixing duplicate folders:", error);
     return { success: false, error };
+  }
+}
+
+// Neue Funktion zum Bereinigen doppelter IMAP-Einträge
+export async function cleanupDuplicateImapSettings(): Promise<{ success: boolean; message: string }> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return {
+        success: false,
+        message: "Kein Benutzer gefunden"
+      };
+    }
+
+    // Hole alle IMAP-Einstellungen für den Benutzer
+    const { data: imapSettings, error: fetchError } = await supabase
+      .from('imap_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (fetchError) {
+      throw fetchError;
+    }
+
+    if (!imapSettings || imapSettings.length === 0) {
+      return {
+        success: true,
+        message: "Keine IMAP-Einstellungen gefunden"
+      };
+    }
+
+    if (imapSettings.length === 1) {
+      return {
+        success: true,
+        message: "Keine doppelten Einträge gefunden"
+      };
+    }
+
+    // Behalte den neuesten Eintrag und lösche die anderen
+    const [latestSettings, ...duplicates] = imapSettings;
+    
+    // Lösche alle doppelten Einträge
+    const { error: deleteError } = await supabase
+      .from('imap_settings')
+      .delete()
+      .in('id', duplicates.map(d => d.id));
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    return {
+      success: true,
+      message: `${duplicates.length} doppelte Einträge wurden gelöscht`
+    };
+  } catch (error) {
+    console.error("Fehler beim Bereinigen der IMAP-Einstellungen:", error);
+    return {
+      success: false,
+      message: error.message || "Ein unerwarteter Fehler ist aufgetreten"
+    };
   }
 }
