@@ -148,18 +148,8 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
         onRefresh={syncEmails}
         isSyncing={isSyncing}
         profile={profile}
+        onNewEmail={() => setIsNewEmailOpen(true)}
       />
-      
-      {/* New Email Button - Fixed Position */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <Button 
-          onClick={() => setIsNewEmailOpen(true)} 
-          className="h-14 w-14 rounded-full shadow-lg flex items-center justify-center"
-          variant="primary"
-        >
-          <PlusCircle className="h-6 w-6" />
-        </Button>
-      </div>
       
       <div className="grid flex-1 h-[calc(100%-4rem)] mt-16 md:mt-16 grid-cols-[240px_350px_1fr] overflow-hidden">
         {/* Email Folders Sidebar */}

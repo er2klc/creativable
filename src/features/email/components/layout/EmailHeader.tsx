@@ -2,7 +2,7 @@
 import React from 'react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Search, MoveHorizontal, X, Mail } from "lucide-react";
+import { RefreshCw, Search, MoveHorizontal, X, Mail, PlusCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 
@@ -13,6 +13,7 @@ interface EmailHeaderProps {
   onRefresh: () => void;
   isSyncing: boolean;
   profile?: any;
+  onNewEmail?: () => void;
 }
 
 export function EmailHeader({ 
@@ -21,7 +22,8 @@ export function EmailHeader({
   onSearchChange,
   onRefresh,
   isSyncing,
-  profile
+  profile,
+  onNewEmail
 }: EmailHeaderProps) {
   return (
     <div className="fixed top-[64px] md:top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
@@ -71,6 +73,16 @@ export function EmailHeader({
               >
                 <RefreshCw className={cn("h-4 w-4", isSyncing && "animate-spin")} />
                 <span className="hidden md:inline">Refresh</span>
+              </Button>
+              
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={onNewEmail}
+                className="flex items-center gap-1"
+              >
+                <PlusCircle className="h-4 w-4" />
+                <span className="hidden md:inline">New Email</span>
               </Button>
               
               <HeaderActions userEmail={userEmail} profile={profile} />
