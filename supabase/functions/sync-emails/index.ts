@@ -1,7 +1,9 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ImapFlow } from 'npm:imapflow@1.0.98';
 import { simpleParser } from 'npm:mailparser@3.6.5';
 import * as log from 'npm:console';
+import { corsHeaders } from "../_shared/cors.ts";
 
 // Enable global debug logging for detailed connection information
 const globalDebugMode = true;
