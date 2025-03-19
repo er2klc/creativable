@@ -814,7 +814,7 @@ serve(async (req) => {
       },
       logger: requestData.debug || false,
       tls: {
-        rejectUnauthorized: false, // More permissive TLS for better compatibility
+        rejectUnauthorized: false, // More permissive TLS for broader compatibility
         servername: settings.host,
         enableTrace: false,
         minVersion: 'TLSv1'
