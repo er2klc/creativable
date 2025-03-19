@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ImapFlow } from 'npm:imapflow@1.0.98';
 import { simpleParser } from 'npm:mailparser@3.6.5';
@@ -71,6 +70,7 @@ interface SyncOptions {
   };
   incrementalConnection?: boolean;
   loadLatest?: boolean;
+  incrementalSync?: boolean;
 }
 
 // Add this new date validation function
@@ -88,12 +88,13 @@ async function syncEmails(
 ): Promise<SyncResult> {
   const { 
     folder = 'INBOX', 
-    maxEmails = 500, 
+    maxEmails = 100, 
     batchProcessing = true,
-    maxBatchSize = 25,
-    connectionTimeout = 60000,
+    maxBatchSize = 10,
+    connectionTimeout = 30000,
     retryAttempts = 2,
-    loadLatest = true
+    loadLatest = true,
+    incrementalSync = true
   } = options;
   
   // Check for system time issues
@@ -110,14 +111,47 @@ async function syncEmails(
 
   debugLog(`[Attempt ${retryCount + 1}] Syncing emails from folder ${folder} with options:`, options);
   
+  // Get the SUPABASE environment variables
+  const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
+  
+  if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error("Missing Supabase environment variables");
+  }
+  
+  // First check if we have a previous sync record and when it was last synced
+  let lastSyncTime: Date | null = null;
+  let lastUID: number | null = null;
+  
+  if (incrementalSync && !options.forceRefresh) {
+    try {
+      const syncStatusResponse = await fetch(
+        `${SUPABASE_URL}/rest/v1/email_sync_status?user_id=eq.${userId}&folder=eq.${encodeURIComponent(folder)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            'apikey': SUPABASE_SERVICE_ROLE_KEY,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          }
+        }
+      );
+      
+      const syncStatus = await syncStatusResponse.json();
+      
+      if (syncStatus && syncStatus.length > 0) {
+        lastSyncTime = new Date(syncStatus[0].last_sync_time);
+        lastUID = syncStatus[0].last_uid || null;
+        debugLog(`Found previous sync record. Last sync time: ${lastSyncTime.toISOString()}, Last UID: ${lastUID}`);
+      }
+    } catch (error) {
+      console.error("Error fetching sync status:", error);
+      // Continue with sync even if we can't get the last sync time
+    }
+  }
+  
   // Update status in DB to show sync in progress
   try {
-    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
-    
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing Supabase environment variables");
-    }
-    
     // Update or create sync status
     const syncStatusResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/email_sync_status?user_id=eq.${userId}&folder=eq.${encodeURIComponent(folder)}`,
@@ -147,7 +181,8 @@ async function syncEmails(
             'Prefer': 'return=representation'
           },
           body: JSON.stringify({
-            last_sync_time: new Date().toISOString(),
+            sync_in_progress: true,
+            last_sync_attempt: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
         }
@@ -167,8 +202,9 @@ async function syncEmails(
           body: JSON.stringify({
             user_id: userId,
             folder: folder,
-            last_sync_time: new Date().toISOString(),
-            items_synced: 0
+            last_sync_attempt: new Date().toISOString(),
+            items_synced: 0,
+            sync_in_progress: true
           })
         }
       );
@@ -177,11 +213,26 @@ async function syncEmails(
     console.error("Error updating sync status:", statusError);
     // Continue with sync even if status update fails
   }
-  
-  // Create IMAP connection
-  const client = new ImapFlow(imapSettings);
+
+  // Create IMAP connection with optimized settings
+  const optimizedSettings = {
+    ...imapSettings,
+    connectionTimeout: 30000,
+    greetTimeout: 15000,
+    socketTimeout: 30000,
+    disableCompression: true, // Try disabling compression for better performance
+    tls: {
+      ...imapSettings.tls,
+      rejectUnauthorized: false, // More permissive TLS for broader compatibility
+      minVersion: 'TLSv1'
+    }
+  };
+
+  const client = new ImapFlow(optimizedSettings);
   
   try {
+    debugLog("Attempting to connect to IMAP server...");
+    
     // Create a connection timeout promise
     const connectPromise = client.connect();
     const timeoutPromise = new Promise((_, reject) => {
@@ -202,6 +253,10 @@ async function syncEmails(
     if (mailbox.exists === 0) {
       debugLog(`No messages in folder ${folder}`);
       await client.logout();
+      
+      // Update sync status
+      await updateSyncStatus(userId, folder, 0, null, 0, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
       return {
         success: true,
         message: `No messages found in folder ${folder}`,
@@ -210,14 +265,8 @@ async function syncEmails(
     }
     
     // Get existing message IDs for this folder and user
-    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
-    
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing Supabase environment variables");
-    }
-    
     const existingEmailsResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/emails?user_id=eq.${userId}&folder=eq.${encodeURIComponent(folder)}&select=message_id`,
+      `${SUPABASE_URL}/rest/v1/emails?user_id=eq.${userId}&folder=eq.${encodeURIComponent(folder)}&select=message_id,uid`,
       {
         headers: {
           'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
@@ -228,28 +277,68 @@ async function syncEmails(
     
     const existingEmails = await existingEmailsResponse.json();
     const existingMessageIds = new Set(existingEmails.map(e => e.message_id));
+    const existingUIDs = new Set(existingEmails.map(e => e.uid).filter(Boolean));
     
     debugLog(`Found ${existingMessageIds.size} existing emails in database for folder ${folder}`);
     
-    // Determine sequence numbers to fetch
-    // If loadLatest is true, start from the most recent emails
-    const totalMessages = mailbox.exists;
-    const maxToSync = Math.min(maxEmails, totalMessages);
+    // Determine if we should do incremental sync
+    let searchCriteria: any;
+    let highestUID = 0;
     
-    let sequenceFrom, sequenceTo;
-    if (loadLatest) {
-      sequenceFrom = Math.max(1, totalMessages - maxToSync + 1);
-      sequenceTo = totalMessages;
+    if (incrementalSync && lastUID && !options.forceRefresh) {
+      // Search for messages with UIDs greater than the last one we synced
+      searchCriteria = { uid: { gt: lastUID } };
+      debugLog(`Performing incremental sync from UID ${lastUID + 1}`);
+    } else if (incrementalSync && lastSyncTime && !options.forceRefresh) {
+      // Search for messages newer than last sync time
+      const sinceDate = new Date(lastSyncTime);
+      searchCriteria = { since: sinceDate };
+      debugLog(`Performing incremental sync since ${sinceDate.toISOString()}`);
     } else {
-      sequenceFrom = 1;
-      sequenceTo = Math.min(maxToSync, totalMessages);
+      // Full sync - get all messages with the specified limit
+      searchCriteria = {}; 
+      debugLog(`Performing full sync with max ${maxEmails} emails`);
     }
     
-    debugLog(`Will sync emails from sequence ${sequenceFrom} to ${sequenceTo} (${sequenceTo - sequenceFrom + 1} total)`);
+    // Get message sequence numbers using search
+    debugLog(`Searching with criteria:`, searchCriteria);
+    const messages = await client.search(searchCriteria, { uid: true });
+    
+    // Sort UIDs in ascending order
+    messages.sort((a, b) => a - b);
+    
+    let messagesToFetch = messages;
+    
+    // If this is not an incremental sync or a forced refresh, limit the number of messages
+    if ((!incrementalSync || !lastUID) && !options.forceRefresh) {
+      if (loadLatest) {
+        // Get the most recent messages up to maxEmails
+        messagesToFetch = messages.slice(-maxEmails);
+      } else {
+        // Get the oldest messages up to maxEmails
+        messagesToFetch = messages.slice(0, maxEmails);
+      }
+    }
+    
+    const totalEmails = messagesToFetch.length;
+    debugLog(`Found ${totalEmails} messages to fetch`);
+    
+    if (totalEmails === 0) {
+      debugLog(`No new messages to fetch in folder ${folder}`);
+      await client.logout();
+      
+      // Update sync status with current time but don't change last_uid
+      await updateSyncStatus(userId, folder, 0, null, 0, SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      return {
+        success: true,
+        message: `No new messages found in folder ${folder}`,
+        emailsCount: 0
+      };
+    }
     
     // Process messages in batches for better performance and progress tracking
-    const batchSize = batchProcessing ? maxBatchSize : maxToSync;
-    const totalEmails = sequenceTo - sequenceFrom + 1;
+    const batchSize = batchProcessing ? maxBatchSize : totalEmails;
     const totalBatches = Math.ceil(totalEmails / batchSize);
     
     debugLog(`Processing in ${totalBatches} batches of ${batchSize} emails`);
@@ -257,13 +346,19 @@ async function syncEmails(
     let processedEmails = 0;
     let newEmails = 0;
     let emailsToInsert = [];
+    let highestProcessedUID = lastUID || 0;
     
     // Process emails in batches
     for (let batchNum = 0; batchNum < totalBatches; batchNum++) {
-      const batchStart = sequenceFrom + (batchNum * batchSize);
-      const batchEnd = Math.min(sequenceTo, batchStart + batchSize - 1);
+      const batchStart = batchNum * batchSize;
+      const batchEnd = Math.min(totalEmails, batchStart + batchSize);
+      const batchUIDs = messagesToFetch.slice(batchStart, batchEnd);
       
-      debugLog(`Processing batch ${batchNum + 1}/${totalBatches}, messages ${batchStart}-${batchEnd}`);
+      if (batchUIDs.length === 0) {
+        continue;
+      }
+      
+      debugLog(`Processing batch ${batchNum + 1}/${totalBatches}, messages ${batchStart}-${batchEnd-1}, UIDs: ${batchUIDs[0]}-${batchUIDs[batchUIDs.length-1]}`);
       
       // Fetch messages in the current batch
       const fetchOptions = {
@@ -275,9 +370,14 @@ async function syncEmails(
       };
       
       // Use fetch to get message data
-      for await (const message of client.fetch(`${batchStart}:${batchEnd}`, fetchOptions)) {
+      for await (const message of client.fetch(batchUIDs, fetchOptions)) {
         try {
           processedEmails++;
+          
+          // Keep track of highest UID for incremental sync
+          if (message.uid > highestProcessedUID) {
+            highestProcessedUID = message.uid;
+          }
           
           // Calculate progress percentage
           const progress = Math.floor((processedEmails / totalEmails) * 100);
@@ -285,17 +385,17 @@ async function syncEmails(
           // Get message ID and check if it already exists
           const messageId = message.envelope.messageId;
           
-          if (existingMessageIds.has(messageId)) {
-            debugLog(`Skipping existing message: ${messageId}`);
+          if (existingMessageIds.has(messageId) || existingUIDs.has(message.uid)) {
+            debugLog(`Skipping existing message: ${messageId} (UID: ${message.uid})`);
             // Can update flags and read status if needed
             continue;
           }
           
           // Get full message content
-          const messageData = await client.download(message.seq);
+          const messageData = await client.download(message.uid);
           
           if (!messageData) {
-            console.error(`Failed to download message content for seq ${message.seq}`);
+            console.error(`Failed to download message content for UID ${message.uid}`);
             continue;
           }
           
@@ -333,6 +433,7 @@ async function syncEmails(
             user_id: userId,
             folder: folder,
             message_id: messageId,
+            uid: message.uid,
             subject: subject,
             from_name: fromName,
             from_email: fromEmail,
@@ -356,49 +457,46 @@ async function syncEmails(
           
           // Batch insert if we've accumulated enough emails
           if (emailsToInsert.length >= 10) {
-            await fetch(
-              `${SUPABASE_URL}/rest/v1/emails`,
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-                  'apikey': SUPABASE_SERVICE_ROLE_KEY,
-                  'Prefer': 'return=representation'
-                },
-                body: JSON.stringify(emailsToInsert)
-              }
-            );
+            try {
+              await fetch(
+                `${SUPABASE_URL}/rest/v1/emails`,
+                {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                    'apikey': SUPABASE_SERVICE_ROLE_KEY,
+                    'Prefer': 'return=representation'
+                  },
+                  body: JSON.stringify(emailsToInsert)
+                }
+              );
+            } catch (insertError) {
+              console.error("Error inserting batch of emails:", insertError);
+            }
             
             // Clear the batch array
             emailsToInsert = [];
           }
           
-          // Store sync progress for tracking
+          // Update sync progress periodically
           if (processedEmails % 5 === 0 || processedEmails === totalEmails) {
-            // Store progress in Redis
-            // This is simplified - you might want to use a more persistent storage for production
             try {
-              await fetch(
-                `${SUPABASE_URL}/rest/v1/email_sync_status?user_id=eq.${userId}&folder=eq.${encodeURIComponent(folder)}`,
-                {
-                  method: 'PATCH',
-                  headers: {
-                    'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-                    'apikey': SUPABASE_SERVICE_ROLE_KEY,
-                    'Content-Type': 'application/json'
-                  },
-                  body: JSON.stringify({
-                    items_synced: processedEmails
-                  })
-                }
+              await updateSyncStatus(
+                userId, 
+                folder, 
+                processedEmails, 
+                highestProcessedUID, 
+                totalEmails, 
+                SUPABASE_URL, 
+                SUPABASE_SERVICE_ROLE_KEY
               );
             } catch (progressError) {
               console.error("Error updating progress:", progressError);
             }
           }
         } catch (messageError) {
-          console.error(`Error processing message at seq ${message.seq}:`, messageError);
+          console.error(`Error processing message at UID ${message.uid}:`, messageError);
           // Continue with next message despite errors
         }
       }
@@ -409,19 +507,23 @@ async function syncEmails(
     
     // Insert any remaining emails
     if (emailsToInsert.length > 0) {
-      await fetch(
-        `${SUPABASE_URL}/rest/v1/emails`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            'apikey': SUPABASE_SERVICE_ROLE_KEY,
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify(emailsToInsert)
-        }
-      );
+      try {
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/emails`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+              'apikey': SUPABASE_SERVICE_ROLE_KEY,
+              'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(emailsToInsert)
+          }
+        );
+      } catch (insertError) {
+        console.error("Error inserting final batch of emails:", insertError);
+      }
     }
     
     // Update folder message counts
@@ -450,6 +552,18 @@ async function syncEmails(
       console.error("Exception updating folder counts:", folderError);
     }
     
+    // Update final sync status
+    await updateSyncStatus(
+      userId, 
+      folder, 
+      processedEmails, 
+      highestProcessedUID, 
+      totalEmails, 
+      SUPABASE_URL, 
+      SUPABASE_SERVICE_ROLE_KEY, 
+      false
+    );
+    
     // Clean up
     await client.logout();
     
@@ -477,6 +591,23 @@ async function syncEmails(
       console.error("Error during logout:", logoutError);
     }
     
+    // Update sync status to show error
+    try {
+      await updateSyncStatus(
+        userId, 
+        folder, 
+        0, 
+        null, 
+        0, 
+        SUPABASE_URL, 
+        SUPABASE_SERVICE_ROLE_KEY, 
+        false, 
+        error.message
+      );
+    } catch (statusError) {
+      console.error("Error updating sync status after error:", statusError);
+    }
+    
     // Retry with different settings if retry count isn't exhausted
     if (retryCount < retryAttempts) {
       console.log(`Retrying email sync (${retryCount + 1}/${retryAttempts})...`);
@@ -491,7 +622,9 @@ async function syncEmails(
             ...imapSettings.tls,
             rejectUnauthorized: false // Don't fail on invalid certificates for retry
           },
-          connectionTimeout: imapSettings.connectionTimeout * 1.5 // Increase timeout
+          connectionTimeout: imapSettings.connectionTimeout * 1.5, // Increase timeout
+          socketTimeout: 60000, // Longer socket timeout
+          greetTimeout: 30000 // Longer greeting timeout
         };
         return syncEmails(newSettings, userId, options, retryCount + 1);
       } 
@@ -519,6 +652,92 @@ async function syncEmails(
       error: error.message,
       details: error.stack || "Unknown error during email sync"
     };
+  }
+}
+
+// Helper function to update sync status
+async function updateSyncStatus(
+  userId: string, 
+  folder: string, 
+  itemsSynced: number, 
+  lastUID: number | null, 
+  totalItems: number, 
+  supabaseUrl: string, 
+  supabaseKey: string, 
+  inProgress: boolean = true,
+  errorMessage: string | null = null
+) {
+  try {
+    // First check if entry exists
+    const response = await fetch(
+      `${supabaseUrl}/rest/v1/email_sync_status?user_id=eq.${userId}&folder=eq.${encodeURIComponent(folder)}`,
+      {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${supabaseKey}`,
+          'apikey': supabaseKey,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    
+    const existingStatus = await response.json();
+    
+    const updateData = {
+      items_synced: itemsSynced,
+      total_items: totalItems,
+      sync_in_progress: inProgress,
+      updated_at: new Date().toISOString()
+    };
+    
+    // Only set these fields if we have valid values
+    if (!inProgress) {
+      updateData['last_sync_time'] = new Date().toISOString();
+    }
+    
+    if (lastUID) {
+      updateData['last_uid'] = lastUID;
+    }
+    
+    if (errorMessage) {
+      updateData['last_error'] = errorMessage;
+    }
+    
+    if (existingStatus && existingStatus.length > 0) {
+      // Update existing record
+      await fetch(
+        `${supabaseUrl}/rest/v1/email_sync_status?id=eq.${existingStatus[0].id}`,
+        {
+          method: 'PATCH',
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updateData)
+        }
+      );
+    } else {
+      // Create new record
+      await fetch(
+        `${supabaseUrl}/rest/v1/email_sync_status`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${supabaseKey}`,
+            'apikey': supabaseKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            user_id: userId,
+            folder: folder,
+            ...updateData
+          })
+        }
+      );
+    }
+  } catch (error) {
+    console.error("Error updating sync status:", error);
   }
 }
 
@@ -584,6 +803,7 @@ serve(async (req) => {
     // Configure IMAP client
     const settings = imapSettings[0];
     
+    // Use optimized IMAP settings to prevent timeout issues
     const imapConfig = {
       host: settings.host,
       port: settings.port || 993,
@@ -594,24 +814,24 @@ serve(async (req) => {
       },
       logger: requestData.debug || false,
       tls: {
-        rejectUnauthorized: !(requestData.disable_certificate_validation || false),
+        rejectUnauthorized: false, // More permissive TLS for better compatibility
         servername: settings.host,
-        enableTrace: requestData.tlsOptions?.enableTrace || false,
-        minVersion: requestData.tlsOptions?.minVersion || 'TLSv1'
+        enableTrace: false,
+        minVersion: 'TLSv1'
       },
       connectionTimeout: requestData.connection_timeout || settings.connection_timeout || 30000,
       greetTimeout: 15000,
       socketTimeout: 30000,
-      disableCompression: false
+      disableCompression: true // Try disabling compression for better performance
     };
 
-    // Extract sync options from request
+    // Extract sync options from request with better defaults for reliability
     const syncOptions = {
       folder: requestData.folder || 'INBOX',
       forceRefresh: requestData.force_refresh || false,
-      maxEmails: requestData.max_emails || settings.max_emails || 500,
+      maxEmails: requestData.max_emails || settings.max_emails || 100,
       batchProcessing: requestData.batch_processing !== false,
-      maxBatchSize: requestData.max_batch_size || 25,
+      maxBatchSize: requestData.max_batch_size || 10, // Smaller batch size for better reliability
       connectionTimeout: requestData.connection_timeout || settings.connection_timeout || 30000,
       retryAttempts: requestData.retry_attempts || 2,
       folderSyncOnly: requestData.folder_sync_only || false,
@@ -619,7 +839,8 @@ serve(async (req) => {
       loadLatest: requestData.load_latest !== false,
       historicalSync: requestData.historical_sync || settings.historical_sync || false,
       tlsOptions: requestData.tlsOptions || { rejectUnauthorized: false },
-      ignoreDataValidation: requestData.ignore_date_validation || false
+      ignoreDataValidation: requestData.ignore_date_validation || false,
+      incrementalSync: requestData.incremental_sync !== false // Default to true for incremental sync
     };
 
     // Only sync folders if explicitly requested
