@@ -9,7 +9,7 @@ export const imapSettingsSchema = z.object({
   secure: z.boolean().default(true),
   max_emails: z.coerce.number().int().positive().default(100),
   auto_reconnect: z.boolean().default(true),
-  connection_timeout: z.coerce.number().int().positive().default(30000)
+  connection_timeout: z.coerce.number().int().positive().default(60000)
 });
 
 // Documentation for common IMAP servers

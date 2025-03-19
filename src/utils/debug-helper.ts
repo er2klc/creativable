@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 interface EmailConfigStatus {
@@ -251,6 +250,45 @@ export async function cleanupDuplicateImapSettings(): Promise<{ success: boolean
   }
 }
 
+// New function to reset IMAP settings
+export async function resetImapSettings(): Promise<{ success: boolean; message: string }> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      return {
+        success: false,
+        message: "No user found. Please log in."
+      };
+    }
+    
+    // Call the Supabase function to reset IMAP settings
+    const { data, error } = await supabase.rpc(
+      'reset_imap_settings',
+      { user_id_param: user.id }
+    );
+    
+    if (error) {
+      console.error("Error resetting IMAP settings:", error);
+      return {
+        success: false,
+        message: error.message || "An error occurred while resetting IMAP settings."
+      };
+    }
+    
+    return {
+      success: true,
+      message: "IMAP settings have been reset successfully. Please update your settings and start a new sync."
+    };
+  } catch (error) {
+    console.error("Error resetting IMAP settings:", error);
+    return {
+      success: false,
+      message: error.message || "An unexpected error occurred while resetting IMAP settings."
+    };
+  }
+}
+
 // New function to validate IMAP credentials
 export async function validateImapCredentials(settings: {
   host: string;
@@ -289,7 +327,7 @@ export async function validateImapCredentials(settings: {
             enableTrace: true,
             minVersion: "TLSv1"
           },
-          timeout: 20000 // 20 seconds timeout
+          timeout: 60000 // 60 seconds timeout
         })
       }
     );

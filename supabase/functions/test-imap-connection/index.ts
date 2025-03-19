@@ -154,7 +154,7 @@ serve(async (req) => {
         enableTrace: true,
         minVersion: "TLSv1"
       },
-      timeout = 20000
+      timeout = 60000  // Increased default timeout to 60 seconds
     } = requestData;
     
     // Validate required parameters

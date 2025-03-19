@@ -1,429 +1,365 @@
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/use-auth';
-import { AlertCircle, AlertTriangle, Bug, Check, RefreshCw, XCircle, Clock, Inbox, Server, Shield } from 'lucide-react';
-import { toast } from 'sonner';
-import { useFolderSync } from '@/features/email/hooks/useFolderSync';
-import { checkEmailConfigStatus } from "@/utils/debug-helper";
-import { cleanupDuplicateImapSettings } from "@/utils/debug-helper";
-import { Progress } from "@/components/ui/progress";
+import React, { useState } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Loader2, AlertCircle, CheckCircle, RefreshCcw, Trash2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
+import { 
+  checkEmailConfigStatus, 
+  cleanupDuplicateImapSettings, 
+  fixDuplicateEmailFolders,
+  resetImapSettings,
+  validateImapCredentials
+} from "@/utils/debug-helper";
+import { supabase } from "@/integrations/supabase/client";
 
 export function EmailDiagnostics() {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [isCleaning, setIsCleaning] = useState(false);
-  const [imapSettings, setImapSettings] = useState<any>(null);
-  const [smtpSettings, setSmtpSettings] = useState<any>(null);
-  const [emailCount, setEmailCount] = useState<number | null>(null);
-  const [folderCount, setFolderCount] = useState<number | null>(null);
-  const [syncStatus, setSyncStatus] = useState<any>(null);
-  const [systemTime, setSystemTime] = useState<string | null>(null);
-  const [dbTime, setDbTime] = useState<string | null>(null);
-  const [timeDiscrepancy, setTimeDiscrepancy] = useState(false);
-  const [discrepancyMinutes, setDiscrepancyMinutes] = useState(0);
-  const [isSyncingInbox, setSyncingInbox] = useState(false);
-  const [syncProgress, setSyncProgress] = useState(0);
-  const { resetEmailSync, syncFolders, syncEmailsFromInbox } = useFolderSync();
+  const [isResetting, setIsResetting] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
+  const [status, setStatus] = useState<any>(null);
+  const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
 
-  useEffect(() => {
-    loadDiagnosticData();
-  }, [user]);
-
-  const loadDiagnosticData = async () => {
+  const checkStatus = async () => {
     if (!user) return;
-    
     setIsLoading(true);
     try {
-      // Get all diagnostics in parallel for efficiency
-      const [
-        imapResult, 
-        smtpResult, 
-        emailCountResult, 
-        folderCountResult,
-        syncStatusResult,
-        timeCheckResult
-      ] = await Promise.all([
-        supabase.from('imap_settings').select('*').eq('user_id', user.id).maybeSingle(),
-        supabase.from('smtp_settings').select('*').eq('user_id', user.id).maybeSingle(),
-        supabase.from('emails').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('email_folders').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-        supabase.from('email_sync_status').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-        supabase.rpc('check_time_discrepancy')
-      ]);
-
-      setImapSettings(imapResult.data);
-      setSmtpSettings(smtpResult.data);
-      setEmailCount(emailCountResult.count);
-      setFolderCount(folderCountResult.count);
-      setSyncStatus(syncStatusResult.data);
+      const result = await checkEmailConfigStatus();
+      console.log("Email configuration check result:", result);
+      setStatus(result);
       
-      // Handle time check
-      if (timeCheckResult.data) {
-        const currentSystemTime = new Date().toISOString();
-        setSystemTime(currentSystemTime);
-        setDbTime(timeCheckResult.data.db_time);
-        
-        // Check for time discrepancy greater than 1 minute
-        const dbTimeObj = new Date(timeCheckResult.data.db_time);
-        const systemTimeObj = new Date(currentSystemTime);
-        const diffMs = Math.abs(dbTimeObj.getTime() - systemTimeObj.getTime());
-        const diffMinutes = diffMs / (1000 * 60);
-        
-        setTimeDiscrepancy(diffMinutes > 1);
-        setDiscrepancyMinutes(Math.round(diffMinutes));
+      if (result.success) {
+        toast.success("Email configuration check completed");
+      } else {
+        toast.error("Error checking email configuration", {
+          description: result.error
+        });
       }
     } catch (error) {
-      console.error('Error loading diagnostics:', error);
-      toast.error('Failed to load diagnostic information');
+      console.error("Error checking status:", error);
+      toast.error("Failed to check email status");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleResetEmailSync = async () => {
-    const result = await resetEmailSync();
-    if (result.success) {
-      toast.success('Email sync reset successfully');
-      loadDiagnosticData();
-    }
-  };
-
-  const handleSyncFolders = async () => {
-    const result = await syncFolders();
-    if (result.success) {
-      toast.success('Folders synced successfully');
-      loadDiagnosticData();
-    }
-  };
-  
-  const handleSyncInbox = async () => {
-    if (isSyncingInbox) return;
-    
-    setSyncingInbox(true);
-    setSyncProgress(10); // Start progress
-    
+  const fixFolders = async () => {
+    if (!user) return;
+    setIsLoading(true);
     try {
-      // Set initial progress updates
-      const progressInterval = setInterval(() => {
-        setSyncProgress(prev => {
-          if (prev < 90) return prev + 5;
-          return prev;
-        });
-      }, 1500);
-      
-      await syncEmailsFromInbox();
-      clearInterval(progressInterval);
-      setSyncProgress(100);
-      
-      toast.success('Inbox synced successfully');
-      loadDiagnosticData();
-      
-      // Reset progress after 2 seconds
-      setTimeout(() => {
-        setSyncProgress(0);
-        setSyncingInbox(false);
-      }, 2000);
-    } catch (error) {
-      console.error('Error syncing inbox:', error);
-      toast.error('Failed to sync inbox', {
-        description: error.message || 'Please check your IMAP settings or try again later'
-      });
-      clearInterval(progressInterval);
-      setSyncProgress(0);
-      setSyncingInbox(false);
-    }
-  };
-
-  const handleCleanupDuplicates = async () => {
-    if (!user || isCleaning) return;
-    
-    setIsCleaning(true);
-    try {
-      const result = await cleanupDuplicateImapSettings();
+      const result = await fixDuplicateEmailFolders(user.id);
+      console.log("Fix folders result:", result);
       
       if (result.success) {
-        toast.success("IMAP-Einstellungen bereinigt", {
+        toast.success("Email folders fixed", {
           description: result.message
         });
-        // Aktualisiere die Anzeige
-        loadDiagnosticData();
       } else {
-        toast.error("Fehler beim Bereinigen", {
+        toast.error("Failed to fix email folders", {
+          description: result.error
+        });
+      }
+    } catch (error) {
+      console.error("Error fixing folders:", error);
+      toast.error("Failed to fix email folders");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const cleanupSettings = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const result = await cleanupDuplicateImapSettings();
+      console.log("Cleanup result:", result);
+      
+      if (result.success) {
+        toast.success("IMAP settings cleaned up", {
+          description: result.message
+        });
+      } else {
+        toast.error("Failed to clean up IMAP settings", {
           description: result.message
         });
       }
     } catch (error) {
-      console.error("Fehler beim Bereinigen der IMAP-Einstellungen:", error);
-      toast.error("Fehler beim Bereinigen", {
-        description: "Ein unerwarteter Fehler ist aufgetreten"
-      });
+      console.error("Error cleaning up settings:", error);
+      toast.error("Failed to clean up IMAP settings");
     } finally {
-      setIsCleaning(false);
+      setIsLoading(false);
     }
   };
 
-  const formatTimestamp = (timestamp: string | null) => {
-    if (!timestamp) return 'Never';
+  const resetSettings = async () => {
+    if (!user) return;
+    if (!window.confirm("This will reset all IMAP settings, delete all emails and folders. Are you sure you want to continue?")) {
+      return;
+    }
+    
+    setIsResetting(true);
     try {
-      return new Date(timestamp).toLocaleString();
+      const result = await resetImapSettings();
+      console.log("Reset result:", result);
+      
+      if (result.success) {
+        toast.success("IMAP settings reset successfully", {
+          description: "All email data has been cleared. Please update your settings and start a new sync."
+        });
+      } else {
+        toast.error("Failed to reset IMAP settings", {
+          description: result.message
+        });
+      }
     } catch (error) {
-      return 'Invalid date';
+      console.error("Error resetting settings:", error);
+      toast.error("Failed to reset IMAP settings");
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  const testCurrentSettings = async () => {
+    if (!user) return;
+    setIsTesting(true);
+    setTestResult(null);
+    
+    try {
+      // First get current IMAP settings
+      const { data, error } = await supabase
+        .from('imap_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+        
+      if (error) throw error;
+      
+      if (!data) {
+        setTestResult({
+          success: false,
+          message: "No IMAP settings found. Please configure your IMAP settings first."
+        });
+        return;
+      }
+      
+      // Test the connection
+      const result = await validateImapCredentials({
+        host: data.host,
+        port: data.port,
+        username: data.username,
+        password: data.password,
+        secure: data.secure
+      });
+      
+      setTestResult(result);
+      
+      if (result.success) {
+        toast.success("IMAP connection test successful");
+      } else {
+        toast.error("IMAP connection test failed", {
+          description: result.message
+        });
+      }
+    } catch (error) {
+      console.error("Error testing connection:", error);
+      setTestResult({
+        success: false,
+        message: error.message || "Failed to test IMAP connection"
+      });
+      toast.error("Failed to test IMAP connection");
+    } finally {
+      setIsTesting(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Email Integration Diagnostics</CardTitle>
-          <CardDescription>
-            Überprüfen Sie den Status Ihrer E-Mail-Integration
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            {timeDiscrepancy && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
-                <div className="flex">
-                  <AlertTriangle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
-                  <div>
-                    <h3 className="text-sm font-medium text-red-800">Time Discrepancy Detected!</h3>
-                    <p className="text-sm text-red-700 mt-1">
-                      Your system time is {discrepancyMinutes} minutes different from the database time.
-                      This can cause authentication and synchronization issues.
-                    </p>
-                    <div className="mt-2 text-xs text-red-600 flex flex-col gap-1">
-                      <div>Your system time: {formatTimestamp(systemTime)}</div>
-                      <div>Database time: {formatTimestamp(dbTime)}</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2 flex items-center gap-1">
-                  <Clock className="h-4 w-4" /> Time Status
-                </h3>
-                <div className="space-y-2 text-sm">
-                  <p>
-                    <span className="text-muted-foreground">System Time:</span> {formatTimestamp(systemTime)}
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Database Time:</span> {formatTimestamp(dbTime)}
-                  </p>
-                  <p>
-                    <span className="text-muted-foreground">Time Discrepancy:</span> {
-                      timeDiscrepancy 
-                        ? <span className="text-red-500">{discrepancyMinutes} minutes (Problem)</span>
-                        : <span className="text-green-500">None detected</span>
-                    }
-                  </p>
-                </div>
-              </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Email Diagnostics and Troubleshooting</CardTitle>
+        <CardDescription>
+          Tools to diagnose and fix issues with email integration
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <Tabs defaultValue="diagnostics">
+          <TabsList className="mb-4">
+            <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
+            <TabsTrigger value="actions">Maintenance Actions</TabsTrigger>
+          </TabsList>
           
-              <div className="border rounded-md p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-medium flex items-center gap-1">
-                    <Server className="h-4 w-4" /> IMAP Settings
-                  </h3>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleCleanupDuplicates}
-                    disabled={isCleaning}
-                  >
-                    {isCleaning ? "Bereinige..." : "Doppelte Einträge bereinigen"}
-                  </Button>
-                </div>
-                {imapSettings ? (
-                  <div className="space-y-2 text-sm">
-                    <p><span className="text-muted-foreground">Host:</span> {imapSettings.host}</p>
-                    <p><span className="text-muted-foreground">Username:</span> {imapSettings.username}</p>
-                    <p><span className="text-muted-foreground">Last Sync:</span> {formatTimestamp(imapSettings.last_sync_date)}</p>
-                    <p><span className="text-muted-foreground">Historical Sync:</span> {imapSettings.historical_sync ? 'Enabled' : 'Disabled'}</p>
-                    <p>
-                      <span className="text-muted-foreground">Sync Status:</span> 
-                      {imapSettings.sync_status ? (
-                        <span className={`ml-1 ${imapSettings.sync_status === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-                          {imapSettings.sync_status}
-                        </span>
-                      ) : 'Not started'}
-                    </p>
-                    {imapSettings.sync_status === 'error' && imapSettings.sync_error && (
-                      <div className="mt-2 p-2 bg-red-50 rounded border border-red-200">
-                        <p className="text-xs font-medium text-red-800">Error Details:</p>
-                        <pre className="text-xs mt-1 text-red-700 whitespace-pre-wrap break-words">
-                          {imapSettings.sync_error}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-amber-500 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" /> Not configured
-                  </p>
-                )}
+          <TabsContent value="diagnostics">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <Label>Check current email configuration</Label>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={checkStatus}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</>
+                  ) : (
+                    <>Check Status</>
+                  )}
+                </Button>
               </div>
               
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2 flex items-center gap-1">
-                  <Shield className="h-4 w-4" /> SMTP Settings
-                </h3>
-                {smtpSettings ? (
+              <div className="flex items-center justify-between">
+                <Label>Test current IMAP connection</Label>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={testCurrentSettings}
+                  disabled={isTesting}
+                >
+                  {isTesting ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</>
+                  ) : (
+                    <>Test Connection</>
+                  )}
+                </Button>
+              </div>
+              
+              {status && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-md">
+                  <h3 className="font-medium text-sm mb-2">Email Configuration Status</h3>
                   <div className="space-y-2 text-sm">
-                    <p><span className="text-muted-foreground">Host:</span> {smtpSettings.host}</p>
-                    <p><span className="text-muted-foreground">Username:</span> {smtpSettings.username}</p>
-                    <p><span className="text-muted-foreground">From Email:</span> {smtpSettings.from_email}</p>
-                    <p><span className="text-muted-foreground">Last Verified:</span> {formatTimestamp(smtpSettings.last_verified_at)}</p>
-                    <p>
-                      <span className="text-muted-foreground">Verification Status:</span> 
-                      {smtpSettings.last_verification_status ? (
-                        <span className={`ml-1 ${smtpSettings.last_verification_status === 'success' ? 'text-green-500' : 'text-red-500'}`}>
-                          {smtpSettings.last_verification_status}
-                        </span>
-                      ) : 'Not verified'}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-amber-500 flex items-center gap-1">
-                    <AlertCircle className="w-4 h-4" /> Not configured
-                  </p>
-                )}
-              </div>
-            
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2 flex items-center gap-1">
-                  <Inbox className="h-4 w-4" /> Sync Statistics
-                </h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-muted-foreground text-sm">Email Count</p>
-                    <p className="text-xl font-medium">{emailCount !== null ? emailCount : '...'}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-sm">Folder Count</p>
-                    <p className="text-xl font-medium">{folderCount !== null ? folderCount : '...'}</p>
-                  </div>
-                </div>
-                
-                {/* Add connection health check */}
-                <div className="mt-4">
-                  <p className="text-muted-foreground text-sm mb-1">Connection Health</p>
-                  <div className="flex items-center gap-2">
-                    {imapSettings?.sync_status === 'success' ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : imapSettings?.sync_status === 'error' ? (
-                      <XCircle className="h-4 w-4 text-red-500" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4 text-amber-500" />
-                    )}
-                    
-                    <span className={
-                      imapSettings?.sync_status === 'success' ? 'text-green-500' :
-                      imapSettings?.sync_status === 'error' ? 'text-red-500' : 
-                      'text-amber-500'
-                    }>
-                      {imapSettings?.sync_status === 'success' ? 'Healthy' :
-                       imapSettings?.sync_status === 'error' ? 'Connection Issues' : 
-                       'Unknown Status'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="border rounded-md p-4">
-              <h3 className="font-medium mb-2">Last Sync Status</h3>
-              {syncStatus ? (
-                <div className="space-y-2 text-sm">
-                  <p><span className="text-muted-foreground">Status:</span> 
-                    <span className={`ml-1 ${syncStatus.status === 'error' ? 'text-red-500' : 'text-green-500'}`}>
-                      {syncStatus.status}
-                    </span>
-                  </p>
-                  <p><span className="text-muted-foreground">Message:</span> {syncStatus.message || 'No message'}</p>
-                  <p><span className="text-muted-foreground">Started:</span> {formatTimestamp(syncStatus.created_at)}</p>
-                  {syncStatus.completed_at && (
-                    <p><span className="text-muted-foreground">Completed:</span> {formatTimestamp(syncStatus.completed_at)}</p>
-                  )}
-                  {syncStatus.error && (
-                    <div className="mt-2 p-2 bg-red-50 rounded border border-red-200">
-                      <p className="text-xs font-medium text-red-800">Error Details:</p>
-                      <pre className="text-xs mt-1 text-red-700 whitespace-pre-wrap break-words">
-                        {typeof syncStatus.error === 'object' 
-                          ? JSON.stringify(syncStatus.error, null, 2) 
-                          : syncStatus.error}
-                      </pre>
+                    <div className="flex justify-between">
+                      <span>IMAP Configured:</span>
+                      <span>{status.hasImapSettings ? 'Yes' : 'No'}</span>
                     </div>
-                  )}
+                    <div className="flex justify-between">
+                      <span>SMTP Configured:</span>
+                      <span>{status.hasSmtpSettings ? 'Yes' : 'No'}</span>
+                    </div>
+                    {status.imapSettings && (
+                      <>
+                        <div className="flex justify-between">
+                          <span>IMAP Server:</span>
+                          <span>{status.imapSettings.host}:{status.imapSettings.port}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Secure Connection:</span>
+                          <span>{status.imapSettings.secure ? 'Yes (SSL/TLS)' : 'No (Unencrypted)'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Username:</span>
+                          <span>{status.imapSettings.username}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Last Sync:</span>
+                          <span>
+                            {status.imapSettings.last_sync_at 
+                              ? new Date(status.imapSettings.last_sync_at).toLocaleString() 
+                              : 'Never'}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <p className="text-sm">No sync has been attempted yet</p>
+              )}
+              
+              {testResult && (
+                <Alert
+                  variant={testResult.success ? "default" : "destructive"}
+                  className="mt-4"
+                >
+                  {testResult.success ? (
+                    <CheckCircle className="h-4 w-4" />
+                  ) : (
+                    <AlertCircle className="h-4 w-4" />
+                  )}
+                  <AlertTitle>
+                    {testResult.success
+                      ? "Connection Successful"
+                      : "Connection Failed"}
+                  </AlertTitle>
+                  <AlertDescription>{testResult.message}</AlertDescription>
+                </Alert>
               )}
             </div>
-            
-            {/* Add sync progress indicator */}
-            {syncProgress > 0 && (
-              <div className="border rounded-md p-4">
-                <h3 className="font-medium mb-2">Current Sync Progress</h3>
-                <Progress value={syncProgress} className="mb-2" />
-                <p className="text-sm text-muted-foreground">
-                  {syncProgress < 100 
-                    ? `Syncing emails... ${syncProgress}% complete`
-                    : 'Sync complete!'}
-                </p>
-              </div>
-            )}
-            
-            <div className="flex flex-wrap justify-between items-center gap-2 mt-4">
-              <Button 
-                variant="outline" 
-                onClick={loadDiagnosticData}
-                className="flex items-center gap-2"
-                disabled={isLoading}
-              >
-                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-                {isLoading ? 'Refreshing...' : 'Refresh Diagnostics'}
-              </Button>
-              
-              <div className="flex gap-2">
+          </TabsContent>
+          
+          <TabsContent value="actions">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Fix duplicate email folders</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Removes duplicate folders that may cause synchronization issues
+                  </p>
+                </div>
                 <Button 
-                  variant="outline"
-                  onClick={handleSyncFolders}
-                  className="flex items-center gap-2"
+                  variant="outline" 
+                  size="sm"
+                  onClick={fixFolders}
+                  disabled={isLoading}
                 >
-                  <RefreshCw className="w-4 h-4" />
-                  Sync Folders
+                  {isLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Fixing...</>
+                  ) : (
+                    <><RefreshCcw className="mr-2 h-4 w-4" /> Fix Folders</>
+                  )}
                 </Button>
-                
-                <Button
-                  variant="outline"
-                  onClick={handleSyncInbox}
-                  className="flex items-center gap-2"
-                  disabled={isSyncingInbox}
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label>Clean up duplicate IMAP settings</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Removes duplicate IMAP settings entries
+                  </p>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={cleanupSettings}
+                  disabled={isLoading}
                 >
-                  <Inbox className={`w-4 h-4 ${isSyncingInbox ? 'animate-pulse' : ''}`} />
-                  {isSyncingInbox ? 'Syncing...' : 'Sync Inbox'}
+                  {isLoading ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cleaning...</>
+                  ) : (
+                    <><RefreshCcw className="mr-2 h-4 w-4" /> Clean Settings</>
+                  )}
                 </Button>
-                
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-red-600">Reset IMAP settings and data</Label>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    <strong className="text-red-600">Warning:</strong> This will delete all emails, folders, and reset IMAP settings
+                  </p>
+                </div>
                 <Button 
                   variant="destructive" 
-                  onClick={handleResetEmailSync}
-                  className="flex items-center gap-2"
+                  size="sm"
+                  onClick={resetSettings}
+                  disabled={isResetting}
                 >
-                  <XCircle className="w-4 h-4" />
-                  Reset Email Sync
+                  {isResetting ? (
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...</>
+                  ) : (
+                    <><Trash2 className="mr-2 h-4 w-4" /> Reset All</>
+                  )}
                 </Button>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+      <CardFooter>
+        <p className="text-sm text-muted-foreground">
+          After making changes, you may need to navigate to the IMAP settings tab to update your settings.
+        </p>
+      </CardFooter>
+    </Card>
   );
 }
