@@ -4949,6 +4949,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_time_discrepancy: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       create_phase_analysis: {
         Args: {
           p_lead_id: string

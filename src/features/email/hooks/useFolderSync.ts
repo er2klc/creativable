@@ -52,9 +52,21 @@ export function useFolderSync() {
               diffMinutes 
             });
             
+            // Update settings to record the time discrepancy
+            await updateSettings.mutateAsync({
+              time_discrepancy_detected: true,
+              time_discrepancy_minutes: diffMinutes
+            });
+            
             // Add warning toast about time discrepancy
             toast.warning("System time discrepancy detected", {
-              description: "Your system time differs from the server. This may cause sync issues."
+              description: `Your system time differs from the server by ${Math.round(diffMinutes)} minutes. This may cause sync issues.`
+            });
+          } else if (settings?.time_discrepancy_detected) {
+            // Clear previous time discrepancy flag if it's now resolved
+            await updateSettings.mutateAsync({
+              time_discrepancy_detected: false,
+              time_discrepancy_minutes: 0
             });
           }
         }

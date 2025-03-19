@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
-import { AlertCircle, AlertTriangle, Bug, Check, RefreshCw } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Bug, Check, RefreshCw, XCircle, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 
@@ -19,7 +19,8 @@ export function EmailDiagnostics() {
   const [systemTime, setSystemTime] = useState<string | null>(null);
   const [dbTime, setDbTime] = useState<string | null>(null);
   const [timeDiscrepancy, setTimeDiscrepancy] = useState(false);
-  const { resetEmailSync } = useFolderSync();
+  const [discrepancyMinutes, setDiscrepancyMinutes] = useState(0);
+  const { resetEmailSync, syncFolders } = useFolderSync();
 
   useEffect(() => {
     loadDiagnosticData();
@@ -55,16 +56,18 @@ export function EmailDiagnostics() {
       
       // Handle time check
       if (timeCheckResult.data) {
-        setSystemTime(new Date().toISOString());
+        const currentSystemTime = new Date().toISOString();
+        setSystemTime(currentSystemTime);
         setDbTime(timeCheckResult.data.db_time);
         
         // Check for time discrepancy greater than 1 minute
         const dbTimeObj = new Date(timeCheckResult.data.db_time);
-        const systemTimeObj = new Date();
+        const systemTimeObj = new Date(currentSystemTime);
         const diffMs = Math.abs(dbTimeObj.getTime() - systemTimeObj.getTime());
         const diffMinutes = diffMs / (1000 * 60);
         
         setTimeDiscrepancy(diffMinutes > 1);
+        setDiscrepancyMinutes(Math.round(diffMinutes));
       }
     } catch (error) {
       console.error('Error loading diagnostics:', error);
@@ -79,6 +82,23 @@ export function EmailDiagnostics() {
     if (result.success) {
       toast.success('Email sync reset successfully');
       loadDiagnosticData();
+    }
+  };
+
+  const handleSyncFolders = async () => {
+    const result = await syncFolders();
+    if (result.success) {
+      toast.success('Folders synced successfully');
+      loadDiagnosticData();
+    }
+  };
+
+  const formatTimestamp = (timestamp: string | null) => {
+    if (!timestamp) return 'Never';
+    try {
+      return new Date(timestamp).toLocaleString();
+    } catch (error) {
+      return 'Invalid date';
     }
   };
 
@@ -100,9 +120,13 @@ export function EmailDiagnostics() {
                   <div>
                     <h3 className="text-sm font-medium text-red-800">Time Discrepancy Detected!</h3>
                     <p className="text-sm text-red-700 mt-1">
-                      Your system time ({systemTime}) is significantly different from the database time ({dbTime}).
+                      Your system time is {discrepancyMinutes} minutes different from the database time.
                       This can cause authentication and synchronization issues.
                     </p>
+                    <div className="mt-2 text-xs text-red-600 flex flex-col gap-1">
+                      <div>Your system time: {formatTimestamp(systemTime)}</div>
+                      <div>Database time: {formatTimestamp(dbTime)}</div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -110,12 +134,33 @@ export function EmailDiagnostics() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="border rounded-md p-4">
+                <h3 className="font-medium mb-2 flex items-center gap-1">
+                  <Clock className="h-4 w-4" /> Time Status
+                </h3>
+                <div className="space-y-2 text-sm">
+                  <p>
+                    <span className="text-muted-foreground">System Time:</span> {formatTimestamp(systemTime)}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">Database Time:</span> {formatTimestamp(dbTime)}
+                  </p>
+                  <p>
+                    <span className="text-muted-foreground">Time Discrepancy:</span> {
+                      timeDiscrepancy 
+                        ? <span className="text-red-500">{discrepancyMinutes} minutes (Problem)</span>
+                        : <span className="text-green-500">None detected</span>
+                    }
+                  </p>
+                </div>
+              </div>
+          
+              <div className="border rounded-md p-4">
                 <h3 className="font-medium mb-2">IMAP Settings</h3>
                 {imapSettings ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2 text-sm">
                     <p><span className="text-muted-foreground">Host:</span> {imapSettings.host}</p>
                     <p><span className="text-muted-foreground">Username:</span> {imapSettings.username}</p>
-                    <p><span className="text-muted-foreground">Last Sync:</span> {imapSettings.last_sync_date ? new Date(imapSettings.last_sync_date).toLocaleString() : 'Never'}</p>
+                    <p><span className="text-muted-foreground">Last Sync:</span> {formatTimestamp(imapSettings.last_sync_date)}</p>
                     <p><span className="text-muted-foreground">Historical Sync:</span> {imapSettings.historical_sync ? 'Enabled' : 'Disabled'}</p>
                     <p>
                       <span className="text-muted-foreground">Sync Status:</span> 
@@ -136,11 +181,11 @@ export function EmailDiagnostics() {
               <div className="border rounded-md p-4">
                 <h3 className="font-medium mb-2">SMTP Settings</h3>
                 {smtpSettings ? (
-                  <div className="space-y-2">
+                  <div className="space-y-2 text-sm">
                     <p><span className="text-muted-foreground">Host:</span> {smtpSettings.host}</p>
                     <p><span className="text-muted-foreground">Username:</span> {smtpSettings.username}</p>
                     <p><span className="text-muted-foreground">From Email:</span> {smtpSettings.from_email}</p>
-                    <p><span className="text-muted-foreground">Last Verified:</span> {smtpSettings.last_verified_at ? new Date(smtpSettings.last_verified_at).toLocaleString() : 'Never'}</p>
+                    <p><span className="text-muted-foreground">Last Verified:</span> {formatTimestamp(smtpSettings.last_verified_at)}</p>
                     <p>
                       <span className="text-muted-foreground">Verification Status:</span> 
                       {smtpSettings.last_verification_status ? (
@@ -156,18 +201,18 @@ export function EmailDiagnostics() {
                   </p>
                 )}
               </div>
-            </div>
             
-            <div className="border rounded-md p-4">
-              <h3 className="font-medium mb-2">Sync Statistics</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-muted-foreground">Email Count</p>
-                  <p className="text-xl font-medium">{emailCount !== null ? emailCount : '...'}</p>
-                </div>
-                <div>
-                  <p className="text-muted-foreground">Folder Count</p>
-                  <p className="text-xl font-medium">{folderCount !== null ? folderCount : '...'}</p>
+              <div className="border rounded-md p-4">
+                <h3 className="font-medium mb-2">Sync Statistics</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-muted-foreground text-sm">Email Count</p>
+                    <p className="text-xl font-medium">{emailCount !== null ? emailCount : '...'}</p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground text-sm">Folder Count</p>
+                    <p className="text-xl font-medium">{folderCount !== null ? folderCount : '...'}</p>
+                  </div>
                 </div>
               </div>
             </div>
@@ -175,40 +220,63 @@ export function EmailDiagnostics() {
             <div className="border rounded-md p-4">
               <h3 className="font-medium mb-2">Last Sync Status</h3>
               {syncStatus ? (
-                <div className="space-y-2">
+                <div className="space-y-2 text-sm">
                   <p><span className="text-muted-foreground">Status:</span> 
                     <span className={`ml-1 ${syncStatus.status === 'error' ? 'text-red-500' : 'text-green-500'}`}>
                       {syncStatus.status}
                     </span>
                   </p>
                   <p><span className="text-muted-foreground">Message:</span> {syncStatus.message || 'No message'}</p>
-                  <p><span className="text-muted-foreground">Started:</span> {new Date(syncStatus.created_at).toLocaleString()}</p>
+                  <p><span className="text-muted-foreground">Started:</span> {formatTimestamp(syncStatus.created_at)}</p>
                   {syncStatus.completed_at && (
-                    <p><span className="text-muted-foreground">Completed:</span> {new Date(syncStatus.completed_at).toLocaleString()}</p>
+                    <p><span className="text-muted-foreground">Completed:</span> {formatTimestamp(syncStatus.completed_at)}</p>
+                  )}
+                  {syncStatus.error && (
+                    <div className="mt-2 p-2 bg-red-50 rounded border border-red-200">
+                      <p className="text-xs font-medium text-red-800">Error Details:</p>
+                      <pre className="text-xs mt-1 text-red-700 whitespace-pre-wrap break-words">
+                        {typeof syncStatus.error === 'object' 
+                          ? JSON.stringify(syncStatus.error, null, 2) 
+                          : syncStatus.error}
+                      </pre>
+                    </div>
                   )}
                 </div>
               ) : (
-                <p>No sync has been attempted yet</p>
+                <p className="text-sm">No sync has been attempted yet</p>
               )}
             </div>
             
-            <div className="flex justify-between items-center mt-4">
+            <div className="flex flex-wrap justify-between items-center gap-2 mt-4">
               <Button 
                 variant="outline" 
                 onClick={loadDiagnosticData}
                 className="flex items-center gap-2"
+                disabled={isLoading}
               >
-                <RefreshCw className="w-4 h-4" />
-                Refresh Diagnostics
+                <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                {isLoading ? 'Refreshing...' : 'Refresh Diagnostics'}
               </Button>
               
-              <Button 
-                variant="destructive" 
-                onClick={handleResetEmailSync}
-                className="flex items-center gap-2"
-              >
-                Reset Email Sync
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline"
+                  onClick={handleSyncFolders}
+                  className="flex items-center gap-2"
+                >
+                  <RefreshCw className="w-4 h-4" />
+                  Sync Folders
+                </Button>
+                
+                <Button 
+                  variant="destructive" 
+                  onClick={handleResetEmailSync}
+                  className="flex items-center gap-2"
+                >
+                  <XCircle className="w-4 h-4" />
+                  Reset Email Sync
+                </Button>
+              </div>
             </div>
           </div>
         </CardContent>
