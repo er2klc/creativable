@@ -37,6 +37,7 @@ interface EmailMessagesResult {
   markAsStarred: (emailId: string, isStarred: boolean) => Promise<void>;
   syncProgress?: number | null;
   lastError?: string | null;
+  retrySync: () => Promise<void>;
 }
 
 export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?: string): EmailMessagesResult {
@@ -45,11 +46,12 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
   const [syncInProgress, setSyncInProgress] = useState(false);
   const [syncProgress, setSyncProgress] = useState<number | null>(null);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [syncAttempts, setSyncAttempts] = useState(0);
   
   // Use folderPath if provided, otherwise use oldFolderPath (for backward compatibility)
   const effectiveFolderPath = folderPath || oldFolderPath;
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, refetch } = useQuery({
     queryKey: ["emails", user?.id, effectiveFolderPath],
     queryFn: async () => {
       if (!user || !effectiveFolderPath) {
@@ -79,11 +81,12 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
         console.log(`Loaded ${emails?.length || 0} emails, ${unreadCount} unread`);
         
         // If we didn't load any emails and this is the inbox, try to sync immediately
-        if (emails?.length === 0 && effectiveFolderPath === 'INBOX') {
+        if (emails?.length === 0 && effectiveFolderPath === 'INBOX' && syncAttempts === 0) {
           // Don't await this - let it happen in the background
-          syncEmails(false).catch(e => {
+          syncEmails(true).catch(e => {
             console.error("Background sync failed:", e);
           });
+          setSyncAttempts(prev => prev + 1);
         }
         
         return {
@@ -99,6 +102,37 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchInterval: 1000 * 60 * 5, // 5 minutes
   });
+
+  // Function to retry sync with reset state
+  const retrySync = async () => {
+    if (!user) return;
+    
+    // Reset sync state
+    setSyncAttempts(0);
+    setLastError(null);
+    
+    try {
+      // Reset IMAP settings synchronization state
+      const { data, error } = await supabase.functions.invoke('reset-imap-sync', {
+        body: { user_id: user.id }
+      });
+      
+      if (error) throw new Error(error.message);
+      
+      toast.info("Sync state reset", {
+        description: "Will attempt to sync emails again"
+      });
+      
+      // Start a fresh sync
+      await syncEmails(true);
+      
+    } catch (error: any) {
+      console.error("Error resetting sync state:", error);
+      toast.error("Failed to reset sync state", {
+        description: error.message
+      });
+    }
+  };
 
   // Function to synchronize emails for the current folder
   const syncEmails = async (forceRefresh = false) => {
@@ -131,6 +165,11 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
         throw new Error(sessionError?.message || "No active session found");
       }
       
+      // Show notification for long-running operations
+      const syncToast = toast.loading("Synchronizing emails", {
+        description: "This may take a moment, especially for the first sync"
+      });
+      
       // Call the sync-emails edge function with proper authorization
       const response = await fetch(
         "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
@@ -150,7 +189,7 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
             ignore_date_validation: true,
             max_emails: imapSettings.max_emails || 500, // Use configured max emails or default to 500
             batch_processing: true,
-            max_batch_size: 50,
+            max_batch_size: 25, // Smaller batch size for more reliable processing
             connection_timeout: imapSettings.connection_timeout || 60000, // Use configured timeout
             retry_attempts: 3,
             debug: true,
@@ -166,6 +205,36 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
         }
       );
       
+      // Handle progress updates with EventSource if available
+      const progressEndpoint = `https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-progress?userId=${user.id}&folder=${encodeURIComponent(effectiveFolderPath)}`;
+      
+      try {
+        const progressSource = new EventSource(progressEndpoint);
+        
+        progressSource.addEventListener('message', (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.progress) {
+              setSyncProgress(data.progress);
+              if (data.progress >= 100) {
+                progressSource.close();
+              }
+            }
+          } catch (e) {
+            console.error("Error parsing progress event:", e);
+          }
+        });
+        
+        progressSource.addEventListener('error', () => {
+          progressSource.close();
+        });
+        
+        // Auto-close after 2 minutes to prevent hanging connections
+        setTimeout(() => progressSource.close(), 120000);
+      } catch (progressError) {
+        console.warn("EventSource not supported or failed:", progressError);
+      }
+      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
@@ -177,6 +246,9 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
       if (result.progress) {
         setSyncProgress(result.progress);
       }
+      
+      // Dismiss the loading toast
+      toast.dismiss(syncToast);
       
       if (result.success) {
         console.log(`Sync successful for folder ${effectiveFolderPath}:`, result);
@@ -196,11 +268,11 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
       console.error("Error syncing emails:", error);
       setLastError(error.message || "Failed to sync emails");
       toast.error("Email Sync Failed", {
-        description: error.message || "Failed to sync emails"
+        description: error.message || "Failed to sync emails. Try again or check your settings."
       });
+      setSyncAttempts(prev => prev + 1);
     } finally {
       setSyncInProgress(false);
-      setSyncProgress(null);
     }
   };
 
@@ -258,6 +330,7 @@ export function useEmailMessages(oldFolderPath?: string | undefined, folderPath?
     markAsRead,
     markAsStarred,
     syncProgress,
-    lastError
+    lastError,
+    retrySync
   };
 }

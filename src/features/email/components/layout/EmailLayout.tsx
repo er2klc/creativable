@@ -10,6 +10,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useFolderSync } from '@/features/email/hooks/useFolderSync';
+import { Button } from '@/components/ui/button';
+import { Pencil, PlusCircle, Loader2 } from 'lucide-react';
+import { NewEmailDialog } from '../compose/NewEmailDialog';
 
 export interface EmailLayoutProps {
   userEmail?: string;
@@ -23,6 +26,7 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isNewEmailOpen, setIsNewEmailOpen] = useState(false);
   const { syncFolders } = useFolderSync();
   
   // Fetch profile data for header
@@ -75,7 +79,11 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
       const syncOptions = {
         force_refresh: true,
         folder: selectedFolder,
-        load_latest: true
+        load_latest: true,
+        batch_processing: true,
+        max_batch_size: 25,
+        connection_timeout: 60000,
+        retry_attempts: 3
       };
       
       // Call the sync-emails function with proper authorization
@@ -132,7 +140,7 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       <EmailHeader 
         userEmail={userEmail}
         searchQuery={searchQuery}
@@ -141,6 +149,18 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
         isSyncing={isSyncing}
         profile={profile}
       />
+      
+      {/* New Email Button - Fixed Position */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <Button 
+          onClick={() => setIsNewEmailOpen(true)} 
+          className="h-14 w-14 rounded-full shadow-lg flex items-center justify-center"
+          variant="primary"
+        >
+          <PlusCircle className="h-6 w-6" />
+        </Button>
+      </div>
+      
       <div className="grid flex-1 h-[calc(100%-4rem)] mt-16 md:mt-16 grid-cols-[240px_350px_1fr] overflow-hidden">
         {/* Email Folders Sidebar */}
         <div className="border-r">
@@ -168,6 +188,13 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
           />
         </div>
       </div>
+      
+      {/* New Email Dialog */}
+      <NewEmailDialog 
+        open={isNewEmailOpen} 
+        onOpenChange={setIsNewEmailOpen}
+        userEmail={userEmail}
+      />
     </div>
   );
 }

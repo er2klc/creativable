@@ -1,385 +1,184 @@
 
-import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.23.0";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { SMTPClient } from "npm:emailjs@4.0.2";
 
-// Initialize Supabase client with env variables
-const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-// CORS headers for all responses
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Access-Control-Max-Age": "86400",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
-interface EmailRequest {
-  to: string;
-  subject: string;
-  html: string;
-  text?: string;
-  lead_id?: string;
-  attachments?: Array<{
-    filename: string;
-    content: string;
-    contentType?: string;
-  }>;
-}
-
-// Helper function to detect SMTP errors and provide clear error messages
-function getDetailedSmtpErrorMessage(error: unknown): { 
-  userMessage: string;
-  technicalDetails: string;
-  errorCode?: string;
-  errorCategory: 'connection' | 'authentication' | 'tls' | 'rate_limit' | 'recipient' | 'unknown';
-} {
-  const errorMessage = error instanceof Error ? error.message : String(error);
-  
-  // Extract technical details for debugging
-  const technicalDetails = errorMessage;
-  
-  // Default values
-  let userMessage = "E-Mail konnte nicht gesendet werden. Bitte prüfen Sie die SMTP-Einstellungen.";
-  let errorCategory: 'connection' | 'authentication' | 'tls' | 'rate_limit' | 'recipient' | 'unknown' = 'unknown';
-  let errorCode: string | undefined = undefined;
-  
-  // Try to extract error code if it exists
-  const errorCodeMatch = errorMessage.match(/(\d{3})/);
-  if (errorCodeMatch) {
-    errorCode = errorCodeMatch[1];
-  }
-  
-  // Connection issues
-  if (errorMessage.includes("connection refused") || 
-      errorMessage.includes("ECONNREFUSED") || 
-      errorMessage.includes("connect failed") || 
-      errorMessage.includes("network error") ||
-      errorMessage.includes("Connection timed out") ||
-      errorMessage.includes("getaddrinfo")) {
-    userMessage = "Verbindung zum SMTP-Server fehlgeschlagen. Bitte überprüfen Sie die Server-Adresse und den Port.";
-    errorCategory = 'connection';
-  }
-  
-  // Authentication issues
-  else if (errorMessage.includes("535") || 
-           errorMessage.includes("535 5.7.8") ||
-           errorMessage.includes("authentication failed") || 
-           errorMessage.includes("invalid credentials") ||
-           errorMessage.includes("Bad username or password")) {
-    userMessage = "SMTP-Authentifizierung fehlgeschlagen. Bitte überprüfen Sie Benutzername und Passwort.";
-    errorCategory = 'authentication';
-  }
-  
-  // SSL/TLS issues
-  else if (errorMessage.includes("SSL") || 
-           errorMessage.includes("TLS") || 
-           errorMessage.includes("certificate") || 
-           errorMessage.includes("secure connection")) {
-    userMessage = "SSL/TLS-Verbindungsfehler. Bitte prüfen Sie die SSL/TLS-Einstellungen oder versuchen Sie, SSL zu deaktivieren.";
-    errorCategory = 'tls';
-  }
-  
-  // Rate limiting or spam detection
-  else if (errorMessage.includes("rate limit") || 
-           errorMessage.includes("too many") ||
-           errorMessage.includes("spam") || 
-           errorMessage.includes("550")) {
-    userMessage = "E-Mail wurde vom Server abgelehnt. Mögliche Gründe: Rate-Limit überschritten oder Spam-Verdacht.";
-    errorCategory = 'rate_limit';
-  }
-  
-  // Recipient issues
-  else if (errorMessage.includes("recipient") || 
-           errorMessage.includes("mailbox") ||
-           errorMessage.includes("no such user") || 
-           errorMessage.includes("550 5.1.1")) {
-    userMessage = "E-Mail-Adresse des Empfängers wurde nicht akzeptiert. Bitte prüfen Sie die E-Mail-Adresse.";
-    errorCategory = 'recipient';
-  }
-  
-  return {
-    userMessage,
-    technicalDetails,
-    errorCode,
-    errorCategory
-  };
-}
-
 serve(async (req) => {
-  console.log("Email service function called", new Date().toISOString());
-  
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    console.log("Handling CORS preflight request");
-    return new Response(null, { 
-      status: 204, 
-      headers: corsHeaders 
-    });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
   }
-
+  
   try {
-    // Parse request body
-    const requestData = await req.json() as EmailRequest;
-    console.log("Request data received:", JSON.stringify({
-      to: requestData.to,
-      subject: requestData.subject,
-      hasHtml: Boolean(requestData.html),
-      hasAttachments: Boolean(requestData.attachments?.length),
-      lead_id: requestData.lead_id
-    }));
-
-    // Validate required fields
-    if (!requestData.to || !requestData.subject || !requestData.html) {
-      console.error("Missing required fields");
-      return new Response(
-        JSON.stringify({ 
-          error: "Missing required fields", 
-          details: `Required fields: ${!requestData.to ? 'to, ' : ''}${!requestData.subject ? 'subject, ' : ''}${!requestData.html ? 'html' : ''}` 
-        }),
-        { 
-          status: 400, 
-          headers: { 
-            "Content-Type": "application/json",
-            ...corsHeaders 
-          } 
-        }
-      );
+    // Parse the request body
+    const { to, cc, bcc, subject, text_content, html_content, attachments, in_reply_to } = await req.json();
+    
+    if (!to || !subject) {
+      throw new Error("Missing required fields: to, subject");
     }
-
-    // Get SMTP settings from database
-    console.log("Fetching SMTP settings from database");
-    const { data: smtpSettings, error: smtpError } = await supabase
-      .from("smtp_settings")
-      .select("*")
-      .single();
-
-    if (smtpError) {
-      console.error("Failed to retrieve SMTP settings:", smtpError);
-      return new Response(
-        JSON.stringify({ 
-          error: "SMTP Einstellungen konnten nicht abgerufen werden", 
-          details: smtpError.message,
-          code: smtpError.code 
-        }),
-        { 
-          status: 500, 
-          headers: { 
-            "Content-Type": "application/json",
-            ...corsHeaders 
-          } 
-        }
-      );
+    
+    // Validate recipients are arrays
+    const toAddresses = Array.isArray(to) ? to : [to];
+    const ccAddresses = cc || [];
+    const bccAddresses = bcc || [];
+    
+    // Get the user's JWT from the request
+    const authHeader = req.headers.get('authorization') || '';
+    const jwt = authHeader.replace('Bearer ', '');
+    
+    if (!jwt) {
+      throw new Error("Authentication required");
     }
-
-    if (!smtpSettings) {
-      console.error("No SMTP settings found");
-      return new Response(
-        JSON.stringify({ 
-          error: "SMTP-Einstellungen nicht gefunden", 
-          details: "Bitte konfigurieren Sie Ihre E-Mail-Einstellungen im Einstellungsbereich." 
-        }),
-        { 
-          status: 404, 
-          headers: { 
-            "Content-Type": "application/json",
-            ...corsHeaders 
-          } 
-        }
-      );
+    
+    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
+    
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Missing Supabase environment variables");
     }
-
-    // Validate SMTP settings
-    const missingFields = [];
-    if (!smtpSettings.smtp_host) missingFields.push("SMTP-Server");
-    if (!smtpSettings.smtp_port) missingFields.push("SMTP-Port");
-    if (!smtpSettings.smtp_user) missingFields.push("SMTP-Benutzername");
-    if (!smtpSettings.smtp_password) missingFields.push("SMTP-Passwort");
-    if (!smtpSettings.from_email) missingFields.push("Absender-E-Mail");
-
-    if (missingFields.length > 0) {
-      console.error("Incomplete SMTP settings:", missingFields);
-      return new Response(
-        JSON.stringify({ 
-          error: "Unvollständige SMTP-Einstellungen", 
-          details: `Folgende Einstellungen fehlen: ${missingFields.join(", ")}` 
-        }),
-        { 
-          status: 400, 
-          headers: { 
-            "Content-Type": "application/json",
-            ...corsHeaders 
-          } 
-        }
-      );
+    
+    // Get user information from the token
+    const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+      },
+    });
+    
+    const userData = await userResponse.json();
+    if (!userData.id) {
+      throw new Error("Failed to get user information");
     }
-
-    // Extract the authenticated user from the request
-    let userId: string | null = null;
-    const authHeader = req.headers.get("Authorization");
-    if (authHeader) {
-      try {
-        const token = authHeader.replace("Bearer ", "");
-        const { data: { user }, error } = await supabase.auth.getUser(token);
-        if (!error && user) {
-          userId = user.id;
+    
+    // Get the SMTP settings
+    const smtpResponse = await fetch(
+      `${SUPABASE_URL}/rest/v1/smtp_settings?user_id=eq.${userData.id}&select=*`,
+      {
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+        },
+      }
+    );
+    
+    if (!smtpResponse.ok) {
+      throw new Error("Failed to fetch SMTP settings");
+    }
+    
+    const smtpSettings = await smtpResponse.json();
+    
+    if (!smtpSettings || smtpSettings.length === 0) {
+      throw new Error("No SMTP settings found for this user");
+    }
+    
+    const settings = smtpSettings[0];
+    
+    // Initialize SMTP client
+    const client = new SMTPClient({
+      user: settings.username,
+      password: settings.password,
+      host: settings.host,
+      port: settings.port,
+      ssl: settings.secure,
+      tls: !settings.secure ? undefined : {
+        rejectUnauthorized: false
+      }
+    });
+    
+    // Format email addresses properly
+    const formatAddresses = (addresses) => {
+      if (!addresses || addresses.length === 0) return undefined;
+      return addresses.join(', ');
+    };
+    
+    // Create message ID for tracking
+    const messageId = `<${Date.now()}.${Math.random().toString(36).substring(2, 15)}@${settings.host}>`;
+    
+    // Send the email
+    const message = {
+      from: settings.from_email,
+      to: formatAddresses(toAddresses),
+      cc: formatAddresses(ccAddresses),
+      bcc: formatAddresses(bccAddresses),
+      subject,
+      text: text_content || html_content?.replace(/<[^>]*>/g, ''),
+      attachment: [
+        { data: html_content, alternative: true }
+      ],
+      'message-id': messageId,
+      ...(in_reply_to && { 'in-reply-to': in_reply_to })
+    };
+    
+    // Add any file attachments
+    if (attachments && attachments.length > 0) {
+      for (const attachment of attachments) {
+        try {
+          const response = await fetch(attachment.url);
+          if (!response.ok) throw new Error(`Failed to fetch attachment: ${attachment.name}`);
+          
+          const fileData = await response.arrayBuffer();
+          
+          message.attachment.push({
+            name: attachment.name,
+            type: attachment.type,
+            data: fileData
+          });
+        } catch (attachError) {
+          console.error(`Error adding attachment ${attachment.name}:`, attachError);
+          // Continue with other attachments even if one fails
         }
-      } catch (error) {
-        console.warn("Failed to get user from token:", error);
       }
     }
     
-    if (!userId) {
-      console.warn("No authenticated user found, trying to extract from JWT claims");
-      try {
-        // Try to extract from JWT claims if using supabase auth
-        const { data: { user } } = await supabase.auth.getUser();
-        userId = user?.id || null;
-      } catch (error) {
-        console.warn("Failed to extract user from claims:", error);
-      }
-    }
-
-    console.log("Authenticated user ID:", userId);
-
-    // Configure SMTP client
-    console.log("Configuring SMTP client with settings:", {
-      host: smtpSettings.smtp_host,
-      port: smtpSettings.smtp_port,
-      secure: smtpSettings.smtp_secure,
-      user: smtpSettings.smtp_user ? "***" : undefined,
-      fromEmail: smtpSettings.from_email
-    });
-
-    try {
-      // Create SMTP client with proper debug logging
-      console.log("Creating SMTP client...");
-      const client = new SMTPClient({
-        connection: {
-          hostname: smtpSettings.smtp_host,
-          port: smtpSettings.smtp_port,
-          tls: smtpSettings.smtp_secure,
-          auth: {
-            username: smtpSettings.smtp_user,
-            password: smtpSettings.smtp_password,
-          },
-          // Set a reasonable timeout
-          timeout: 10000,
-        },
-      });
-
-      // Prepare email with fallback plain text
-      const htmlContent = requestData.html;
-      // Simple conversion of HTML to plain text
-      const plainText = requestData.text || htmlContent.replace(/<[^>]*>/g, '');
-
-      // Send email
-      console.log("Connecting to SMTP server...");
-      await client.connect();
-      console.log("Connected to SMTP server successfully");
-      
-      console.log("Sending email via SMTP to:", requestData.to);
-      const sendResult = await client.send({
-        from: smtpSettings.from_email,
-        to: requestData.to,
-        subject: requestData.subject,
-        content: plainText,
-        html: htmlContent,
-      });
-      
-      console.log("Send command completed with result:", sendResult);
-      
-      // Close connection
-      console.log("Closing SMTP connection...");
-      await client.close();
-      console.log("Email sent successfully and connection closed");
-      
-      // Log to email_tracking table if lead_id is provided
-      if (requestData.lead_id && userId) {
-        try {
-          console.log("Logging email to tracking table for lead:", requestData.lead_id);
-          const { error: trackingError } = await supabase
-            .from("email_tracking")
-            .insert({
-              user_id: userId,
-              to_email: requestData.to,
-              subject: requestData.subject,
-              content: requestData.html,
-              lead_id: requestData.lead_id,
-              status: "sent",
-              sent_at: new Date().toISOString(),
-            });
-
-          if (trackingError) {
-            console.warn("Failed to insert email tracking record:", trackingError);
-          } else {
-            console.log("Email tracking record created successfully");
-          }
-        } catch (trackingError) {
-          console.warn("Error tracking email:", trackingError);
-        }
-      }
-
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: "E-Mail erfolgreich gesendet" 
-        }),
-        { 
-          status: 200, 
-          headers: { 
-            "Content-Type": "application/json",
-            ...corsHeaders 
-          } 
-        }
-      );
-    } catch (smtpError) {
-      console.error("SMTP Error:", smtpError);
-      
-      // Get detailed error information
-      const errorInfo = getDetailedSmtpErrorMessage(smtpError);
-      
-      // Log the error details for debugging
-      console.error("Detailed SMTP error:", {
-        message: errorInfo.userMessage,
-        technicalDetails: errorInfo.technicalDetails,
-        errorCode: errorInfo.errorCode,
-        category: errorInfo.errorCategory
-      });
-      
-      return new Response(
-        JSON.stringify({ 
-          error: "E-Mail konnte nicht gesendet werden", 
-          message: errorInfo.userMessage,
-          details: errorInfo.technicalDetails,
-          errorCode: errorInfo.errorCode,
-          errorCategory: errorInfo.errorCategory
-        }),
-        { 
-          status: 500, 
-          headers: { 
-            "Content-Type": "application/json",
-            ...corsHeaders 
-          } 
-        }
-      );
-    }
-  } catch (error) {
-    console.error("Error in send-email function:", error);
+    // Send the email
+    const result = await client.sendAsync(message);
+    
+    console.log("Email sent successfully:", result);
     
     return new Response(
-      JSON.stringify({ 
-        error: "Fehler beim E-Mail-Versand", 
-        details: error instanceof Error ? error.message : "Unbekannter Fehler"
+      JSON.stringify({
+        success: true,
+        message: "Email sent successfully",
+        message_id: messageId,
+        result
       }),
-      { 
-        status: 500, 
-        headers: { 
+      {
+        headers: {
           "Content-Type": "application/json",
-          ...corsHeaders 
-        } 
+          ...corsHeaders,
+        },
+        status: 200,
+      }
+    );
+    
+  } catch (error) {
+    console.error("Error sending email:", error);
+    
+    let errorMessage = error.message || "An unknown error occurred";
+    if (error.message.includes("EAUTH")) {
+      errorMessage = "SMTP authentication failed. Please check your credentials.";
+    } else if (error.message.includes("ESOCKET") || error.message.includes("ECONNECTION")) {
+      errorMessage = "Could not connect to SMTP server. Please check your connection settings.";
+    } else if (error.message.includes("ETLS")) {
+      errorMessage = "TLS/SSL error. Try changing the secure setting.";
+    }
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        error: errorMessage,
+        details: error.stack || "No details available"
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders,
+        },
+        status: 400,
       }
     );
   }
