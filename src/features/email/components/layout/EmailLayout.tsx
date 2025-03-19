@@ -11,8 +11,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 import { Button } from '@/components/ui/button';
-import { Pencil, PlusCircle, Loader2 } from 'lucide-react';
+import { Pencil, PlusCircle, Loader2, AlertCircle } from 'lucide-react';
 import { NewEmailDialog } from '../compose/NewEmailDialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export interface EmailLayoutProps {
   userEmail?: string;
@@ -27,7 +28,9 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSyncing, setIsSyncing] = useState(false);
   const [isNewEmailOpen, setIsNewEmailOpen] = useState(false);
-  const { syncFolders } = useFolderSync();
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [configError, setConfigError] = useState<string | null>(null);
+  const { syncFolders, resetEmailSync } = useFolderSync();
   
   // Fetch profile data for header
   const { data: profile } = useQuery({
@@ -46,6 +49,39 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
       return data;
     }
   });
+
+  // Fetch IMAP settings to check if they're properly configured
+  const { data: imapSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ["imap-settings"],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('imap_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          setConfigError("No IMAP settings found. Please configure your email settings.");
+          return null;
+        }
+        throw error;
+      }
+      
+      // Check if settings are properly configured
+      if (!data.last_sync_date) {
+        setConfigError("Email has not been synchronized yet. Please click 'Refresh' to sync your emails.");
+      } else if (data.port === 143 && data.secure === false) {
+        setConfigError("Insecure connection settings detected. Consider resetting your email connection in Settings.");
+      } else {
+        setConfigError(null);
+      }
+      
+      return data;
+    },
+    enabled: !!user
+  });
   
   // Reset selected email when folder changes
   useEffect(() => {
@@ -61,6 +97,7 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
     
     try {
       setIsSyncing(true);
+      setSyncError(null);
       
       if (showLoadingToast) {
         toast.info("Syncing Emails", {
@@ -115,11 +152,41 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
       }
     } catch (error: any) {
       console.error('Email sync error:', error);
+      setSyncError(error.message || 'An error occurred while syncing emails');
+      
       toast.error("Sync Failed", {
         description: error.message || 'An error occurred while syncing emails'
       });
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  // Function to handle connection reset and optimization
+  const handleResetConnection = async () => {
+    try {
+      toast.info("Resetting Email Connection", {
+        description: "This may take a moment..."
+      });
+      
+      const { error } = await resetEmailSync();
+      
+      if (error) throw error;
+      
+      toast.success("Email Connection Reset", {
+        description: "Your email connection has been reset with optimized settings. Please sync again."
+      });
+      
+      // Refresh the settings
+      await queryClient.invalidateQueries({ queryKey: ['imap-settings'] });
+      
+      // Start fresh sync
+      syncFolders(true);
+    } catch (error: any) {
+      console.error('Error resetting connection:', error);
+      toast.error("Reset Failed", {
+        description: error.message || 'An error occurred while resetting your email connection'
+      });
     }
   };
 
@@ -150,6 +217,23 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
         profile={profile}
         onNewEmail={() => setIsNewEmailOpen(true)}
       />
+      
+      {(configError || syncError) && (
+        <div className="mt-16 px-4 py-2">
+          <Alert variant={configError ? "default" : "destructive"}>
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>{configError ? "Configuration Notice" : "Synchronization Error"}</AlertTitle>
+            <AlertDescription className="flex justify-between items-center">
+              <span>{configError || syncError}</span>
+              {configError && configError.includes("Insecure connection") && (
+                <Button variant="outline" size="sm" onClick={handleResetConnection}>
+                  Reset Connection
+                </Button>
+              )}
+            </AlertDescription>
+          </Alert>
+        </div>
+      )}
       
       <div className="grid flex-1 h-[calc(100%-4rem)] mt-16 md:mt-16 grid-cols-[240px_350px_1fr] overflow-hidden">
         {/* Email Folders Sidebar */}
