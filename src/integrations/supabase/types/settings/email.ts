@@ -8,7 +8,7 @@ export interface EmailSettings {
   /**
    * The last time email was synced
    */
-  last_email_sync?: string;
+  last_email_sync?: string | null;
   
   /**
    * Whether email syncing is enabled

@@ -28,6 +28,40 @@ export function useFolderSync() {
         });
       }
       
+      // Log current system time for debugging
+      const systemTime = new Date().toISOString();
+      console.log("Starting folder sync at system time:", systemTime);
+      
+      // Check for time discrepancy (added for debugging)
+      try {
+        const { data: timeCheck } = await supabase.rpc('check_time_discrepancy');
+        if (timeCheck) {
+          const dbTime = timeCheck.db_time;
+          console.log("DB time:", dbTime, "System time:", systemTime);
+          
+          // Check for time discrepancy greater than 1 minute
+          const dbTimeObj = new Date(dbTime);
+          const systemTimeObj = new Date(systemTime);
+          const diffMs = Math.abs(dbTimeObj.getTime() - systemTimeObj.getTime());
+          const diffMinutes = diffMs / (1000 * 60);
+          
+          if (diffMinutes > 1) {
+            console.warn("WARNING: Time discrepancy detected!", { 
+              dbTime, 
+              systemTime, 
+              diffMinutes 
+            });
+            
+            // Add warning toast about time discrepancy
+            toast.warning("System time discrepancy detected", {
+              description: "Your system time differs from the server. This may cause sync issues."
+            });
+          }
+        }
+      } catch (timeError) {
+        console.error("Error checking time discrepancy:", timeError);
+      }
+      
       // Update settings to indicate email sync has been attempted
       if (settings && !settings.email_configured) {
         await updateSettings.mutateAsync({

@@ -1,237 +1,218 @@
 
-import React from 'react';
-import { EmailSyncTroubleshooter } from '@/features/email/components/EmailSyncTroubleshooter';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { checkEmailConfigStatus, debugEmailFolders } from '@/utils/debug-helper';
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
-import { useState } from 'react';
-import { Code } from '@/components/ui/code';
-import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Bug, RefreshCw, History } from 'lucide-react';
-import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/use-auth';
+import { AlertCircle, AlertTriangle, Bug, Check, RefreshCw } from 'lucide-react';
 import { toast } from 'sonner';
+import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 
 export function EmailDiagnostics() {
   const { user } = useAuth();
-  const { resetEmailSync, cleanupFolders, isSyncing } = useFolderSync();
-  const [diagnosticResults, setDiagnosticResults] = useState<any>(null);
-  const [isRunningDiagnostics, setIsRunningDiagnostics] = useState(false);
-  const [isFixingDateIssue, setIsFixingDateIssue] = useState(false);
-  
-  const runDiagnostics = async () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [imapSettings, setImapSettings] = useState<any>(null);
+  const [smtpSettings, setSmtpSettings] = useState<any>(null);
+  const [emailCount, setEmailCount] = useState<number | null>(null);
+  const [folderCount, setFolderCount] = useState<number | null>(null);
+  const [syncStatus, setSyncStatus] = useState<any>(null);
+  const [systemTime, setSystemTime] = useState<string | null>(null);
+  const [dbTime, setDbTime] = useState<string | null>(null);
+  const [timeDiscrepancy, setTimeDiscrepancy] = useState(false);
+  const { resetEmailSync } = useFolderSync();
+
+  useEffect(() => {
+    loadDiagnosticData();
+  }, [user]);
+
+  const loadDiagnosticData = async () => {
     if (!user) return;
     
-    setIsRunningDiagnostics(true);
+    setIsLoading(true);
     try {
-      // Check email configuration status
-      const configStatus = await checkEmailConfigStatus();
+      // Get all diagnostics in parallel for efficiency
+      const [
+        imapResult, 
+        smtpResult, 
+        emailCountResult, 
+        folderCountResult,
+        syncStatusResult,
+        timeCheckResult
+      ] = await Promise.all([
+        supabase.from('imap_settings').select('*').eq('user_id', user.id).maybeSingle(),
+        supabase.from('smtp_settings').select('*').eq('user_id', user.id).maybeSingle(),
+        supabase.from('emails').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('email_folders').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+        supabase.from('email_sync_status').select('*').eq('user_id', user.id).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+        supabase.rpc('check_time_discrepancy')
+      ]);
+
+      setImapSettings(imapResult.data);
+      setSmtpSettings(smtpResult.data);
+      setEmailCount(emailCountResult.count);
+      setFolderCount(folderCountResult.count);
+      setSyncStatus(syncStatusResult.data);
       
-      // Debug email folders
-      const folderStatus = await debugEmailFolders(user.id);
-      
-      // Get IMAP settings to check for future dates
-      const { data: imapSettings, error: imapError } = await supabase
-        .from('imap_settings')
-        .select('created_at, updated_at, last_sync_date, historical_sync_date')
-        .eq('user_id', user.id)
-        .maybeSingle();
+      // Handle time check
+      if (timeCheckResult.data) {
+        setSystemTime(new Date().toISOString());
+        setDbTime(timeCheckResult.data.db_time);
         
-      // Check for future dates in IMAP settings
-      const now = new Date();
-      const dateIssues = imapSettings ? {
-        created_at: imapSettings.created_at ? new Date(imapSettings.created_at) > now : false,
-        updated_at: imapSettings.updated_at ? new Date(imapSettings.updated_at) > now : false,
-        last_sync_date: imapSettings.last_sync_date ? new Date(imapSettings.last_sync_date) > now : false,
-        historical_sync_date: imapSettings.historical_sync_date ? new Date(imapSettings.historical_sync_date) > now : false,
-        hasFutureDates: false
-      } : null;
-      
-      if (dateIssues) {
-        dateIssues.hasFutureDates = 
-          dateIssues.created_at || 
-          dateIssues.updated_at || 
-          dateIssues.last_sync_date || 
-          dateIssues.historical_sync_date;
+        // Check for time discrepancy greater than 1 minute
+        const dbTimeObj = new Date(timeCheckResult.data.db_time);
+        const systemTimeObj = new Date();
+        const diffMs = Math.abs(dbTimeObj.getTime() - systemTimeObj.getTime());
+        const diffMinutes = diffMs / (1000 * 60);
+        
+        setTimeDiscrepancy(diffMinutes > 1);
       }
-      
-      setDiagnosticResults({
-        configStatus,
-        folderStatus,
-        imapSettings,
-        dateIssues,
-        timestamp: new Date().toISOString()
-      });
     } catch (error) {
-      console.error("Error running diagnostics:", error);
-      setDiagnosticResults({
-        error: error instanceof Error ? error.message : "Unknown error",
-        timestamp: new Date().toISOString()
-      });
+      console.error('Error loading diagnostics:', error);
+      toast.error('Failed to load diagnostic information');
     } finally {
-      setIsRunningDiagnostics(false);
+      setIsLoading(false);
     }
   };
-  
-  const handleResetSync = async () => {
-    if (window.confirm("⚠️ This will completely reset all email sync settings. You'll need to reconfigure your email settings afterward. Continue?")) {
-      await resetEmailSync();
-      // Refresh diagnostics after reset
-      await runDiagnostics();
+
+  const handleResetEmailSync = async () => {
+    const result = await resetEmailSync();
+    if (result.success) {
+      toast.success('Email sync reset successfully');
+      loadDiagnosticData();
     }
   };
-  
-  const handleCleanupFolders = async () => {
-    if (window.confirm("This will delete all email folders and require a new sync. Continue?")) {
-      await cleanupFolders();
-      // Refresh diagnostics after cleanup
-      await runDiagnostics();
-    }
-  };
-  
-  const fixFutureDateIssue = async () => {
-    if (!user) return;
-    
-    if (!window.confirm("This will reset dates in your IMAP settings to the current time. Continue?")) {
-      return;
-    }
-    
-    setIsFixingDateIssue(true);
-    try {
-      // Call the reset_imap_settings function
-      const { data, error } = await supabase.rpc('reset_imap_settings', {
-        user_id_param: user.id
-      });
-      
-      if (error) throw error;
-      
-      toast.success("Successfully reset IMAP settings dates", {
-        description: "All future dates have been reset to the current time"
-      });
-      
-      // Refresh diagnostics
-      await runDiagnostics();
-    } catch (error) {
-      console.error("Error fixing date issue:", error);
-      toast.error("Failed to fix date issue", {
-        description: error instanceof Error ? error.message : "Unknown error"
-      });
-    } finally {
-      setIsFixingDateIssue(false);
-    }
-  };
-  
+
   return (
-    <div className="space-y-6">
-      <EmailSyncTroubleshooter />
-      
-      <Accordion type="single" collapsible className="w-full">
-        <AccordionItem value="advanced-diagnostics">
-          <AccordionTrigger className="text-base">
-            <div className="flex items-center gap-2">
-              Advanced Diagnostics
-              <Badge variant="outline" className="ml-2">
-                Technical
-              </Badge>
-            </div>
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-4">
-              <Alert>
-                <Bug className="h-4 w-4" />
-                <AlertTitle>Technical Information</AlertTitle>
-                <AlertDescription>
-                  Run technical diagnostics to identify issues with your email configuration.
-                  This information may be helpful for support purposes.
-                </AlertDescription>
-              </Alert>
-              
-              <div className="flex flex-wrap gap-2">
-                <Button 
-                  onClick={runDiagnostics} 
-                  disabled={isRunningDiagnostics}
-                  size="sm"
-                >
-                  <Bug className="mr-2 h-4 w-4" />
-                  {isRunningDiagnostics ? 'Running...' : 'Run Diagnostics'}
-                </Button>
-                
-                <Button
-                  onClick={handleCleanupFolders}
-                  disabled={isSyncing || isRunningDiagnostics}
-                  size="sm"
-                  variant="outline"
-                >
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                  Clean Folders Only
-                </Button>
-                
-                <Button
-                  onClick={handleResetSync}
-                  disabled={isSyncing || isRunningDiagnostics}
-                  size="sm"
-                  variant="destructive"
-                >
-                  Reset All Sync Settings
-                </Button>
-                
-                {diagnosticResults?.dateIssues?.hasFutureDates && (
-                  <Button
-                    onClick={fixFutureDateIssue}
-                    disabled={isFixingDateIssue || isSyncing || isRunningDiagnostics}
-                    size="sm"
-                    variant="destructive"
-                    className="bg-amber-600 hover:bg-amber-700"
-                  >
-                    <History className="mr-2 h-4 w-4" />
-                    {isFixingDateIssue ? 'Fixing...' : 'Fix Date Issues (18.3.2025)'}
-                  </Button>
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Bug className="w-4 h-4" />
+            Email Integration Diagnostics
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {timeDiscrepancy && (
+              <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+                <div className="flex">
+                  <AlertTriangle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0" />
+                  <div>
+                    <h3 className="text-sm font-medium text-red-800">Time Discrepancy Detected!</h3>
+                    <p className="text-sm text-red-700 mt-1">
+                      Your system time ({systemTime}) is significantly different from the database time ({dbTime}).
+                      This can cause authentication and synchronization issues.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="border rounded-md p-4">
+                <h3 className="font-medium mb-2">IMAP Settings</h3>
+                {imapSettings ? (
+                  <div className="space-y-2">
+                    <p><span className="text-muted-foreground">Host:</span> {imapSettings.host}</p>
+                    <p><span className="text-muted-foreground">Username:</span> {imapSettings.username}</p>
+                    <p><span className="text-muted-foreground">Last Sync:</span> {imapSettings.last_sync_date ? new Date(imapSettings.last_sync_date).toLocaleString() : 'Never'}</p>
+                    <p><span className="text-muted-foreground">Historical Sync:</span> {imapSettings.historical_sync ? 'Enabled' : 'Disabled'}</p>
+                    <p>
+                      <span className="text-muted-foreground">Sync Status:</span> 
+                      {imapSettings.sync_status ? (
+                        <span className={`ml-1 ${imapSettings.sync_status === 'error' ? 'text-red-500' : 'text-green-500'}`}>
+                          {imapSettings.sync_status}
+                        </span>
+                      ) : 'Not started'}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-amber-500 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" /> Not configured
+                  </p>
                 )}
               </div>
               
-              {diagnosticResults?.dateIssues?.hasFutureDates && (
-                <Alert variant="destructive" className="mb-2">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertTitle>Future Date Issue Detected!</AlertTitle>
-                  <AlertDescription>
-                    Your email sync is configured with dates in the future (e.g., 2025), which prevents proper synchronization.
-                    Click the "Fix Date Issues" button above to resolve this problem.
-                  </AlertDescription>
-                </Alert>
-              )}
-              
-              {diagnosticResults && (
-                <div className="mt-4 space-y-2">
-                  <p className="text-sm">
-                    Results from {new Date(diagnosticResults.timestamp).toLocaleString()}:
+              <div className="border rounded-md p-4">
+                <h3 className="font-medium mb-2">SMTP Settings</h3>
+                {smtpSettings ? (
+                  <div className="space-y-2">
+                    <p><span className="text-muted-foreground">Host:</span> {smtpSettings.host}</p>
+                    <p><span className="text-muted-foreground">Username:</span> {smtpSettings.username}</p>
+                    <p><span className="text-muted-foreground">From Email:</span> {smtpSettings.from_email}</p>
+                    <p><span className="text-muted-foreground">Last Verified:</span> {smtpSettings.last_verified_at ? new Date(smtpSettings.last_verified_at).toLocaleString() : 'Never'}</p>
+                    <p>
+                      <span className="text-muted-foreground">Verification Status:</span> 
+                      {smtpSettings.last_verification_status ? (
+                        <span className={`ml-1 ${smtpSettings.last_verification_status === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+                          {smtpSettings.last_verification_status}
+                        </span>
+                      ) : 'Not verified'}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-amber-500 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" /> Not configured
                   </p>
-                  
-                  {diagnosticResults.folderStatus && (
-                    <Alert variant={diagnosticResults.folderStatus.success ? "default" : "destructive"} className="mb-2">
-                      <AlertCircle className="h-4 w-4" />
-                      <AlertTitle>Folder Status</AlertTitle>
-                      <AlertDescription>
-                        Found {diagnosticResults.folderStatus.folderCount || 0} email folders
-                        {diagnosticResults.folderStatus.error && (
-                          <div className="text-red-500 mt-1">
-                            Error: {diagnosticResults.folderStatus.error}
-                          </div>
-                        )}
-                      </AlertDescription>
-                    </Alert>
-                  )}
-                  
-                  <Code className="w-full overflow-auto max-h-96">
-                    <pre>{JSON.stringify(diagnosticResults, null, 2)}</pre>
-                  </Code>
+                )}
+              </div>
+            </div>
+            
+            <div className="border rounded-md p-4">
+              <h3 className="font-medium mb-2">Sync Statistics</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-muted-foreground">Email Count</p>
+                  <p className="text-xl font-medium">{emailCount !== null ? emailCount : '...'}</p>
                 </div>
+                <div>
+                  <p className="text-muted-foreground">Folder Count</p>
+                  <p className="text-xl font-medium">{folderCount !== null ? folderCount : '...'}</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="border rounded-md p-4">
+              <h3 className="font-medium mb-2">Last Sync Status</h3>
+              {syncStatus ? (
+                <div className="space-y-2">
+                  <p><span className="text-muted-foreground">Status:</span> 
+                    <span className={`ml-1 ${syncStatus.status === 'error' ? 'text-red-500' : 'text-green-500'}`}>
+                      {syncStatus.status}
+                    </span>
+                  </p>
+                  <p><span className="text-muted-foreground">Message:</span> {syncStatus.message || 'No message'}</p>
+                  <p><span className="text-muted-foreground">Started:</span> {new Date(syncStatus.created_at).toLocaleString()}</p>
+                  {syncStatus.completed_at && (
+                    <p><span className="text-muted-foreground">Completed:</span> {new Date(syncStatus.completed_at).toLocaleString()}</p>
+                  )}
+                </div>
+              ) : (
+                <p>No sync has been attempted yet</p>
               )}
             </div>
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+            
+            <div className="flex justify-between items-center mt-4">
+              <Button 
+                variant="outline" 
+                onClick={loadDiagnosticData}
+                className="flex items-center gap-2"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Refresh Diagnostics
+              </Button>
+              
+              <Button 
+                variant="destructive" 
+                onClick={handleResetEmailSync}
+                className="flex items-center gap-2"
+              >
+                Reset Email Sync
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
