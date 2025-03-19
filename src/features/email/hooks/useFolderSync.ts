@@ -11,6 +11,8 @@ export function useFolderSync() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const { settings, updateSettings } = useSettings();
+  const [syncProgress, setSyncProgress] = useState<number | null>(null);
+  const [syncDetails, setSyncDetails] = useState<any | null>(null);
   
   const syncFolders = useCallback(async (showToast = true) => {
     if (!user || isSyncing) {
@@ -21,6 +23,8 @@ export function useFolderSync() {
     try {
       setIsSyncing(true);
       setLastError(null);
+      setSyncProgress(0);
+      setSyncDetails(null);
       
       if (showToast) {
         toast.info("Starting folder synchronization", {
@@ -91,6 +95,17 @@ export function useFolderSync() {
       
       console.log("Starting email folder sync with timestamp:", new Date().toISOString());
       
+      // First get IMAP settings to use in sync
+      const { data: imapSettings, error: imapError } = await supabase
+        .from('imap_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+        
+      if (imapError) {
+        throw new Error(`Error fetching IMAP settings: ${imapError.message}`);
+      }
+      
       // Call the sync-emails edge function specifically for folder sync
       const response = await fetch(
         "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
@@ -109,8 +124,11 @@ export function useFolderSync() {
             ignore_date_validation: true, // Add this flag to ignore date validation
             debug: true, // Enable debug mode for more verbose logging
             incremental_connection: true, // Enable incremental connection
-            connection_timeout: 60000, // Increase timeout to 60 seconds
+            connection_timeout: imapSettings.connection_timeout || 60000, // Use configured timeout or default to 60 seconds
             max_batch_size: 25, // Process emails in smaller batches
+            historical_sync: imapSettings.historical_sync ?? true, // Use historical sync setting if available
+            progressive_loading: imapSettings.progressive_loading ?? true, // Use progressive loading if available
+            max_emails: imapSettings.max_emails || 500, // Use configured max emails or default to 500
             tls_options: {
               rejectUnauthorized: false,
               enableTrace: true,
@@ -179,6 +197,7 @@ export function useFolderSync() {
       };
     } finally {
       setIsSyncing(false);
+      setSyncProgress(null);
     }
   }, [user, isSyncing, settings, updateSettings]);
   
@@ -187,12 +206,24 @@ export function useFolderSync() {
     if (!user) return;
     
     console.log("Attempting to sync emails from inbox");
+    setSyncProgress(0);
     
     // Get the current user session
     const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
     
     if (sessionError || !sessionData.session) {
       throw new Error(sessionError?.message || "No active session found");
+    }
+    
+    // Get IMAP settings
+    const { data: imapSettings, error: imapError } = await supabase
+      .from('imap_settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+      
+    if (imapError) {
+      throw new Error(`Error fetching IMAP settings: ${imapError.message}`);
     }
     
     // Call the sync-emails edge function for inbox
@@ -211,12 +242,14 @@ export function useFolderSync() {
           timestamp: new Date().toISOString(),
           disable_certificate_validation: true,
           ignore_date_validation: true,
-          max_emails: 25, // Limit to 25 emails for initial sync
+          max_emails: imapSettings.max_emails || 500, // Use configured value or default to 500
           batch_processing: true, // Enable batch processing
-          max_batch_size: 10, // Process in smaller batches
-          connection_timeout: 60000, // Increase timeout to 60 seconds
+          max_batch_size: 50, // Increased batch size for better performance
+          connection_timeout: imapSettings.connection_timeout || 60000, // Use configured timeout
           retry_attempts: 3, // Number of retry attempts
           debug: true,
+          historical_sync: imapSettings.historical_sync ?? true, // Use historical sync if configured
+          progressive_loading: imapSettings.progressive_loading ?? true, // Use progressive loading if configured
           tls_options: {
             rejectUnauthorized: false,
             enableTrace: true,
@@ -236,6 +269,16 @@ export function useFolderSync() {
     const result = await response.json();
     console.log("Inbox sync result:", result);
     
+    // Update progress if available
+    if (result.progress) {
+      setSyncProgress(result.progress);
+    }
+    
+    // Store sync details for debugging
+    if (result.batchProcessing) {
+      setSyncDetails(result.batchProcessing);
+    }
+    
     if (result.success) {
       console.log("Inbox sync successful:", result);
       toast.success("Inbox Synchronization Complete", {
@@ -254,6 +297,8 @@ export function useFolderSync() {
     }
     
     try {
+      setIsSyncing(true);
+      
       const { data, error } = await supabase.rpc('reset_imap_settings', {
         user_id_param: user.id
       });
@@ -287,6 +332,8 @@ export function useFolderSync() {
         message: error.message || "Unknown error",
         error
       };
+    } finally {
+      setIsSyncing(false);
     }
   }, [user, settings, updateSettings]);
   
@@ -295,6 +342,8 @@ export function useFolderSync() {
     syncEmailsFromInbox,
     resetEmailSync,
     isSyncing,
-    lastError
+    lastError,
+    syncProgress,
+    syncDetails
   };
 }

@@ -26,6 +26,7 @@ interface ImapSettings {
   connectionTimeout: number;
   greetTimeout: number;
   socketTimeout: number;
+  emitLogs?: boolean;
 }
 
 interface TestRequest {
@@ -41,16 +42,40 @@ interface TestRequest {
     minVersion?: string;
   };
   timeout?: number;
+  debug_mode?: boolean;
+  fetch_folder_info?: boolean;
 }
 
 // Function to test IMAP connection
-async function testImapConnection(imapSettings: ImapSettings): Promise<{ success: boolean; error?: string; details?: string; folders?: any[] }> {
+async function testImapConnection(imapSettings: ImapSettings): Promise<{ success: boolean; error?: string; details?: string; folders?: any[]; sizes?: any; debug_info?: any }> {
   console.log(`Testing IMAP connection to: ${imapSettings.host}:${imapSettings.port} (secure: ${imapSettings.secure})`);
   
   const client = new ImapFlow(imapSettings);
+  const debugInfo: any = {
+    connectionAttempted: new Date().toISOString(),
+    tlsSettings: imapSettings.tls,
+    timeouts: {
+      connection: imapSettings.connectionTimeout,
+      greeting: imapSettings.greetTimeout,
+      socket: imapSettings.socketTimeout
+    },
+    logItems: []
+  };
+  
+  const logItems: string[] = [];
+  
+  // Add custom logger if in debug mode
+  if (imapSettings.emitLogs) {
+    client.on('log', (entry: any) => {
+      const logEntry = `${entry.cid} ${entry.msg}`;
+      logItems.push(logEntry);
+      console.log(`IMAP ${entry.meta?.type || 'debug'}: ${logEntry}`);
+    });
+  }
   
   try {
     console.log("Attempting to connect to IMAP server...");
+    debugInfo.connectStart = new Date().toISOString();
     
     // Create a connection timeout promise
     const connectPromise = client.connect();
@@ -63,33 +88,74 @@ async function testImapConnection(imapSettings: ImapSettings): Promise<{ success
     // Race the connection and timeout
     await Promise.race([connectPromise, timeoutPromise]);
     
+    debugInfo.connectSuccess = new Date().toISOString();
     console.log("Successfully connected to IMAP server!");
     
     // Try to list folders as a better test
     console.log("Attempting to list folders...");
+    debugInfo.folderListStart = new Date().toISOString();
     const folderList = await client.list();
+    debugInfo.folderListSuccess = new Date().toISOString();
     console.log(`Successfully listed ${folderList.length} folders`);
+    
+    // Get size information for key folders if requested
+    let folderSizes = {};
+    if (imapSettings.emitLogs) {
+      debugInfo.folderSizeCheckStart = new Date().toISOString();
+      try {
+        const inboxSize = await getMailboxSize(client, 'INBOX');
+        folderSizes = {
+          INBOX: inboxSize,
+          // Try to get sizes for common folders
+          Sent: await getMailboxSize(client, 'Sent'),
+          Drafts: await getMailboxSize(client, 'Drafts'), 
+          Junk: await getMailboxSize(client, 'Junk'),
+          Trash: await getMailboxSize(client, 'Trash')
+        };
+        debugInfo.folderSizeCheckSuccess = new Date().toISOString();
+      } catch (sizeError) {
+        console.error("Error getting folder sizes:", sizeError);
+        debugInfo.folderSizeCheckError = sizeError.message || "Unknown error";
+      }
+    }
     
     // Proper logout
     try {
+      debugInfo.logoutStart = new Date().toISOString();
       await client.logout();
+      debugInfo.logoutSuccess = new Date().toISOString();
       console.log("Successfully logged out from IMAP server");
     } catch (logoutError) {
+      debugInfo.logoutError = logoutError.message || "Unknown error";
       console.error("Error during IMAP logout:", logoutError);
     }
+    
+    // Add logs to debug info
+    debugInfo.logItems = logItems;
     
     return {
       success: true,
       folders: folderList.map(folder => ({
         name: folder.name,
         path: folder.path,
-        specialUse: folder.specialUse
-      })).slice(0, 5) // Return just the first 5 folders
+        specialUse: folder.specialUse,
+        delimiter: folder.delimiter,
+        flags: folder.flags
+      })),
+      sizes: folderSizes,
+      debug_info: debugInfo
     };
   } catch (error) {
     console.error("IMAP connection test error:", error);
     
     let errorMessage = error.message || "Unknown error";
+    let errorDetails = error.stack || "No stack trace available";
+    
+    // Add debug information to the error
+    debugInfo.error = errorMessage;
+    debugInfo.errorStack = errorDetails;
+    debugInfo.errorTime = new Date().toISOString();
+    debugInfo.logItems = logItems;
     
     // Provide more friendly error messages
     if (error.message.includes("auth") || error.message.includes("credentials")) {
@@ -105,7 +171,8 @@ async function testImapConnection(imapSettings: ImapSettings): Promise<{ success
     return {
       success: false,
       error: errorMessage,
-      details: error.stack || "No stack trace available"
+      details: errorDetails,
+      debug_info: debugInfo
     };
   } finally {
     // Ensure client is closed
@@ -116,6 +183,27 @@ async function testImapConnection(imapSettings: ImapSettings): Promise<{ success
         console.error("Error closing IMAP client:", closeError);
       }
     }
+  }
+}
+
+// Helper function to get mailbox size
+async function getMailboxSize(client: any, path: string): Promise<{exists: number, unseen: number}> {
+  try {
+    // Try to select the mailbox
+    const lock = await client.getMailboxLock(path);
+    try {
+      // Get status information
+      return {
+        exists: Number(client.mailbox.exists || 0),
+        unseen: Number(client.mailbox.unseen || 0)
+      };
+    } finally {
+      // Always release the lock
+      lock.release();
+    }
+  } catch (error) {
+    console.log(`Could not get size for mailbox ${path}: ${error.message}`);
+    return { exists: 0, unseen: 0 };
   }
 }
 
@@ -154,7 +242,9 @@ serve(async (req) => {
         enableTrace: true,
         minVersion: "TLSv1"
       },
-      timeout = 60000  // Increased default timeout to 60 seconds
+      timeout = 60000,  // Default timeout of 60 seconds
+      debug_mode = false,
+      fetch_folder_info = false
     } = requestData;
     
     // Validate required parameters
@@ -227,9 +317,10 @@ serve(async (req) => {
           enableTrace: true,
           minVersion: "TLSv1"
         },
-        connectionTimeout: timeout,
-        greetTimeout: 15000,
-        socketTimeout: timeout
+        connectionTimeout: savedSettings.connection_timeout || timeout,
+        greetTimeout: 30000,
+        socketTimeout: savedSettings.connection_timeout || timeout,
+        emitLogs: debug_mode
       };
       
       const result = await testImapConnection(imapConfig);
@@ -259,8 +350,9 @@ serve(async (req) => {
           minVersion: tls_options.minVersion
         },
         connectionTimeout: timeout,
-        greetTimeout: 15000,
-        socketTimeout: timeout
+        greetTimeout: 30000,
+        socketTimeout: timeout,
+        emitLogs: debug_mode
       };
       
       const result = await testImapConnection(imapConfig);
