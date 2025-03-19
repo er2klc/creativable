@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
-import { AlertCircle, AlertTriangle, Bug, Check, RefreshCw, XCircle, Clock } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Bug, Check, RefreshCw, XCircle, Clock, Inbox } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 import { checkEmailConfigStatus } from "@/utils/debug-helper";
@@ -23,7 +23,7 @@ export function EmailDiagnostics() {
   const [dbTime, setDbTime] = useState<string | null>(null);
   const [timeDiscrepancy, setTimeDiscrepancy] = useState(false);
   const [discrepancyMinutes, setDiscrepancyMinutes] = useState(0);
-  const { resetEmailSync, syncFolders } = useFolderSync();
+  const { resetEmailSync, syncFolders, syncEmailsFromInbox } = useFolderSync();
 
   useEffect(() => {
     loadDiagnosticData();
@@ -93,6 +93,17 @@ export function EmailDiagnostics() {
     if (result.success) {
       toast.success('Folders synced successfully');
       loadDiagnosticData();
+    }
+  };
+  
+  const handleSyncInbox = async () => {
+    try {
+      await syncEmailsFromInbox();
+      toast.success('Inbox synced successfully');
+      loadDiagnosticData();
+    } catch (error) {
+      console.error('Error syncing inbox:', error);
+      toast.error('Failed to sync inbox');
     }
   };
 
@@ -307,6 +318,15 @@ export function EmailDiagnostics() {
                 >
                   <RefreshCw className="w-4 h-4" />
                   Sync Folders
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={handleSyncInbox}
+                  className="flex items-center gap-2"
+                >
+                  <Inbox className="w-4 h-4" />
+                  Sync Inbox
                 </Button>
                 
                 <Button 

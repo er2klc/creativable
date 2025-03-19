@@ -105,6 +105,8 @@ export function useFolderSync() {
             force_refresh: true,
             folder_sync_only: true,
             timestamp: new Date().toISOString(), // Add timestamp to prevent caching
+            disable_certificate_validation: true, // Add this flag to disable certificate validation
+            ignore_date_validation: true, // Add this flag to ignore date validation
             debug: true // Enable debug mode for more verbose logging
           })
         }
@@ -132,6 +134,16 @@ export function useFolderSync() {
           last_email_sync: new Date().toISOString(),
           email_sync_enabled: true
         });
+        
+        // After folder sync, try to sync emails from inbox
+        if (result.folderCount > 0) {
+          try {
+            await syncEmailsFromInbox();
+          } catch (inboxSyncError) {
+            console.error("Failed to sync inbox emails:", inboxSyncError);
+            // Don't fail the overall operation if inbox sync fails
+          }
+        }
         
         return {
           success: true, 
@@ -161,6 +173,62 @@ export function useFolderSync() {
       setIsSyncing(false);
     }
   }, [user, isSyncing, settings, updateSettings]);
+  
+  // New function to sync emails from inbox after folder sync
+  const syncEmailsFromInbox = async () => {
+    if (!user) return;
+    
+    console.log("Attempting to sync emails from inbox");
+    
+    // Get the current user session
+    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !sessionData.session) {
+      throw new Error(sessionError?.message || "No active session found");
+    }
+    
+    // Call the sync-emails edge function for inbox
+    const response = await fetch(
+      "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${sessionData.session.access_token}`,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          force_refresh: true,
+          folder: "INBOX", // Specifically target the inbox
+          timestamp: new Date().toISOString(),
+          disable_certificate_validation: true,
+          ignore_date_validation: true,
+          max_emails: 50, // Limit to 50 emails for initial sync
+          debug: true
+        })
+      }
+    );
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Inbox sync API error:", response.status, errorText);
+      throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+    }
+    
+    const result = await response.json();
+    console.log("Inbox sync result:", result);
+    
+    if (result.success) {
+      console.log("Inbox sync successful:", result);
+      toast.success("Inbox Synchronization Complete", {
+        description: `Successfully synced ${result.emailsCount || 0} emails from your inbox`
+      });
+      return result;
+    } else {
+      console.error("Inbox sync failed:", result.message, result.error);
+      throw new Error(result.message || "Failed to sync inbox");
+    }
+  };
   
   const resetEmailSync = useCallback(async () => {
     if (!user) {
@@ -206,6 +274,7 @@ export function useFolderSync() {
   
   return {
     syncFolders,
+    syncEmailsFromInbox,
     resetEmailSync,
     isSyncing,
     lastError
