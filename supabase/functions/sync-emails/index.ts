@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ImapFlow } from 'npm:imapflow@1.0.98';
 import { simpleParser } from 'npm:mailparser@3.6.5';
@@ -275,11 +276,20 @@ async function syncEmails(
       }
     );
     
-    const existingEmails = await existingEmailsResponse.json();
-    const existingMessageIds = new Set(existingEmails.map(e => e.message_id));
-    const existingUIDs = new Set(existingEmails.map(e => e.uid).filter(Boolean));
+    // Fix for the "existingEmails.map is not a function" error
+    let existingData = await existingEmailsResponse.json();
+    let existingMessageIds = new Set();
+    let existingUIDs = new Set();
     
-    debugLog(`Found ${existingMessageIds.size} existing emails in database for folder ${folder}`);
+    // Ensure existingData is an array and handle accordingly
+    if (Array.isArray(existingData)) {
+      existingMessageIds = new Set(existingData.map(e => e.message_id).filter(Boolean));
+      existingUIDs = new Set(existingData.map(e => e.uid).filter(Boolean));
+      debugLog(`Found ${existingMessageIds.size} existing emails in database for folder ${folder}`);
+    } else {
+      debugLog(`No existing emails found or invalid response format for folder ${folder}`);
+      existingData = [];
+    }
     
     // Determine if we should do incremental sync
     let searchCriteria: any;
@@ -428,6 +438,32 @@ async function syncEmails(
           // Determine if message is read
           const isRead = flags.includes("\\Seen");
           
+          // Try to find a matching lead
+          let leadId: string | null = null;
+          
+          try {
+            // Look for leads with matching email addresses
+            const leadResponse = await fetch(
+              `${SUPABASE_URL}/rest/v1/leads?select=id&or=(email.eq.${encodeURIComponent(fromEmail)},email.eq.${encodeURIComponent(toEmail)})&limit=1`,
+              {
+                headers: {
+                  'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                  'apikey': SUPABASE_SERVICE_ROLE_KEY,
+                }
+              }
+            );
+            
+            const leads = await leadResponse.json();
+            
+            if (Array.isArray(leads) && leads.length > 0) {
+              leadId = leads[0].id;
+              debugLog(`Found matching lead: ${leadId} for email: ${messageId}`);
+            }
+          } catch (leadError) {
+            console.error("Error finding matching lead:", leadError);
+            // Continue without lead association
+          }
+          
           // Store the email in the database
           const emailData = {
             user_id: userId,
@@ -446,6 +482,7 @@ async function syncEmails(
             sent_at: sentDate.toISOString(),
             received_at: new Date().toISOString(),
             read: isRead,
+            lead_id: leadId, // Associate with lead if found
             starred: flags.includes("\\Flagged"),
             has_attachments: hasAttachments,
             flags: flags
