@@ -1,350 +1,240 @@
 
-import { useState, useCallback } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/use-auth';
-import { toast } from 'sonner';
-import { fixDuplicateEmailFolders } from '@/utils/debug-helper';
-import { useSettings } from '@/hooks/use-settings';
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
-export function useFolderSync() {
+export interface FolderSyncResult {
+  success: boolean;
+  message: string;
+  folderCount?: number;
+  error?: string;
+}
+
+export interface UseFolderSyncResult {
+  syncFolders: (silent?: boolean) => Promise<FolderSyncResult>;
+  isSyncing: boolean;
+  lastSyncResult: FolderSyncResult | null;
+  lastSyncTime: Date | null;
+  resetEmailSync: () => Promise<{ error: Error | null }>;
+}
+
+export function useFolderSync(): UseFolderSyncResult {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [isSyncing, setIsSyncing] = useState(false);
-  const [lastError, setLastError] = useState<string | null>(null);
-  const { settings, updateSettings } = useSettings();
-  const [syncProgress, setSyncProgress] = useState<number | null>(null);
-  const [syncDetails, setSyncDetails] = useState<any | null>(null);
-  
-  const syncFolders = useCallback(async (showToast = true) => {
+  const [lastSyncResult, setLastSyncResult] = useState<FolderSyncResult | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<Date | null>(null);
+
+  const syncFolders = async (silent = false): Promise<FolderSyncResult> => {
     if (!user || isSyncing) {
       console.log("Cannot sync folders: User not defined or sync already in progress");
-      return { success: false, message: "Cannot sync: not logged in or sync in progress" };
+      return { 
+        success: false, 
+        message: "Cannot sync folders: User not defined or sync already in progress"
+      };
     }
-    
+
     try {
       setIsSyncing(true);
-      setLastError(null);
-      setSyncProgress(0);
-      setSyncDetails(null);
+      console.log("Starting folder sync at system time:", new Date().toISOString());
       
-      if (showToast) {
-        toast.info("Starting folder synchronization", {
-          description: "Syncing email folders, this may take a moment..."
-        });
-      }
-      
-      // Log current system time for debugging
-      const systemTime = new Date().toISOString();
-      console.log("Starting folder sync at system time:", systemTime);
-      
-      // Check for time discrepancy (added for debugging)
+      // Try to check if there's a significant time difference between client and server
       try {
-        const { data: timeCheck } = await supabase.rpc('check_time_discrepancy');
-        if (timeCheck) {
-          const dbTime = timeCheck.db_time;
-          console.log("DB time:", dbTime, "System time:", systemTime);
-          
-          // Check for time discrepancy greater than 1 minute
-          const dbTimeObj = new Date(dbTime);
-          const systemTimeObj = new Date(systemTime);
-          const diffMs = Math.abs(dbTimeObj.getTime() - systemTimeObj.getTime());
-          const diffMinutes = diffMs / (1000 * 60);
-          
-          if (diffMinutes > 1) {
-            console.warn("WARNING: Time discrepancy detected!", { 
-              dbTime, 
-              systemTime, 
-              diffMinutes 
-            });
-            
-            // Update settings to record the time discrepancy
-            await updateSettings.mutateAsync({
-              time_discrepancy_detected: true,
-              time_discrepancy_minutes: diffMinutes
-            });
-            
-            // Add warning toast about time discrepancy
-            toast.warning("System time discrepancy detected", {
-              description: `Your system time differs from the server by ${Math.round(diffMinutes)} minutes. This may cause sync issues.`
-            });
-          } else if (settings?.time_discrepancy_detected) {
-            // Clear previous time discrepancy flag if it's now resolved
-            await updateSettings.mutateAsync({
-              time_discrepancy_detected: false,
-              time_discrepancy_minutes: 0
+        const { data: timeData } = await supabase.rpc('check_time_discrepancy');
+        const serverTime = new Date(timeData.db_time);
+        const clientTime = new Date();
+        
+        console.log(`DB time: ${timeData.db_time} System time: ${clientTime.toISOString()}`);
+        
+        const timeDiff = Math.abs(serverTime.getTime() - clientTime.getTime());
+        
+        // If time difference is more than 5 minutes, warn the user
+        if (timeDiff > 5 * 60 * 1000) {
+          console.warn(`Time difference between client and server is ${timeDiff/1000}s`);
+          if (!silent) {
+            toast.warning("System time might be incorrect", {
+              description: "Your system time differs significantly from the server time. This might cause issues with email synchronization."
             });
           }
         }
       } catch (timeError) {
         console.error("Error checking time discrepancy:", timeError);
       }
-      
-      // Fix duplicate folders before syncing
-      try {
-        const fixResult = await fixDuplicateEmailFolders(user.id);
-        if (fixResult.success && fixResult.message.includes("Fixed") && parseInt(fixResult.message.split(" ")[1]) > 0) {
-          console.log("Fixed duplicate folders:", fixResult.message);
-        }
-      } catch (fixError) {
-        console.error("Error fixing duplicate folders:", fixError);
-        // Continue with sync even if fix fails
-      }
-      
-      // Update settings to indicate email sync has been attempted
-      if (settings && !settings.email_configured) {
-        await updateSettings.mutateAsync({
-          email_configured: true,
-          last_email_sync: new Date().toISOString()
-        });
-      }
-      
-      // Get the current user session
+
+      // Get the current user's auth token
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError || !sessionData.session) {
-        throw new Error(sessionError?.message || "No active session found");
+        throw new Error("No active session found");
       }
       
-      console.log("Starting email folder sync with timestamp:", new Date().toISOString());
-      
-      // First get IMAP settings to use in sync
-      const { data: imapSettings, error: imapError } = await supabase
-        .from('imap_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-        
-      if (imapError) {
-        throw new Error(`Error fetching IMAP settings: ${imapError.message}`);
+      // Show toast notification for folder sync
+      let syncToastId;
+      if (!silent) {
+        syncToastId = toast.loading("Syncing email folders...");
       }
       
-      // Call the sync-folders edge function for folder sync
+      // Call the edge function to sync folders
       const response = await fetch(
         "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-folders",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${sessionData.session.access_token}`,
-            "Accept": "application/json"
+            "Authorization": `Bearer ${sessionData.session.access_token}`
           },
           body: JSON.stringify({
             force_refresh: true,
             detailed_logging: true,
-            timestamp: new Date().toISOString(), // Add timestamp to prevent caching
-            disable_certificate_validation: true, // Add this flag to disable certificate validation
-            ignore_date_validation: true, // Add this flag to ignore date validation
-            debug: true, // Enable debug mode for more verbose logging
-            connection_timeout: imapSettings.connection_timeout || 60000, // Use configured timeout or default to 60 seconds
+            timestamp: new Date().toISOString(),
+            disable_certificate_validation: true,
+            ignore_date_validation: true,
+            debug: true,
+            connection_timeout: 30000
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+      }
+
+      const result = await response.json();
+      console.log("Folder sync result:", result);
+      
+      if (result.success) {
+        // Update the last sync time and result
+        setLastSyncTime(new Date());
+        setLastSyncResult(result);
+        
+        // Try to fix any duplicate folders in the database
+        try {
+          const { data: fixResult, error: fixError } = await supabase.rpc(
+            'fix_duplicate_email_folders',
+            { user_id_param: user.id }
+          );
+          console.log("Fixed duplicate email folders:", fixResult || fixError);
+        } catch (fixError) {
+          console.error("Error fixing duplicate folders:", fixError);
+        }
+        
+        // Invalidate the folders query to update the folders list
+        queryClient.invalidateQueries({ queryKey: ["email-folders", user.id] });
+        
+        // Update the settings to indicate email is now configured
+        await supabase
+          .from('settings')
+          .update({
+            last_email_sync: new Date().toISOString(),
+            email_sync_enabled: true
+          })
+          .eq('user_id', user.id);
+        
+        console.log("Folder sync successful:", result);
+        
+        if (!silent && syncToastId) {
+          toast.dismiss(syncToastId);
+          toast.success(`Email Folders Synced`, {
+            description: `Successfully synced ${result.folderCount} folders`
+          });
+        }
+        
+        return result;
+      } else {
+        if (!silent && syncToastId) {
+          toast.dismiss(syncToastId);
+          toast.error("Folder Sync Failed", {
+            description: result.message || "Could not sync email folders"
+          });
+        }
+        
+        setLastSyncResult(result);
+        return result;
+      }
+    } catch (error: any) {
+      console.error("Error syncing folders:", error);
+      
+      if (!silent) {
+        toast.error("Folder Sync Failed", {
+          description: error.message || "An unexpected error occurred"
+        });
+      }
+      
+      const errorResult = {
+        success: false,
+        message: "Failed to sync folders",
+        error: error.message || "Unknown error"
+      };
+      
+      setLastSyncResult(errorResult);
+      return errorResult;
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  // Function to reset IMAP sync state for troubleshooting
+  const resetEmailSync = async (): Promise<{ error: Error | null }> => {
+    if (!user) {
+      return { error: new Error("User not authenticated") };
+    }
+    
+    try {
+      // Get the current user's auth token
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error("No active session found");
+      }
+      
+      // Call the edge function to reset sync state
+      const response = await fetch(
+        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/reset-imap-sync",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${sessionData.session.access_token}`
+          },
+          body: JSON.stringify({
+            user_id: user.id,
+            reset_cache: true,
+            optimize_settings: true
           })
         }
       );
       
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("Folder sync API error:", response.status, errorText);
         throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
       
       const result = await response.json();
-      console.log("Folder sync result:", result);
       
       if (result.success) {
-        console.log("Folder sync successful:", result);
-        if (showToast) {
-          toast.success("Folder Synchronization Complete", {
-            description: `Successfully synced ${result.folderCount || 0} folders from your email account`
-          });
-        }
+        // Invalidate related queries
+        queryClient.invalidateQueries({ queryKey: ["email-folders"] });
+        queryClient.invalidateQueries({ queryKey: ["emails"] });
+        queryClient.invalidateQueries({ queryKey: ["imap-settings"] });
         
-        // Update settings with successful sync
-        await updateSettings.mutateAsync({
-          last_email_sync: new Date().toISOString(),
-          email_sync_enabled: true
-        });
-        
-        // After folder sync, try to sync emails from inbox
-        if (result.folderCount > 0) {
-          try {
-            await syncEmailsFromInbox();
-          } catch (inboxSyncError) {
-            console.error("Failed to sync inbox emails:", inboxSyncError);
-            // Don't fail the overall operation if inbox sync fails
-          }
-        }
-        
-        return {
-          success: true, 
-          message: `Successfully synced ${result.folderCount || 0} folders`,
-          folderCount: result.folderCount || 0
-        };
+        return { error: null };
       } else {
-        console.error("Folder sync failed:", result.message, result.error);
-        throw new Error(result.message || "Failed to sync folders");
+        throw new Error(result.message || "Reset failed");
       }
-    } catch (error: any) {
-      console.error("Error syncing folders:", error);
-      setLastError(error.message || "Failed to sync folders");
-      
-      if (showToast) {
-        toast.error("Folder Sync Failed", {
-          description: error.message || "An error occurred while syncing folders"
-        });
-      }
-      
-      return {
-        success: false,
-        message: error.message || "Unknown error",
-        error
-      };
-    } finally {
-      setIsSyncing(false);
-      setSyncProgress(null);
-    }
-  }, [user, isSyncing, settings, updateSettings]);
-  
-  // Function to sync emails from inbox after folder sync
-  const syncEmailsFromInbox = useCallback(async () => {
-    if (!user) return;
-    
-    console.log("Attempting to sync emails from inbox");
-    setSyncProgress(0);
-    
-    // Get the current user session
-    const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-    
-    if (sessionError || !sessionData.session) {
-      throw new Error(sessionError?.message || "No active session found");
-    }
-    
-    // Get IMAP settings
-    const { data: imapSettings, error: imapError } = await supabase
-      .from('imap_settings')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-      
-    if (imapError) {
-      throw new Error(`Error fetching IMAP settings: ${imapError.message}`);
-    }
-    
-    // Call the sync-emails edge function for inbox
-    const response = await fetch(
-      "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${sessionData.session.access_token}`,
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          force_refresh: true,
-          folder: "INBOX", // Specifically target the inbox
-          timestamp: new Date().toISOString(),
-          disable_certificate_validation: true,
-          ignore_date_validation: true,
-          max_emails: imapSettings.max_emails || 500, // Use configured value or default to 500
-          batch_processing: true, // Enable batch processing
-          max_batch_size: 50, // Increased batch size for better performance
-          connection_timeout: imapSettings.connection_timeout || 60000, // Use configured timeout
-          retry_attempts: 3, // Number of retry attempts
-          debug: true,
-          historical_sync: imapSettings.historical_sync ?? true, // Use historical sync if configured
-          progressive_loading: imapSettings.progressive_loading ?? true, // Use progressive loading if configured
-          tls_options: {
-            rejectUnauthorized: false,
-            enableTrace: true,
-            minVersion: "TLSv1"
-          },
-          incremental_connection: true // Enable incremental connection
-        })
-      }
-    );
-    
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Inbox sync API error:", response.status, errorText);
-      throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-    }
-    
-    const result = await response.json();
-    console.log("Inbox sync result:", result);
-    
-    // Update progress if available
-    if (result.progress) {
-      setSyncProgress(result.progress);
-    }
-    
-    // Store sync details for debugging
-    if (result.batchProcessing) {
-      setSyncDetails(result.batchProcessing);
-    }
-    
-    if (result.success) {
-      console.log("Inbox sync successful:", result);
-      toast.success("Inbox Synchronization Complete", {
-        description: `Successfully synced ${result.emailsCount || 0} emails from your inbox`
-      });
-      return result;
-    } else {
-      console.error("Inbox sync failed:", result.message, result.error);
-      throw new Error(result.message || "Failed to sync inbox");
-    }
-  }, [user]);
-  
-  const resetEmailSync = useCallback(async () => {
-    if (!user) {
-      return { success: false, message: "Not logged in" };
-    }
-    
-    try {
-      setIsSyncing(true);
-      
-      const { data, error } = await supabase.rpc('reset_imap_settings', {
-        user_id_param: user.id
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Reset any settings flags that might be set
-      if (settings) {
-        await updateSettings.mutateAsync({
-          email_sync_enabled: false,
-          last_email_sync: null
-        });
-      }
-      
-      toast.success("Email sync has been reset", {
-        description: "All email folders and sync status have been cleared. You can now try syncing again."
-      });
-      
-      return { success: true, message: "Successfully reset email sync" };
     } catch (error: any) {
       console.error("Error resetting email sync:", error);
-      
-      toast.error("Reset Failed", {
-        description: error.message || "An error occurred while trying to reset email sync"
-      });
-      
-      return {
-        success: false,
-        message: error.message || "Unknown error",
-        error
-      };
-    } finally {
-      setIsSyncing(false);
+      return { error };
     }
-  }, [user, settings, updateSettings]);
-  
+  };
+
   return {
     syncFolders,
-    syncEmailsFromInbox,
-    resetEmailSync,
     isSyncing,
-    lastError,
-    syncProgress,
-    syncDetails
+    lastSyncResult,
+    lastSyncTime,
+    resetEmailSync
   };
 }

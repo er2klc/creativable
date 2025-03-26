@@ -72,6 +72,7 @@ interface SyncOptions {
   incrementalConnection?: boolean;
   loadLatest?: boolean;
   incrementalSync?: boolean;
+  ignoreDataValidation?: boolean;
 }
 
 // Add this new date validation function
@@ -95,12 +96,13 @@ async function syncEmails(
     connectionTimeout = 30000,
     retryAttempts = 2,
     loadLatest = true,
-    incrementalSync = true
+    incrementalSync = true,
+    ignoreDataValidation = false
   } = options;
   
   // Check for system time issues
   const currentTime = new Date();
-  if (isDateInFuture(currentTime) && !options.ignoreDataValidation) {
+  if (isDateInFuture(currentTime) && !ignoreDataValidation) {
     console.error(`SYSTEM TIME ERROR: System time appears to be in the future: ${currentTime.toISOString()}`);
     return {
       success: false,
@@ -236,13 +238,13 @@ async function syncEmails(
     
     // Create a connection timeout promise
     const connectPromise = client.connect();
-    const timeoutPromise = new Promise((_, reject) => {
+    const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => {
         reject(new Error(`Connection timed out after ${connectionTimeout}ms`));
       }, connectionTimeout);
     });
     
-    // Race the connection and timeout
+    // Race connection attempt vs. timeout
     await Promise.race([connectPromise, timeoutPromise]);
     
     debugLog("Successfully connected to IMAP server");
@@ -277,7 +279,14 @@ async function syncEmails(
     );
     
     // Fix for the "existingEmails.map is not a function" error
-    let existingData = await existingEmailsResponse.json();
+    let existingData;
+    try {
+      existingData = await existingEmailsResponse.json();
+    } catch (e) {
+      existingData = [];
+      debugLog("Error parsing existing emails:", e);
+    }
+    
     let existingMessageIds = new Set();
     let existingUIDs = new Set();
     
@@ -495,7 +504,7 @@ async function syncEmails(
           // Batch insert if we've accumulated enough emails
           if (emailsToInsert.length >= 10) {
             try {
-              await fetch(
+              const response = await fetch(
                 `${SUPABASE_URL}/rest/v1/emails`,
                 {
                   method: 'POST',
@@ -508,6 +517,11 @@ async function syncEmails(
                   body: JSON.stringify(emailsToInsert)
                 }
               );
+              
+              if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Error inserting emails: ${response.status} ${errorText}`);
+              }
             } catch (insertError) {
               console.error("Error inserting batch of emails:", insertError);
             }
@@ -545,7 +559,7 @@ async function syncEmails(
     // Insert any remaining emails
     if (emailsToInsert.length > 0) {
       try {
-        await fetch(
+        const response = await fetch(
           `${SUPABASE_URL}/rest/v1/emails`,
           {
             method: 'POST',
@@ -558,6 +572,11 @@ async function syncEmails(
             body: JSON.stringify(emailsToInsert)
           }
         );
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Error inserting remaining emails: ${response.status} ${errorText}`);
+        }
       } catch (insertError) {
         console.error("Error inserting final batch of emails:", insertError);
       }
@@ -720,7 +739,7 @@ async function updateSyncStatus(
     
     const existingStatus = await response.json();
     
-    const updateData = {
+    const updateData: any = {
       items_synced: itemsSynced,
       total_items: totalItems,
       sync_in_progress: inProgress,
@@ -868,15 +887,15 @@ serve(async (req) => {
       forceRefresh: requestData.force_refresh || false,
       maxEmails: requestData.max_emails || settings.max_emails || 100,
       batchProcessing: requestData.batch_processing !== false,
-      maxBatchSize: requestData.max_batch_size || 10, // Smaller batch size for better reliability
+      maxBatchSize: requestData.max_batch_size || 50, // Default to 50 for faster syncing
       connectionTimeout: requestData.connection_timeout || settings.connection_timeout || 30000,
-      retryAttempts: requestData.retry_attempts || 2,
+      retryAttempts: requestData.retry_attempts || 3,
       folderSyncOnly: requestData.folder_sync_only || false,
       incrementalConnection: requestData.incremental_connection || false,
       loadLatest: requestData.load_latest !== false,
       historicalSync: requestData.historical_sync || settings.historical_sync || false,
-      tlsOptions: requestData.tlsOptions || { rejectUnauthorized: false },
-      ignoreDataValidation: requestData.ignore_date_validation || false,
+      tlsOptions: requestData.tls_options || { rejectUnauthorized: false },
+      ignoreDataValidation: requestData.ignore_date_validation || true, // Ignore date validation by default
       incrementalSync: requestData.incremental_sync !== false // Default to true for incremental sync
     };
 
@@ -888,10 +907,10 @@ serve(async (req) => {
       const folderSyncResponse = await fetch(
         `${SUPABASE_URL}/functions/v1/sync-folders`,
         {
-          method: 'POST',
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${jwt}`
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${jwt}`
           },
           body: JSON.stringify({
             force_refresh: syncOptions.forceRefresh

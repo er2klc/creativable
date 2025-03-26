@@ -1,30 +1,27 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { SMTPClient } from "npm:emailjs@3.2.1";
+import { SMTPClient } from "npm:emailjs@4.0.1";
 import { corsHeaders } from "../_shared/cors.ts";
 
-interface SendEmailRequest {
+interface EmailRequest {
   to: string;
+  cc?: string[];
+  bcc?: string[];
   subject: string;
   text?: string;
   html?: string;
-  cc?: string[];
-  bcc?: string[];
-  attachments?: {
-    name: string;
-    data: string; // Base64 encoded
-    contentType: string;
-  }[];
-  lead_id?: string;
-  reply_to_message_id?: string;
-}
-
-interface SendEmailResponse {
-  success: boolean;
-  message: string;
-  messageId?: string;
-  error?: string;
-  details?: string;
+  use_saved_settings?: boolean;
+  smtp_config?: {
+    host: string;
+    port: number;
+    secure: boolean;
+    user: string;
+    password: string;
+    from_email: string;
+    from_name?: string;
+  };
+  reply_to?: string;
+  attachments?: any[];
 }
 
 serve(async (req) => {
@@ -34,8 +31,7 @@ serve(async (req) => {
   }
 
   try {
-    // Parse request body
-    const requestData: SendEmailRequest = await req.json();
+    const requestData: EmailRequest = await req.json();
     console.log("Send email request received");
 
     // Validate required fields
@@ -43,155 +39,107 @@ serve(async (req) => {
       throw new Error("Missing required fields: to, subject, and either text or html body");
     }
 
-    // Get the user's JWT from the request
-    const authHeader = req.headers.get('authorization') || '';
-    const jwt = authHeader.replace('Bearer ', '');
+    // Get user information from JWT if using saved settings
+    let smtpConfig;
+    if (requestData.use_saved_settings) {
+      const authHeader = req.headers.get('authorization') || '';
+      const jwt = authHeader.replace('Bearer ', '');
 
-    if (!jwt) {
-      throw new Error("Authentication required");
-    }
+      if (!jwt) {
+        throw new Error("Authentication required to use saved settings");
+      }
 
-    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
-    
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing Supabase environment variables");
-    }
+      const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
+      
+      if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+        throw new Error("Missing Supabase environment variables");
+      }
 
-    // Get user information from the token
-    const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-        apikey: SUPABASE_SERVICE_ROLE_KEY,
-      },
-    });
-
-    const userData = await userResponse.json();
-    if (!userData.id) {
-      throw new Error("Failed to get user information");
-    }
-
-    const userId = userData.id;
-
-    // Fetch SMTP settings for the user
-    const smtpSettingsResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/smtp_settings?user_id=eq.${userId}&select=*`,
-      {
+      // Get user ID from JWT
+      const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
         headers: {
-          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+          Authorization: `Bearer ${jwt}`,
           apikey: SUPABASE_SERVICE_ROLE_KEY,
         },
+      });
+
+      const userData = await userResponse.json();
+      if (!userData.id) {
+        throw new Error("Failed to get user information");
       }
-    );
 
-    const smtpSettings = await smtpSettingsResponse.json();
-    
-    if (!smtpSettings || smtpSettings.length === 0) {
-      throw new Error("No SMTP settings found for this user");
+      // Fetch SMTP settings for the user
+      const smtpSettingsResponse = await fetch(
+        `${SUPABASE_URL}/rest/v1/smtp_settings?user_id=eq.${userData.id}&select=*`,
+        {
+          headers: {
+            Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+            apikey: SUPABASE_SERVICE_ROLE_KEY,
+          },
+        }
+      );
+
+      const savedSettings = await smtpSettingsResponse.json();
+      
+      if (!savedSettings || savedSettings.length === 0) {
+        throw new Error("No SMTP settings found for this user");
+      }
+      
+      const settings = savedSettings[0];
+      smtpConfig = {
+        host: settings.host,
+        port: settings.port,
+        secure: settings.secure,
+        user: settings.username,
+        password: settings.password,
+        from_email: settings.from_email,
+        from_name: settings.from_name
+      };
+    } else if (requestData.smtp_config) {
+      smtpConfig = requestData.smtp_config;
+    } else {
+      throw new Error("Either use_saved_settings must be true or smtp_config must be provided");
     }
-
-    const settings = smtpSettings[0];
 
     // Configure SMTP client
     const client = new SMTPClient({
-      user: settings.username,
-      password: settings.password,
-      host: settings.host,
-      port: settings.port,
-      ssl: settings.secure,
+      host: smtpConfig.host,
+      port: smtpConfig.port,
+      secure: smtpConfig.secure,
+      auth: {
+        user: smtpConfig.user,
+        pass: smtpConfig.password
+      },
       tls: {
         rejectUnauthorized: false // Allow self-signed certificates
       }
     });
 
-    // Prepare email
-    const message = {
-      from: `${settings.from_name} <${settings.from_email}>`,
+    // Build email message
+    const message: any = {
+      from: smtpConfig.from_name 
+        ? `${smtpConfig.from_name} <${smtpConfig.from_email}>`
+        : smtpConfig.from_email,
       to: requestData.to,
-      subject: requestData.subject,
-      text: requestData.text || '',
-      attachment: [
-        // Include HTML body if provided
-        ...(requestData.html ? [{ data: requestData.html, alternative: true }] : []),
-        
-        // Include attachments if provided
-        ...(requestData.attachments || []).map(attachment => ({
-          name: attachment.name,
-          data: Uint8Array.from(atob(attachment.data), c => c.charCodeAt(0)),
-          type: attachment.contentType
-        }))
-      ]
+      subject: requestData.subject
     };
 
-    // Add CC and BCC if provided
-    if (requestData.cc && requestData.cc.length > 0) {
-      message['cc'] = requestData.cc.join(', ');
-    }
-    
-    if (requestData.bcc && requestData.bcc.length > 0) {
-      message['bcc'] = requestData.bcc.join(', ');
-    }
+    if (requestData.text) message.text = requestData.text;
+    if (requestData.html) message.html = requestData.html;
+    if (requestData.cc) message.cc = requestData.cc.join(',');
+    if (requestData.bcc) message.bcc = requestData.bcc.join(',');
+    if (requestData.reply_to) message.replyTo = requestData.reply_to;
+    if (requestData.attachments) message.attachments = requestData.attachments;
 
-    // Add In-Reply-To header if this is a reply
-    if (requestData.reply_to_message_id) {
-      message['headers'] = {
-        'In-Reply-To': requestData.reply_to_message_id
-      };
-    }
-
-    // Send the email
-    console.log("Sending email to:", requestData.to);
+    // Send email
     const info = await client.sendAsync(message);
-    console.log("Email sent successfully:", info);
-
-    // Store the sent email in the database
-    try {
-      const emailData = {
-        user_id: userId,
-        folder: 'Sent', // Store in Sent folder
-        message_id: info.header['message-id'],
-        subject: requestData.subject,
-        from_name: settings.from_name,
-        from_email: settings.from_email,
-        to_name: '', // We don't know recipient's name
-        to_email: requestData.to,
-        cc: requestData.cc || [],
-        bcc: requestData.bcc || [],
-        html_content: requestData.html || null,
-        text_content: requestData.text || null,
-        sent_at: new Date().toISOString(),
-        received_at: new Date().toISOString(),
-        read: true, // Mark as read since it's our own email
-        lead_id: requestData.lead_id || null,
-        has_attachments: requestData.attachments && requestData.attachments.length > 0,
-        direction: 'outbound'
-      };
-
-      const storeResponse = await fetch(
-        `${SUPABASE_URL}/rest/v1/emails`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            'apikey': SUPABASE_SERVICE_ROLE_KEY
-          },
-          body: JSON.stringify(emailData)
-        }
-      );
-
-      if (!storeResponse.ok) {
-        console.error("Failed to store sent email:", await storeResponse.text());
-      }
-    } catch (storeError) {
-      console.error("Error storing sent email:", storeError);
-      // Continue even if storing fails
-    }
 
     return new Response(
       JSON.stringify({
         success: true,
         message: "Email sent successfully",
-        messageId: info.header['message-id']
+        messageId: info.id,
+        details: info
       }),
       {
         headers: {
