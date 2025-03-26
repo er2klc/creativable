@@ -1,109 +1,111 @@
 
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { corsHeaders } from "../_shared/cors.ts";
+import { getSupabase } from "../_shared/supabase.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-};
+interface ResetSyncOptions {
+  user_id: string;
+  reset_cache?: boolean;
+  optimize_settings?: boolean;
+}
 
 serve(async (req) => {
-  // Handle CORS preflight request
+  // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    // Get request body
-    const { user_id } = await req.json();
+    // Parse request body
+    const requestData = await req.json() as ResetSyncOptions;
+    console.log("Reset IMAP sync request:", requestData);
+
+    // Get the user's JWT from the request
+    const authHeader = req.headers.get('authorization') || '';
+    const jwt = authHeader.replace('Bearer ', '');
+
+    if (!jwt) {
+      throw new Error("Authentication required");
+    }
+
+    const supabase = getSupabase();
     
-    if (!user_id) {
-      throw new Error("User ID is required");
+    // Verify the user
+    const { data: userData, error: userError } = await supabase.auth.getUser(jwt);
+    
+    if (userError || !userData.user) {
+      throw new Error("Failed to authenticate user");
     }
 
-    // Create a Supabase client with the Auth context of the user that called the function
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
-        },
-      }
-    );
-
-    // First use the SQL function to reset emails and folders
-    const { data: resetData, error: resetError } = await supabaseClient.rpc(
-      'reset_imap_settings',
-      { user_id_param: user_id }
-    );
-
-    if (resetError) {
-      throw resetError;
+    // Use the user ID from the token or the requested ID if user is admin
+    const userId = userData.user.id;
+    
+    // Validate that the user matches the requested user_id
+    if (userId !== requestData.user_id) {
+      throw new Error("Unauthorized: Cannot reset another user's sync state");
     }
 
-    // Now update the IMAP settings with better defaults
-    const { data: imapSettings, error: imapError } = await supabaseClient
-      .from('imap_settings')
-      .select('*')
-      .eq('user_id', user_id)
-      .single();
-
-    if (imapError && imapError.code !== 'PGRST116') {
-      throw imapError;
-    }
-
-    // Update with better defaults if settings exist
-    if (imapSettings) {
-      // Check if we need to update the port for secure connections
-      const port = imapSettings.port === 143 ? 993 : imapSettings.port;
-      
-      const { error: updateError } = await supabaseClient
+    // 1. Reset email_sync_status
+    await supabase
+      .from('email_sync_status')
+      .delete()
+      .eq('user_id', userId);
+    
+    // 2. Update IMAP settings
+    if (requestData.optimize_settings) {
+      const { error: imapError } = await supabase
         .from('imap_settings')
         .update({
-          port,
-          secure: true, // Always use secure connections
-          max_emails: 500, // Increase from default 100
-          historical_sync: true, // Enable historical sync
-          progressive_loading: true, // Enable progressive loading
-          connection_timeout: 60000, // 60 second timeout
-          auto_reconnect: true, // Enable automatic reconnection
+          historical_sync: false,
+          syncing_historical: false,
+          last_sync_date: null,
+          last_sync_status: null,
+          sync_progress: 0,
           updated_at: new Date().toISOString()
         })
-        .eq('id', imapSettings.id);
-
-      if (updateError) {
-        throw updateError;
+        .eq('user_id', userId);
+        
+      if (imapError) {
+        console.error("Error updating IMAP settings:", imapError);
       }
     }
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: "IMAP settings reset successfully with optimized configuration"
-      }),
-      {
-        headers: { 
-          "Content-Type": "application/json",
-          ...corsHeaders 
-        },
-      }
-    );
-  } catch (error) {
-    console.error("Error resetting IMAP settings:", error);
+    
+    // 3. Optionally clear email cache
+    if (requestData.reset_cache) {
+      await supabase
+        .from('emails')
+        .delete()
+        .eq('user_id', userId);
+    }
     
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        message: error.message || "An unknown error occurred" 
+      JSON.stringify({
+        success: true,
+        message: "Email sync state reset successfully"
       }),
-      { 
-        headers: { 
+      {
+        headers: {
           "Content-Type": "application/json",
-          ...corsHeaders 
+          ...corsHeaders
+        }
+      }
+    );
+
+  } catch (error) {
+    console.error("Reset sync error:", error);
+    
+    return new Response(
+      JSON.stringify({
+        success: false,
+        message: "Failed to reset email sync state",
+        error: error.message
+      }),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          ...corsHeaders
         },
-        status: 400,
+        status: 400
       }
     );
   }

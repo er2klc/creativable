@@ -1,206 +1,133 @@
+
+// Helper functions for troubleshooting and debugging email functionality
 import { supabase } from '@/integrations/supabase/client';
 
-/**
- * Fixes duplicate email folders in the database
- * @param userId The user ID
- * @returns Result of the cleanup operation
- */
-export async function fixDuplicateEmailFolders(userId: string) {
-  try {
-    const { data, error } = await supabase.rpc('fix_duplicate_email_folders', {
-      user_id_param: userId
-    });
-    
-    if (error) {
-      console.error('Error fixing duplicate email folders:', error);
-      return { success: false, message: error.message };
-    }
-    
-    console.log('Fixed duplicate email folders:', data);
-    return { success: true, message: `Fixed ${data.duplicates_removed || 0} duplicate folders` };
-  } catch (error: any) {
-    console.error('Exception fixing duplicate email folders:', error);
-    return { success: false, message: error.message };
-  }
+export interface EmailConfigStatus {
+  success: boolean;
+  isConfigured: boolean;
+  imapSettings?: any;
+  smtpSettings?: any;
+  error?: string;
 }
 
-/**
- * Validates IMAP credentials by attempting to connect
- * @param credentials The IMAP credentials to validate
- * @returns Result of the validation
- */
-export async function validateImapCredentials(credentials: {
-  host: string;
-  port: number;
-  username: string;
-  password: string;
-  secure: boolean;
-}) {
+export async function checkEmailConfigStatus(): Promise<EmailConfigStatus> {
   try {
-    const { data, error } = await supabase.functions.invoke('test-imap-connection', {
-      body: credentials
-    });
+    const { data: { user } } = await supabase.auth.getUser();
     
-    if (error) {
-      return { success: false, message: error.message };
-    }
-    
-    return data;
-  } catch (error: any) {
-    return { success: false, message: error.message };
-  }
-}
-
-/**
- * Checks the status of email configuration for the current user
- * @returns Status of the email configuration
- */
-export async function checkEmailConfigStatus() {
-  try {
-    // Try to get the current user's ID
-    const { data: authData } = await supabase.auth.getSession();
-    const userId = authData.session?.user.id;
-    
-    if (!userId) {
-      return { 
+    if (!user) {
+      return {
         success: false, 
-        isConfigured: false, 
-        error: "No authenticated user found" 
+        isConfigured: false,
+        error: "User not authenticated"
       };
     }
-
-    // Check for IMAP settings
+    
+    // Check IMAP settings
     const { data: imapSettings, error: imapError } = await supabase
       .from('imap_settings')
       .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('user_id', user.id)
+      .single();
     
     if (imapError && imapError.code !== 'PGRST116') {
-      console.error('Error fetching IMAP settings:', imapError);
-      return { success: false, isConfigured: false, error: imapError.message };
+      console.error("Error checking IMAP settings:", imapError);
+      return {
+        success: false,
+        isConfigured: false,
+        error: `Error checking IMAP settings: ${imapError.message}`
+      };
     }
     
-    // Check for SMTP settings
+    // Check SMTP settings
     const { data: smtpSettings, error: smtpError } = await supabase
       .from('smtp_settings')
       .select('*')
-      .eq('user_id', userId)
-      .maybeSingle();
+      .eq('user_id', user.id)
+      .single();
     
     if (smtpError && smtpError.code !== 'PGRST116') {
-      console.error('Error fetching SMTP settings:', smtpError);
-      return { success: false, isConfigured: false, error: smtpError.message };
+      console.error("Error checking SMTP settings:", smtpError);
+      return {
+        success: false,
+        isConfigured: false,
+        error: `Error checking SMTP settings: ${smtpError.message}`
+      };
     }
     
-    // Configuration is complete if both IMAP and SMTP settings exist
-    const hasImapSettings = !!imapSettings;
-    const hasSmtpSettings = !!smtpSettings;
-    const isConfigured = hasImapSettings; // IMAP is essential, SMTP is optional
+    const isConfigured = Boolean(imapSettings?.host);
     
     return {
       success: true,
       isConfigured,
-      hasImapSettings,
-      hasSmtpSettings,
-      imapSettings,
-      smtpSettings
+      imapSettings: imapSettings || null,
+      smtpSettings: smtpSettings || null
     };
-  } catch (error: any) {
-    console.error('Error in checkEmailConfigStatus:', error);
+  } catch (error) {
+    console.error("Error in checkEmailConfigStatus:", error);
     return {
       success: false,
       isConfigured: false,
-      error: error.message
+      error: error.message || "Unknown error checking email configuration"
     };
   }
 }
 
-/**
- * Cleans up duplicate IMAP settings in the database
- * @returns Result of the cleanup operation
- */
-export async function cleanupDuplicateImapSettings() {
+export async function fixDuplicateEmailFolders() {
   try {
-    // Get the current user's ID
-    const { data: authData } = await supabase.auth.getSession();
-    const userId = authData.session?.user.id;
-    
-    if (!userId) {
-      return { success: false, message: "No authenticated user found" };
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("User not authenticated");
     }
     
-    // First, check if there are multiple IMAP settings for this user
-    const { data: settings, error: fetchError } = await supabase
-      .from('imap_settings')
-      .select('id, created_at')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: true });
-      
-    if (fetchError) {
-      return { success: false, message: fetchError.message };
-    }
+    const { data, error } = await supabase.rpc(
+      'fix_duplicate_email_folders',
+      { user_id_param: user.id }
+    );
     
-    if (!settings || settings.length <= 1) {
-      return { success: true, message: "No duplicate settings found" };
-    }
-    
-    // Keep the oldest setting, delete others
-    const [keepSetting, ...duplicateSettings] = settings;
-    const duplicateIds = duplicateSettings.map(s => s.id);
-    
-    console.log(`Found ${duplicateIds.length} duplicate IMAP settings to remove`);
-    
-    // Delete duplicate settings
-    const { error: deleteError } = await supabase
-      .from('imap_settings')
-      .delete()
-      .in('id', duplicateIds);
-      
-    if (deleteError) {
-      return { success: false, message: deleteError.message };
-    }
-    
-    return { 
-      success: true, 
-      message: `Removed ${duplicateIds.length} duplicate IMAP settings` 
-    };
-  } catch (error: any) {
-    console.error('Error cleaning up IMAP settings:', error);
-    return { success: false, message: error.message };
+    return { success: true, data };
+  } catch (error) {
+    console.error("Error fixing duplicate folders:", error);
+    return { success: false, error: error.message };
   }
 }
 
-/**
- * Resets all IMAP settings and clears email data for the current user
- * @returns Result of the reset operation
- */
-export async function resetImapSettings() {
+export async function resetEmailSync() {
   try {
-    // Get the current user's ID
-    const { data: authData } = await supabase.auth.getSession();
-    const userId = authData.session?.user.id;
-    
-    if (!userId) {
-      return { success: false, message: "No authenticated user found" };
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error("User not authenticated");
     }
     
-    // Call the stored procedure to reset IMAP settings
-    const { data, error } = await supabase.rpc('reset_imap_settings', {
-      user_id_param: userId
-    });
-    
-    if (error) {
-      console.error('Error resetting IMAP settings:', error);
-      return { success: false, message: error.message };
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      throw new Error("No active session");
     }
     
-    return { 
-      success: true, 
-      message: "IMAP settings reset successfully. All email data has been cleared." 
-    };
-  } catch (error: any) {
-    console.error('Error resetting IMAP settings:', error);
-    return { success: false, message: error.message };
+    const response = await fetch(
+      "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/reset-imap-sync",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${sessionData.session.access_token}`
+        },
+        body: JSON.stringify({
+          user_id: user.id,
+          reset_cache: true,
+          optimize_settings: true
+        })
+      }
+    );
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Failed to reset sync: ${response.status} ${errorText}`);
+    }
+    
+    const result = await response.json();
+    return { success: true, result };
+  } catch (error) {
+    console.error("Error resetting email sync:", error);
+    return { success: false, error: error.message };
   }
 }

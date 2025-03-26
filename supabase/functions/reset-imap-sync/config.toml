@@ -1,2 +1,4 @@
 
 project_id = "agqaitxlmxztqyhpcjau"
+timeout_seconds = 60
+max_retries = 2
