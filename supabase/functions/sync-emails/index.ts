@@ -250,23 +250,63 @@ async function syncEmails(
       debugLog("Successfully connected to IMAP server");
     } catch (connectionError) {
       debugLog(`Connection error (attempt ${retryCount + 1}): ${connectionError.message}`);
+      
       // Sofort einen Retry mit alternativen Einstellungen versuchen
       if (retryCount < retryAttempts) {
         debugLog(`Immediate retry with alternative settings...`);
-        // Die Verbindungseinstellungen für alternativen Verbindungsversuch ändern
-        const alternativeConfig = {
-          ...imapSettings,
-          secure: !imapSettings.secure, // Toggle secure setting
-          port: imapSettings.secure ? 143 : 993, // Alternative Port basierend auf secure
-          tls: {
-            rejectUnauthorized: false,
-            minVersion: '' // Leerer String statt null
+        
+        // Definiere eine Liste von alternativen Konfigurationen für unterschiedliche Szenarien
+        const retryConfigs = [
+          // 1. Standard-Port mit deaktiviertem TLS
+          {
+            ...imapSettings,
+            secure: false,
+            port: 143, // Non-secure IMAP port
+            tls: {
+              rejectUnauthorized: false,
+              minVersion: '',
+              enableTrace: true
+            },
+            connectionTimeout: connectionTimeout * 1.5,
+            requireTLS: false
           },
-          connectionTimeout: connectionTimeout * 1.5,
-          requireTLS: false
-        };
+          // 2. Alternative Ports für sichere Verbindung, falls Standard-Port blockiert wird
+          {
+            ...imapSettings,
+            secure: true,
+            port: 993, // Standard-IMAPS Port erneut versuchen mit anderen Einstellungen
+            tls: {
+              rejectUnauthorized: false,
+              minVersion: '',
+              ciphers: 'ALL'
+            },
+            connectionTimeout: connectionTimeout * 2,
+            requireTLS: false,
+            greetTimeout: 90000
+          },
+          // 3. Unverschlüsselte Verbindung als letzte Möglichkeit
+          {
+            ...imapSettings,
+            secure: false,
+            port: 143, // Non-secure IMAP port
+            tls: { 
+              rejectUnauthorized: false,
+              minVersion: '',
+              ciphers: 'ALL',
+              secureContext: false
+            }, // Minimales TLS-Objekt statt null
+            connectionTimeout: connectionTimeout * 2,
+            requireTLS: false
+          }
+        ];
+        
+        // Wähle die Konfiguration basierend auf dem aktuellen Versuch
+        const alternativeConfig = retryConfigs[Math.min(retryCount, retryConfigs.length - 1)];
+        debugLog(`Trying alternative config: secure=${alternativeConfig.secure}, port=${alternativeConfig.port}`);
+        
         return syncEmails(alternativeConfig, userId, options, retryCount + 1);
       }
+      
       throw connectionError; // Weitergeben, wenn keine Retries mehr möglich
     }
     
@@ -1029,14 +1069,16 @@ serve(async (req) => {
         rejectUnauthorized: false, // More permissive TLS for broader compatibility
         servername: settings.host,
         enableTrace: true, // Aktiviere Trace für bessere Fehlermeldungen
-        minVersion: 'TLSv1', // Verwende ältere TLS-Version für breitere Kompatibilität
-        ciphers: 'DEFAULT:!aNULL:!eNULL:!LOW:!EXPORT:!SSLv2:!SSLv3' // Verwende mehr Cipher-Optionen
+        minVersion: '', // Keine Einschränkung der TLS-Version für maximale Kompatibilität
+        ciphers: 'ALL' // Alle verfügbaren Cipher erlauben für maximale Kompatibilität
       },
-      connectionTimeout: 60000, // Längerer Timeout (60 Sekunden)
-      greetTimeout: 30000, // Längerer Greeting-Timeout
-      socketTimeout: 60000, // Längerer Socket-Timeout
+      connectionTimeout: 120000, // Auf 2 Minuten erhöhen für langsame Verbindungen
+      greetTimeout: 60000, // Längerer Greeting-Timeout (1 Minute)
+      socketTimeout: 120000, // Längerer Socket-Timeout (2 Minuten)
       disableCompression: true, // Deaktiviere Kompression für bessere Stabilität
-      requireTLS: false // Nicht zwingend TLS benötigen
+      requireTLS: false, // Nicht zwingend TLS benötigen
+      upgradeTTLSeconds: 180, // 3 Minuten für TLS-Upgrade (statt Standardwert)
+      maxIdleTime: 30000 // 30 Sekunden für maximale Idle-Zeit
     };
 
     // Extract sync options from request with better defaults for reliability

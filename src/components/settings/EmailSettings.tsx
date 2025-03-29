@@ -227,7 +227,38 @@ export function EmailSettings() {
     setIsRepairing(true);
     
     try {
-      await EmailSyncService.resetAndRepairConnection();
+      // Erst einen Verbindungstest durchführen, um detaillierte Diagnose zu bekommen
+      const testResult = await EmailSyncService.testImapConnection();
+      
+      if (!testResult.success) {
+        console.log("IMAP-Verbindungstest fehlgeschlagen:", testResult);
+        // Zeige spezifischere Meldung basierend auf Diagnose
+        let errorMessage = "Verbindungsproblem erkannt: ";
+        
+        if (testResult.diagnostics?.certificateIssue) {
+          errorMessage += "SSL/TLS-Zertifikat-Problem. ";
+        }
+        
+        if (testResult.diagnostics?.timeoutIssue) {
+          errorMessage += "Timeout bei der Verbindung. ";
+        }
+        
+        if (testResult.diagnostics?.networkIssue) {
+          errorMessage += "Netzwerkverbindungsproblem. ";
+        }
+        
+        if (testResult.diagnostics?.authenticationIssue) {
+          errorMessage += "Authentifizierungsproblem. ";
+        }
+        
+        // Benachrichtigung mit spezifischeren Informationen
+        toast.warning("Verbindungsproblem erkannt", {
+          description: errorMessage + "Versuche Verbindungsreparatur...",
+          duration: 5000
+        });
+      }
+      
+      const result = await EmailSyncService.resetAndRepairConnection();
       
       // Aktualisiere UI nach erfolgreicher Reparatur
       const now = new Date().toISOString();
@@ -236,10 +267,16 @@ export function EmailSettings() {
       loadAttemptedRef.current = false;
       loadEmailSettings();
       
-      toast.success("Verbindungseinstellungen wurden repariert und optimiert");
+      toast.success("Verbindungseinstellungen wurden repariert und optimiert", {
+        description: result.data?.portChanged 
+          ? "Die Verbindungseinstellungen wurden angepasst, um Kompatibilitätsprobleme zu beheben." 
+          : "Die Verbindung wurde mit optimierten Einstellungen neu hergestellt."
+      });
     } catch (error) {
       console.error("Fehler bei Verbindungsreparatur:", error);
-      toast.error("Fehler bei der Verbindungsreparatur");
+      toast.error("Fehler bei der Verbindungsreparatur", {
+        description: error.message || "Ein unbekannter Fehler ist aufgetreten. Bitte überprüfen Sie Ihre E-Mail-Einstellungen und versuchen Sie es erneut."
+      });
     } finally {
       setIsRepairing(false);
     }

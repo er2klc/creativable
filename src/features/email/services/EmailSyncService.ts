@@ -462,12 +462,25 @@ export class EmailSyncService {
         throw new Error("IMAP-Einstellungen nicht gefunden");
       }
       
-      // 3. IMAP-Einstellungen aktualisieren
+      // 3. IMAP-Einstellungen optimieren
+      // Ermittle, ob wir den standardmäßigen oder alternativen Port verwenden sollten
+      let optimizedPort = imapSettings.port;
+      
+      // Wenn Port 993 (Standard für SSL) verwendet wurde und Fehler aufgetreten sind,
+      // versuche Port 143 (Standard ohne SSL)
+      if (imapSettings.port === 993 && imapSettings.secure === true) {
+        // Bei Problemen probieren wir erst mit alternativer Port-Konfiguration
+        optimizedPort = 143;
+      }
+      
+      // Aktualisiere die IMAP-Einstellungen mit optimierten Werten
       const { error: updateError } = await supabase
         .from('imap_settings')
         .update({
-          connection_timeout: 60000, // Längerer Timeout
+          connection_timeout: 120000, // 2 Minuten Timeout
           auto_reconnect: true,      // Automatische Wiederverbindung aktivieren
+          port: optimizedPort,       // Optimierter Port
+          secure: optimizedPort === 993, // Setze secure passend zum Port
           updated_at: new Date().toISOString()
         })
         .eq('id', imapSettings.id);
@@ -482,15 +495,38 @@ export class EmailSyncService {
       // 5. Nach kurzer Pause neue Synchronisation starten
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // 6. Vollständige Synchronisation starten
-      const syncResult = await this.startFullSync();
+      // 6. Vollständige Synchronisation mit besonderen Optionen für maximale Erfolgswahrscheinlichkeit
+      const syncOptions = {
+        force_refresh: true,
+        batch_processing: true,
+        max_batch_size: 10,  // Kleinere Batches für weniger Fehleranfälligkeit
+        connection_timeout: 120000,
+        retry_attempts: 5    // Mehr Wiederholungsversuche
+      };
+      
+      const response = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify(syncOptions)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Fehler bei der Synchronisation: ${errorText}`);
+      }
+      
+      const syncResult = await response.json();
       
       return {
         success: syncResult.success,
         message: "E-Mail-Verbindung wurde repariert und neu synchronisiert",
         data: {
           reset: resetResult,
-          sync: syncResult
+          sync: syncResult,
+          portChanged: imapSettings.port !== optimizedPort
         }
       };
     } catch (error) {

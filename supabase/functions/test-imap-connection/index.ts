@@ -89,15 +89,17 @@ serve(async (req) => {
       tls: {
         rejectUnauthorized: false, // More permissive TLS for broader compatibility
         servername: settings.host,
-        enableTrace: detailedDiagnostics, // Enable tracing for detailed diagnostics
-        minVersion: 'TLSv1', // Use older TLS version for broader compatibility
-        ciphers: 'DEFAULT:!aNULL:!eNULL:!LOW:!EXPORT:!SSLv2:!SSLv3' // Use more cipher options
+        enableTrace: true, // Enable tracing for detailed diagnostics
+        minVersion: '', // Keine Einschränkung der TLS-Version für maximale Kompatibilität
+        ciphers: 'ALL' // Alle verfügbaren Cipher für maximale Kompatibilität
       },
-      connectionTimeout: connectionTimeout,
-      greetTimeout: 30000, // Longer greeting timeout
-      socketTimeout: 60000, // Longer socket timeout
+      connectionTimeout: 120000, // Auf 2 Minuten erhöhen für langsame Verbindungen
+      greetTimeout: 60000, // Auf 1 Minute erhöhen
+      socketTimeout: 120000, // Auf 2 Minuten erhöhen
       disableCompression: true, // Disable compression for better stability
-      requireTLS: false // Do not require TLS
+      requireTLS: false, // Do not require TLS
+      upgradeTTLSeconds: 180, // 3 Minuten für TLS-Upgrade
+      maxIdleTime: 30000 // 30 Sekunden maximale Idle-Zeit
     };
 
     const client = new ImapFlow(imapConfig);
