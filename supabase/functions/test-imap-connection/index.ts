@@ -98,7 +98,7 @@ serve(async (req) => {
         },
         requireTLS: false,
         disableCompression: true,
-        connectionTimeout: 120000,
+        connectionTimeout: settings.connection_timeout || 120000,
         greetTimeout: 60000,
         socketTimeout: 120000
       } : 
@@ -116,10 +116,10 @@ serve(async (req) => {
           rejectUnauthorized: false, // More permissive TLS for broader compatibility
           servername: settings.host,
           enableTrace: true, // Enable tracing for detailed diagnostics
-          minVersion: '', // Keine Einschränkung der TLS-Version für maximale Kompatibilität
+          minVersion: 'TLSv1', // Minimal TLS-Version for greater compatibility
           ciphers: 'ALL' // Alle verfügbaren Cipher für maximale Kompatibilität
         },
-        connectionTimeout: 120000, // Auf 2 Minuten erhöhen für langsame Verbindungen
+        connectionTimeout: settings.connection_timeout || 120000, // Standard 2 Minuten
         greetTimeout: 60000, // Auf 1 Minute erhöhen
         socketTimeout: 120000, // Auf 2 Minuten erhöhen
         disableCompression: true, // Disable compression for better stability

@@ -38,8 +38,8 @@ const formSchema = z.object({
   }),
   connection_timeout: z.coerce.number().min(5000, {
     message: "Connection Timeout must be at least 5000ms."
-  }).max(60000, {
-    message: "Connection Timeout cannot exceed 60000ms."
+  }).max(300000, {
+    message: "Connection Timeout cannot exceed 300000ms (5 minutes)."
   }),
   progressive_loading: z.boolean().default(true),
 });
@@ -61,7 +61,7 @@ export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void
       force_insecure: false,
       historical_sync: false,
       max_emails: 100,
-      connection_timeout: 30000,
+      connection_timeout: 120000,
       progressive_loading: true
     },
   });
@@ -226,13 +226,26 @@ export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void
                 <div className="space-y-0.5">
                   <FormLabel>SSL/TLS-Verschlüsselung</FormLabel>
                   <FormDescription>
-                    Aktivieren, um eine sichere Verbindung zu verwenden.
+                    Aktivieren, um eine sichere Verbindung zu verwenden (Port 993).
+                    {field.value === false && (
+                      <div className="mt-1 text-amber-600">
+                        ⚠️ Die Verbindung ist nicht verschlüsselt. E-Mails und Passwort werden unverschlüsselt übertragen.
+                      </div>
+                    )}
                   </FormDescription>
                 </div>
                 <FormControl>
                   <Switch
                     checked={field.value}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={(value) => {
+                      field.onChange(value);
+                      // Wenn secure ausgeschaltet wird, port auf 143 setzen, sonst auf 993
+                      if (!value) {
+                        form.setValue('port', 143);
+                      } else {
+                        form.setValue('port', 993);
+                      }
+                    }}
                   />
                 </FormControl>
               </FormItem>
@@ -244,15 +257,31 @@ export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void
             render={({ field }) => (
               <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
                 <div className="space-y-0.5">
-                  <FormLabel>Erzwungene unsichere Verbindung</FormLabel>
+                  <FormLabel>Unsichere Verbindung erzwingen (Notfalloption)</FormLabel>
                   <FormDescription>
-                    Aktivieren, um eine unsichere Verbindung zu verwenden.
+                    <div className="mb-1">
+                      Aktivieren Sie diese Option NUR, wenn Sie Verbindungsprobleme haben und andere Optionen nicht funktionieren.
+                    </div>
+                    {field.value && (
+                      <div className="mt-1 text-red-600 font-medium">
+                        ⚠️ ACHTUNG: Diese Option deaktiviert alle Sicherheitsmechanismen. Nur für Problemfälle verwenden!
+                      </div>
+                    )}
                   </FormDescription>
                 </div>
                 <FormControl>
                   <Switch
                     checked={field.value}
-                    onCheckedChange={field.onChange}
+                    onCheckedChange={(value) => {
+                      field.onChange(value);
+                      if (value) {
+                        // Bei erzwungener unsicherer Verbindung auf Port 143 wechseln und secure deaktivieren
+                        form.setValue('port', 143);
+                        form.setValue('secure', false);
+                        // Timeout erhöhen
+                        form.setValue('connection_timeout', 180000);
+                      }
+                    }}
                   />
                 </FormControl>
               </FormItem>
@@ -321,10 +350,11 @@ export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void
               <FormItem>
                 <FormLabel>Connection Timeout (ms)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="30000" {...field} />
+                  <Input type="number" placeholder="120000" {...field} />
                 </FormControl>
                 <FormDescription>
-                  Zeit in Millisekunden, die auf eine Verbindung gewartet wird.
+                  Zeit in Millisekunden, die auf eine Verbindung gewartet wird. Bei langsamen Verbindungen erhöhen.
+                  Empfohlener Wert: 120000 (2 Minuten).
                 </FormDescription>
                 <FormMessage />
               </FormItem>
