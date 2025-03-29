@@ -365,4 +365,146 @@ export class EmailSyncService {
       };
     }
   }
+  
+  /**
+   * IMAP-Verbindungstest mit detaillierten Diagnoseinformationen
+   */
+  static async testImapConnection() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Nicht authentifiziert");
+      }
+      
+      // Toast-Nachricht anzeigen
+      const testToastId = toast.loading("IMAP-Verbindung wird getestet...");
+      
+      try {
+        // Teste die Verbindung mit speziellen Diagnose-Flags
+        const response = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/test-imap-connection', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            detailed_diagnostics: true,
+            connection_timeout: 60000, // 60 Sekunden Timeout für gründlichen Test
+            test_folders: true,
+            verify_credentials: true
+          })
+        });
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Fehler ${response.status}: ${errorText || response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        // Toast-Nachricht aktualisieren
+        toast.dismiss(testToastId);
+        
+        if (result.success) {
+          toast.success("IMAP-Verbindungstest erfolgreich", {
+            description: result.message || "Die Verbindung zum IMAP-Server wurde erfolgreich hergestellt."
+          });
+        } else {
+          toast.error("IMAP-Verbindungstest fehlgeschlagen", {
+            description: result.error || "Die Verbindung zum IMAP-Server konnte nicht hergestellt werden."
+          });
+        }
+        
+        return result;
+      } catch (error) {
+        toast.dismiss(testToastId);
+        toast.error("IMAP-Verbindungstest fehlgeschlagen", {
+          description: error.message || "Ein unerwarteter Fehler ist aufgetreten."
+        });
+        throw error;
+      }
+    } catch (error) {
+      console.error("Fehler beim IMAP-Verbindungstest:", error);
+      return {
+        success: false,
+        error: error.message || "Fehler beim Testen der IMAP-Verbindung"
+      };
+    }
+  }
+  
+  /**
+   * Debug-Funktion: Lösche alle E-Mail-Daten und starte neu mit alternativen IMAP-Einstellungen
+   */
+  static async resetAndRepairConnection() {
+    try {
+      // 1. Erst alle E-Mail-Daten löschen
+      const resetResult = await this.resetEmailSync();
+      
+      if (!resetResult.success) {
+        throw new Error(resetResult.error?.message || "Fehler beim Zurücksetzen der E-Mail-Daten");
+      }
+      
+      // 2. IMAP-Einstellungen abrufen
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user?.id) {
+        throw new Error("Benutzer ist nicht angemeldet");
+      }
+      
+      const { data: imapSettings, error: imapError } = await supabase
+        .from('imap_settings')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (imapError || !imapSettings) {
+        throw new Error("IMAP-Einstellungen nicht gefunden");
+      }
+      
+      // 3. IMAP-Einstellungen aktualisieren
+      const { error: updateError } = await supabase
+        .from('imap_settings')
+        .update({
+          connection_timeout: 60000, // Längerer Timeout
+          auto_reconnect: true,      // Automatische Wiederverbindung aktivieren
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', imapSettings.id);
+      
+      if (updateError) {
+        console.error("Fehler beim Aktualisieren der IMAP-Einstellungen:", updateError);
+      }
+      
+      // 4. IMAP-Verbindung testen
+      await this.testImapConnection();
+      
+      // 5. Nach kurzer Pause neue Synchronisation starten
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // 6. Vollständige Synchronisation starten
+      const syncResult = await this.startFullSync();
+      
+      return {
+        success: syncResult.success,
+        message: "E-Mail-Verbindung wurde repariert und neu synchronisiert",
+        data: {
+          reset: resetResult,
+          sync: syncResult
+        }
+      };
+    } catch (error) {
+      console.error("Fehler bei der Reparatur der E-Mail-Verbindung:", error);
+      
+      toast.error("Verbindungsreparatur fehlgeschlagen", {
+        description: error.message || "Ein unbekannter Fehler ist aufgetreten"
+      });
+      
+      return {
+        success: false,
+        error: error,
+        message: "Fehler bei der Verbindungsreparatur"
+      };
+    }
+  }
 }

@@ -33,6 +33,7 @@ export function EmailSettings() {
   const loadAttemptedRef = useRef(false);
   const [showSettingsForm, setShowSettingsForm] = useState(false);
   const [isResyncing, setIsResyncing] = useState(false);
+  const [isRepairing, setIsRepairing] = useState(false);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -215,6 +216,35 @@ export function EmailSettings() {
     }
   };
 
+  // Verbindungsreparatur-Funktion
+  const triggerRepairConnection = async () => {
+    if (!user) return;
+    
+    if (!confirm("Dies ist eine erweiterte Reparaturfunktion für Verbindungsprobleme. Es werden alle E-Mails gelöscht und die Verbindungseinstellungen optimiert. Fortfahren?")) {
+      return;
+    }
+    
+    setIsRepairing(true);
+    
+    try {
+      await EmailSyncService.resetAndRepairConnection();
+      
+      // Aktualisiere UI nach erfolgreicher Reparatur
+      const now = new Date().toISOString();
+      setLastSyncTime(now);
+      settingsLoadedRef.current = false;
+      loadAttemptedRef.current = false;
+      loadEmailSettings();
+      
+      toast.success("Verbindungseinstellungen wurden repariert und optimiert");
+    } catch (error) {
+      console.error("Fehler bei Verbindungsreparatur:", error);
+      toast.error("Fehler bei der Verbindungsreparatur");
+    } finally {
+      setIsRepairing(false);
+    }
+  };
+
   const handleSettingsSaved = () => {
     // Reset load flags to force a refresh of settings
     settingsLoadedRef.current = false;
@@ -343,7 +373,7 @@ export function EmailSettings() {
                   size="sm" 
                   className="flex items-center gap-1.5"
                   onClick={triggerSync}
-                  disabled={isSyncing || isResyncing}
+                  disabled={isSyncing || isResyncing || isRepairing}
                 >
                   {isSyncing ? (
                     <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Synchronisiere...</>
@@ -356,12 +386,25 @@ export function EmailSettings() {
                   size="sm" 
                   className="flex items-center gap-1.5"
                   onClick={triggerFullResync}
-                  disabled={isSyncing || isResyncing || isDisconnecting}
+                  disabled={isSyncing || isResyncing || isDisconnecting || isRepairing}
                 >
                   {isResyncing ? (
                     <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Vollständig neu laden...</>
                   ) : (
                     <><RefreshCw className="h-3.5 w-3.5" /> Vollständig neu laden</>
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1.5 text-orange-600"
+                  onClick={triggerRepairConnection}
+                  disabled={isSyncing || isResyncing || isDisconnecting || isRepairing}
+                >
+                  {isRepairing ? (
+                    <><AlertCircle className="h-3.5 w-3.5 animate-pulse" /> Wird repariert...</>
+                  ) : (
+                    <><AlertCircle className="h-3.5 w-3.5" /> Verbindung reparieren</>
                   )}
                 </Button>
                 <Button 
@@ -377,7 +420,7 @@ export function EmailSettings() {
                   size="sm" 
                   className="flex items-center gap-1.5"
                   onClick={disconnectEmail}
-                  disabled={isDisconnecting || isSyncing || isResyncing}
+                  disabled={isDisconnecting || isSyncing || isResyncing || isRepairing}
                 >
                   {isDisconnecting ? (
                     <><XCircle className="h-3.5 w-3.5" /> Trennen...</>

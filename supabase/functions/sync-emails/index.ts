@@ -243,10 +243,32 @@ async function syncEmails(
       }, connectionTimeout);
     });
     
-    // Race connection attempt vs. timeout
-    await Promise.race([connectPromise, timeoutPromise]);
-    
-    debugLog("Successfully connected to IMAP server");
+    // Verbesserte Fehlerbehandlung bei Verbindung
+    try {
+      // Race connection attempt vs. timeout
+      await Promise.race([connectPromise, timeoutPromise]);
+      debugLog("Successfully connected to IMAP server");
+    } catch (connectionError) {
+      debugLog(`Connection error (attempt ${retryCount + 1}): ${connectionError.message}`);
+      // Sofort einen Retry mit alternativen Einstellungen versuchen
+      if (retryCount < retryAttempts) {
+        debugLog(`Immediate retry with alternative settings...`);
+        // Die Verbindungseinstellungen für alternativen Verbindungsversuch ändern
+        const alternativeConfig = {
+          ...imapSettings,
+          secure: !imapSettings.secure, // Toggle secure setting
+          port: imapSettings.secure ? 143 : 993, // Alternative Port basierend auf secure
+          tls: {
+            rejectUnauthorized: false,
+            minVersion: '' // Leerer String statt null
+          },
+          connectionTimeout: connectionTimeout * 1.5,
+          requireTLS: false
+        };
+        return syncEmails(alternativeConfig, userId, options, retryCount + 1);
+      }
+      throw connectionError; // Weitergeben, wenn keine Retries mehr möglich
+    }
     
     // Select the specified folder
     const mailbox = await client.mailboxOpen(folder);
@@ -1006,13 +1028,15 @@ serve(async (req) => {
       tls: {
         rejectUnauthorized: false, // More permissive TLS for broader compatibility
         servername: settings.host,
-        enableTrace: false,
-        minVersion: 'TLSv1'
+        enableTrace: true, // Aktiviere Trace für bessere Fehlermeldungen
+        minVersion: 'TLSv1', // Verwende ältere TLS-Version für breitere Kompatibilität
+        ciphers: 'DEFAULT:!aNULL:!eNULL:!LOW:!EXPORT:!SSLv2:!SSLv3' // Verwende mehr Cipher-Optionen
       },
-      connectionTimeout: requestData.connection_timeout || settings.connection_timeout || 30000,
-      greetTimeout: 15000,
-      socketTimeout: 30000,
-      disableCompression: true // Try disabling compression for better performance
+      connectionTimeout: 60000, // Längerer Timeout (60 Sekunden)
+      greetTimeout: 30000, // Längerer Greeting-Timeout
+      socketTimeout: 60000, // Längerer Socket-Timeout
+      disableCompression: true, // Deaktiviere Kompression für bessere Stabilität
+      requireTLS: false // Nicht zwingend TLS benötigen
     };
 
     // Extract sync options from request with better defaults for reliability
