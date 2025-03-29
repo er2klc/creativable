@@ -750,7 +750,11 @@ export type Database = {
           folder: string
           id: string
           items_synced: number | null
+          last_error: string | null
           last_sync_time: string | null
+          last_uid: number | null
+          sync_in_progress: boolean | null
+          total_items: number | null
           updated_at: string | null
           user_id: string
         }
@@ -759,7 +763,11 @@ export type Database = {
           folder?: string
           id?: string
           items_synced?: number | null
+          last_error?: string | null
           last_sync_time?: string | null
+          last_uid?: number | null
+          sync_in_progress?: boolean | null
+          total_items?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -768,7 +776,11 @@ export type Database = {
           folder?: string
           id?: string
           items_synced?: number | null
+          last_error?: string | null
           last_sync_time?: string | null
+          last_uid?: number | null
+          sync_in_progress?: boolean | null
+          total_items?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -896,6 +908,7 @@ export type Database = {
           thread_id: string | null
           to_email: string
           to_name: string | null
+          uid: number | null
           user_id: string
         }
         Insert: {
@@ -927,6 +940,7 @@ export type Database = {
           thread_id?: string | null
           to_email: string
           to_name?: string | null
+          uid?: number | null
           user_id: string
         }
         Update: {
@@ -958,6 +972,7 @@ export type Database = {
           thread_id?: string | null
           to_email?: string
           to_name?: string | null
+          uid?: number | null
           user_id?: string
         }
         Relationships: [
@@ -1008,6 +1023,7 @@ export type Database = {
           auto_reconnect: boolean | null
           connection_timeout: number | null
           created_at: string | null
+          force_insecure: boolean | null
           historical_sync: boolean | null
           historical_sync_date: string | null
           historical_sync_progress: number | null
@@ -1021,6 +1037,7 @@ export type Database = {
           max_historical_emails: number | null
           password: string
           port: number
+          progressive_loading: boolean | null
           secure: boolean
           sync_progress: number | null
           sync_start_date: string | null
@@ -1034,6 +1051,7 @@ export type Database = {
           auto_reconnect?: boolean | null
           connection_timeout?: number | null
           created_at?: string | null
+          force_insecure?: boolean | null
           historical_sync?: boolean | null
           historical_sync_date?: string | null
           historical_sync_progress?: number | null
@@ -1047,6 +1065,7 @@ export type Database = {
           max_historical_emails?: number | null
           password: string
           port: number
+          progressive_loading?: boolean | null
           secure?: boolean
           sync_progress?: number | null
           sync_start_date?: string | null
@@ -1060,6 +1079,7 @@ export type Database = {
           auto_reconnect?: boolean | null
           connection_timeout?: number | null
           created_at?: string | null
+          force_insecure?: boolean | null
           historical_sync?: boolean | null
           historical_sync_date?: string | null
           historical_sync_progress?: number | null
@@ -1073,6 +1093,7 @@ export type Database = {
           max_historical_emails?: number | null
           password?: string
           port?: number
+          progressive_loading?: boolean | null
           secure?: boolean
           sync_progress?: number | null
           sync_start_date?: string | null
@@ -4980,6 +5001,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      cleanup_user_email_data: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: boolean
+      }
       create_phase_analysis: {
         Args: {
           p_lead_id: string
@@ -5443,6 +5470,12 @@ export type Database = {
           metadata: Json
           content_type: string
         }[]
+      }
+      reset_email_sync: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: Json
       }
       reset_imap_settings: {
         Args: {

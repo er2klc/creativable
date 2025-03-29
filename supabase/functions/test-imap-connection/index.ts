@@ -1,291 +1,136 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { ImapFlow } from 'npm:imapflow@1.0.98';
-import { corsHeaders } from "../_shared/cors.ts";
 
-interface ConnectionTestResult {
-  success: boolean;
-  message: string;
-  diagnostics?: any;
-  error?: string;
-  errorDetails?: string;
-  serverInfo?: any;
-  folders?: any[];
-}
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.36.0';
+import { ImapFlow } from 'npm:imapflow@1.0.98';
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+};
 
 serve(async (req) => {
   // Handle CORS preflight requests
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: corsHeaders
+    });
   }
 
   try {
-    // Parse request body
-    const requestData = await req.json();
-    const detailedDiagnostics = requestData.detailed_diagnostics || false;
-    const connectionTimeout = requestData.connection_timeout || 30000;
-    const testFolders = requestData.test_folders !== false;
-    const verifyCredentials = requestData.verify_credentials !== false;
-
-    // Get the user's JWT from the request
-    const authHeader = req.headers.get('authorization') || '';
-    const jwt = authHeader.replace('Bearer ', '');
-
-    if (!jwt) {
-      throw new Error("Authentication required");
-    }
-
-    const { SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = Deno.env.toObject();
-    
-    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing Supabase environment variables");
-    }
-
-    // Get user information from the token
-    const userResponse = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
-      headers: {
-        Authorization: `Bearer ${jwt}`,
-        apikey: SUPABASE_SERVICE_ROLE_KEY,
-      },
-    });
-
-    const userData = await userResponse.json();
-    if (!userData.id) {
-      throw new Error("Failed to get user information");
-    }
-
-    const userId = userData.id;
-
-    // Query the database for the IMAP settings
-    const imapSettingsResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/imap_settings?user_id=eq.${userId}&select=*`,
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       {
-        headers: {
-          Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-          apikey: SUPABASE_SERVICE_ROLE_KEY,
-          "Content-Type": "application/json",
+        global: {
+          headers: { Authorization: req.headers.get('Authorization')! },
         },
       }
     );
-
-    const imapSettings = await imapSettingsResponse.json();
     
-    if (!imapSettings || imapSettings.length === 0) {
-      throw new Error("No IMAP settings found for this user");
+    // Get user from auth header
+    const {
+      data: { user },
+    } = await supabaseClient.auth.getUser();
+    
+    if (!user) {
+      throw new Error('Not authenticated');
     }
 
-    // Configure IMAP client
-    const settings = imapSettings[0];
-    
-    // Prüfe, ob wir eine komplett unsichere Verbindung verwenden sollen
-    const forceInsecure = settings.force_insecure === true;
-    
-    // Use optimized IMAP settings for testing
-    const imapConfig = forceInsecure ? 
-      // Konfiguration für erzwungene unsichere Verbindung (ohne TLS)
-      {
-        host: settings.host,
-        port: settings.port || 143, // Standardport für unverschlüsselte Verbindungen
-        secure: false, // Keine verschlüsselte Verbindung verwenden
-        auth: {
-          user: settings.username,
-          pass: settings.password
-        },
-        logger: detailedDiagnostics,
-        tls: {
-          rejectUnauthorized: false,
-          servername: settings.host,
-          enableTrace: true
-        },
-        requireTLS: false,
-        disableCompression: true,
-        connectionTimeout: settings.connection_timeout || 120000,
-        greetTimeout: 60000,
-        socketTimeout: 120000
-      } : 
-      // Standard-Konfiguration für sichere Verbindungen (mit TLS)
-      {
-        host: settings.host,
-        port: settings.port || 993,
-        secure: settings.secure !== false, // Default to true if not set
-        auth: {
-          user: settings.username,
-          pass: settings.password
-        },
-        logger: detailedDiagnostics, // Enable logging for detailed diagnostics
-        tls: {
-          rejectUnauthorized: false, // More permissive TLS for broader compatibility
-          servername: settings.host,
-          enableTrace: true, // Enable tracing for detailed diagnostics
-          minVersion: 'TLSv1', // Minimal TLS-Version for greater compatibility
-          ciphers: 'ALL' // Alle verfügbaren Cipher für maximale Kompatibilität
-        },
-        connectionTimeout: settings.connection_timeout || 120000, // Standard 2 Minuten
-        greetTimeout: 60000, // Auf 1 Minute erhöhen
-        socketTimeout: 120000, // Auf 2 Minuten erhöhen
-        disableCompression: true, // Disable compression for better stability
-        requireTLS: false, // Do not require TLS
-        upgradeTTLSeconds: 180, // 3 Minuten für TLS-Upgrade
-        maxIdleTime: 30000 // 30 Sekunden maximale Idle-Zeit
-      };
+    const { host, port, username, password, connection_type = 'SSL/TLS', connection_timeout = 120000 } = await req.json();
 
-    const client = new ImapFlow(imapConfig);
+    // Validate required fields
+    if (!host || !port || !username || !password) {
+      throw new Error('Missing required fields');
+    }
+
+    console.log(`Testing IMAP connection to ${host}:${port} with security: ${connection_type}`);
     
-    const result: ConnectionTestResult = {
-      success: false,
-      message: "IMAP connection test failed",
-      diagnostics: {}
+    // Determine secure settings based on connection type
+    const secure = connection_type === 'SSL/TLS';
+    const requireTLS = connection_type === 'STARTTLS';
+    
+    // Configure TLS options for better compatibility
+    const tlsOptions = {
+      rejectUnauthorized: false, // This allows self-signed certs
+      minVersion: 'TLSv1',       // Support older TLS versions for compatibility
     };
     
+    // Create IMAP client with proper settings
+    const client = new ImapFlow({
+      host,
+      port,
+      secure,
+      auth: {
+        user: username,
+        pass: password
+      },
+      requireTLS,
+      logger: false,
+      timeoutConnection: connection_timeout,
+      tls: tlsOptions
+    });
+
+    // Try to connect to verify settings
     try {
-      // Verbindungsversuch
-      console.log("Attempting to connect to IMAP server...");
+      await client.connect();
       
-      // Create a connection timeout promise
-      const connectPromise = client.connect();
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error(`Connection timed out after ${connectionTimeout}ms`));
-        }, connectionTimeout);
-      });
+      // Get mailbox list to verify access
+      const mailboxes = await client.listMailboxes();
       
-      // Race connection attempt vs. timeout
-      await Promise.race([connectPromise, timeoutPromise]);
+      console.log('Connection successful!');
+      console.log(`Found ${mailboxes.length} mailboxes`);
       
-      console.log("Successfully connected to IMAP server");
-      result.success = true;
-      result.message = "Successfully connected to IMAP server";
+      // Close connection
+      await client.logout();
       
-      // Get server info
-      if (client.serverInfo) {
-        result.serverInfo = client.serverInfo;
-      }
-      
-      // Test folder access if requested
-      if (testFolders) {
-        console.log("Testing folder access...");
-        
-        try {
-          const mailboxes = await client.list();
-          const folders = [];
-          
-          for (const mailbox of mailboxes) {
-            folders.push({
-              path: mailbox.path,
-              name: mailbox.name,
-              flags: mailbox.flags,
-              specialUse: mailbox.specialUse,
-              listed: mailbox.listed,
-              subscribed: mailbox.subscribed
-            });
-          }
-          
-          result.folders = folders;
-          console.log(`Found ${folders.length} folders`);
-        } catch (folderError) {
-          console.error("Error listing folders:", folderError);
-          result.diagnostics.folderError = folderError.message;
-        }
-      }
-      
-      // Verify credentials if requested
-      if (verifyCredentials) {
-        console.log("Verifying credentials...");
-        
-        try {
-          // Try to open INBOX as a basic credential check
-          const inbox = await client.mailboxOpen("INBOX");
-          result.diagnostics.inbox = {
-            exists: inbox.exists,
-            unseen: inbox.unseen,
-            flags: inbox.flags
-          };
-        } catch (inboxError) {
-          console.error("Error opening INBOX:", inboxError);
-          result.diagnostics.inboxError = inboxError.message;
-        }
-      }
-    } catch (connectionError) {
-      console.error("Connection error:", connectionError);
-      
-      result.success = false;
-      result.message = `Failed to connect to IMAP server: ${connectionError.message}`;
-      result.error = connectionError.message;
-      result.errorDetails = connectionError.stack;
-      
-      // Analyze the error for more detailed diagnostics
-      if (connectionError.message.includes("certificate")) {
-        result.diagnostics.certificateIssue = true;
-      }
-      
-      if (connectionError.message.includes("auth") || connectionError.message.includes("credentials")) {
-        result.diagnostics.authenticationIssue = true;
-      }
-      
-      if (connectionError.message.includes("timeout")) {
-        result.diagnostics.timeoutIssue = true;
-      }
-      
-      if (connectionError.message.includes("socket")) {
-        result.diagnostics.networkIssue = true;
-      }
-    } finally {
-      // Make sure to close the connection
-      try {
-        if (client.usable) {
-          await client.logout();
-        }
-      } catch (logoutError) {
-        console.error("Error during logout:", logoutError);
-      }
-    }
-    
-    // Update IMAP settings with last verification status
-    try {
-      await fetch(
-        `${SUPABASE_URL}/rest/v1/imap_settings?id=eq.${settings.id}`,
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Erfolgreich mit ${host} verbunden! ${mailboxes.length} E-Mail-Ordner gefunden.`,
+          mailboxCount: mailboxes.length
+        }),
         {
-          method: 'PATCH',
           headers: {
-            'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-            'apikey': SUPABASE_SERVICE_ROLE_KEY,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            last_verification_status: result.success ? 'success' : 'failure',
-            last_verified_at: new Date().toISOString(),
-            last_error: result.success ? null : result.message
-          })
+            'Content-Type': 'application/json',
+            ...corsHeaders
+          }
         }
       );
-    } catch (updateError) {
-      console.error("Error updating verification status:", updateError);
-    }
-    
-    return new Response(
-      JSON.stringify(result),
-      {
-        headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
+    } catch (error) {
+      console.error('Connection error:', error);
+      let errorMessage = 'Verbindungsfehler';
+      
+      // Provide more helpful error messages
+      if (error.code === 'ECONNREFUSED') {
+        errorMessage = `Verbindung abgelehnt: Prüfen Sie Host und Port (${host}:${port})`;
+      } else if (error.code === 'ETIMEDOUT' || error.code === 'TIMEOUT') {
+        errorMessage = `Zeitüberschreitung bei der Verbindung: Prüfen Sie Ihre Netzwerkverbindung und Firewall`;
+      } else if (error.code === 'AUTHENTICATIONFAILED') {
+        errorMessage = `Authentifizierung fehlgeschlagen: Benutzername oder Passwort falsch`;
+      } else if (error.code === 'UPGRADE_TIMEOUT') {
+        errorMessage = `SSL/TLS Aufbau fehlgeschlagen: Versuchen Sie einen anderen Verbindungstyp`;
+      } else if (error.code === 'STARTTLS') {
+        errorMessage = `STARTTLS fehlgeschlagen: Server unterstützt STARTTLS möglicherweise nicht`;
+      } else {
+        errorMessage = `Fehler: ${error.message || error}`;
       }
-    );
+
+      throw new Error(errorMessage);
+    }
   } catch (error) {
-    console.error("Test IMAP connection error:", error);
+    console.error(error.message);
     
     return new Response(
       JSON.stringify({
         success: false,
-        message: "Failed to test IMAP connection",
-        error: error.message,
-        errorDetails: error.stack || "Unknown error"
+        error: error.message
       }),
       {
+        status: 400,
         headers: {
-          "Content-Type": "application/json",
-          ...corsHeaders,
-        },
-        status: 200, // Return 200 even on error to get the error details on frontend
+          'Content-Type': 'application/json',
+          ...corsHeaders
+        }
       }
     );
   }
