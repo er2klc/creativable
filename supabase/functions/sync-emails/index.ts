@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ImapFlow } from 'npm:imapflow@1.0.98';
 import { simpleParser } from 'npm:mailparser@3.6.5';
@@ -521,6 +520,61 @@ async function syncEmails(
               if (!response.ok) {
                 const errorText = await response.text();
                 console.error(`Error inserting emails: ${response.status} ${errorText}`);
+              } else {
+                // Verarbeite Anhänge für jede eingefügte E-Mail
+                const insertedEmails = await response.json();
+                
+                for (let i = 0; i < insertedEmails.length; i++) {
+                  const insertedEmail = insertedEmails[i];
+                  const emailDataWithAttachments = emailsToInsert[i];
+                  
+                  // Prüfe, ob diese E-Mail Anhänge hat
+                  const indexInBatch = emailsToInsert.indexOf(emailDataWithAttachments);
+                  const messageWithAttachments = indexInBatch >= 0 ? parsed : null;
+                  
+                  // Wenn die E-Mail Anhänge hat, speichere diese in der email_attachments Tabelle
+                  if (messageWithAttachments && messageWithAttachments.attachments && messageWithAttachments.attachments.length > 0) {
+                    debugLog(`Processing ${messageWithAttachments.attachments.length} attachments for email ${insertedEmail.id}`);
+                    
+                    for (const attachment of messageWithAttachments.attachments) {
+                      try {
+                        // Bereite Attachment-Daten vor
+                        const attachmentData = {
+                          email_id: insertedEmail.id,
+                          file_name: attachment.filename || 'unnamed_attachment',
+                          file_type: attachment.contentType || 'application/octet-stream',
+                          file_size: attachment.size || 0,
+                          file_content: attachment.content ? attachment.content.toString('base64') : null,
+                          content_id: attachment.contentId || null
+                        };
+                        
+                        // Füge den Anhang in die Datenbank ein
+                        const attachmentResponse = await fetch(
+                          `${SUPABASE_URL}/rest/v1/email_attachments`,
+                          {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                              'apikey': SUPABASE_SERVICE_ROLE_KEY,
+                              'Prefer': 'return=representation'
+                            },
+                            body: JSON.stringify(attachmentData)
+                          }
+                        );
+                        
+                        if (!attachmentResponse.ok) {
+                          const errorText = await attachmentResponse.text();
+                          console.error(`Error saving attachment: ${attachmentResponse.status} ${errorText}`);
+                        } else {
+                          debugLog(`Successfully saved attachment ${attachment.filename} for email ${insertedEmail.id}`);
+                        }
+                      } catch (attachmentError) {
+                        console.error(`Error processing attachment for email ${insertedEmail.id}:`, attachmentError);
+                      }
+                    }
+                  }
+                }
               }
             } catch (insertError) {
               console.error("Error inserting batch of emails:", insertError);
@@ -576,6 +630,72 @@ async function syncEmails(
         if (!response.ok) {
           const errorText = await response.text();
           console.error(`Error inserting remaining emails: ${response.status} ${errorText}`);
+        } else {
+          // Verarbeite Anhänge für die verbleibenden eingefügten E-Mails
+          const insertedEmails = await response.json();
+          
+          // Wir müssen jede E-Mail im Batch mit den Anhängen verknüpfen
+          for (let i = 0; i < insertedEmails.length; i++) {
+            const insertedEmail = insertedEmails[i];
+            const emailData = emailsToInsert[i];
+            
+            // Wenn diese E-Mail Anhänge hat
+            if (emailData.has_attachments) {
+              debugLog(`Processing attachments for remaining email ${insertedEmail.id}`);
+              
+              // Lade die E-Mail neu, um die Anhänge zu bekommen
+              const messageUID = emailData.uid;
+              const messageData = await client.download(messageUID);
+              
+              if (!messageData) {
+                console.error(`Failed to download message content for UID ${messageUID}`);
+                continue;
+              }
+              
+              // Parse die Nachricht, um an die Anhänge zu kommen
+              const parsedMsg = await simpleParser(messageData.content);
+              
+              if (parsedMsg.attachments && parsedMsg.attachments.length > 0) {
+                for (const attachment of parsedMsg.attachments) {
+                  try {
+                    // Bereite Attachment-Daten vor
+                    const attachmentData = {
+                      email_id: insertedEmail.id,
+                      file_name: attachment.filename || 'unnamed_attachment',
+                      file_type: attachment.contentType || 'application/octet-stream',
+                      file_size: attachment.size || 0,
+                      file_content: attachment.content ? attachment.content.toString('base64') : null,
+                      content_id: attachment.contentId || null
+                    };
+                    
+                    // Füge den Anhang in die Datenbank ein
+                    const attachmentResponse = await fetch(
+                      `${SUPABASE_URL}/rest/v1/email_attachments`,
+                      {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          'Authorization': `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+                          'apikey': SUPABASE_SERVICE_ROLE_KEY,
+                          'Prefer': 'return=representation'
+                        },
+                        body: JSON.stringify(attachmentData)
+                      }
+                    );
+                    
+                    if (!attachmentResponse.ok) {
+                      const errorText = await attachmentResponse.text();
+                      console.error(`Error saving remaining attachment: ${attachmentResponse.status} ${errorText}`);
+                    } else {
+                      debugLog(`Successfully saved attachment ${attachment.filename} for email ${insertedEmail.id}`);
+                    }
+                  } catch (attachmentError) {
+                    console.error(`Error processing attachment for email ${insertedEmail.id}:`, attachmentError);
+                  }
+                }
+              }
+            }
+          }
         }
       } catch (insertError) {
         console.error("Error inserting final batch of emails:", insertError);

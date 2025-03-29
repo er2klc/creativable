@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -149,56 +148,175 @@ export class EmailSyncService {
   }
   
   /**
-   * Reset the email sync state for troubleshooting
+   * Vollständiges Zurücksetzen der E-Mail-Synchronisation für den aktuellen Benutzer
+   * Löscht alle Emails, Ordner und Attachments und setzt Synchronisierungsstatus zurück
    */
-  public static async resetEmailSync(): Promise<{ success: boolean, error: Error | null }> {
+  static async resetEmailSync() {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        return { success: false, error: new Error("User not authenticated") };
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.user?.id) {
+        throw new Error("Benutzer ist nicht angemeldet");
       }
       
-      // Get the current user's auth token
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        throw new Error("No active session found");
-      }
-      
-      // Call the reset endpoint
-      const response = await fetch(
-        "https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/reset-imap-sync",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${sessionData.session.access_token}`
-          },
-          body: JSON.stringify({
-            user_id: user.id,
-            reset_cache: true,
-            optimize_settings: true
-          })
-        }
+      // Verwende die Funktion cleanup_user_email_data von der Datenbank
+      const { data, error } = await supabase.rpc(
+        'cleanup_user_email_data',
+        { user_id_param: session.user.id }
       );
+      
+      if (error) {
+        console.error("Fehler beim Zurücksetzen der E-Mail-Daten:", error);
+        return { 
+          success: false, 
+          error: error 
+        };
+      }
+      
+      return { 
+        success: true, 
+        message: "E-Mail-Synchronisation wurde zurückgesetzt",
+        data: data
+      };
+    } catch (error) {
+      console.error("Ausnahme beim Zurücksetzen der E-Mails:", error);
+      return { 
+        success: false, 
+        error: error 
+      };
+    }
+  }
+  
+  /**
+   * Starten einer vollständigen Synchronisation für den aktuellen Benutzer
+   */
+  static async startFullSync() {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("Nicht authentifiziert");
+      }
+      
+      toast.info("E-Mail-Synchronisation wird gestartet", {
+        description: "Dies kann einige Minuten dauern."
+      });
+      
+      // Abrufen der IMAP-Einstellungen
+      const { data: imapSettings, error: imapError } = await supabase
+        .from('imap_settings')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .single();
+      
+      if (imapError || !imapSettings) {
+        throw new Error("IMAP-Einstellungen nicht gefunden");
+      }
+      
+      // Synchronisationsoption konfigurieren
+      const syncOptions = {
+        folder: 'INBOX', // Beginne mit dem Posteingang
+        force_refresh: true,
+        max_emails: imapSettings.max_emails || 500,
+        historical_sync: imapSettings.historical_sync || false,
+        batch_processing: true,
+        max_batch_size: 25,
+        connection_timeout: 60000,
+        retry_attempts: 3
+      };
+      
+      // Funktion zur Synchronisierung aufrufen
+      const response = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify(syncOptions)
+      });
       
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+        throw new Error(`Fehler ${response.status}: ${errorText || response.statusText}`);
       }
       
       const result = await response.json();
       
       if (result.success) {
-        // Reset our cache as well
-        this.lastFolderSync = null;
-        return { success: true, error: null };
+        toast.success("E-Mails wurden synchronisiert", {
+          description: `${result.emailsCount || 0} neue E-Mails synchronisiert`
+        });
+        
+        return {
+          success: true,
+          data: result
+        };
       } else {
-        throw new Error(result.message || "Reset failed");
+        throw new Error(result.message || 'Fehler bei der E-Mail-Synchronisation');
       }
     } catch (error: any) {
-      console.error("Error resetting email sync:", error);
-      return { success: false, error };
+      console.error('Fehler bei der E-Mail-Synchronisation:', error);
+      
+      toast.error("Synchronisation fehlgeschlagen", {
+        description: error.message || 'Ein Fehler ist aufgetreten'
+      });
+      
+      return {
+        success: false, 
+        error: error
+      };
+    }
+  }
+  
+  /**
+   * E-Mail-Anhänge für eine bestimmte E-Mail abrufen
+   */
+  static async getAttachments(emailId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('email_attachments')
+        .select('*')
+        .eq('email_id', emailId);
+      
+      if (error) throw error;
+      
+      return {
+        success: true,
+        attachments: data
+      };
+    } catch (error) {
+      console.error('Fehler beim Abrufen von Anhängen:', error);
+      return {
+        success: false,
+        error: error,
+        attachments: []
+      };
+    }
+  }
+  
+  /**
+   * Inhalt eines Anhangs abrufen
+   */
+  static async getAttachmentContent(attachmentId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('email_attachments')
+        .select('file_content, file_name, file_type')
+        .eq('id', attachmentId)
+        .single();
+      
+      if (error) throw error;
+      
+      return {
+        success: true,
+        attachment: data
+      };
+    } catch (error) {
+      console.error('Fehler beim Abrufen des Anhanginhalts:', error);
+      return {
+        success: false,
+        error: error
+      };
     }
   }
 }
