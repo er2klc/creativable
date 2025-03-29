@@ -29,6 +29,7 @@ const formSchema = z.object({
     message: "Passwort ist erforderlich.",
   }),
   secure: z.boolean().default(true),
+  force_insecure: z.boolean().default(false),
   historical_sync: z.boolean().default(false),
   max_emails: z.coerce.number().min(10, {
     message: "Max. E-Mails muss mindestens 10 betragen.",
@@ -57,6 +58,7 @@ export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void
       username: "",
       password: "",
       secure: true,
+      force_insecure: false,
       historical_sync: false,
       max_emails: 100,
       connection_timeout: 30000,
@@ -87,6 +89,7 @@ export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void
           username: data.username,
           password: data.password,
           secure: data.secure,
+          force_insecure: data.force_insecure,
           historical_sync: data.historical_sync,
           max_emails: data.max_emails,
           connection_timeout: data.connection_timeout,
@@ -118,6 +121,7 @@ export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void
             username: values.username,
             password: values.password,
             secure: values.secure,
+            force_insecure: values.force_insecure,
             historical_sync: values.historical_sync,
             max_emails: values.max_emails,
             connection_timeout: values.connection_timeout,
@@ -223,6 +227,26 @@ export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void
                   <FormLabel>SSL/TLS-Verschlüsselung</FormLabel>
                   <FormDescription>
                     Aktivieren, um eine sichere Verbindung zu verwenden.
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="force_insecure"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-md border p-4">
+                <div className="space-y-0.5">
+                  <FormLabel>Erzwungene unsichere Verbindung</FormLabel>
+                  <FormDescription>
+                    Aktivieren, um eine unsichere Verbindung zu verwenden.
                   </FormDescription>
                 </div>
                 <FormControl>

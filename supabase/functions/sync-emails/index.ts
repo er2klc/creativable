@@ -1055,31 +1055,57 @@ serve(async (req) => {
     // Configure IMAP client
     const settings = imapSettings[0];
     
+    // Prüfe, ob wir eine komplett unsichere Verbindung verwenden sollen (für Notfälle)
+    const forceInsecure = settings.force_insecure === true;
+    
     // Use optimized IMAP settings to prevent timeout issues
-    const imapConfig = {
-      host: settings.host,
-      port: settings.port || 993,
-      secure: settings.secure !== false, // Default to true if not set
-      auth: {
-        user: settings.username,
-        pass: settings.password
-      },
-      logger: requestData.debug || false,
-      tls: {
-        rejectUnauthorized: false, // More permissive TLS for broader compatibility
-        servername: settings.host,
-        enableTrace: true, // Aktiviere Trace für bessere Fehlermeldungen
-        minVersion: '', // Keine Einschränkung der TLS-Version für maximale Kompatibilität
-        ciphers: 'ALL' // Alle verfügbaren Cipher erlauben für maximale Kompatibilität
-      },
-      connectionTimeout: 120000, // Auf 2 Minuten erhöhen für langsame Verbindungen
-      greetTimeout: 60000, // Längerer Greeting-Timeout (1 Minute)
-      socketTimeout: 120000, // Längerer Socket-Timeout (2 Minuten)
-      disableCompression: true, // Deaktiviere Kompression für bessere Stabilität
-      requireTLS: false, // Nicht zwingend TLS benötigen
-      upgradeTTLSeconds: 180, // 3 Minuten für TLS-Upgrade (statt Standardwert)
-      maxIdleTime: 30000 // 30 Sekunden für maximale Idle-Zeit
-    };
+    const imapConfig = forceInsecure ? 
+      // Konfiguration für erzwungene unsichere Verbindung (ohne TLS)
+      {
+        host: settings.host,
+        port: settings.port || 143, // Standardport für unverschlüsselte Verbindungen
+        secure: false, // Keine verschlüsselte Verbindung verwenden
+        auth: {
+          user: settings.username,
+          pass: settings.password
+        },
+        logger: requestData.debug || false,
+        tls: {
+          rejectUnauthorized: false,
+          servername: settings.host,
+          enableTrace: true
+        },
+        requireTLS: false,
+        disableCompression: true,
+        connectionTimeout: 120000, // 2 Minuten
+        greetTimeout: 60000,
+        socketTimeout: 120000
+      } : 
+      // Standard-Konfiguration für sichere Verbindungen (mit TLS)
+      {
+        host: settings.host,
+        port: settings.port || 993,
+        secure: settings.secure !== false, // Default to true if not set
+        auth: {
+          user: settings.username,
+          pass: settings.password
+        },
+        logger: requestData.debug || false,
+        tls: {
+          rejectUnauthorized: false, // More permissive TLS for broader compatibility
+          servername: settings.host,
+          enableTrace: true, // Aktiviere Trace für bessere Fehlermeldungen
+          minVersion: '', // Keine Einschränkung der TLS-Version für maximale Kompatibilität
+          ciphers: 'ALL' // Alle verfügbaren Cipher erlauben für maximale Kompatibilität
+        },
+        connectionTimeout: 120000, // Auf 2 Minuten erhöhen für langsame Verbindungen
+        greetTimeout: 60000, // Längerer Greeting-Timeout (1 Minute)
+        socketTimeout: 120000, // Längerer Socket-Timeout (2 Minuten)
+        disableCompression: true, // Deaktiviere Kompression für bessere Stabilität
+        requireTLS: false, // Nicht zwingend TLS benötigen
+        upgradeTTLSeconds: 180, // 3 Minuten für TLS-Upgrade (statt Standardwert)
+        maxIdleTime: 30000 // 30 Sekunden für maximale Idle-Zeit
+      };
 
     // Extract sync options from request with better defaults for reliability
     const syncOptions = {

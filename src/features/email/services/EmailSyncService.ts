@@ -532,6 +532,17 @@ export class EmailSyncService {
       // 3. IMAP-Einstellungen optimieren
       // Ermittle, ob wir den standardmäßigen oder alternativen Port verwenden sollten
       let optimizedPort = imapSettings.port;
+      let forceInsecure = false;
+      
+      // Prüfe, ob ein TLS-Upgrade-Fehler vorliegt und aktiviere force_insecure
+      const testResult = await this.testImapConnection();
+      if (!testResult.success && 
+          (testResult.error?.includes('upgrade connection') || 
+           testResult.error?.includes('TLS'))) {
+        console.log("TLS-Upgrade-Fehler erkannt, aktiviere force_insecure");
+        forceInsecure = true;
+        optimizedPort = 143; // Standard-Port für unverschlüsselte Verbindungen
+      }
       
       // Wenn Port 993 (Standard für SSL) verwendet wurde und Fehler aufgetreten sind,
       // versuche Port 143 (Standard ohne SSL)
@@ -545,9 +556,10 @@ export class EmailSyncService {
         .from('imap_settings')
         .update({
           connection_timeout: 120000, // 2 Minuten Timeout
-          auto_reconnect: true,      // Automatische Wiederverbindung aktivieren
-          port: optimizedPort,       // Optimierter Port
+          auto_reconnect: true,       // Automatische Wiederverbindung aktivieren
+          port: optimizedPort,        // Optimierter Port
           secure: optimizedPort === 993, // Setze secure passend zum Port
+          force_insecure: forceInsecure, // Aktiviere force_insecure bei TLS-Problemen
           updated_at: new Date().toISOString()
         })
         .eq('id', imapSettings.id);

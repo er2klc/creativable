@@ -76,31 +76,57 @@ serve(async (req) => {
     // Configure IMAP client
     const settings = imapSettings[0];
     
+    // Prüfe, ob wir eine komplett unsichere Verbindung verwenden sollen
+    const forceInsecure = settings.force_insecure === true;
+    
     // Use optimized IMAP settings for testing
-    const imapConfig = {
-      host: settings.host,
-      port: settings.port || 993,
-      secure: settings.secure !== false, // Default to true if not set
-      auth: {
-        user: settings.username,
-        pass: settings.password
-      },
-      logger: detailedDiagnostics, // Enable logging for detailed diagnostics
-      tls: {
-        rejectUnauthorized: false, // More permissive TLS for broader compatibility
-        servername: settings.host,
-        enableTrace: true, // Enable tracing for detailed diagnostics
-        minVersion: '', // Keine Einschränkung der TLS-Version für maximale Kompatibilität
-        ciphers: 'ALL' // Alle verfügbaren Cipher für maximale Kompatibilität
-      },
-      connectionTimeout: 120000, // Auf 2 Minuten erhöhen für langsame Verbindungen
-      greetTimeout: 60000, // Auf 1 Minute erhöhen
-      socketTimeout: 120000, // Auf 2 Minuten erhöhen
-      disableCompression: true, // Disable compression for better stability
-      requireTLS: false, // Do not require TLS
-      upgradeTTLSeconds: 180, // 3 Minuten für TLS-Upgrade
-      maxIdleTime: 30000 // 30 Sekunden maximale Idle-Zeit
-    };
+    const imapConfig = forceInsecure ? 
+      // Konfiguration für erzwungene unsichere Verbindung (ohne TLS)
+      {
+        host: settings.host,
+        port: settings.port || 143, // Standardport für unverschlüsselte Verbindungen
+        secure: false, // Keine verschlüsselte Verbindung verwenden
+        auth: {
+          user: settings.username,
+          pass: settings.password
+        },
+        logger: detailedDiagnostics,
+        tls: {
+          rejectUnauthorized: false,
+          servername: settings.host,
+          enableTrace: true
+        },
+        requireTLS: false,
+        disableCompression: true,
+        connectionTimeout: 120000,
+        greetTimeout: 60000,
+        socketTimeout: 120000
+      } : 
+      // Standard-Konfiguration für sichere Verbindungen (mit TLS)
+      {
+        host: settings.host,
+        port: settings.port || 993,
+        secure: settings.secure !== false, // Default to true if not set
+        auth: {
+          user: settings.username,
+          pass: settings.password
+        },
+        logger: detailedDiagnostics, // Enable logging for detailed diagnostics
+        tls: {
+          rejectUnauthorized: false, // More permissive TLS for broader compatibility
+          servername: settings.host,
+          enableTrace: true, // Enable tracing for detailed diagnostics
+          minVersion: '', // Keine Einschränkung der TLS-Version für maximale Kompatibilität
+          ciphers: 'ALL' // Alle verfügbaren Cipher für maximale Kompatibilität
+        },
+        connectionTimeout: 120000, // Auf 2 Minuten erhöhen für langsame Verbindungen
+        greetTimeout: 60000, // Auf 1 Minute erhöhen
+        socketTimeout: 120000, // Auf 2 Minuten erhöhen
+        disableCompression: true, // Disable compression for better stability
+        requireTLS: false, // Do not require TLS
+        upgradeTTLSeconds: 180, // 3 Minuten für TLS-Upgrade
+        maxIdleTime: 30000 // 30 Sekunden maximale Idle-Zeit
+      };
 
     const client = new ImapFlow(imapConfig);
     
