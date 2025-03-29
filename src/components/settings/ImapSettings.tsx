@@ -43,7 +43,7 @@ const formSchema = z.object({
   progressive_loading: z.boolean().default(true),
 });
 
-export function ImapSettings() {
+export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void }) {
   const { user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [initialValues, setInitialValues] = useState<z.infer<typeof formSchema> | undefined>(undefined);

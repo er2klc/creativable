@@ -2,9 +2,7 @@
 -- Add missing UID column to emails table if it doesn't exist
 DO $$ 
 BEGIN
-  -- Only add if it doesn't exist already (to prevent errors if migration was already run)
-  PERFORM check_table_column('emails', 'uid');
-  
+  -- Check if columns exist before adding them
   IF NOT EXISTS (
     SELECT 1
     FROM information_schema.columns
@@ -17,8 +15,6 @@ BEGIN
   END IF;
 
   -- Ensure all required columns exist in email_sync_status
-  PERFORM check_table_column('email_sync_status', 'last_uid');
-  
   IF NOT EXISTS (
     SELECT 1
     FROM information_schema.columns
@@ -58,42 +54,42 @@ BEGIN
   ) THEN
     ALTER TABLE email_sync_status ADD COLUMN last_error TEXT;
   END IF;
-
-  -- Create a function to reset the email sync state
-  CREATE OR REPLACE FUNCTION public.reset_email_sync(user_id_param uuid)
-  RETURNS json
-  LANGUAGE plpgsql
-  SECURITY DEFINER
-  AS $$
-  DECLARE
-    result json;
-  BEGIN
-    -- Delete sync status entries
-    DELETE FROM email_sync_status WHERE user_id = user_id_param;
-    
-    -- Update IMAP settings
-    UPDATE imap_settings
-    SET 
-      last_sync_date = NULL,
-      historical_sync = false,
-      syncing_historical = false,
-      last_sync_status = NULL,
-      sync_progress = 0,
-      updated_at = NOW()
-    WHERE user_id = user_id_param;
-    
-    -- Return success
-    RETURN json_build_object(
-      'success', true,
-      'message', 'Email sync state reset successfully'
-    );
-  EXCEPTION
-    WHEN OTHERS THEN
-      RETURN json_build_object(
-        'success', false,
-        'message', 'Failed to reset email sync state',
-        'error', SQLERRM
-      );
-  END;
-  $$;
 END $$;
+
+-- Create a function to reset the email sync state (separate from DO block)
+CREATE OR REPLACE FUNCTION public.reset_email_sync(user_id_param uuid)
+RETURNS json
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  result json;
+BEGIN
+  -- Delete sync status entries
+  DELETE FROM email_sync_status WHERE user_id = user_id_param;
+  
+  -- Update IMAP settings
+  UPDATE imap_settings
+  SET 
+    last_sync_date = NULL,
+    historical_sync = false,
+    syncing_historical = false,
+    last_sync_status = NULL,
+    sync_progress = 0,
+    updated_at = NOW()
+  WHERE user_id = user_id_param;
+  
+  -- Return success
+  RETURN json_build_object(
+    'success', true,
+    'message', 'Email sync state reset successfully'
+  );
+EXCEPTION
+  WHEN OTHERS THEN
+    RETURN json_build_object(
+      'success', false,
+      'message', 'Failed to reset email sync state',
+      'error', SQLERRM
+    );
+END;
+$$;

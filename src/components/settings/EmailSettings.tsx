@@ -527,7 +527,7 @@ export function EmailSettings() {
       </TabsList>
       
       <TabsContent value="imap" className="space-y-4">
-        <ImapSettings onSettingsSaved={handleSettingsSaved} />
+        {emailConnected ? <ConnectedView /> : <ConfigurationView />}
       </TabsContent>
       
       <TabsContent value="smtp" className="space-y-4">
