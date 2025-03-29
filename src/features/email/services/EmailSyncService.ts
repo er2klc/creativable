@@ -159,27 +159,94 @@ export class EmailSyncService {
         throw new Error("Benutzer ist nicht angemeldet");
       }
       
-      // Verwende die Funktion cleanup_user_email_data von der Datenbank
+      // Versuche zuerst die Hauptfunktion, dann Fallback zu alternativen Funktionen
+      try {
+        // Verwende die Funktion cleanup_user_email_data von der Datenbank
+        const { data, error } = await supabase.rpc(
+          'cleanup_user_email_data',
+          { user_id_param: session.user.id }
+        );
+        
+        if (error) {
+          // Wenn die Funktion nicht gefunden wurde (PGRST202), versuche die Alternative
+          if (error.code === 'PGRST202') {
+            console.log("Verwende Alternative: reset_email_sync");
+            return this.resetEmailSyncAlternative(session.user.id);
+          }
+          
+          throw error;
+        }
+        
+        return { 
+          success: true, 
+          message: "E-Mail-Synchronisation wurde zurückgesetzt",
+          data: data
+        };
+      } catch (rpcError) {
+        // Bei Fehler mit der Hauptfunktion, versuche die Alternative
+        console.error("Fehler mit cleanup_user_email_data, verwende Alternative:", rpcError);
+        return this.resetEmailSyncAlternative(session.user.id);
+      }
+    } catch (error) {
+      console.error("Ausnahme beim Zurücksetzen der E-Mails:", error);
+      return { 
+        success: false, 
+        error: error 
+      };
+    }
+  }
+  
+  /**
+   * Alternative Methode zum Zurücksetzen der E-Mail-Synchronisation
+   * Verwendet die vorhandene reset_email_sync Funktion, wenn cleanup_user_email_data nicht verfügbar ist
+   */
+  private static async resetEmailSyncAlternative(userId: string) {
+    try {
+      // Verwende die alternative Funktion reset_email_sync
       const { data, error } = await supabase.rpc(
-        'cleanup_user_email_data',
-        { user_id_param: session.user.id }
+        'reset_email_sync',
+        { user_id_param: userId }
       );
       
       if (error) {
-        console.error("Fehler beim Zurücksetzen der E-Mail-Daten:", error);
+        console.error("Fehler beim alternativen Zurücksetzen der E-Mail-Daten:", error);
         return { 
           success: false, 
           error: error 
         };
       }
       
+      // Nach dem Reset noch die manuellen Operationen durchführen, die nicht von reset_email_sync abgedeckt sind
+      
+      // Lösche E-Mail-Anhänge, falls diese Tabelle existiert
+      try {
+        const { error: attachmentsError } = await supabase
+          .from('email_attachments')
+          .delete()
+          .filter('email_id', 'in', (query) => {
+            query
+              .from('emails')
+              .select('id')
+              .eq('user_id', userId);
+          });
+          
+        if (attachmentsError) {
+          console.warn("Fehler beim Löschen von E-Mail-Anhängen:", attachmentsError);
+          // Kein fataler Fehler, weitermachen
+        }
+      } catch (attachmentsEx) {
+        console.warn("Ausnahme beim Löschen von Anhängen, ignoriert:", attachmentsEx);
+        // Tabelle existiert möglicherweise nicht, ignorieren
+      }
+      
       return { 
         success: true, 
-        message: "E-Mail-Synchronisation wurde zurückgesetzt",
-        data: data
+        message: "E-Mail-Synchronisation wurde zurückgesetzt (Alternative)",
+        data: data,
+        method: "alternative"
       };
     } catch (error) {
-      console.error("Ausnahme beim Zurücksetzen der E-Mails:", error);
+      console.error("Fehler in resetEmailSyncAlternative:", error);
       return { 
         success: false, 
         error: error 
@@ -228,7 +295,7 @@ export class EmailSyncService {
       // Funktion zur Synchronisierung aufrufen
       const response = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails', {
         method: 'POST',
-        headers: {
+          headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`
         },
