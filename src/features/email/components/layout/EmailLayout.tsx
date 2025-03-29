@@ -9,11 +9,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 import { Button } from '@/components/ui/button';
-import { Pencil, PlusCircle, Loader2, AlertCircle } from 'lucide-react';
+import { Pencil, PlusCircle, Loader2, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 import { NewEmailDialog } from '../compose/NewEmailDialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { EmailSyncService } from '../../services/EmailSyncService';
 
 export interface EmailLayoutProps {
   userEmail?: string;
@@ -30,7 +30,6 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   const [isNewEmailOpen, setIsNewEmailOpen] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [configError, setConfigError] = useState<string | null>(null);
-  const { syncFolders, resetEmailSync } = useFolderSync();
   
   // Fetch profile data for header
   const { data: profile } = useQuery({
@@ -86,14 +85,11 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   // Reset selected email when folder changes
   useEffect(() => {
     setSelectedEmailId(null);
-    
-    // Auto sync when folder changes
-    syncEmails(false);
   }, [selectedFolder]);
 
   // Function to sync emails for the current folder
   const syncEmails = async (showLoadingToast = true) => {
-    if (!user) return;
+    if (!user || isSyncing) return;
     
     try {
       setIsSyncing(true);
@@ -169,9 +165,9 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
         description: "This may take a moment..."
       });
       
-      const { error } = await resetEmailSync();
+      const result = await EmailSyncService.resetEmailSync();
       
-      if (error) throw error;
+      if (result.error) throw result.error;
       
       toast.success("Email Connection Reset", {
         description: "Your email connection has been reset with optimized settings. Please sync again."
@@ -181,7 +177,10 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
       await queryClient.invalidateQueries({ queryKey: ['imap-settings'] });
       
       // Start fresh sync
-      syncFolders(true);
+      await EmailSyncService.syncFolders({ forceRefresh: true, silent: false });
+      
+      // Also sync emails
+      syncEmails(true);
     } catch (error: any) {
       console.error('Error resetting connection:', error);
       toast.error("Reset Failed", {
@@ -190,20 +189,13 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
     }
   };
 
-  // Set up automatic email sync every 5 minutes
+  // Initial folder sync when component mounts - only once
   useEffect(() => {
-    const syncInterval = setInterval(() => {
-      if (!isSyncing) {
-        syncEmails(false); // Don't show loading toast for automatic syncs
-      }
-    }, 5 * 60 * 1000); // 5 minutes
+    // Sync folders silently on first load
+    EmailSyncService.syncFolders({ forceRefresh: false, silent: true });
     
-    return () => clearInterval(syncInterval);
-  }, [selectedFolder, isSyncing]);
-
-  // Initial folder sync when component mounts
-  useEffect(() => {
-    syncFolders(false);  // Silent sync of folders on mount
+    // Also sync the current folder (usually INBOX)
+    syncEmails(false);
   }, []);
 
   return (

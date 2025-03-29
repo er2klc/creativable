@@ -1,365 +1,138 @@
 
 import React, { useState } from 'react';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, AlertCircle, CheckCircle, RefreshCcw, Trash2 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { toast } from "sonner";
-import { 
-  checkEmailConfigStatus, 
-  cleanupDuplicateImapSettings, 
-  fixDuplicateEmailFolders,
-  resetImapSettings,
-  validateImapCredentials
-} from "@/utils/debug-helper";
-import { supabase } from "@/integrations/supabase/client";
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Loader2, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { resetEmailSync, checkEmailConfigStatus } from '@/utils/debug-helper';
 
 export function EmailDiagnostics() {
-  const { user } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
-  const [isTesting, setIsTesting] = useState(false);
-  const [status, setStatus] = useState<any>(null);
-  const [testResult, setTestResult] = useState<{success: boolean, message: string} | null>(null);
+  const [isChecking, setIsChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState<any>(null);
 
-  const checkStatus = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    try {
-      const result = await checkEmailConfigStatus();
-      console.log("Email configuration check result:", result);
-      setStatus(result);
-      
-      if (result.success) {
-        toast.success("Email configuration check completed");
-      } else {
-        toast.error("Error checking email configuration", {
-          description: result.error
-        });
-      }
-    } catch (error) {
-      console.error("Error checking status:", error);
-      toast.error("Failed to check email status");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fixFolders = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    try {
-      const result = await fixDuplicateEmailFolders(user.id);
-      console.log("Fix folders result:", result);
-      
-      if (result.success) {
-        toast.success("Email folders fixed", {
-          description: result.message
-        });
-      } else {
-        toast.error("Failed to fix email folders", {
-          description: result.error
-        });
-      }
-    } catch (error) {
-      console.error("Error fixing folders:", error);
-      toast.error("Failed to fix email folders");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const cleanupSettings = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    try {
-      const result = await cleanupDuplicateImapSettings();
-      console.log("Cleanup result:", result);
-      
-      if (result.success) {
-        toast.success("IMAP settings cleaned up", {
-          description: result.message
-        });
-      } else {
-        toast.error("Failed to clean up IMAP settings", {
-          description: result.message
-        });
-      }
-    } catch (error) {
-      console.error("Error cleaning up settings:", error);
-      toast.error("Failed to clean up IMAP settings");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetSettings = async () => {
-    if (!user) return;
-    if (!window.confirm("This will reset all IMAP settings, delete all emails and folders. Are you sure you want to continue?")) {
-      return;
-    }
-    
+  const handleResetSync = async () => {
     setIsResetting(true);
     try {
-      const result = await resetImapSettings();
-      console.log("Reset result:", result);
+      toast.info("Resetting Email Sync State", {
+        description: "This may take a moment..."
+      });
+      
+      const result = await resetEmailSync();
       
       if (result.success) {
-        toast.success("IMAP settings reset successfully", {
-          description: "All email data has been cleared. Please update your settings and start a new sync."
+        toast.success("Email Sync Reset", {
+          description: "Email sync state reset successfully. Please try syncing again."
         });
+        setCheckResult(null); // Clear previous results
       } else {
-        toast.error("Failed to reset IMAP settings", {
-          description: result.message
+        toast.error("Reset Failed", {
+          description: result.error || "Failed to reset email sync state"
         });
       }
-    } catch (error) {
-      console.error("Error resetting settings:", error);
-      toast.error("Failed to reset IMAP settings");
+    } catch (error: any) {
+      toast.error("Error", { description: error.message });
     } finally {
       setIsResetting(false);
     }
   };
 
-  const testCurrentSettings = async () => {
-    if (!user) return;
-    setIsTesting(true);
-    setTestResult(null);
-    
+  const handleCheckConfig = async () => {
+    setIsChecking(true);
     try {
-      // First get current IMAP settings
-      const { data, error } = await supabase
-        .from('imap_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-        
-      if (error) throw error;
-      
-      if (!data) {
-        setTestResult({
-          success: false,
-          message: "No IMAP settings found. Please configure your IMAP settings first."
-        });
-        return;
-      }
-      
-      // Test the connection
-      const result = await validateImapCredentials({
-        host: data.host,
-        port: data.port,
-        username: data.username,
-        password: data.password,
-        secure: data.secure
-      });
-      
-      setTestResult(result);
+      const result = await checkEmailConfigStatus();
+      setCheckResult(result);
       
       if (result.success) {
-        toast.success("IMAP connection test successful");
+        if (result.isConfigured) {
+          toast.success("Email Configuration Check", {
+            description: "Your email configuration looks good."
+          });
+        } else {
+          toast.warning("Email Not Configured", {
+            description: "Email integration is not properly configured."
+          });
+        }
       } else {
-        toast.error("IMAP connection test failed", {
-          description: result.message
+        toast.error("Check Failed", {
+          description: result.error || "Failed to check email configuration"
         });
       }
-    } catch (error) {
-      console.error("Error testing connection:", error);
-      setTestResult({
-        success: false,
-        message: error.message || "Failed to test IMAP connection"
-      });
-      toast.error("Failed to test IMAP connection");
+    } catch (error: any) {
+      toast.error("Error", { description: error.message });
     } finally {
-      setIsTesting(false);
+      setIsChecking(false);
     }
   };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Email Diagnostics and Troubleshooting</CardTitle>
+        <CardTitle>Email Diagnostics</CardTitle>
         <CardDescription>
-          Tools to diagnose and fix issues with email integration
+          Tools to troubleshoot and fix email sync issues
         </CardDescription>
       </CardHeader>
-      <CardContent>
-        <Tabs defaultValue="diagnostics">
-          <TabsList className="mb-4">
-            <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
-            <TabsTrigger value="actions">Maintenance Actions</TabsTrigger>
-          </TabsList>
+      <CardContent className="space-y-4">
+        <div className="flex flex-col space-y-2">
+          <div className="flex justify-between items-center">
+            <span className="text-sm font-medium">Check Configuration</span>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleCheckConfig}
+              disabled={isChecking}
+            >
+              {isChecking ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
+              )}
+              Check
+            </Button>
+          </div>
           
-          <TabsContent value="diagnostics">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label>Check current email configuration</Label>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={checkStatus}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Checking...</>
-                  ) : (
-                    <>Check Status</>
-                  )}
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <Label>Test current IMAP connection</Label>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={testCurrentSettings}
-                  disabled={isTesting}
-                >
-                  {isTesting ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Testing...</>
-                  ) : (
-                    <>Test Connection</>
-                  )}
-                </Button>
-              </div>
-              
-              {status && (
-                <div className="mt-4 p-4 bg-gray-50 rounded-md">
-                  <h3 className="font-medium text-sm mb-2">Email Configuration Status</h3>
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span>IMAP Configured:</span>
-                      <span>{status.hasImapSettings ? 'Yes' : 'No'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span>SMTP Configured:</span>
-                      <span>{status.hasSmtpSettings ? 'Yes' : 'No'}</span>
-                    </div>
-                    {status.imapSettings && (
-                      <>
-                        <div className="flex justify-between">
-                          <span>IMAP Server:</span>
-                          <span>{status.imapSettings.host}:{status.imapSettings.port}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Secure Connection:</span>
-                          <span>{status.imapSettings.secure ? 'Yes (SSL/TLS)' : 'No (Unencrypted)'}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Username:</span>
-                          <span>{status.imapSettings.username}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Last Sync:</span>
-                          <span>
-                            {status.imapSettings.last_sync_at 
-                              ? new Date(status.imapSettings.last_sync_at).toLocaleString() 
-                              : 'Never'}
-                          </span>
-                        </div>
-                      </>
-                    )}
-                  </div>
+          {checkResult && (
+            <div className={`mt-2 p-2 text-sm rounded ${checkResult.success && checkResult.isConfigured ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-yellow-50 text-yellow-700 border border-yellow-200'}`}>
+              {checkResult.success && checkResult.isConfigured ? (
+                <div className="flex items-center">
+                  <CheckCircle className="h-4 w-4 mr-2" />
+                  <span>Email is properly configured</span>
+                </div>
+              ) : (
+                <div className="flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-2" />
+                  <span>{checkResult.error || "Email is not properly configured"}</span>
                 </div>
               )}
-              
-              {testResult && (
-                <Alert
-                  variant={testResult.success ? "default" : "destructive"}
-                  className="mt-4"
-                >
-                  {testResult.success ? (
-                    <CheckCircle className="h-4 w-4" />
-                  ) : (
-                    <AlertCircle className="h-4 w-4" />
-                  )}
-                  <AlertTitle>
-                    {testResult.success
-                      ? "Connection Successful"
-                      : "Connection Failed"}
-                  </AlertTitle>
-                  <AlertDescription>{testResult.message}</AlertDescription>
-                </Alert>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex flex-col space-y-2">
+          <div className="flex justify-between items-center">
+            <div>
+              <span className="text-sm font-medium">Reset Email Sync</span>
+              <p className="text-xs text-muted-foreground">
+                For troubleshooting when emails aren't syncing correctly.
+              </p>
+            </div>
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleResetSync}
+              disabled={isResetting}
+            >
+              {isResetting ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="h-4 w-4 mr-2" />
               )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="actions">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Fix duplicate email folders</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Removes duplicate folders that may cause synchronization issues
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={fixFolders}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Fixing...</>
-                  ) : (
-                    <><RefreshCcw className="mr-2 h-4 w-4" /> Fix Folders</>
-                  )}
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Clean up duplicate IMAP settings</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Removes duplicate IMAP settings entries
-                  </p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={cleanupSettings}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Cleaning...</>
-                  ) : (
-                    <><RefreshCcw className="mr-2 h-4 w-4" /> Clean Settings</>
-                  )}
-                </Button>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label className="text-red-600">Reset IMAP settings and data</Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    <strong className="text-red-600">Warning:</strong> This will delete all emails, folders, and reset IMAP settings
-                  </p>
-                </div>
-                <Button 
-                  variant="destructive" 
-                  size="sm"
-                  onClick={resetSettings}
-                  disabled={isResetting}
-                >
-                  {isResetting ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Resetting...</>
-                  ) : (
-                    <><Trash2 className="mr-2 h-4 w-4" /> Reset All</>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+              Reset Sync
+            </Button>
+          </div>
+        </div>
       </CardContent>
-      <CardFooter>
-        <p className="text-sm text-muted-foreground">
-          After making changes, you may need to navigate to the IMAP settings tab to update your settings.
-        </p>
-      </CardFooter>
     </Card>
   );
 }
