@@ -277,7 +277,7 @@ async function syncEmails(
       }
     );
     
-    // Fix for the "existingEmails.map is not a function" error
+    // Fix for the "existingEmails.map is not function" error
     let existingData;
     try {
       existingData = await existingEmailsResponse.json();
@@ -286,17 +286,24 @@ async function syncEmails(
       debugLog("Error parsing existing emails:", e);
     }
     
+    // TEMPORÄRER FIX: Wenn forceRefresh aktiviert ist, ignorieren wir vorhandene Emails
     let existingMessageIds = new Set();
     let existingUIDs = new Set();
     
     // Ensure existingData is an array and handle accordingly
-    if (Array.isArray(existingData)) {
+    if (Array.isArray(existingData) && !options.forceRefresh) {
       existingMessageIds = new Set(existingData.map(e => e.message_id).filter(Boolean));
       existingUIDs = new Set(existingData.map(e => e.uid).filter(Boolean));
       debugLog(`Found ${existingMessageIds.size} existing emails in database for folder ${folder}`);
     } else {
-      debugLog(`No existing emails found or invalid response format for folder ${folder}`);
+      if (options.forceRefresh) {
+        debugLog(`Force refresh enabled - ignoring ${existingData.length} existing emails for folder ${folder}`);
+      } else {
+        debugLog(`No existing emails found or invalid response format for folder ${folder}`);
+      }
       existingData = [];
+      existingMessageIds.clear();
+      existingUIDs.clear();
     }
     
     // Determine if we should do incremental sync
@@ -408,6 +415,13 @@ async function syncEmails(
             // Can update flags and read status if needed
             continue;
           }
+          
+          // Debugging für existingMessageIds und existingUIDs
+          debugLog(`Checking message: ${messageId} (UID: ${message.uid})`);
+          debugLog(`Existing Message IDs count: ${existingMessageIds.size}`);
+          debugLog(`Existing UIDs count: ${existingUIDs.size}`);
+          debugLog(`Is duplicate by Message ID: ${existingMessageIds.has(messageId)}`);
+          debugLog(`Is duplicate by UID: ${existingUIDs.has(message.uid)}`);
           
           // Get full message content
           const messageData = await client.download(message.uid);

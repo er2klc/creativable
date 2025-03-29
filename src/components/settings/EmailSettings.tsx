@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { checkEmailConfigStatus } from "@/utils/debug-helper";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmailDiagnostics } from "./EmailDiagnostics";
+import { EmailSyncService } from '@/features/email/services/EmailSyncService';
 
 export function EmailSettings() {
   const { settings, updateSettings } = useSettings();
@@ -31,6 +32,7 @@ export function EmailSettings() {
   const settingsLoadedRef = useRef(false);
   const loadAttemptedRef = useRef(false);
   const [showSettingsForm, setShowSettingsForm] = useState(false);
+  const [isResyncing, setIsResyncing] = useState(false);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -186,6 +188,33 @@ export function EmailSettings() {
     }
   };
 
+  const triggerFullResync = async () => {
+    if (!user) return;
+    
+    if (!confirm("Achtung: Diese Aktion löscht alle vorhandenen E-Mails und lädt sie komplett neu. Fortfahren?")) {
+      return;
+    }
+    
+    setIsResyncing(true);
+    
+    try {
+      await EmailSyncService.resetAndResyncAll();
+      
+      // Aktualisiere UI nach erfolgreicher Neusynchronisierung
+      const now = new Date().toISOString();
+      setLastSyncTime(now);
+      settingsLoadedRef.current = false;
+      loadAttemptedRef.current = false;
+      loadEmailSettings();
+      
+    } catch (error) {
+      console.error("Fehler bei voller Neusynchronisierung:", error);
+      toast.error("Fehler bei der vollständigen Neusynchronisierung");
+    } finally {
+      setIsResyncing(false);
+    }
+  };
+
   const handleSettingsSaved = () => {
     // Reset load flags to force a refresh of settings
     settingsLoadedRef.current = false;
@@ -314,12 +343,25 @@ export function EmailSettings() {
                   size="sm" 
                   className="flex items-center gap-1.5"
                   onClick={triggerSync}
-                  disabled={isSyncing}
+                  disabled={isSyncing || isResyncing}
                 >
                   {isSyncing ? (
                     <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Synchronisiere...</>
                   ) : (
                     <><RefreshCw className="h-3.5 w-3.5" /> Synchronisieren</>
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1.5"
+                  onClick={triggerFullResync}
+                  disabled={isSyncing || isResyncing || isDisconnecting}
+                >
+                  {isResyncing ? (
+                    <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Vollständig neu laden...</>
+                  ) : (
+                    <><RefreshCw className="h-3.5 w-3.5" /> Vollständig neu laden</>
                   )}
                 </Button>
                 <Button 
@@ -335,7 +377,7 @@ export function EmailSettings() {
                   size="sm" 
                   className="flex items-center gap-1.5"
                   onClick={disconnectEmail}
-                  disabled={isDisconnecting}
+                  disabled={isDisconnecting || isSyncing || isResyncing}
                 >
                   {isDisconnecting ? (
                     <><XCircle className="h-3.5 w-3.5" /> Trennen...</>

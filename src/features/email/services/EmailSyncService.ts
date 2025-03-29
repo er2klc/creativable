@@ -216,7 +216,7 @@ export class EmailSyncService {
       // Synchronisationsoption konfigurieren
       const syncOptions = {
         folder: 'INBOX', // Beginne mit dem Posteingang
-        force_refresh: true,
+        force_refresh: true, // Auf true gesetzt um Duplikaterkennung zu umgehen
         max_emails: imapSettings.max_emails || 500,
         historical_sync: imapSettings.historical_sync || false,
         batch_processing: true,
@@ -316,6 +316,52 @@ export class EmailSyncService {
       return {
         success: false,
         error: error
+      };
+    }
+  }
+  
+  /**
+   * Vollständige Bereinigung der E-Mail-Daten und Neusynchronisierung
+   * Löscht alle E-Mails und Attachments, dann startet einen kompletten Neuimport
+   */
+  static async resetAndResyncAll() {
+    try {
+      // Schritt 1: Alle E-Mail-Daten zurücksetzen
+      const resetResult = await this.resetEmailSync();
+      
+      if (!resetResult.success) {
+        throw new Error(resetResult.error?.message || "Fehler beim Zurücksetzen der E-Mail-Daten");
+      }
+      
+      toast.success("E-Mail-Daten wurden zurückgesetzt", {
+        description: "Starte neue Synchronisation..."
+      });
+      
+      // Schritt 2: Nach kurzer Pause neue Synchronisation starten
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Schritt 3: Vollständige Synchronisation starten
+      const syncResult = await this.startFullSync();
+      
+      return {
+        success: syncResult.success,
+        message: "E-Mail-Daten wurden zurückgesetzt und neu synchronisiert",
+        data: {
+          reset: resetResult,
+          sync: syncResult
+        }
+      };
+    } catch (error) {
+      console.error("Fehler bei Reset und Neusynchronisation:", error);
+      
+      toast.error("Fehler bei der Neusynchronisation", {
+        description: error.message || "Ein unbekannter Fehler ist aufgetreten"
+      });
+      
+      return {
+        success: false,
+        error: error,
+        message: "Fehler bei Reset und Neusynchronisation"
       };
     }
   }
