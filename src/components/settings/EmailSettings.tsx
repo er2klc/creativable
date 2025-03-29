@@ -63,8 +63,8 @@ export function EmailSettings() {
         setSmtpSettings(configStatus.smtpSettings);
 
         // Update last sync time if available
-        if (configStatus.imapSettings?.last_sync_at) {
-          setLastSyncTime(configStatus.imapSettings.last_sync_at);
+        if (configStatus.imapSettings?.last_sync_date) {
+          setLastSyncTime(configStatus.imapSettings.last_sync_date);
         }
 
         // Update settings if connection status has changed
@@ -170,7 +170,7 @@ export function EmailSettings() {
       if (imapSettings?.id) {
         await supabase
           .from('imap_settings')
-          .update({ last_sync_at: now })
+          .update({ last_sync_date: now })
           .eq('id', imapSettings.id);
       }
       
