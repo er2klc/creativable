@@ -1,3 +1,4 @@
+
 import { serve } from 'https://deno.land/std@0.177.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.36.0';
 import { corsHeaders } from "../_shared/cors.ts";
@@ -22,9 +23,16 @@ serve(async (req) => {
     // Get user from auth header
     const {
       data: { user },
+      error: userError,
     } = await supabaseClient.auth.getUser();
     
+    if (userError) {
+      console.error('Authentication error:', userError);
+      throw new Error('Authentication failed: ' + userError.message);
+    }
+    
     if (!user) {
+      console.error('No authenticated user found');
       throw new Error('Not authenticated');
     }
     
@@ -98,7 +106,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: false,
-        error: error.message
+        error: error.message || "Ein unbekannter Fehler ist aufgetreten"
       }),
       {
         status: 500,

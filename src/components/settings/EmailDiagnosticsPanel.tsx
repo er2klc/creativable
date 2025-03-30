@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,6 +5,7 @@ import { Loader2, RefreshCcw, AlertCircle, CheckCircle, Info, Terminal } from 'l
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
+import { EmailSyncService } from '@/features/email/services/EmailSyncService';
 
 interface ConnectionStatus {
   imapConnected: boolean;
@@ -80,7 +80,7 @@ export function EmailDiagnosticsPanel() {
     }
   };
   
-  // Reset all email data
+  // Reset all email data using EmailSyncService
   const resetEmailData = async () => {
     if (!user) return;
     
@@ -91,32 +91,11 @@ export function EmailDiagnosticsPanel() {
     setIsResetting(true);
     
     try {
-      // Call the database function to reset email data
-      const { data, error } = await supabase.rpc(
-        'reset_email_sync',
-        { user_id_param: user.id }
-      );
+      // Use EmailSyncService instead of direct API call
+      const resetResult = await EmailSyncService.resetEmailSync();
       
-      if (error) throw error;
-      
-      // Call the cleanup endpoint to ensure full reset
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("Nicht authentifiziert");
-      }
-      
-      // Call cleanup edge function
-      const response = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/cleanup-emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Fehler beim Zurücksetzen: ${response.statusText}`);
+      if (!resetResult.success) {
+        throw new Error(resetResult.error?.message || "Unbekannter Fehler beim Zurücksetzen");
       }
       
       toast.success("E-Mail-Daten zurückgesetzt");
@@ -134,64 +113,25 @@ export function EmailDiagnosticsPanel() {
     }
   };
   
-  // Force synchronize emails
+  // Force synchronize emails using EmailSyncService
   const syncEmails = async () => {
     if (!user) return;
     setIsSyncing(true);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("Nicht authentifiziert");
-      }
-      
       toast.info("Synchronisierung gestartet", { 
         description: "Dies kann einige Momente dauern..." 
       });
       
-      // Synchronize folders first
-      const foldersResponse = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-folders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ force_refresh: true })
-      });
+      // Use EmailSyncService for full sync
+      const syncResult = await EmailSyncService.startFullSync();
       
-      if (!foldersResponse.ok) {
-        throw new Error(`Ordnersynchronisierung fehlgeschlagen: ${foldersResponse.statusText}`);
+      if (!syncResult.success) {
+        throw new Error(syncResult.error?.message || "Fehler bei der Synchronisierung");
       }
       
-      // Then sync emails
-      const emailsResponse = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ 
-          folder: 'INBOX',
-          force_refresh: true, 
-          connection_timeout: 120000,
-          retry_attempts: 3
-        })
-      });
-      
-      if (!emailsResponse.ok) {
-        throw new Error(`E-Mail-Synchronisierung fehlgeschlagen: ${emailsResponse.statusText}`);
-      }
-      
-      const result = await emailsResponse.json();
-      
-      if (result.success) {
-        toast.success(`E-Mails synchronisiert: ${result.emailsCount || 0} neue E-Mails`);
-        // Refresh status
-        checkStatus();
-      } else {
-        throw new Error(result.error || 'Unbekannter Synchronisierungsfehler');
-      }
+      // Refresh status after sync
+      checkStatus();
       
     } catch (error: any) {
       console.error('Error synchronizing emails:', error);
