@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -91,19 +92,22 @@ export function EmailDiagnosticsPanel() {
     setIsResetting(true);
     
     try {
-      // Use EmailSyncService instead of direct API call
-      const resetResult = await EmailSyncService.resetEmailSync();
+      // Use EmailSyncService directly instead of edge function
+      const result = await EmailSyncService.resetEmailSync();
       
-      if (!resetResult.success) {
-        throw new Error(resetResult.error?.message || "Unbekannter Fehler beim Zurücksetzen");
+      if (!result.success) {
+        throw new Error(result.error?.message || "Unbekannter Fehler beim Zurücksetzen");
       }
       
       toast.success("E-Mail-Daten zurückgesetzt");
       
-      // Update status
+      // Update status after reset
       setConnectionStatus(prev => 
         prev ? {...prev, emailsCount: 0, lastSync: null} : null
       );
+      
+      // Refresh status to get latest data
+      checkStatus();
       
     } catch (error: any) {
       console.error('Error resetting email data:', error);
@@ -123,7 +127,7 @@ export function EmailDiagnosticsPanel() {
         description: "Dies kann einige Momente dauern..." 
       });
       
-      // Use EmailSyncService for full sync
+      // Use EmailSyncService for full sync with detailed logging enabled
       const syncResult = await EmailSyncService.startFullSync();
       
       if (!syncResult.success) {

@@ -10,6 +10,7 @@ serve(async (req) => {
   }
 
   try {
+    // Create Supabase client
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
@@ -37,6 +38,36 @@ serve(async (req) => {
     }
     
     console.log(`Cleaning up email data for user ${user.id}`);
+    
+    // Try to use the database function first (more efficient method)
+    try {
+      const { data, error } = await supabaseClient.rpc(
+        'cleanup_user_email_data',
+        { user_id_param: user.id }
+      );
+      
+      if (!error) {
+        console.log('Successfully reset email data using DB function');
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'E-Mail-Daten erfolgreich zurückgesetzt',
+            method: 'database_function'
+          }),
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              ...corsHeaders
+            }
+          }
+        );
+      }
+      
+      // If database function failed, continue with manual deletions
+      console.log('Database function not available or failed, using manual deletion');
+    } catch (dbFunctionError) {
+      console.log('Database function error, falling back to manual deletion:', dbFunctionError);
+    }
     
     // 1. Delete emails
     const { error: emailsError } = await supabaseClient
@@ -91,7 +122,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({
         success: true,
-        message: 'E-Mail-Daten erfolgreich zurückgesetzt'
+        message: 'E-Mail-Daten erfolgreich zurückgesetzt',
+        method: 'manual_deletion'
       }),
       {
         headers: {
