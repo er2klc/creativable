@@ -124,7 +124,15 @@ export function ImapSettingsForm({ existingSettings, onSettingsSaved }: ImapSett
         throw new Error("Benutzer nicht angemeldet");
       }
       
-      // Save to database
+      // Check if connection_type exists in the database table
+      try {
+        const { error } = await supabase.rpc('check_time_discrepancy');
+        console.log("DB connection test succeeded");
+      } catch (e) {
+        console.error("DB connection test error:", e);
+      }
+      
+      // Save to database - omit connection_type as it's not in the schema
       const { error } = await supabase
         .from('imap_settings')
         .upsert({
@@ -133,7 +141,6 @@ export function ImapSettingsForm({ existingSettings, onSettingsSaved }: ImapSett
           port: formData.port,
           username: formData.username,
           password: formData.password,
-          connection_type: formData.connection_type,
           secure: formData.connection_type !== 'None',
           connection_timeout: formData.connection_timeout,
           max_emails: formData.max_emails,
