@@ -16,6 +16,9 @@ import { EmailLayout } from '@/features/email/components/layout/EmailLayout';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 
 export default function Messages() {
+  // ---- React hooks must be called at the top level and in same order every time ----
+  
+  // Auth and state hooks
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -23,7 +26,7 @@ export default function Messages() {
   const [isCheckingConfig, setIsCheckingConfig] = useState(true);
   const configCheckCompletedRef = useRef(false);
 
-  // Fetch user profile for header - now called unconditionally
+  // Fetch user profile for header - called unconditionally
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -41,7 +44,7 @@ export default function Messages() {
     enabled: !!user // This ensures the query only runs when user exists
   });
 
-  // Query for API email settings - now called unconditionally
+  // Query for API email settings - called unconditionally
   const { data: apiSettings } = useQuery({
     queryKey: ['api-email-settings'],
     queryFn: async () => {
@@ -123,7 +126,9 @@ export default function Messages() {
     }
   }, [user]);
 
-  // Now all hooks are called, we can have conditional renders after this point
+  // ---- All hooks have been called by this point, now we can have conditional renders ----
+
+  // Render states based on authentication and configuration
   if (!user) {
     return (
       <div className="container mx-auto p-4 overflow-x-hidden">
@@ -199,6 +204,7 @@ export default function Messages() {
     );
   }
 
+  // Main component render when everything is set up
   return (
     <div className="container-fluid p-0 h-[calc(100vh-4rem)] overflow-hidden">
       <Card className="w-full h-full rounded-none border-0 shadow-none">
