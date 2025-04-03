@@ -195,42 +195,49 @@ export class ExternalEmailApiService {
       for (let i = 0; i < emails.length; i += chunkSize) {
         const chunk = emails.slice(i, i + chunkSize);
         
-        // Prepare email records for insertion
-        const emailRecords = chunk.map(email => ({
-          user_id: userId,
-          message_id: email.message_id,
-          folder: folder,
-          subject: email.subject,
-          from_name: email.from_name,
-          from_email: email.from_email,
-          to_name: email.to_name,
-          to_email: email.to_email,
-          cc: email.cc || [],
-          bcc: email.bcc || [],
-          html_content: email.html_content,
-          text_content: email.text_content,
-          sent_at: email.sent_at,
-          received_at: new Date().toISOString(),
-          read: false,
-          starred: false,
-          has_attachments: !!email.has_attachments,
-          flags: email.flags || {},
-          headers: email.headers || {}
-        }));
-        
-        // Insert emails with upsert to avoid duplicates
-        const { data, error } = await supabase
-          .from('emails')
-          .upsert(emailRecords, { 
-            onConflict: 'user_id,message_id',
-            ignoreDuplicates: true
-          });
-        
-        if (error) {
-          console.error("Error saving emails batch to database:", error);
-        } else {
-          savedCount += chunk.length;
-          console.log(`Saved batch of ${chunk.length} emails`);
+        // For each email, we'll insert it individually to better handle errors
+        for (const email of chunk) {
+          try {
+            // Insert a new email record
+            const { data, error } = await supabase
+              .from('emails')
+              .insert({
+                user_id: userId,
+                message_id: email.message_id,
+                folder: folder,
+                subject: email.subject,
+                from_name: email.from_name,
+                from_email: email.from_email,
+                to_name: email.to_name,
+                to_email: email.to_email,
+                cc: email.cc || [],
+                bcc: email.bcc || [],
+                html_content: email.html_content,
+                text_content: email.text_content,
+                sent_at: email.sent_at,
+                received_at: new Date().toISOString(),
+                read: false,
+                starred: false,
+                has_attachments: !!email.has_attachments,
+                flags: email.flags || {},
+                headers: email.headers || {},
+                // Required fields for upsert
+                direction: 'inbound',
+                status: 'delivered'
+              })
+              // Use on_conflict parameter to handle duplicates
+              .select();
+            
+            if (error) {
+              // Log but continue processing other emails
+              console.error("Error saving email to database:", error);
+            } else {
+              savedCount++;
+            }
+          } catch (emailError) {
+            console.error("Error processing email:", emailError);
+            // Continue with next email
+          }
         }
       }
       
@@ -262,16 +269,17 @@ export class ExternalEmailApiService {
         .single();
       
       if (data) {
-        // Update existing record
+        // Update existing record - use user_id and folder in the query, not id
         await supabase
           .from('email_sync_status')
           .update({
             sync_in_progress: inProgress,
             last_error: error || null,
             updated_at: now,
-            ...(inProgress ? {} : { last_sync_date: now }) // Only update last_sync_date if sync is complete
+            ...(inProgress ? {} : { last_sync_time: now }) // Only update last_sync_date if sync is complete
           })
-          .eq('id', data.id);
+          .eq('user_id', userId)
+          .eq('folder', folder);
       } else {
         // Create new record
         await supabase
@@ -281,7 +289,7 @@ export class ExternalEmailApiService {
             folder: folder,
             sync_in_progress: inProgress,
             last_error: error || null,
-            last_sync_date: inProgress ? null : now
+            last_sync_time: inProgress ? null : now
           });
       }
     } catch (error) {

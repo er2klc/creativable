@@ -80,11 +80,17 @@ export function EmailViewer({ emailId, userEmail }: EmailViewerProps) {
   const sanitizedHtml = email.html_content ? DOMPurify.sanitize(email.html_content) : null;
   
   const toggleStarred = async () => {
-    await supabase
-      .from('emails')
-      .update({ starred: !email.starred })
-      .eq('id', email.id)
-      .eq('user_id', user.id);
+    try {
+      await supabase
+        .from('emails')
+        .update({ starred: !email.starred })
+        .eq('id', email.id);
+      
+      // Invalidate the query to refresh the data
+      // This will be handled by react-query automatically on next render
+    } catch (error) {
+      console.error("Error updating starred status:", error);
+    }
   };
 
   return (
