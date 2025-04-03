@@ -14,6 +14,7 @@ import { Pencil, PlusCircle, Loader2, AlertCircle, CheckCircle, RefreshCw } from
 import { NewEmailDialog } from '../compose/NewEmailDialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { ExternalEmailApiService } from '../../services/ExternalEmailApiService';
+import { Progress } from '@/components/ui/progress';
 
 export interface EmailLayoutProps {
   userEmail?: string;
@@ -32,6 +33,7 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   const [configError, setConfigError] = useState<string | null>(null);
   const [throttleTime, setThrottleTime] = useState(0);
   const [throttleTimer, setThrottleTimer] = useState<NodeJS.Timeout | null>(null);
+  const [syncProgress, setSyncProgress] = useState(0);
   
   // Fetch profile data for header
   const { data: profile } = useQuery({
@@ -71,7 +73,7 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
       }
       
       // Check if settings are properly configured
-      if (!apiSettings?.host) {
+      if (!data?.host) {
         setConfigError("E-Mail-Einstellungen sind nicht vollständig. Bitte konfigurieren Sie Ihre E-Mail-Einstellungen.");
       } else {
         setConfigError(null);
@@ -80,6 +82,28 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
       return data;
     },
     enabled: !!user
+  });
+
+  // Fetch email sync status
+  const { data: syncStatus } = useQuery({
+    queryKey: ["email-sync-status", user?.id, selectedFolder],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('email_sync_status')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('folder', selectedFolder)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error("Error fetching sync status:", error);
+      }
+      
+      return data || null;
+    },
+    enabled: !!user && !!selectedFolder
   });
   
   // Reset selected email when folder changes
@@ -128,26 +152,56 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
     try {
       setIsSyncing(true);
       setSyncError(null);
+      setSyncProgress(0);
+      
+      const startTime = Date.now();
+      const progressInterval = setInterval(() => {
+        // Simulate progress for better UX
+        setSyncProgress(prev => {
+          const elapsed = Date.now() - startTime;
+          const calculatedProgress = Math.min(Math.floor(elapsed / 100), 95);
+          return prev < calculatedProgress ? calculatedProgress : prev;
+        });
+      }, 100);
       
       // Use external API service
       const result = await ExternalEmailApiService.syncEmailsWithPagination({
         host: apiSettings.host,
         port: apiSettings.port,
-        user: apiSettings.user,
+        user: apiSettings.username,
         password: apiSettings.password,
         folder: selectedFolder,
         tls: apiSettings.tls
       });
       
+      clearInterval(progressInterval);
+      
       if (!result.success) {
         setSyncError(result.error || "Fehler bei der Synchronisierung");
+        setSyncProgress(0);
+        toast.error("Synchronisierung fehlgeschlagen", {
+          description: result.error || "Fehler bei der Synchronisierung"
+        });
       } else {
+        setSyncProgress(100);
+        // Success toast
+        toast.success("Synchronisierung erfolgreich", {
+          description: `${result.emailsCount || 0} E-Mails synchronisiert`
+        });
+        
+        // Reset progress after a short delay
+        setTimeout(() => {
+          setSyncProgress(0);
+        }, 2000);
+        
         // Refresh the emails list
         queryClient.invalidateQueries({ queryKey: ['emails'] });
+        queryClient.invalidateQueries({ queryKey: ['email-sync-status'] });
       }
     } catch (error: any) {
       console.error('Email sync error:', error);
       setSyncError(error.message || 'Ein Fehler ist aufgetreten');
+      setSyncProgress(0);
       
       toast.error("Synchronisierungsfehler", {
         description: error.message || 'Ein Fehler ist aufgetreten'
@@ -159,10 +213,35 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
 
   // Initial sync when component mounts - only once
   useEffect(() => {
-    if (apiSettings && !configError) {
+    if (apiSettings && !configError && !syncStatus?.last_sync_date) {
       syncEmails();
     }
-  }, [apiSettings]);
+  }, [apiSettings, syncStatus]);
+
+  // Check if there's an ongoing sync from another session
+  useEffect(() => {
+    if (syncStatus?.sync_in_progress && !isSyncing) {
+      const checkSyncStatus = async () => {
+        // Re-fetch the sync status to see if it's still in progress
+        const { data } = await supabase
+          .from('email_sync_status')
+          .select('*')
+          .eq('user_id', user?.id)
+          .eq('folder', selectedFolder)
+          .single();
+          
+        if (!data?.sync_in_progress) {
+          // Sync is no longer in progress, refresh emails
+          queryClient.invalidateQueries({ queryKey: ['emails'] });
+        }
+      };
+      
+      // Check status after a short delay
+      const timer = setTimeout(checkSyncStatus, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [syncStatus, isSyncing, user, selectedFolder, queryClient]);
 
   return (
     <div className="flex flex-col h-full relative">
@@ -191,6 +270,18 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
               )}
             </AlertDescription>
           </Alert>
+        </div>
+      )}
+      
+      {syncProgress > 0 && syncProgress < 100 && (
+        <div className="mt-16 px-4 py-2">
+          <div className="space-y-2">
+            <div className="flex justify-between items-center">
+              <p className="text-sm font-medium">E-Mails werden synchronisiert...</p>
+              <span className="text-sm text-muted-foreground">{syncProgress}%</span>
+            </div>
+            <Progress value={syncProgress} className="h-2" />
+          </div>
         </div>
       )}
       

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { formatDistanceToNow } from 'date-fns';
+import { de } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Paperclip, Star, Loader2, AlertCircle, MailOpen, Mail, RefreshCw } from 'lucide-react';
@@ -32,7 +33,7 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail, searchQuery 
   const { user } = useAuth();
   
   const { data: emails, isLoading, error, refetch } = useQuery({
-    queryKey: ['emails', folder, searchQuery],
+    queryKey: ['emails', user?.id, folder, searchQuery],
     queryFn: async () => {
       if (!user) return [];
       
@@ -73,8 +74,10 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail, searchQuery 
   
   useEffect(() => {
     console.log("EmailList mounted or folder changed, refetching...");
-    refetch();
-  }, [folder, refetch]);
+    if (user && folder) {
+      refetch();
+    }
+  }, [folder, user, refetch]);
 
   if (isLoading) {
     return (
@@ -125,9 +128,39 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail, searchQuery 
 
   const formatSentDate = (sentAt: string) => {
     try {
-      return formatDistanceToNow(new Date(sentAt), { addSuffix: true });
+      return formatDistanceToNow(new Date(sentAt), { 
+        addSuffix: true,
+        locale: de // German locale for dates
+      });
     } catch (e) {
       return 'Unknown date';
+    }
+  };
+
+  const markEmailAsRead = async (emailId: string) => {
+    if (!user) return;
+    
+    try {
+      // Update the email in the database
+      await supabase
+        .from('emails')
+        .update({ read: true })
+        .eq('id', emailId)
+        .eq('user_id', user.id);
+    } catch (error) {
+      console.error('Error marking email as read:', error);
+      // Continue anyway, we don't want to block the user from viewing emails
+    }
+  };
+
+  const handleSelectEmail = async (email: Email) => {
+    onSelectEmail(email.id);
+    
+    // If the email is not read, mark it as read
+    if (!email.read) {
+      await markEmailAsRead(email.id);
+      // Update the email in the cache
+      refetch();
     }
   };
 
@@ -142,7 +175,7 @@ export function EmailList({ folder, selectedEmailId, onSelectEmail, searchQuery 
               selectedEmailId === email.id ? "bg-muted" : "hover:bg-muted/50",
               !email.read && "font-medium"
             )}
-            onClick={() => onSelectEmail(email.id)}
+            onClick={() => handleSelectEmail(email)}
           >
             <div className="flex items-start justify-between">
               <div className="flex items-center space-x-2">

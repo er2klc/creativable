@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
 import { externalApiSettingsSchema, commonEmailServers, type ApiEmailSettingsFormData } from './schemas/external-api-email-schema';
 import { ExternalEmailApiService } from '@/features/email/services/ExternalEmailApiService';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface ExternalApiEmailFormProps {
   existingSettings?: any;
@@ -60,15 +61,13 @@ export function ExternalApiEmailForm({ existingSettings, onSettingsSaved }: Exte
       const formValues = form.getValues();
       
       // Test connection using external API service
-      const result = await ExternalEmailApiService.fetchEmails({
+      const result = await ExternalEmailApiService.testConnection({
         host: formValues.host,
         port: formValues.port,
         username: formValues.username,
         password: formValues.password,
         folder: formValues.folder,
         tls: formValues.tls
-      }, { 
-        limit: 1 // Just fetch 1 email to test connection
       });
       
       if (result.success) {
@@ -114,6 +113,15 @@ export function ExternalApiEmailForm({ existingSettings, onSettingsSaved }: Exte
         throw error;
       }
       
+      // Update settings table to indicate email is configured
+      await supabase
+        .from('settings')
+        .update({
+          email_configured: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id);
+      
       toast.success("E-Mail-Einstellungen erfolgreich gespeichert");
       
       // Trigger callback
@@ -142,6 +150,25 @@ export function ExternalApiEmailForm({ existingSettings, onSettingsSaved }: Exte
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <div>
+              <FormLabel>E-Mail-Anbieter</FormLabel>
+              <Select onValueChange={fillWithPreset}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="E-Mail-Anbieter wählen" />
+                </SelectTrigger>
+                <SelectContent>
+                  {commonEmailServers.map((server) => (
+                    <SelectItem key={server.name} value={server.name}>
+                      {server.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-sm text-muted-foreground mt-2">
+                Wählen Sie Ihren E-Mail-Anbieter aus, um die Einstellungen automatisch zu füllen
+              </p>
+            </div>
+            
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
