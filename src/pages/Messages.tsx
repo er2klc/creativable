@@ -23,7 +23,7 @@ export default function Messages() {
   const [isCheckingConfig, setIsCheckingConfig] = useState(true);
   const configCheckCompletedRef = useRef(false);
 
-  // Fetch user profile for header
+  // Fetch user profile for header - now called unconditionally
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -38,7 +38,32 @@ export default function Messages() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user
+    enabled: !!user // This ensures the query only runs when user exists
+  });
+
+  // Query for API email settings - now called unconditionally
+  const { data: apiSettings } = useQuery({
+    queryKey: ['api-email-settings'],
+    queryFn: async () => {
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('api_email_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log("No email settings found");
+          return null;
+        }
+        throw error;
+      }
+      
+      return data;
+    },
+    enabled: !!user, // This ensures the query only runs when user exists
   });
 
   // Check email configuration only once - simplified for external API
@@ -98,6 +123,7 @@ export default function Messages() {
     }
   }, [user]);
 
+  // Now all hooks are called, we can have conditional renders after this point
   if (!user) {
     return (
       <div className="container mx-auto p-4 overflow-x-hidden">
@@ -172,23 +198,6 @@ export default function Messages() {
       </div>
     );
   }
-
-  // Query for settings if configured
-  const { data: apiSettings } = useQuery({
-    queryKey: ['api-email-settings'],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await supabase
-        .from('api_email_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user && isConfigured && !isCheckingConfig,
-  });
 
   return (
     <div className="container-fluid p-0 h-[calc(100vh-4rem)] overflow-hidden">

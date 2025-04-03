@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_email_settings: {
+        Row: {
+          created_at: string | null
+          folder: string
+          host: string
+          id: string
+          password: string
+          port: number
+          tls: boolean
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          folder?: string
+          host: string
+          id?: string
+          password: string
+          port?: number
+          tls?: boolean
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          folder?: string
+          host?: string
+          id?: string
+          password?: string
+          port?: number
+          tls?: boolean
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       changelog_entries: {
         Row: {
           created_at: string | null
