@@ -195,7 +195,7 @@ export default function Messages() {
       <Card className="w-full h-full rounded-none border-0 shadow-none">
         <CardContent className="p-0 h-full">
           <EmailLayout 
-            userEmail={apiSettings?.user || user?.email}
+            userEmail={apiSettings?.username || user?.email}
           />
         </CardContent>
       </Card>

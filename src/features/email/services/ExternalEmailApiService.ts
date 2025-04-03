@@ -9,7 +9,7 @@ const API_KEY = '7b5d3a9f2c4e1d6a8b0e5f3c7a9d2e4f1b8c5a0d3e6f7c2a9b8e5d4f3a1c7e'
 interface EmailApiSettings {
   host: string;
   port: number;
-  user: string;
+  username: string;
   password: string;
   folder: string;
   tls: boolean;
@@ -102,7 +102,7 @@ export class ExternalEmailApiService {
         body: JSON.stringify({
           host: settings.host,
           port: settings.port,
-          user: settings.user,
+          user: settings.username, // Map our username field to the API's user field
           password: settings.password,
           folder: settings.folder,
           tls: settings.tls,

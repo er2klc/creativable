@@ -30,7 +30,7 @@ export function ExternalApiEmailForm({ existingSettings, onSettingsSaved }: Exte
     defaultValues: {
       host: existingSettings?.host || '',
       port: existingSettings?.port || 993,
-      user: existingSettings?.user || '',
+      username: existingSettings?.username || '',
       password: existingSettings?.password || '',
       folder: existingSettings?.folder || 'INBOX',
       tls: existingSettings?.tls !== false,
@@ -63,7 +63,7 @@ export function ExternalApiEmailForm({ existingSettings, onSettingsSaved }: Exte
       const result = await ExternalEmailApiService.fetchEmails({
         host: formValues.host,
         port: formValues.port,
-        user: formValues.user,
+        username: formValues.username,
         password: formValues.password,
         folder: formValues.folder,
         tls: formValues.tls
@@ -103,7 +103,7 @@ export function ExternalApiEmailForm({ existingSettings, onSettingsSaved }: Exte
           user_id: user.id,
           host: formData.host,
           port: formData.port,
-          user: formData.user,
+          username: formData.username,
           password: formData.password,
           folder: formData.folder,
           tls: formData.tls,
@@ -176,7 +176,7 @@ export function ExternalApiEmailForm({ existingSettings, onSettingsSaved }: Exte
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
-                  name="user"
+                  name="username"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Benutzername</FormLabel>
