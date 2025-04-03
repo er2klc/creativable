@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 
 export class ExternalEmailApiService {
@@ -6,7 +5,7 @@ export class ExternalEmailApiService {
   private static MAX_BATCH_SIZE = 50; // Max emails to fetch in one batch
 
   /**
-   * Fetches emails from the external email service
+   * Fetches emails from the external email service using Supabase Edge Function
    */
   static async fetchEmails(config: {
     host: string;
@@ -40,39 +39,56 @@ export class ExternalEmailApiService {
         options: fetchOptions
       });
 
-      // In a real implementation, this would call your backend API
-      // For now, return successful response with mock data
+      // Get user auth session
+      const { data: { session } } = await supabase.auth.getSession();
       
-      // Mock email data for testing
-      const mockEmails = Array.from({ length: Math.min(fetchOptions.limit, 3) }, (_, i) => ({
-        id: `mock-${Date.now()}-${i}`,
-        message_id: `<mock-${Date.now()}-${i}@example.com>`,
-        subject: `Test Email ${i + 1}`,
-        from_name: "Test Sender",
-        from_email: "sender@example.com",
-        to_name: config.username,
-        to_email: config.username,
-        html_content: `<p>This is test email ${i + 1}</p>`,
-        text_content: `This is test email ${i + 1}`,
-        sent_at: new Date(Date.now() - i * 3600000).toISOString(),
-        folder: config.folder,
-        read: false,
-        starred: false,
-        has_attachments: false
-      }));
+      if (!session) {
+        throw new Error("User not authenticated");
+      }
 
-      // Simulate progress updates
-      if (options?.onProgress) {
-        for (let i = 0; i <= 100; i += 20) {
-          options.onProgress(i);
-          await new Promise(r => setTimeout(r, 100));
+      // Call the sync-emails edge function with proper parameters
+      const response = await fetch(
+        'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            host: config.host,
+            port: config.port,
+            username: config.username,
+            password: config.password,
+            folder: config.folder,
+            tls: config.tls,
+            limit: fetchOptions.limit,
+            offset: fetchOptions.offset,
+            forceRefresh: false,
+            batchProcessing: true,
+            maxBatchSize: 10,
+            detailed_logging: true
+          })
         }
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      // Implement progress updates if callback provided
+      if (options?.onProgress) {
+        options.onProgress(100); // Set to 100% as edge function handles sync
       }
 
       return { 
-        success: true, 
-        emails: mockEmails,
-        count: mockEmails.length
+        success: result.success, 
+        emails: result.emails || [],
+        count: result.emailsCount || 0,
+        error: result.error
       };
     } catch (error) {
       console.error("Error fetching emails:", error);
@@ -84,7 +100,7 @@ export class ExternalEmailApiService {
   }
 
   /**
-   * Synchronizes emails with pagination and throttling
+   * Synchronizes emails with pagination and throttling, using the Edge Function
    */
   static async syncEmailsWithPagination(config: {
     host: string;
@@ -124,35 +140,44 @@ export class ExternalEmailApiService {
       await this.updateSyncStatus(user.id, config.folder, true);
 
       try {
-        // Fetch emails with progress tracking
-        let progress = 0;
-        const result = await this.fetchEmails(
+        // Get user auth session for the Edge Function call
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (!session) {
+          throw new Error("No active session found");
+        }
+
+        // Call the sync-emails edge function
+        const response = await fetch(
+          'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails',
           {
-            host: config.host,
-            port: config.port,
-            username: config.user,
-            password: config.password,
-            folder: config.folder,
-            tls: config.tls
-          }, 
-          {
-            limit: this.MAX_BATCH_SIZE,
-            onProgress: (p) => {
-              progress = p;
-              console.log(`Sync progress: ${progress}%`);
-            }
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({
+              host: config.host,
+              port: config.port,
+              username: config.user,
+              password: config.password,
+              folder: config.folder,
+              tls: config.tls,
+              forceRefresh: false,
+              batchProcessing: true,
+              maxBatchSize: 10,
+              connectionTimeout: 60000,
+              retryAttempts: 3
+            })
           }
         );
 
-        if (!result.success) {
-          throw new Error(result.error || "Failed to fetch emails");
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
         }
 
-        // Save emails to database
-        if (result.emails && result.emails.length > 0) {
-          const savedCount = await this.saveEmailsToDatabase(user.id, config.folder, result.emails);
-          console.log(`Saved ${savedCount} emails to database`);
-        }
+        const result = await response.json();
 
         // Set throttle for this folder
         await this.setThrottle(config.folder);
@@ -161,13 +186,15 @@ export class ExternalEmailApiService {
         await this.updateSyncStatus(user.id, config.folder, false);
 
         return { 
-          success: true, 
-          emailsCount: result.emails?.length || 0,
-          message: `Successfully synced ${result.emails?.length || 0} emails` 
+          success: result.success, 
+          emailsCount: result.emailsCount || 0,
+          message: result.message || `Successfully synced ${result.emailsCount || 0} emails` 
         };
       } catch (error) {
         // Update sync status with error
-        await this.updateSyncStatus(user.id, config.folder, false, error instanceof Error ? error.message : "Unknown error");
+        if (user) {
+          await this.updateSyncStatus(user.id, config.folder, false, error instanceof Error ? error.message : "Unknown error");
+        }
         throw error;
       }
     } catch (error) {
@@ -341,7 +368,7 @@ export class ExternalEmailApiService {
   }
 
   /**
-   * Test email connection
+   * Test email connection via Edge Function
    */
   static async testConnection(config: {
     host: string;
@@ -357,30 +384,46 @@ export class ExternalEmailApiService {
         password: "********" // Don't log the actual password
       });
       
-      // Try to fetch a single email to test connection
-      const result = await this.fetchEmails(
+      // Get user auth session
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        throw new Error("User not authenticated");
+      }
+
+      // Call the test-imap-connection edge function
+      const response = await fetch(
+        'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/test-imap-connection',
         {
-          host: config.host,
-          port: config.port,
-          username: config.username,
-          password: config.password,
-          folder: config.folder,
-          tls: config.tls
-        },
-        { limit: 1 }
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            host: config.host,
+            port: config.port,
+            username: config.username,
+            password: config.password,
+            folder: config.folder,
+            tls: config.tls,
+            detailed_diagnostics: true
+          })
+        }
       );
       
-      if (result.success) {
-        return { 
-          success: true, 
-          message: "Connection successful" 
-        };
-      } else {
-        return { 
-          success: false, 
-          error: result.error || "Failed to connect to email server" 
-        };
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
+      
+      const result = await response.json();
+      
+      return { 
+        success: result.success, 
+        message: result.message || "Connection successful",
+        error: result.error
+      };
     } catch (error) {
       console.error("Email connection test error:", error);
       return { 

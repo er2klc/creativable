@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/use-auth';
@@ -9,16 +9,18 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Reply, Forward, Trash, Star, Archive, AlertCircle, MailOpen } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import DOMPurify from 'dompurify';
+import { toast } from 'sonner';
 
 interface EmailViewerProps {
   emailId: string | null;
   userEmail?: string;
+  onRefresh?: () => void;
 }
 
-export function EmailViewer({ emailId, userEmail }: EmailViewerProps) {
+export function EmailViewer({ emailId, userEmail, onRefresh }: EmailViewerProps) {
   const { user } = useAuth();
   
-  const { data: email, isLoading, error } = useQuery({
+  const { data: email, isLoading, error, refetch } = useQuery({
     queryKey: ['email', emailId],
     queryFn: async () => {
       if (!user || !emailId) return null;
@@ -35,6 +37,32 @@ export function EmailViewer({ emailId, userEmail }: EmailViewerProps) {
     },
     enabled: !!user && !!emailId,
   });
+
+  // Mark email as read when opened
+  useEffect(() => {
+    if (email && !email.read && user) {
+      const markAsRead = async () => {
+        try {
+          const { error } = await supabase
+            .from('emails')
+            .update({ read: true })
+            .eq('id', email.id)
+            .eq('user_id', user.id);
+            
+          if (error) {
+            console.error("Error marking email as read:", error);
+          } else if (onRefresh) {
+            // Trigger refresh of email list to update unread count
+            onRefresh();
+          }
+        } catch (e) {
+          console.error("Exception marking email as read:", e);
+        }
+      };
+      
+      markAsRead();
+    }
+  }, [email, user, onRefresh]);
   
   // If no email is selected or still loading
   if (!emailId) {
@@ -86,10 +114,60 @@ export function EmailViewer({ emailId, userEmail }: EmailViewerProps) {
         .update({ starred: !email.starred })
         .eq('id', email.id);
       
-      // Invalidate the query to refresh the data
-      // This will be handled by react-query automatically on next render
+      // Refetch the email to refresh the data
+      refetch();
+      
+      // Refresh email list if callback provided
+      if (onRefresh) {
+        onRefresh();
+      }
+      
+      toast.success(`Email ${email.starred ? 'removed from' : 'added to'} favorites`);
     } catch (error) {
       console.error("Error updating starred status:", error);
+      toast.error("Failed to update starred status");
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await supabase
+        .from('emails')
+        .update({ 
+          archived: true,
+          folder: 'trash'
+        })
+        .eq('id', email.id);
+      
+      // Refresh email list if callback provided
+      if (onRefresh) {
+        onRefresh();
+        toast.success("Email moved to trash");
+      }
+    } catch (error) {
+      console.error("Error deleting email:", error);
+      toast.error("Failed to delete email");
+    }
+  };
+
+  const handleArchive = async () => {
+    try {
+      await supabase
+        .from('emails')
+        .update({ 
+          archived: true,
+          folder: 'archive'
+        })
+        .eq('id', email.id);
+      
+      // Refresh email list if callback provided
+      if (onRefresh) {
+        onRefresh();
+        toast.success("Email archived");
+      }
+    } catch (error) {
+      console.error("Error archiving email:", error);
+      toast.error("Failed to archive email");
     }
   };
 
@@ -134,11 +212,21 @@ export function EmailViewer({ emailId, userEmail }: EmailViewerProps) {
             <Forward className="h-4 w-4" />
             <span>Forward</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2"
+            onClick={handleArchive}
+          >
             <Archive className="h-4 w-4" />
             <span>Archive</span>
           </Button>
-          <Button variant="outline" size="sm" className="flex items-center gap-2 text-destructive hover:text-destructive">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex items-center gap-2 text-destructive hover:text-destructive"
+            onClick={handleDelete}
+          >
             <Trash className="h-4 w-4" />
             <span>Delete</span>
           </Button>
