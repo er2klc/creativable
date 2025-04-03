@@ -10,8 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { ImapSettingsForm } from "./ImapSettingsForm";
-import { SmtpSettingsForm } from "./SmtpSettingsForm";
+import { ExternalApiEmailForm } from "./ExternalApiEmailForm";
 import { EmailDiagnosticsPanel } from "./EmailDiagnosticsPanel";
 
 export function NewEmailSettings() {
@@ -19,8 +18,7 @@ export function NewEmailSettings() {
   const [activeTab, setActiveTab] = useState("config");
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [imapSettings, setImapSettings] = useState<any>(null);
-  const [smtpSettings, setSmtpSettings] = useState<any>(null);
+  const [apiSettings, setApiSettings] = useState<any>(null);
   const [emailConfigured, setEmailConfigured] = useState(false);
 
   useEffect(() => {
@@ -31,31 +29,19 @@ export function NewEmailSettings() {
       setError(null);
       
       try {
-        // Load IMAP settings
-        const { data: imapData, error: imapError } = await supabase
-          .from('imap_settings')
+        // Load API email settings
+        const { data: apiData, error: apiError } = await supabase
+          .from('api_email_settings')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
           
-        if (imapError && imapError.code !== 'PGRST116') {
-          throw new Error(`Fehler beim Laden der IMAP-Einstellungen: ${imapError.message}`);
+        if (apiError && apiError.code !== 'PGRST116') {
+          throw new Error(`Fehler beim Laden der E-Mail-Einstellungen: ${apiError.message}`);
         }
         
-        // Load SMTP settings
-        const { data: smtpData, error: smtpError } = await supabase
-          .from('smtp_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
-          
-        if (smtpError && smtpError.code !== 'PGRST116') {
-          throw new Error(`Fehler beim Laden der SMTP-Einstellungen: ${smtpError.message}`);
-        }
-        
-        setImapSettings(imapData || null);
-        setSmtpSettings(smtpData || null);
-        setEmailConfigured(!!(imapData && imapData.host));
+        setApiSettings(apiData || null);
+        setEmailConfigured(!!(apiData && apiData.host));
         
       } catch (error: any) {
         console.error('Error loading email settings:', error);
@@ -74,29 +60,21 @@ export function NewEmailSettings() {
     if (user) {
       setIsLoading(true);
       
-      Promise.all([
-        supabase
-          .from('imap_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle(),
-        supabase
-          .from('smtp_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle()
-      ])
-      .then(([imapResult, smtpResult]) => {
-        if (imapResult.data) setImapSettings(imapResult.data);
-        if (smtpResult.data) setSmtpSettings(smtpResult.data);
-        setEmailConfigured(!!(imapResult.data && imapResult.data.host));
-      })
-      .catch(error => {
-        console.error('Error reloading settings after save:', error);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
+      supabase
+        .from('api_email_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) setApiSettings(data);
+          setEmailConfigured(!!(data && data.host));
+        })
+        .catch(error => {
+          console.error('Error reloading settings after save:', error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
     }
   };
 
@@ -168,19 +146,14 @@ export function NewEmailSettings() {
           <Mail className="h-4 w-4" />
           <AlertTitle>E-Mail einrichten</AlertTitle>
           <AlertDescription>
-            Konfigurieren Sie Ihre E-Mail-Verbindungen für den Empfang und Versand von E-Mails.
+            Konfigurieren Sie Ihre E-Mail-Zugangsdaten für den Empfang von E-Mails.
           </AlertDescription>
         </Alert>
       )}
       
       <div className="grid grid-cols-1 gap-6">
-        <ImapSettingsForm 
-          existingSettings={imapSettings}
-          onSettingsSaved={handleSettingsSaved}
-        />
-        
-        <SmtpSettingsForm 
-          existingSettings={smtpSettings}
+        <ExternalApiEmailForm 
+          existingSettings={apiSettings}
           onSettingsSaved={handleSettingsSaved}
         />
       </div>
@@ -203,7 +176,7 @@ export function NewEmailSettings() {
             )}
           </div>
           <CardDescription>
-            Verwalten Sie Ihre E-Mail-Verbindungen für den Empfang und Versand von E-Mails
+            Verwalten Sie Ihre E-Mail-Verbindung für den E-Mail-Empfang
           </CardDescription>
         </CardHeader>
         

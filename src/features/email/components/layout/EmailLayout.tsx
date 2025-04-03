@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Pencil, PlusCircle, Loader2, AlertCircle, CheckCircle, RefreshCw } from 'lucide-react';
 import { NewEmailDialog } from '../compose/NewEmailDialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { EmailSyncService } from '../../services/EmailSyncService';
+import { ExternalEmailApiService } from '../../services/ExternalEmailApiService';
 
 export interface EmailLayoutProps {
   userEmail?: string;
@@ -30,6 +30,8 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   const [isNewEmailOpen, setIsNewEmailOpen] = useState(false);
   const [syncError, setSyncError] = useState<string | null>(null);
   const [configError, setConfigError] = useState<string | null>(null);
+  const [throttleTime, setThrottleTime] = useState(0);
+  const [throttleTimer, setThrottleTimer] = useState<NodeJS.Timeout | null>(null);
   
   // Fetch profile data for header
   const { data: profile } = useQuery({
@@ -49,30 +51,28 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
     }
   });
 
-  // Fetch IMAP settings to check if they're properly configured
-  const { data: imapSettings, isLoading: isLoadingSettings } = useQuery({
-    queryKey: ["imap-settings"],
+  // Fetch API email settings to check if they're properly configured
+  const { data: apiSettings, isLoading: isLoadingSettings } = useQuery({
+    queryKey: ["api-email-settings"],
     queryFn: async () => {
       if (!user) return null;
       const { data, error } = await supabase
-        .from('imap_settings')
+        .from('api_email_settings')
         .select('*')
         .eq('user_id', user.id)
         .single();
       
       if (error) {
         if (error.code === 'PGRST116') {
-          setConfigError("No IMAP settings found. Please configure your email settings.");
+          setConfigError("Keine E-Mail-Einstellungen gefunden. Bitte konfigurieren Sie Ihre E-Mail-Einstellungen.");
           return null;
         }
         throw error;
       }
       
       // Check if settings are properly configured
-      if (!data.last_sync_date) {
-        setConfigError("Email has not been synchronized yet. Please click 'Refresh' to sync your emails.");
-      } else if (data.port === 143 && data.secure === false) {
-        setConfigError("Insecure connection settings detected. Consider resetting your email connection in Settings.");
+      if (!apiSettings?.host) {
+        setConfigError("E-Mail-Einstellungen sind nicht vollständig. Bitte konfigurieren Sie Ihre E-Mail-Einstellungen.");
       } else {
         setConfigError(null);
       }
@@ -87,116 +87,82 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
     setSelectedEmailId(null);
   }, [selectedFolder]);
 
-  // Function to sync emails for the current folder
-  const syncEmails = async (showLoadingToast = true) => {
-    if (!user || isSyncing) return;
+  // Setup throttle timer for refresh button
+  useEffect(() => {
+    if (throttleTime > 0 && !throttleTimer) {
+      const timer = setInterval(() => {
+        setThrottleTime(prev => {
+          if (prev <= 1000) {
+            clearInterval(timer);
+            setThrottleTimer(null);
+            return 0;
+          }
+          return prev - 1000;
+        });
+      }, 1000);
+      
+      setThrottleTimer(timer);
+    }
+    
+    return () => {
+      if (throttleTimer) {
+        clearInterval(throttleTimer);
+      }
+    };
+  }, [throttleTime, throttleTimer]);
+
+  // Function to sync emails using external API
+  const syncEmails = async () => {
+    if (!user || !apiSettings || isSyncing) return;
+    
+    // Check throttle time
+    const remainingTime = await ExternalEmailApiService.getThrottleTimeRemaining(selectedFolder);
+    if (remainingTime > 0) {
+      setThrottleTime(remainingTime);
+      toast.error("Zu viele Anfragen", {
+        description: `Bitte warten Sie ${Math.ceil(remainingTime/1000)} Sekunden, bevor Sie erneut synchronisieren.`
+      });
+      return;
+    }
     
     try {
       setIsSyncing(true);
       setSyncError(null);
       
-      if (showLoadingToast) {
-        toast.info("Syncing Emails", {
-          description: "Fetching your latest emails..."
-        });
-      }
-      
-      // Get the current user session
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      if (sessionError || !sessionData.session) {
-        throw new Error(sessionError?.message || "No active session found");
-      }
-      
-      // Prepare sync options
-      const syncOptions = {
-        force_refresh: true,
+      // Use external API service
+      const result = await ExternalEmailApiService.syncEmailsWithPagination({
+        host: apiSettings.host,
+        port: apiSettings.port,
+        user: apiSettings.user,
+        password: apiSettings.password,
         folder: selectedFolder,
-        load_latest: true,
-        batch_processing: true,
-        max_batch_size: 25,
-        connection_timeout: 60000,
-        retry_attempts: 3
-      };
-      
-      // Call the sync-emails function with proper authorization
-      const response = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${sessionData.session.access_token}`
-        },
-        body: JSON.stringify(syncOptions)
+        tls: apiSettings.tls
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        toast.success("Emails Synchronized", {
-          description: `Successfully synced ${result.emailsCount || 0} emails`
-        });
-        
-        // Refresh the emails list
-        await queryClient.invalidateQueries({ queryKey: ['emails'] });
+      if (!result.success) {
+        setSyncError(result.error || "Fehler bei der Synchronisierung");
       } else {
-        throw new Error(result.message || 'Failed to sync emails');
+        // Refresh the emails list
+        queryClient.invalidateQueries({ queryKey: ['emails'] });
       }
     } catch (error: any) {
       console.error('Email sync error:', error);
-      setSyncError(error.message || 'An error occurred while syncing emails');
+      setSyncError(error.message || 'Ein Fehler ist aufgetreten');
       
-      toast.error("Sync Failed", {
-        description: error.message || 'An error occurred while syncing emails'
+      toast.error("Synchronisierungsfehler", {
+        description: error.message || 'Ein Fehler ist aufgetreten'
       });
     } finally {
       setIsSyncing(false);
     }
   };
 
-  // Function to handle connection reset and optimization
-  const handleResetConnection = async () => {
-    try {
-      toast.info("Resetting Email Connection", {
-        description: "This may take a moment..."
-      });
-      
-      const result = await EmailSyncService.resetEmailSync();
-      
-      if (result.error) throw result.error;
-      
-      toast.success("Email Connection Reset", {
-        description: "Your email connection has been reset with optimized settings. Please sync again."
-      });
-      
-      // Refresh the settings
-      await queryClient.invalidateQueries({ queryKey: ['imap-settings'] });
-      
-      // Start fresh sync
-      await EmailSyncService.syncFolders({ forceRefresh: true, silent: false });
-      
-      // Also sync emails
-      syncEmails(true);
-    } catch (error: any) {
-      console.error('Error resetting connection:', error);
-      toast.error("Reset Failed", {
-        description: error.message || 'An error occurred while resetting your email connection'
-      });
-    }
-  };
-
-  // Initial folder sync when component mounts - only once
+  // Initial sync when component mounts - only once
   useEffect(() => {
-    // Sync folders silently on first load
-    EmailSyncService.syncFolders({ forceRefresh: false, silent: true });
-    
-    // Also sync the current folder (usually INBOX)
-    syncEmails(false);
-  }, []);
+    if (apiSettings && !configError) {
+      syncEmails();
+    }
+  }, [apiSettings]);
 
   return (
     <div className="flex flex-col h-full relative">
@@ -208,18 +174,19 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
         isSyncing={isSyncing}
         profile={profile}
         onNewEmail={() => setIsNewEmailOpen(true)}
+        throttleTime={throttleTime}
       />
       
       {(configError || syncError) && (
         <div className="mt-16 px-4 py-2">
           <Alert variant={configError ? "default" : "destructive"}>
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{configError ? "Configuration Notice" : "Synchronization Error"}</AlertTitle>
+            <AlertTitle>{configError ? "Konfigurationshinweis" : "Synchronisierungsfehler"}</AlertTitle>
             <AlertDescription className="flex justify-between items-center">
               <span>{configError || syncError}</span>
-              {configError && configError.includes("Insecure connection") && (
-                <Button variant="outline" size="sm" onClick={handleResetConnection}>
-                  Reset Connection
+              {configError && (
+                <Button variant="outline" size="sm" onClick={() => window.location.href = '/settings?tab=email'}>
+                  Zu den Einstellungen
                 </Button>
               )}
             </AlertDescription>
