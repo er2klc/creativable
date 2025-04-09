@@ -79,4 +79,15 @@ body {
   .page-header {
     z-index: 45 !important;
   }
+  
+  /* Make sure fixed headers don't overlap content */
+  .fixed-header {
+    z-index: 50 !important; 
+  }
+  
+  /* Improve button accessibility on mobile */
+  .mobile-actions {
+    position: relative;
+    z-index: 40;
+  }
 }
