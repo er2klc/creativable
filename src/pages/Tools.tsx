@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Link } from "react-router-dom";
-import { Signature, Link2, QrCode, Image, MessageSquareText, Wrench } from "lucide-react";
+import { Pencil, Link2, QrCode, Image, MessageSquareText, Wrench } from "lucide-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
@@ -12,7 +12,7 @@ const Tools = () => {
     {
       title: "Signatur-Ersteller",
       description: "Erstelle und passe deine digitale Signatur an. Wähle aus verschiedenen Schriftarten und Stilen.",
-      icon: Signature,
+      icon: Pencil, // Changed from Signature to Pencil
       url: "/signature-generator",
       gradient: "from-purple-500 to-pink-500"
     },
