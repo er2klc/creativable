@@ -1,26 +1,27 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
+import { format } from "date-fns";
 import { de } from "date-fns/locale";
-import { getAvatarUrl } from "@/lib/supabase-utils";
-import { useNavigate } from "react-router-dom";
 import { Post } from "../../types/post";
+import { getCategoryStyle } from "@/lib/supabase-utils";
+import { useNavigate } from "react-router-dom";
 
 interface PostHeaderProps {
   post: Post;
   teamSlug: string;
-  categoryColor: string;
+  categoryColor?: string;
 }
 
 export const PostHeader = ({ post, teamSlug, categoryColor }: PostHeaderProps) => {
   const navigate = useNavigate();
-  const displayName = post.author.display_name || 'Unbekannt';
-  const avatarUrl = getAvatarUrl(post.author.avatar_url, post.author.email);
-
+  const categoryStyle = getCategoryStyle(post.team_categories?.color || categoryColor || "#e5e7eb");
+  const displayName = post.author?.display_name || 'Unbekannt';
+  const avatarUrl = post.author?.avatar_url || "";
+  
   return (
-    <div className="flex items-center gap-3 mb-4 cursor-pointer">
-      <Avatar className="h-10 w-10 border-2 border-primary/10">
+    <div className="flex items-center gap-3 mb-3">
+      <Avatar className="h-8 w-8 border-2 border-primary/10">
         <AvatarImage 
           src={avatarUrl}
           alt={displayName}
@@ -30,31 +31,28 @@ export const PostHeader = ({ post, teamSlug, categoryColor }: PostHeaderProps) =
         </AvatarFallback>
       </Avatar>
       <div className="flex flex-col">
-        <span className="font-medium">
+        <span className="font-medium text-sm">
           {displayName}
         </span>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span>{formatDistanceToNow(new Date(post.created_at), {
-            addSuffix: true,
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>{format(new Date(post.created_at), "d. MMM", {
             locale: de,
           })}</span>
-          <span>•</span>
-          <Badge 
-            style={{
-              backgroundColor: categoryColor,
-              color: '#2A4A2A',
-              opacity: '1 !important',
-              '--tw-bg-opacity': '1',
-              '--tw-text-opacity': '1'
-            } as React.CSSProperties}
-            className="transition-colors font-medium"
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
-            }}
-          >
-            {post.team_categories.name}
-          </Badge>
+          {post.team_categories && (
+            <>
+              <span>•</span>
+              <Badge 
+                style={categoryStyle}
+                className="hover:opacity-90 text-[10px] px-2 h-4"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories?.slug}`);
+                }}
+              >
+                {post.team_categories?.name}
+              </Badge>
+            </>
+          )}
         </div>
       </div>
     </div>

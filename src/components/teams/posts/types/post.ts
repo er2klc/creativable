@@ -10,6 +10,9 @@ export interface Post {
   slug: string;
   pinned?: boolean;
   team_post_comments: number;
+  file_urls?: string[];
+  edited?: boolean;
+  last_edited_at?: string;
   team_categories?: {
     name: string;
     slug: string;
@@ -21,5 +24,6 @@ export interface Post {
   author?: {
     display_name?: string;
     avatar_url?: string;
+    email?: string;
   };
 }
