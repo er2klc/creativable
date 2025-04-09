@@ -1,19 +1,13 @@
 
-import { LeadWithRelations } from "@/types/leads";
-
 export type TimelineItemType = 
-  | 'contact_created'
   | 'message'
   | 'task' 
   | 'appointment'
   | 'note'
   | 'phase_change'
   | 'status_change'
-  | 'reminder'
-  | 'presentation'
-  | 'upload'
+  | 'contact_created'
   | 'file_upload'
-  | 'business_match'
   | string;
 
 export interface TimelineItem {
@@ -22,7 +16,6 @@ export interface TimelineItem {
   content: string;
   timestamp: string;
   platform?: string;
-  completed?: boolean;
   status?: string;
   metadata?: {
     dueDate?: string;
@@ -36,22 +29,26 @@ export interface TimelineItem {
     updatedAt?: string;
     oldDate?: string;
     newDate?: string;
-    type?: string;
     oldStatus?: string;
     newStatus?: string;
+    oldPhase?: string;
+    newPhase?: string;
     last_edited_at?: string;
-    meetingType?: string;
-    color?: string;
-    event_type?: string;
-    match_score?: number;
-    skills?: string[];
-    commonalities?: string[];
-    potential_needs?: string[];
-    strengths?: string[];
+    sender?: string;
+    receiver?: string;
+    due_date?: string;
+    completed_at?: string;
   };
-  created_at?: string;
 }
 
+// Helper function to format a date
+export const formatDate = (date: string | Date): string => {
+  if (!date) return '';
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return dateObj.toLocaleDateString();
+};
+
+// This function creates a timeline item for a status change
 export const createStatusChangeItem = (
   status: string, 
   timestamp: string
@@ -60,19 +57,19 @@ export const createStatusChangeItem = (
   
   switch (status) {
     case 'partner':
-      statusMessage = `Kontakt ist jetzt dein Partner! 🚀`;
+      statusMessage = `Contact is now your partner! 🚀`;
       break;
     case 'customer':
-      statusMessage = `Kontakt ist jetzt Kunde – viel Erfolg! 🎉`;
+      statusMessage = `Contact is now a customer – success! 🎉`;
       break;
     case 'not_for_now':
-      statusMessage = `Kontakt ist aktuell nicht bereit – bleib dran! ⏳`;
+      statusMessage = `Contact is not ready at the moment – keep in touch! ⏳`;
       break;
     case 'no_interest':
-      statusMessage = `Kontakt hat kein Interesse – weiter geht's! 🚀`;
+      statusMessage = `Contact has no interest – move forward! 🚀`;
       break;
     default:
-      statusMessage = `Status geändert zu ${status}`;
+      statusMessage = `Status changed to ${status}`;
   }
 
   return {
@@ -83,7 +80,6 @@ export const createStatusChangeItem = (
     metadata: {
       oldStatus: 'lead',
       newStatus: status,
-      timestamp
     }
   };
 };
