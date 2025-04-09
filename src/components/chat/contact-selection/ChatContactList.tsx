@@ -13,9 +13,9 @@ export const ChatContactList = ({ contacts, onSelect, selectedId }: ChatContactL
   if (!contacts.length) return null;
 
   return (
-    <div className="w-full h-[90px] border-t overflow-hidden">
+    <div className="w-full h-full border-t overflow-hidden">
       <ScrollArea className="w-full h-full" orientation="horizontal">
-        <div className="flex gap-2 px-4 py-2 snap-x snap-mandatory h-full">
+        <div className="flex flex-wrap gap-3 p-4 snap-x snap-mandatory">
           {contacts.map((contact) => (
             <ChatContactCard
               key={contact.id}

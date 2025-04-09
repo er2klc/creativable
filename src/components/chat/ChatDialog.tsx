@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
@@ -24,6 +25,7 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
   const { settings } = useSettings();
   const session = useSession();
   const isMobile = useIsMobile();
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [flowState, setFlowState] = useState("initial");
   const [selectedContact, setSelectedContact] = useState<any>(null);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
@@ -121,14 +123,14 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
         return (
           <ChatContactList
             contacts={leads}
-            onSelectContact={handleContactSelect}
+            onSelect={handleContactSelect}
           />
         );
       case "templateSelection":
         return (
           <MessageTemplateSelector
             templates={templates || []}
-            onSelectTemplate={handleTemplateSelect}
+            onSelect={handleTemplateSelect}
             onBack={() => setFlowState("contactSelection")}
           />
         );
@@ -147,7 +149,7 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
           <>
             <ChatMessages
               messages={messages}
-              isLoadingAnswer={isLoadingAnswer}
+              scrollRef={scrollRef}
             />
             <ChatInput
               input={input}
