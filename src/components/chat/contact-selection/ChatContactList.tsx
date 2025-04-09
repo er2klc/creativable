@@ -2,6 +2,7 @@
 import { Tables } from "@/integrations/supabase/types";
 import { ChatContactCard } from "./ChatContactCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useEffect, useState } from "react";
 
 interface ChatContactListProps {
   contacts: Tables<"leads">[];
