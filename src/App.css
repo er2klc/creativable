@@ -1,4 +1,3 @@
-
 #root {
   margin: 0 auto;
   text-align: center;
@@ -53,7 +52,13 @@ body {
   }
 }
 
-/* ... keep existing code (card and docs styles) */
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
 
 /* Gradient text utility */
 .text-gradient {
@@ -62,7 +67,34 @@ body {
   color: transparent;
 }
 
-/* ... keep existing code (animation classes) */
+/* Animation classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out forwards;
+}
+
+.slide-up {
+  animation: slideUp 0.5s ease-in-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
 
 /* Mobile-specific fixes */
 @media (max-width: 768px) {
@@ -89,5 +121,11 @@ body {
   .mobile-actions {
     position: relative;
     z-index: 40;
+  }
+  
+  /* Ensure dialogs and sheets are on top of everything else */
+  .radix-dialog-overlay,
+  .radix-dialog-content {
+    z-index: 110 !important;
   }
 }
