@@ -1,196 +1,234 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { Check, Circle, Plus, Trash } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useSettings } from "@/hooks/use-settings";
-import { toast } from "sonner";
-import { TaskForm } from "./tasks/TaskForm";
-import { TaskItem } from "./tasks/TaskItem";
-import { ClipboardList } from "lucide-react";
-import confetti from "canvas-confetti";
-import { Tables } from "@/integrations/supabase/types";
-import { motion, AnimatePresence } from "framer-motion";
-import { useEffect } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import confetti from 'canvas-confetti';
 
-interface TaskListProps {
-  leadId?: string;
+interface Task {
+  id: string;
+  task: string;
+  completed: boolean;
 }
 
-export function TaskList({ leadId }: TaskListProps) {
+interface TaskListProps {
+  leadId: string;
+}
+
+export const TaskList = ({ leadId }: TaskListProps) => {
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [newTask, setNewTask] = useState("");
   const { settings } = useSettings();
+  const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: tasks = [], isLoading } = useQuery({
-    queryKey: ["tasks", leadId],
-    queryFn: async () => {
-      try {
-        const query = supabase
-          .from("tasks")
-          .select("*, leads(name)")
-          .order("order_index", { ascending: true })
-          .order("created_at", { ascending: false });
+  const { mutate: createTaskMutation } = useMutation({
+    mutationFn: async (task: string) => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .insert([{ lead_id: leadId, task, completed: false }])
+        .select()
+        .single();
 
-        if (leadId) {
-          query.eq("lead_id", leadId);
-        }
-
-        const { data, error } = await query;
-
-        if (error) {
-          console.error("Error fetching tasks:", error);
-          throw error;
-        }
-
-        return data as (Tables<"tasks"> & {
-          leads?: Tables<"leads">;
-        })[];
-      } catch (error) {
-        console.error("Error in task query:", error);
+      if (error) {
         throw error;
       }
+      return data;
+    },
+    onSuccess: (newTask) => {
+      setTasks([...tasks, newTask]);
+      setNewTask("");
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast({
+        title:
+          settings?.language === "en" ? "Task created" : "Aufgabe erstellt",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Error creating task:", error);
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description:
+          settings?.language === "en"
+            ? "Failed to create task"
+            : "Aufgabe konnte nicht erstellt werden",
+        variant: "destructive",
+      });
     },
   });
 
-  // Set up real-time subscription
-  useEffect(() => {
-    const channel = supabase
-      .channel('tasks-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks'
-        },
-        (payload) => {
-          console.log('Task change received:', payload);
-          queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
-        }
-      )
-      .subscribe();
+  const { mutate: updateTaskMutation } = useMutation({
+    mutationFn: async ({ id, completed }: { id: string; completed: boolean }) => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .update({ completed })
+        .eq("id", id)
+        .select()
+        .single();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, leadId]);
-
-  const updateTask = useMutation({
-    mutationFn: async (task: Tables<"tasks">) => {
-      try {
-        const { error } = await supabase
-          .from("tasks")
-          .update({ completed: !task.completed })
-          .eq("id", task.id);
-
-        if (error) throw error;
-      } catch (error) {
-        console.error("Error updating task:", error);
+      if (error) {
         throw error;
       }
+      return data;
     },
-    onSuccess: (_, task) => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
+    onSuccess: (updatedTask) => {
+      setTasks(
+        tasks.map((task) =>
+          task.id === updatedTask.id ? { ...task, completed: updatedTask.completed } : task
+        )
+      );
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast({
+        title:
+          settings?.language === "en" ? "Task updated" : "Aufgabe aktualisiert",
+      });
       
-      if (!task.completed) {
+      // Check if all tasks are completed
+      if (tasks.every(task => task.completed)) {
         confetti({
           particleCount: 100,
           spread: 70,
-          origin: { y: 0.6 },
-          colors: ['#FFD700', '#FFA500', '#FF6347', '#98FB98', '#87CEEB'],
+          origin: { y: 0.6 }
         });
-
-        toast.success(
-          settings?.language === "en"
-            ? "Task completed! 🎉"
-            : "Aufgabe erledigt! 🎉"
-        );
-      } else {
-        toast.success(
-          settings?.language === "en"
-            ? "Task uncompleted"
-            : "Aufgabe nicht erledigt"
-        );
       }
+    },
+    onError: (error: any) => {
+      console.error("Error updating task:", error);
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description:
+          settings?.language === "en"
+            ? "Failed to update task"
+            : "Aufgabe konnte nicht aktualisiert werden",
+        variant: "destructive",
+      });
     },
   });
 
-  const updateTaskOrder = useMutation({
-    mutationFn: async (updates: Tables<"tasks">[]) => {
-      try {
-        const { error } = await supabase
-          .from("tasks")
-          .upsert(updates);
-
-        if (error) throw error;
-      } catch (error) {
-        console.error("Error updating task order:", error);
+  const { mutate: deleteTaskMutation } = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("tasks").delete().eq("id", id);
+      if (error) {
         throw error;
       }
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks", leadId] });
+    onSuccess: (_, taskId) => {
+      setTasks(tasks.filter((task) => task.id !== taskId));
+      queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+      toast({
+        title:
+          settings?.language === "en" ? "Task deleted" : "Aufgabe gelöscht",
+      });
+    },
+    onError: (error: any) => {
+      console.error("Error deleting task:", error);
+      toast({
+        title: settings?.language === "en" ? "Error" : "Fehler",
+        description:
+          settings?.language === "en"
+            ? "Failed to delete task"
+            : "Aufgabe konnte nicht gelöscht werden",
+        variant: "destructive",
+      });
     },
   });
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("lead_id", leadId);
 
-    const items = Array.from(tasks);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+      if (error) {
+        console.error("Error fetching tasks:", error);
+        toast({
+          title: settings?.language === "en" ? "Error" : "Fehler",
+          description:
+            settings?.language === "en"
+              ? "Failed to load tasks"
+              : "Aufgaben konnten nicht geladen werden",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    // Update order indices
-    const updates = items.map((task, index) => ({
-      ...task,
-      order_index: index,
-    }));
+      setTasks(data || []);
+    };
 
-    updateTaskOrder.mutate(updates);
+    fetchTasks();
+  }, [leadId, settings?.language, toast]);
+
+  const handleAddTask = () => {
+    if (newTask.trim() !== "") {
+      createTaskMutation(newTask.trim());
+    }
   };
 
-  const incompleteTasks = tasks.filter(task => !task.completed);
+  const handleTaskCompletion = (id: string, completed: boolean) => {
+    updateTaskMutation({ id, completed });
+  };
 
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5" />
-            {settings?.language === "en" ? "Loading tasks..." : "Lade Aufgaben..."}
-          </CardTitle>
-        </CardHeader>
-      </Card>
-    );
-  }
+  const handleDeleteTask = (id: string) => {
+    deleteTaskMutation(id);
+  };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <ClipboardList className="h-5 w-5" />
-          {settings?.language === "en" ? "Tasks" : "Aufgaben"} ({incompleteTasks.length})
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <TaskForm leadId={leadId} />
-        <AnimatePresence>
-          <div className="space-y-2 mt-4">
-            {incompleteTasks.map((task) => (
-              <motion.div
-                key={task.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ duration: 0.2 }}
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Input
+          type="text"
+          placeholder={
+            settings?.language === "en" ? "Add new task" : "Neue Aufgabe hinzufügen"
+          }
+          value={newTask}
+          onChange={(e) => setNewTask(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleAddTask();
+            }
+          }}
+        />
+        <Button onClick={handleAddTask}>
+          <Plus className="h-4 w-4 mr-2" />
+          {settings?.language === "en" ? "Add" : "Hinzufügen"}
+        </Button>
+      </div>
+      <ul className="space-y-2">
+        {tasks.map((task) => (
+          <li
+            key={task.id}
+            className="flex items-center justify-between p-2 rounded-md shadow-sm border"
+          >
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleTaskCompletion(task.id, !task.completed)}
               >
-                <TaskItem
-                  task={task}
-                  onToggle={() => updateTask.mutate(task)}
-                />
-              </motion.div>
-            ))}
-          </div>
-        </AnimatePresence>
-      </CardContent>
-    </Card>
+                {task.completed ? (
+                  <Check className="h-4 w-4 text-green-500" />
+                ) : (
+                  <Circle className="h-4 w-4" />
+                )}
+              </Button>
+              <span className={task.completed ? "line-through text-gray-500" : ""}>
+                {task.task}
+              </span>
+            </div>
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={() => handleDeleteTask(task.id)}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
-}
+};

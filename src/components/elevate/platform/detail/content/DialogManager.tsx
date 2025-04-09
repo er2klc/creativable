@@ -1,74 +1,68 @@
 import { useState } from "react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { UnitCreation } from "../UnitCreation";
-import { EditUnitDialog } from "../EditUnitDialog";
+import { EditUnitDialog } from "../dialog/EditUnitDialog";
+import { CreateUnitDialog } from "../dialog/CreateUnitDialog";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 
 interface DialogManagerProps {
-  platform: any;
-  sortedSubmodules: any[];
-  refetch: () => Promise<void>;
-  isDialogOpen: boolean;
-  setIsDialogOpen: (open: boolean) => void;
-  isEditDialogOpen: boolean;
-  setIsEditDialogOpen: (open: boolean) => void;
-  activeUnit: any;
+  platformId: string;
+  onUnitCreated: () => void;
 }
 
-export const DialogManager = ({
-  platform,
-  sortedSubmodules,
-  refetch,
-  isDialogOpen,
-  setIsDialogOpen,
-  isEditDialogOpen,
-  setIsEditDialogOpen,
-  activeUnit
-}: DialogManagerProps) => {
-  const [files, setFiles] = useState<File[]>([]);
+export const DialogManager = ({ platformId, onUnitCreated }: DialogManagerProps) => {
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedUnit, setSelectedUnit] = useState<string | null>(null);
+  const [unitData, setUnitData] = useState<{
+    title: any;
+    description: any;
+    videoUrl: any;
+  }>({
+    title: "",
+    description: "",
+    videoUrl: "",
+  });
+
+  const handleEditClick = (unitId: string, title: string, description: string, videoUrl: string) => {
+    setSelectedUnit(unitId);
+    setUnitData({ title, description, videoUrl });
+    setShowEditDialog(true);
+  };
 
   return (
     <>
-      <UnitCreation
-        platform={platform}
-        sortedSubmodules={sortedSubmodules}
-        refetch={refetch}
-        isDialogOpen={isDialogOpen}
-        setIsDialogOpen={setIsDialogOpen}
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setShowCreateDialog(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Lerneinheit erstellen
+        </Button>
+      </div>
+
+      <CreateUnitDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        platformId={platformId}
+        onUnitCreated={onUnitCreated}
       />
 
-      {activeUnit && (
+      {selectedUnit && (
         <EditUnitDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          title={activeUnit.title}
-          description={activeUnit.description || ""}
-          videoUrl={activeUnit.video_url || ""}
-          onUpdate={async (data) => {
-            try {
-              const { error } = await supabase
-                .from('elevate_lerninhalte')
-                .update({
-                  title: data.title,
-                  description: data.description,
-                  video_url: data.videoUrl
-                })
-                .eq('id', activeUnit.id);
-
-              if (error) throw error;
-              await refetch();
-              setIsEditDialogOpen(false);
-              toast.success("Lerneinheit erfolgreich aktualisiert");
-            } catch (error) {
-              console.error('Error updating learning unit:', error);
-              toast.error("Fehler beim Aktualisieren der Lerneinheit");
+          open={showEditDialog}
+          onOpenChange={(open: boolean) => {
+            setShowEditDialog(open);
+            if (!open) {
+              setSelectedUnit(null);
+              setUnitData({ title: "", description: "", videoUrl: "" });
             }
           }}
-          existingFiles={[]}
-          onFileRemove={() => {}}
-          onFilesSelected={setFiles}
-          files={files}
-          id={activeUnit.id}
+          id={selectedUnit}
+          platformId={platformId}
+          title={unitData.title}
+          description={unitData.description}
+          videoUrl={unitData.videoUrl}
+          onUpdate={async (data: { title: string; description: string; videoUrl: string }) => {
+            // Handle update logic here
+          }}
         />
       )}
     </>

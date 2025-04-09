@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useSupabaseClient, useSessionContext, User } from '@supabase/auth-helpers-react';
 
 export const useAuth = () => {
