@@ -2,18 +2,18 @@
 import { create } from 'zustand';
 import { Tables } from '@/integrations/supabase/types';
 
-interface LeadState {
+interface LeadStore {
   leads: Tables<"leads">[];
   selectedLeadId: string | null;
   setLeads: (leads: Tables<"leads">[]) => void;
   addLead: (lead: Tables<"leads">) => void;
-  updateLead: (leadId: string, data: Partial<Tables<"leads">>) => void;
-  deleteLead: (leadId: string) => void;
-  archiveLead: (leadId: string) => void;
-  setSelectedLeadId: (leadId: string | null) => void;
+  updateLead: (id: string, data: Partial<Tables<"leads">>) => void;
+  removeLead: (id: string) => void;
+  archiveLead: (id: string) => void;
+  setSelectedLeadId: (id: string | null) => void;
 }
 
-export const useLeadStore = create<LeadState>((set) => ({
+export const useLeadStore = create<LeadStore>((set) => ({
   leads: [],
   selectedLeadId: null,
   
@@ -23,22 +23,21 @@ export const useLeadStore = create<LeadState>((set) => ({
     leads: [...state.leads, lead]
   })),
   
-  updateLead: (leadId, data) => set((state) => ({
+  updateLead: (id, data) => set((state) => ({
     leads: state.leads.map((lead) => 
-      lead.id === leadId ? { ...lead, ...data } : lead
+      lead.id === id ? { ...lead, ...data } : lead
     )
   })),
   
-  deleteLead: (leadId) => set((state) => ({
-    leads: state.leads.filter((lead) => lead.id !== leadId),
-    selectedLeadId: state.selectedLeadId === leadId ? null : state.selectedLeadId
+  removeLead: (id) => set((state) => ({
+    leads: state.leads.filter((lead) => lead.id !== id),
+    selectedLeadId: state.selectedLeadId === id ? null : state.selectedLeadId
+  })),
+
+  archiveLead: (id) => set((state) => ({
+    leads: state.leads.filter((lead) => lead.id !== id),
+    selectedLeadId: state.selectedLeadId === id ? null : state.selectedLeadId
   })),
   
-  archiveLead: (leadId) => set((state) => ({
-    leads: state.leads.map((lead) => 
-      lead.id === leadId ? { ...lead, archived: true } : lead
-    )
-  })),
-  
-  setSelectedLeadId: (leadId) => set({ selectedLeadId: leadId }),
+  setSelectedLeadId: (id) => set({ selectedLeadId: id })
 }));

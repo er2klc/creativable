@@ -40,11 +40,15 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
     handleInputChange,
     handleSubmit,
     isLoading,
-    append,
-    reload,
-    stop,
-    isLoadingAnswer,
-  } = useChatMessages();
+    setMessages,
+    resetMessages
+  } = useChatMessages({
+    sessionToken: session?.access_token || null,
+    apiKey: settings?.openai_api_key || null,
+    userId: session?.user?.id || null,
+    currentTeamId: null,
+    systemMessage: "You are a helpful assistant."
+  });
 
   useLeadSubscription(selectedContact?.id);
 
@@ -103,10 +107,14 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
 
   const handleSendMessage = () => {
     // Logic to send the message
-    append({
-      role: "user",
-      content: previewMessage,
-    });
+    setMessages([
+      ...messages,
+      {
+        id: Date.now().toString(),
+        role: "user",
+        content: previewMessage
+      }
+    ]);
     
     // Reset flow
     setFlowState("chat");
@@ -124,12 +132,13 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
           <ChatContactList
             contacts={leads}
             onSelect={handleContactSelect}
+            selectedId={selectedContact?.id}
           />
         );
       case "templateSelection":
         return (
           <MessageTemplateSelector
-            templates={templates || []}
+            templateList={templates || []}
             onSelect={handleTemplateSelect}
             onBack={() => setFlowState("contactSelection")}
           />
@@ -141,7 +150,7 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
             isLoading={isPreviewLoading}
             onSend={handleSendMessage}
             onBack={() => setFlowState("templateSelection")}
-            onEdit={(newMessage) => setPreviewMessage(newMessage)}
+            onEdit={setPreviewMessage}
           />
         );
       case "chat":
@@ -152,10 +161,9 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
               scrollRef={scrollRef}
             />
             <ChatInput
-              input={input}
-              handleInputChange={handleInputChange}
-              handleSubmit={handleSubmit}
-              isLoading={isLoading}
+              value={input}
+              onChange={handleInputChange}
+              onSubmit={handleSubmit}
             />
           </>
         );
@@ -168,7 +176,7 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex flex-col h-[80vh] max-w-md p-0 gap-0 overflow-hidden">
         <ChatHeader
-          contact={selectedContact}
+          title={selectedContact?.name || "Chat"}
           onBack={
             flowState !== "initial" && flowState !== "contactSelection"
               ? handleBackToSelection
