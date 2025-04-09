@@ -1,167 +1,94 @@
 
-import { TimelineItem } from "../TimelineUtils";
-import { Tables } from "@/integrations/supabase/types";
+import { TimelineItem, TimelineItemType } from "../TimelineUtils";
+import { SocialMediaPost } from "../hooks/useSocialMediaPosts";
 
-export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
-  id: note.id,
-  type: note.metadata?.type === 'phase_analysis' ? 'phase_analysis' : 
-        note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
-  content: note.content,
-  created_at: note.created_at,
-  timestamp: note.metadata?.timestamp || note.created_at,
-  metadata: note.metadata,
-  status: note.status
-});
+// Map social media posts to timeline items
+export const mapSocialMediaPostsToTimelineItems = (posts: SocialMediaPost[]): TimelineItem[] => {
+  return posts.map(post => ({
+    id: post.id,
+    type: post.platform.toLowerCase() as TimelineItemType,
+    content: post.post_content || "",
+    timestamp: post.post_date,
+    platform: post.platform,
+    metadata: {
+      postUrl: post.post_url,
+      postType: post.post_type,
+      likes: post.likes,
+      comments: post.comments,
+      location: post.location,
+      ...post.metadata
+    }
+  }));
+};
 
-export const mapTaskToTimelineItem = (task: any): TimelineItem => {
-  // Check if this is an appointment (meeting) or a regular task
-  if (task.meeting_type || task.type === 'appointment') {
-    return {
-      id: task.id,
-      type: 'appointment',
-      content: task.title,
-      created_at: task.created_at,
-      timestamp: task.created_at,
-      metadata: {
-        dueDate: task.due_date,
-        status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
-        completedAt: task.completed ? task.updated_at : undefined,
-        cancelledAt: task.cancelled ? task.updated_at : undefined,
-        color: task.color,
-        meetingType: task.meeting_type,
-        duration: 60, // Default duration in minutes
-      }
-    };
-  }
-  
-  // Regular task
-  return {
+// Map tasks to timeline items
+export const mapTasksToTimelineItems = (tasks: any[]): TimelineItem[] => {
+  return tasks.map(task => ({
     id: task.id,
-    type: task.type || 'task',
-    content: task.title,
-    created_at: task.created_at,
+    type: "task",
+    content: task.title || task.content || "",
     timestamp: task.created_at,
-    completed: task.completed || false,
+    status: task.completed ? "completed" : "open",
     metadata: {
       dueDate: task.due_date,
-      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
-      completedAt: task.completed ? task.updated_at : undefined,
-      color: task.color,
+      completedAt: task.completed_at,
+      status: task.completed ? "completed" : task.cancelled ? "cancelled" : "open",
+      priority: task.priority
     }
-  };
+  }));
 };
 
-export const mapMessageToTimelineItem = (message: any): TimelineItem => ({
-  id: message.id,
-  type: 'message',
-  content: message.content,
-  created_at: message.created_at,
-  timestamp: message.sent_at || message.created_at,
-  platform: message.platform,
-  metadata: {
-    type: message.platform
-  }
-});
-
-export const mapFileToTimelineItem = (file: any): TimelineItem => ({
-  id: file.id,
-  type: 'file_upload',
-  content: file.file_name,
-  created_at: file.created_at,
-  timestamp: file.created_at,
-  metadata: {
-    fileName: file.file_name,
-    filePath: file.file_path,
-    fileType: file.file_type,
-    fileSize: file.file_size
-  }
-});
-
-export const mapBusinessMatchToTimelineItem = (businessMatch: any): TimelineItem => ({
-  id: businessMatch.id,
-  type: 'business_match',
-  content: `Business Match Analyse: ${businessMatch.match_score}%`,
-  created_at: businessMatch.created_at,
-  timestamp: businessMatch.created_at,
-  metadata: {
-    match_score: businessMatch.match_score,
-    skills: businessMatch.skills || [],
-    commonalities: businessMatch.commonalities || [],
-    potential_needs: businessMatch.potential_needs || [],
-    strengths: businessMatch.strengths || [],
-    type: 'business_match',
-    content: businessMatch.analysis_content
-  }
-});
-
-export const createContactCreationItem = (name: string, created_at: string): TimelineItem => ({
-  id: `contact-creation-${created_at}`,
-  type: 'contact_created',
-  content: `Kontakt ${name} wurde erstellt`,
-  created_at: created_at,
-  timestamp: created_at,
-  metadata: {
-    type: 'contact_created'
-  }
-});
-
-export const createStatusChangeItem = (
-  status: string, 
-  timestamp: string,
-  name?: string
-): TimelineItem | null => {
-  if (status === 'lead') return null;
-
-  let content = '';
-  switch (status) {
-    case 'partner':
-      content = `${name || 'Kontakt'} ist jetzt dein neuer Partner! 🚀`;
-      break;
-    case 'customer':
-      content = `${name || 'Kontakt'} ist jetzt Kunde – viel Erfolg! 🎉`;
-      break;
-    case 'not_for_now':
-      content = `${name || 'Kontakt'} ist aktuell nicht bereit – bleib dran! ⏳`;
-      break;
-    case 'no_interest':
-      content = `${name || 'Kontakt'} hat kein Interesse – weiter geht's! 🚀`;
-      break;
-    default:
-      content = `Status geändert zu ${status}`;
-  }
-
-  return {
-    id: `status-${timestamp}`,
-    type: 'status_change',
-    content,
-    timestamp,
+// Map notes to timeline items
+export const mapNotesToTimelineItems = (notes: any[]): TimelineItem[] => {
+  return notes.map(note => ({
+    id: note.id,
+    type: "note",
+    content: note.content || "",
+    timestamp: note.created_at,
     metadata: {
-      type: 'status_change',
-      newStatus: status,
-      timestamp
+      updatedAt: note.updated_at,
+      lastEditedAt: note.updated_at
     }
-  };
+  }));
 };
 
-export const deduplicateTimelineItems = (items: TimelineItem[]): TimelineItem[] => {
-  const uniqueItems = new Map<string, TimelineItem>();
-  
-  items.forEach(item => {
-    // Für Phasenänderungen einen spezifischen Schlüssel erstellen
-    const key = item.type === 'phase_change' 
-      ? `${item.metadata?.oldPhase}-${item.metadata?.newPhase}-${item.timestamp}`
-      : item.content;
-      
-    const existingItem = uniqueItems.get(key);
-    
-    if (!existingItem || new Date(item.timestamp) > new Date(existingItem.timestamp)) {
-      uniqueItems.set(key, item);
+// Map activities to timeline items
+export const mapActivitiesToTimelineItems = (activities: any[]): TimelineItem[] => {
+  return activities.filter(activity => activity.type === "phase_change").map(activity => ({
+    id: activity.id,
+    type: "phase_change",
+    content: activity.content || "",
+    timestamp: activity.created_at,
+    metadata: {
+      type: activity.metadata?.type || "phase_change",
+      oldPhase: activity.metadata?.old_phase,
+      newPhase: activity.metadata?.new_phase,
+      oldStatus: activity.metadata?.old_status,
+      newStatus: activity.metadata?.new_status
     }
-  });
+  }));
+};
 
-  return Array.from(uniqueItems.values()).sort((a, b) => {
-    const dateA = new Date(a.timestamp || a.created_at || '');
-    const dateB = new Date(b.timestamp || b.created_at || '');
-    return dateB.getTime() - dateA.getTime();
-  });
+// Sort timeline items by timestamp (newest first)
+export const sortTimelineItems = (items: TimelineItem[]): TimelineItem[] => {
+  return [...items].sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
+};
+
+// Combine all timeline items from different sources
+export const combineTimelineItems = (
+  tasks: any[] = [],
+  notes: any[] = [],
+  activities: any[] = [],
+  socialMediaPosts: SocialMediaPost[] = []
+): TimelineItem[] => {
+  const timelineItems = [
+    ...mapTasksToTimelineItems(tasks),
+    ...mapNotesToTimelineItems(notes),
+    ...mapActivitiesToTimelineItems(activities),
+    ...mapSocialMediaPostsToTimelineItems(socialMediaPosts)
+  ];
+  
+  return sortTimelineItems(timelineItems);
 };
