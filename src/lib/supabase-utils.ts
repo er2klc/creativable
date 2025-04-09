@@ -9,7 +9,7 @@ export const getAvatarUrl = (avatarPath?: string | null, email?: string | null):
       const initial = email.charAt(0).toUpperCase();
       return `https://ui-avatars.com/api/?name=${initial}&background=random`;
     }
-    return '/placeholder.svg';
+    return '/lovable-uploads/45d6a707-e026-4964-aac9-4f294a2b5a1c.png';
   }
   
   // Wenn es bereits eine vollständige URL ist

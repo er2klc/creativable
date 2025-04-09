@@ -23,7 +23,7 @@ const isValidUUID = (uuid: string) => {
 export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
   const { settings } = useSettings();
   
-  const { data: lead, isLoading, error } = useQuery({
+  const { data: lead, isLoading } = useQuery({
     queryKey: ["lead", leadId],
     queryFn: async () => {
       if (!leadId || !isValidUUID(leadId)) {
@@ -83,17 +83,6 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
     return null;
   }
 
-  // Fehlerbehandlung für lead_activities fehlende Tabelle
-  const handleDeletePhaseChange = (noteId: string) => {
-    console.log("Deleting phase change note:", noteId);
-    // Hier könnten Sie eine tatsächliche Löschlogik implementieren
-    toast.success(
-      settings?.language === "en" 
-        ? "Phase change deleted" 
-        : "Phasenänderung gelöscht"
-    );
-  };
-
   return (
     <Dialog open={!!leadId} onOpenChange={() => onClose()}>
       <DialogContent className="max-w-4xl h-[90vh] p-0 bg-white border rounded-lg shadow-lg overflow-hidden">
@@ -113,7 +102,9 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
             onUpdateLead={updateLeadMutation.mutate}
             isLoading={isLoading}
             onDeleteClick={() => deleteLeadMutation.mutate()}
-            onDeletePhaseChange={handleDeletePhaseChange}
+            onDeletePhaseChange={(noteId) => {
+              console.log("Delete phase change:", noteId);
+            }}
           />
         )}
       </DialogContent>

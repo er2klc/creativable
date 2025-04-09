@@ -1,172 +1,137 @@
 
-import { useState, useEffect, useRef } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { useRef } from "react";
+import { useChatContext } from "@/hooks/use-chat-context";
 import { ChatHeader } from "./ChatHeader";
 import { ChatMessages } from "./ChatMessages";
 import { ChatInput } from "./ChatInput";
+import { useChatSetup } from "./hooks/useChatSetup";
 import { useChatMessages } from "./hooks/useChatMessages";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { ChatContactList } from "./contact-selection/ChatContactList";
-import { useLeadStore } from "@/store/useLeadStore";
-import { useSettings } from "@/hooks/use-settings";
-import { useSession } from "@supabase/auth-helpers-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useChatFlow } from "./hooks/useChatFlow";
 import { MessageTemplateSelector } from "./template-selection/MessageTemplateSelector";
 import { MessagePreview } from "./message-preview/MessagePreview";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { useLeadSubscription } from "../leads/detail/hooks/useLeadSubscription";
+import { cn } from "@/lib/utils";
 
 interface ChatDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
-  const { settings } = useSettings();
-  const session = useSession();
-  const isMobile = useIsMobile();
+export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [flowState, setFlowState] = useState("initial");
-  const [selectedContact, setSelectedContact] = useState<any>(null);
-  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
-  const [previewMessage, setPreviewMessage] = useState("");
-  const [isPreviewReady, setIsPreviewReady] = useState(false);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const { leads } = useLeadStore();
+  const { systemMessage } = useChatContext();
+  const isMobile = useIsMobile();
+
+  const {
+    sessionToken,
+    apiKey,
+    isReady,
+    userId,
+    currentTeamId,
+  } = useChatSetup(open);
+
+  const {
+    flowState,
+    selectedContact,
+    selectedTemplateType,
+    contacts,
+    handleUserMessage,
+    handleContactSelection,
+    handleTemplateSelection,
+    generateTemplateMessage,
+    reset
+  } = useChatFlow(userId);
 
   const {
     messages,
     input,
     handleInputChange,
-    handleSubmit,
-    isLoading,
-    setMessages,
+    handleSubmit: originalHandleSubmit,
     resetMessages
   } = useChatMessages({
-    sessionToken: session?.access_token || null,
-    apiKey: settings?.openai_api_key || null,
-    userId: session?.user?.id || null,
-    currentTeamId: null,
-    systemMessage: "You are a helpful assistant."
+    sessionToken,
+    apiKey,
+    userId,
+    currentTeamId,
+    systemMessage
   });
 
-  useLeadSubscription(selectedContact?.id);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!input.trim()) return;
 
-  const { data: templates } = useQuery({
-    queryKey: ["message-templates"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("message_templates")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    },
-    enabled: !!session,
-  });
-
-  useEffect(() => {
-    if (!open) {
-      // Reset state when dialog closes
-      setFlowState("initial");
-      setSelectedContact(null);
-      setSelectedTemplate(null);
-      setPreviewMessage("");
-      setIsPreviewReady(false);
-    }
-  }, [open]);
-
-  const handleContactSelect = (contact: any) => {
-    setSelectedContact(contact);
-    setFlowState("templateSelection");
-  };
-
-  const handleTemplateSelect = (template: any) => {
-    setSelectedTemplate(template);
-    setFlowState("preview");
-    generatePreview(template, selectedContact);
-  };
-
-  const generatePreview = async (template: any, contact: any) => {
-    setIsPreviewLoading(true);
-    try {
-      // Generate preview using AI or template variables
-      const preview = template.content
-        .replace("{{name}}", contact.name || "")
-        .replace("{{company}}", contact.company_name || "");
-      
-      setPreviewMessage(preview);
-      setIsPreviewReady(true);
-    } catch (error) {
-      console.error("Error generating preview:", error);
-    } finally {
-      setIsPreviewLoading(false);
+    const isMessageCommand = handleUserMessage(input);
+    if (!isMessageCommand) {
+      await originalHandleSubmit(e);
     }
   };
 
-  const handleSendMessage = () => {
-    // Logic to send the message
-    setMessages([
-      ...messages,
-      {
-        id: Date.now().toString(),
-        role: "user",
-        content: previewMessage
-      }
-    ]);
-    
-    // Reset flow
-    setFlowState("chat");
+  const handleClose = () => {
+    onOpenChange(false);
+    resetMessages();
+    reset();
   };
 
-  const handleBackToSelection = () => {
-    setFlowState("contactSelection");
-  };
+  if (!isReady) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent 
+          className={cn(
+            "p-0 gap-0 bg-background",
+            isMobile ? "w-full h-[100dvh] max-w-full m-0 rounded-none" : "sm:max-w-[700px] h-[80vh]"
+          )}
+        >
+          <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
+          <div className="flex items-center justify-center h-full">
+            <p className="text-muted-foreground">Initialisiere Chat...</p>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
-  const renderContent = () => {
+  const renderFlowContent = () => {
     switch (flowState) {
-      case "initial":
-      case "contactSelection":
+      case 'contact_selection':
         return (
-          <ChatContactList
-            contacts={leads}
-            onSelect={handleContactSelect}
-            selectedId={selectedContact?.id}
-          />
-        );
-      case "templateSelection":
-        return (
-          <MessageTemplateSelector
-            templateList={templates || []}
-            onSelect={handleTemplateSelect}
-            onBack={() => setFlowState("contactSelection")}
-          />
-        );
-      case "preview":
-        return (
-          <MessagePreview
-            message={previewMessage}
-            isLoading={isPreviewLoading}
-            onSend={handleSendMessage}
-            onBack={() => setFlowState("templateSelection")}
-            onEdit={setPreviewMessage}
-          />
-        );
-      case "chat":
-        return (
-          <>
-            <ChatMessages
-              messages={messages}
-              scrollRef={scrollRef}
+          <div className="border-t bg-background">
+            <ChatContactList
+              contacts={contacts}
+              onSelect={handleContactSelection}
+              selectedId={selectedContact?.id}
             />
-            <ChatInput
-              value={input}
-              onChange={handleInputChange}
-              onSubmit={handleSubmit}
-            />
-          </>
+          </div>
         );
+      case 'template_selection':
+        return (
+          <div className="border-t bg-background">
+            <MessageTemplateSelector
+              onSelect={handleTemplateSelection}
+              selectedType={selectedTemplateType}
+            />
+          </div>
+        );
+      case 'message_preview':
+        const templateMessage = generateTemplateMessage();
+        if (templateMessage) {
+          return (
+            <div className="border-t bg-background">
+              <MessagePreview
+                message={templateMessage}
+                onEdit={() => setFlowState('template_selection')}
+                onSend={async () => {
+                  await originalHandleSubmit({
+                    preventDefault: () => {},
+                  } as React.FormEvent, templateMessage);
+                  reset();
+                }}
+              />
+            </div>
+          );
+        }
+        return null;
       default:
         return null;
     }
@@ -174,18 +139,32 @@ export const ChatDialog = ({ open, onOpenChange }: ChatDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col h-[80vh] max-w-md p-0 gap-0 overflow-hidden">
-        <ChatHeader
-          title={selectedContact?.name || "Chat"}
-          onBack={
-            flowState !== "initial" && flowState !== "contactSelection"
-              ? handleBackToSelection
-              : undefined
-          }
-          onClose={() => onOpenChange(false)}
-        />
-        <div className="flex-1 overflow-hidden">{renderContent()}</div>
+      <DialogContent 
+        className={cn(
+          "flex flex-col p-0 gap-0 bg-background overflow-hidden",
+          isMobile 
+            ? "w-full h-[100dvh] max-w-full m-0 rounded-none" 
+            : "sm:max-w-[700px] h-[80vh]"
+        )}
+        onClick={(e) => e.stopPropagation()} 
+        hideClose
+      >
+        <ChatHeader onMinimize={onOpenChange} onClose={handleClose} />
+        
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ChatMessages messages={messages} scrollRef={scrollRef} />
+        </div>
+
+        {renderFlowContent()}
+        
+        <div className="w-full mt-auto border-t bg-background px-4 py-4">
+          <ChatInput 
+            input={input}
+            handleInputChange={handleInputChange}
+            handleSubmit={handleSubmit}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
-};
+}

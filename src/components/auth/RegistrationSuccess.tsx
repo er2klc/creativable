@@ -25,12 +25,6 @@ export const RegistrationSuccess = () => {
           </p>
         </div>
 
-        <img 
-          src="/images/default-avatar.png"
-          alt="Default Profile"
-          className="w-24 h-24 rounded-full mx-auto mb-4"
-        />
-
         <Button 
           variant="outline" 
           className="w-full"

@@ -1,61 +1,89 @@
 
+import { LeadWithRelations } from "@/types/leads";
+
 export type TimelineItemType = 
-  | 'message' 
-  | 'note' 
-  | 'task' 
-  | 'appointment' 
-  | 'phase_change' 
-  | 'status_change' 
-  | 'file_upload' 
   | 'contact_created'
-  | 'youtube'
+  | 'message'
+  | 'task' 
+  | 'appointment'
+  | 'note'
+  | 'phase_change'
+  | 'status_change'
+  | 'reminder'
+  | 'presentation'
+  | 'upload'
+  | 'file_upload'
   | 'business_match'
-  | 'facebook'
-  | 'instagram'
-  | 'linkedin'
-  | 'tiktok';
+  | string;
 
 export interface TimelineItem {
   id: string;
   type: TimelineItemType;
   content: string;
   timestamp: string;
-  status?: string;
   platform?: string;
-  metadata?: any;
+  completed?: boolean;
+  status?: string;
+  metadata?: {
+    dueDate?: string;
+    fileName?: string;
+    fileType?: string;
+    fileSize?: number;
+    filePath?: string;
+    status?: "completed" | "cancelled" | "outdated";
+    completedAt?: string;
+    cancelledAt?: string;
+    updatedAt?: string;
+    oldDate?: string;
+    newDate?: string;
+    type?: string;
+    oldStatus?: string;
+    newStatus?: string;
+    last_edited_at?: string;
+    meetingType?: string;
+    color?: string;
+    event_type?: string;
+    match_score?: number;
+    skills?: string[];
+    commonalities?: string[];
+    potential_needs?: string[];
+    strengths?: string[];
+  };
+  created_at?: string;
 }
 
-export const getTimelineItemTypeColor = (type: TimelineItemType, status?: string): string => {
-  switch (type) {
-    case 'message':
-      return 'bg-blue-500';
-    case 'note':
-      return 'bg-yellow-500';
-    case 'task':
-      return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
-    case 'appointment':
-      return status === 'cancelled' ? 'bg-gray-400' : 'bg-orange-500';
-    case 'phase_change':
-      return 'bg-purple-500';
-    case 'status_change':
-      return 'bg-red-500';
-    case 'youtube':
-      return 'bg-red-600';
-    case 'business_match':
-      return 'bg-blue-600';
-    case 'file_upload':
-      return 'bg-blue-500';
-    case 'contact_created':
-      return 'bg-emerald-500';
-    case 'facebook':
-      return 'bg-blue-600';
-    case 'instagram':
-      return 'bg-pink-500';
-    case 'linkedin':
-      return 'bg-blue-800';
-    case 'tiktok':
-      return 'bg-black';
+export const createStatusChangeItem = (
+  status: string, 
+  timestamp: string
+): TimelineItem => {
+  let statusMessage = '';
+  
+  switch (status) {
+    case 'partner':
+      statusMessage = `Kontakt ist jetzt dein Partner! 🚀`;
+      break;
+    case 'customer':
+      statusMessage = `Kontakt ist jetzt Kunde – viel Erfolg! 🎉`;
+      break;
+    case 'not_for_now':
+      statusMessage = `Kontakt ist aktuell nicht bereit – bleib dran! ⏳`;
+      break;
+    case 'no_interest':
+      statusMessage = `Kontakt hat kein Interesse – weiter geht's! 🚀`;
+      break;
     default:
-      return 'bg-gray-500';
+      statusMessage = `Status geändert zu ${status}`;
   }
+
+  return {
+    id: `status-${Date.now()}`,
+    type: 'status_change',
+    content: statusMessage,
+    timestamp,
+    metadata: {
+      oldStatus: 'lead',
+      newStatus: status,
+      timestamp
+    }
+  };
 };

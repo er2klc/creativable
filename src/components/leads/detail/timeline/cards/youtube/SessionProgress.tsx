@@ -1,5 +1,6 @@
 
 import { formatDateTime } from "../../utils/dateUtils";
+import { Session } from "./types";
 import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";

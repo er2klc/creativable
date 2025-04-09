@@ -1,55 +1,73 @@
 
-import { ChevronLeft } from "lucide-react";
+import { MessageTemplateType } from "@/config/messageTemplates";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { MessageSquare, Clock, Calendar, Users, MessageCircle } from "lucide-react";
 
 interface MessageTemplateSelectorProps {
-  templateList: {
-    id: string;
-    name: string;
-    content: string;
-    created_at: string;
-    updated_at: string;
-    user_id: string;
-  }[];
-  onSelect: (template: any) => void;
-  onBack: () => void;
+  onSelect: (type: MessageTemplateType) => void;
+  selectedType: MessageTemplateType;
 }
 
-export const MessageTemplateSelector = ({ 
-  templateList, 
-  onSelect, 
-  onBack 
+const templates: Array<{
+  type: MessageTemplateType;
+  label: string;
+  icon: React.ReactNode;
+  description: string;
+}> = [
+  {
+    type: 'first_contact',
+    label: 'Erste Kontaktaufnahme',
+    icon: <MessageSquare className="h-4 w-4" />,
+    description: 'Perfekt für den ersten Kontakt'
+  },
+  {
+    type: 'follow_up',
+    label: 'Follow-up',
+    icon: <Clock className="h-4 w-4" />,
+    description: 'Nach einer vorherigen Interaktion'
+  },
+  {
+    type: 'event_invitation',
+    label: 'Event Einladung',
+    icon: <Calendar className="h-4 w-4" />,
+    description: 'Lade zu einem Event ein'
+  },
+  {
+    type: 'collaboration',
+    label: 'Zusammenarbeit',
+    icon: <Users className="h-4 w-4" />,
+    description: 'Schlage eine Kooperation vor'
+  },
+  {
+    type: 'feedback',
+    label: 'Feedback',
+    icon: <MessageCircle className="h-4 w-4" />,
+    description: 'Bitte um Feedback oder Meinung'
+  }
+];
+
+export const MessageTemplateSelector = ({
+  onSelect,
+  selectedType
 }: MessageTemplateSelectorProps) => {
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-3 border-b flex items-center">
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back
-        </Button>
-        <h3 className="text-sm font-medium ml-2">Select a template</h3>
-      </div>
-      
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
-        {templateList.length === 0 ? (
-          <p className="text-center text-muted-foreground p-4">
-            No templates available.
-          </p>
-        ) : (
-          templateList.map((template) => (
-            <Card
-              key={template.id}
-              className="p-3 cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => onSelect(template)}
-            >
-              <h4 className="font-medium mb-1">{template.name}</h4>
-              <p className="text-sm text-muted-foreground line-clamp-2">
-                {template.content}
-              </p>
-            </Card>
-          ))
-        )}
+    <div className="p-4 space-y-2 bg-muted/50 rounded-lg mb-4">
+      <h3 className="font-medium mb-3">Wähle eine Nachrichtenvorlage:</h3>
+      <div className="grid grid-cols-1 gap-2">
+        {templates.map((template) => (
+          <Button
+            key={template.type}
+            variant={selectedType === template.type ? "default" : "outline"}
+            className="flex items-center justify-start gap-3 h-auto py-3"
+            onClick={() => onSelect(template.type)}
+          >
+            {template.icon}
+            <div className="text-left">
+              <div className="font-medium">{template.label}</div>
+              <div className="text-xs text-muted-foreground">{template.description}</div>
+            </div>
+          </Button>
+        ))}
       </div>
     </div>
   );

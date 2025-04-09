@@ -1,136 +1,172 @@
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/hooks/use-auth';
-import { EmailViewer } from './EmailViewer';
+import React, { useEffect, useState } from 'react';
+import { EmailSidebar } from './EmailSidebar';
 import { EmailList } from './EmailList';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
-import { Settings } from 'lucide-react';
-import { toast } from 'sonner';
+import { EmailViewer } from './EmailViewer';
+import { EmailHeader } from './EmailHeader';
+import { Separator } from "@/components/ui/separator";
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { toast } from "sonner";
+import { useFolderSync } from '@/features/email/hooks/useFolderSync';
 
-interface EmailLayoutProps {
+export interface EmailLayoutProps {
   userEmail?: string;
 }
 
 export function EmailLayout({ userEmail }: EmailLayoutProps) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
+  // Default to inbox as starting folder
+  const [selectedFolder, setSelectedFolder] = useState('INBOX');
   const [selectedEmailId, setSelectedEmailId] = useState<string | null>(null);
-  const [currentFolder, setCurrentFolder] = useState('inbox');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSyncing, setIsSyncing] = useState(false);
+  const { syncFolders } = useFolderSync();
   
-  // Query for API email settings
-  const { data: apiSettings } = useQuery({
-    queryKey: ['api-email-settings'],
+  // Fetch profile data for header
+  const { data: profile } = useQuery({
+    queryKey: ["profile"],
     queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
-      
+
       const { data, error } = await supabase
-        .from('api_email_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error) {
-        if (error.code === 'PGRST116') {
-          console.log("No email settings found");
-          return null;
-        }
-        throw error;
-      }
-      
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+
+      if (error) throw error;
       return data;
-    },
-    enabled: !!user,
+    }
   });
   
-  const handleEmailListRefresh = () => {
-    // If the currently selected email was moved (archived/deleted)
-    // clear the selection to avoid showing a deleted email
-    if (selectedEmailId) {
-      supabase
-        .from('emails')
-        .select('id')
-        .eq('id', selectedEmailId)
-        .eq('archived', false)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (!data) {
-            setSelectedEmailId(null);
-          }
+  // Reset selected email when folder changes
+  useEffect(() => {
+    setSelectedEmailId(null);
+    
+    // Auto sync when folder changes
+    syncEmails(false);
+  }, [selectedFolder]);
+
+  // Function to sync emails for the current folder
+  const syncEmails = async (showLoadingToast = true) => {
+    if (!user) return;
+    
+    try {
+      setIsSyncing(true);
+      
+      if (showLoadingToast) {
+        toast.info("Syncing Emails", {
+          description: "Fetching your latest emails..."
         });
+      }
+      
+      // Get the current user session
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError || !sessionData.session) {
+        throw new Error(sessionError?.message || "No active session found");
+      }
+      
+      // Prepare sync options
+      const syncOptions = {
+        force_refresh: true,
+        folder: selectedFolder,
+        load_latest: true
+      };
+      
+      // Call the sync-emails function with proper authorization
+      const response = await fetch('https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${sessionData.session.access_token}`
+        },
+        body: JSON.stringify(syncOptions)
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success("Emails Synchronized", {
+          description: `Successfully synced ${result.emailsCount || 0} emails`
+        });
+        
+        // Refresh the emails list
+        await queryClient.invalidateQueries({ queryKey: ['emails'] });
+      } else {
+        throw new Error(result.message || 'Failed to sync emails');
+      }
+    } catch (error: any) {
+      console.error('Email sync error:', error);
+      toast.error("Sync Failed", {
+        description: error.message || 'An error occurred while syncing emails'
+      });
+    } finally {
+      setIsSyncing(false);
     }
   };
-  
-  const goToSettings = () => {
-    window.location.href = '/settings?tab=email';
-  };
-  
-  if (!apiSettings) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-4 pt-20">
-        <Settings className="h-12 w-12 text-gray-400 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Email Not Configured</h2>
-        <p className="text-center text-muted-foreground mb-4">
-          Please configure your email settings to start syncing emails.
-        </p>
-        <Button onClick={goToSettings}>
-          Configure Email
-        </Button>
-      </div>
-    );
-  }
-  
+
+  // Set up automatic email sync every 5 minutes
+  useEffect(() => {
+    const syncInterval = setInterval(() => {
+      if (!isSyncing) {
+        syncEmails(false); // Don't show loading toast for automatic syncs
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(syncInterval);
+  }, [selectedFolder, isSyncing]);
+
+  // Initial folder sync when component mounts
+  useEffect(() => {
+    syncFolders(false);  // Silent sync of folders on mount
+  }, []);
+
   return (
-    <div className="grid md:grid-cols-3 lg:grid-cols-12 h-full pt-16 md:pt-0">
-      <div className="md:col-span-1 lg:col-span-3 border-r">
-        <Tabs defaultValue="inbox" value={currentFolder} onValueChange={setCurrentFolder}>
-          <div className="p-2 border-b">
-            <TabsList className="w-full">
-              <TabsTrigger value="inbox" className="flex-1">Inbox</TabsTrigger>
-              <TabsTrigger value="archive" className="flex-1">Archive</TabsTrigger>
-              <TabsTrigger value="trash" className="flex-1">Trash</TabsTrigger>
-            </TabsList>
-          </div>
-          
-          <TabsContent value="inbox" className="h-[calc(100vh-8rem)] border-0 m-0 p-0">
-            <EmailList 
-              onSelectEmail={setSelectedEmailId} 
-              selectedEmailId={selectedEmailId}
-              currentFolder="INBOX"
-              apiSettings={apiSettings}
-            />
-          </TabsContent>
-          
-          <TabsContent value="archive" className="h-[calc(100vh-8rem)] border-0 m-0 p-0">
-            <EmailList 
-              onSelectEmail={setSelectedEmailId} 
-              selectedEmailId={selectedEmailId}
-              currentFolder="archive"
-              apiSettings={apiSettings}
-            />
-          </TabsContent>
-          
-          <TabsContent value="trash" className="h-[calc(100vh-8rem)] border-0 m-0 p-0">
-            <EmailList 
-              onSelectEmail={setSelectedEmailId} 
-              selectedEmailId={selectedEmailId}
-              currentFolder="trash"
-              apiSettings={apiSettings}
-            />
-          </TabsContent>
-        </Tabs>
-      </div>
-      
-      <Separator orientation="vertical" className="md:hidden" />
-      
-      <div className="md:col-span-2 lg:col-span-9 h-[calc(100vh-4rem)]">
-        <EmailViewer 
-          emailId={selectedEmailId} 
-          userEmail={userEmail}
-          onRefresh={handleEmailListRefresh}
-        />
+    <div className="flex flex-col h-full">
+      <EmailHeader 
+        userEmail={userEmail}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onRefresh={syncEmails}
+        isSyncing={isSyncing}
+        profile={profile}
+      />
+      <div className="grid flex-1 h-[calc(100%-4rem)] mt-16 md:mt-16 grid-cols-[240px_350px_1fr] overflow-hidden">
+        {/* Email Folders Sidebar */}
+        <div className="border-r">
+          <EmailSidebar 
+            selectedFolder={selectedFolder}
+            onSelectFolder={setSelectedFolder}
+          />
+        </div>
+        
+        {/* Email List */}
+        <div className="border-r overflow-y-auto">
+          <EmailList 
+            folder={selectedFolder}
+            selectedEmailId={selectedEmailId}
+            onSelectEmail={setSelectedEmailId}
+            searchQuery={searchQuery}
+          />
+        </div>
+        
+        {/* Email Viewer */}
+        <div className="overflow-y-auto">
+          <EmailViewer 
+            emailId={selectedEmailId}
+            userEmail={userEmail}
+          />
+        </div>
       </div>
     </div>
   );

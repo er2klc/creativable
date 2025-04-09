@@ -1,20 +1,34 @@
 
+export interface Session {
+  timestamp: string;
+  progress: number;
+  start_time?: string;
+  end_time?: string;
+  max_progress?: number;
+}
+
 export interface YoutubeCardProps {
   content: string;
-  metadata?: {
-    type?: string;
-    view_id?: string;
-    url?: string;
-    title?: string;
-    video_progress?: number;
-    completed?: boolean;
-    presentationUrl?: string;
-    event_type?: string;
-    id?: string;
-    ip?: string;
-    location?: string;
-    view_history?: any[];
-    [key: string]: any;
-  };
+  metadata: YoutubeCardMetadata;
   timestamp?: string;
 }
+
+export interface YoutubeCardMetadata {
+  type: string;
+  video_progress?: number;
+  ip?: string;
+  location?: string;
+  event_type?: string;
+  presentationUrl?: string;
+  title?: string;
+  url?: string;
+  id?: string;
+  view_id?: string;
+  completed?: boolean;
+  view_history?: Array<{
+    timestamp: string;
+    progress: number;
+    event_type: string;
+  }>;
+}
+
