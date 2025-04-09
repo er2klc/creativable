@@ -1,3 +1,4 @@
+
 import { format, isSameDay, isWithinInterval, addDays, addWeeks, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,9 +14,17 @@ const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] 
   const monthEnd = endOfMonth(currentDate);
   const instances: TeamEvent[] = [];
 
+  // Handle multi-month recurring events by checking if the event
+  // should appear in the current month view
   let currentInstance = startDate;
-  while (currentInstance <= monthEnd) {
-    if (currentInstance >= monthStart) {
+  
+  // Set a reasonable limit to prevent infinite loops
+  const maxInstances = 100;
+  let instanceCount = 0;
+  
+  while (currentInstance <= monthEnd && instanceCount < maxInstances) {
+    // Only add the instance if it falls within the current month view
+    if (currentInstance >= monthStart && currentInstance <= monthEnd) {
       instances.push({
         ...event,
         id: `${event.id}-${format(currentInstance, 'yyyy-MM-dd')}`,
@@ -27,6 +36,7 @@ const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] 
       });
     }
 
+    // Advance to the next occurrence based on pattern
     switch (event.recurring_pattern) {
       case 'daily':
         currentInstance = addDays(currentInstance, 1);
@@ -38,8 +48,12 @@ const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] 
         currentInstance = addMonths(currentInstance, 1);
         break;
       default:
-        currentInstance = monthEnd; // Exit loop for unknown patterns
+        // Exit loop for unknown patterns
+        instanceCount = maxInstances;
+        break;
     }
+    
+    instanceCount++;
   }
 
   return instances;
@@ -74,13 +88,13 @@ export const useCalendarEvents = (
         ...appointment,
         isTeamEvent: false,
         start_time: appointment.due_date,
-        end_time: appointment.due_date,
+        end_time: appointment.end_date || appointment.due_date,
         is_multi_day: false,
       }));
     },
   });
 
-  // Team events query
+  // Team events query - modified to get events that might affect the current month
   const { data: teamData = { events: [] }, isLoading: isLoadingTeamEvents } = useQuery({
     queryKey: ["team-appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
@@ -107,6 +121,7 @@ export const useCalendarEvents = (
       );
 
       // Fetch team events including admin-only events if user is admin
+      // Modified to get all recurring events, not just those that start in current month
       const { data: events = [], error: eventsError } = await supabase
         .from("team_calendar_events")
         .select(`
@@ -114,8 +129,6 @@ export const useCalendarEvents = (
           teams:team_id (name)
         `)
         .in("team_id", teamIds)
-        .gte("start_time", startOfMonth(currentDate).toISOString())
-        .lte("start_time", endOfMonth(currentDate).toISOString())
         .or(
           isAdmin 
             ? `is_admin_only.eq.false,is_admin_only.eq.true`
@@ -140,7 +153,7 @@ export const useCalendarEvents = (
         isRecurring: event.recurring_pattern !== "none",
       })) as TeamEvent[];
 
-      // Expand recurring events
+      // Expand recurring events for the current month view
       const expandedEvents = processedEvents.flatMap(event => 
         expandRecurringEvent(event, currentDate)
       );
