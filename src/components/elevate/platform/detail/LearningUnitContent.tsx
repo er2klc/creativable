@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye, FileText, Film } from "lucide-react";
@@ -23,7 +24,7 @@ export const LearningUnitContent = ({
   documentUrl,
   onUpdate,
   onDelete,
-  existingFiles
+  existingFiles = []
 }: LearningUnitContentProps) => {
   const [showEditDialog, setShowEditDialog] = useState(false);
 

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { EditUnitDialog } from "../dialog/EditUnitDialog";
 import { CreateUnitDialog } from "../dialog/CreateUnitDialog";
@@ -17,15 +18,23 @@ export const DialogManager = ({ platformId, onUnitCreated }: DialogManagerProps)
     title: any;
     description: any;
     videoUrl: any;
+    existingFiles?: string[];
   }>({
     title: "",
     description: "",
     videoUrl: "",
+    existingFiles: []
   });
 
-  const handleEditClick = (unitId: string, title: string, description: string, videoUrl: string) => {
+  const handleEditClick = (
+    unitId: string, 
+    title: string, 
+    description: string, 
+    videoUrl: string,
+    existingFiles?: string[]
+  ) => {
     setSelectedUnit(unitId);
-    setUnitData({ title, description, videoUrl });
+    setUnitData({ title, description, videoUrl, existingFiles });
     setShowEditDialog(true);
   };
 
@@ -52,16 +61,19 @@ export const DialogManager = ({ platformId, onUnitCreated }: DialogManagerProps)
             setShowEditDialog(open);
             if (!open) {
               setSelectedUnit(null);
-              setUnitData({ title: "", description: "", videoUrl: "" });
+              setUnitData({ title: "", description: "", videoUrl: "", existingFiles: [] });
             }
           }}
           id={selectedUnit}
-          platformId={platformId}
           title={unitData.title}
           description={unitData.description}
           videoUrl={unitData.videoUrl}
+          existingFiles={unitData.existingFiles}
           onUpdate={async (data: { title: string; description: string; videoUrl: string }) => {
             // Handle update logic here
+          }}
+          onDelete={async () => {
+            // Handle delete logic here
           }}
         />
       )}

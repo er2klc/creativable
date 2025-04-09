@@ -1,72 +1,74 @@
 
-import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { DialogHeader } from "./dialog/DialogHeader";
-import { UnitForm } from "./dialog/UnitForm";
 import { DialogFooter } from "./dialog/DialogFooter";
+import { UnitForm } from "./dialog/UnitForm";
+import { Button } from "@/components/ui/button";
+import { DeleteUnitButton } from "./DeleteUnitButton";
 
-interface EditUnitDialogProps {
+export interface EditUnitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
   description: string;
   videoUrl: string;
   onUpdate: (data: { title: string; description: string; videoUrl: string }) => Promise<void>;
+  onDelete: () => Promise<void>;
   id: string;
+  existingFiles?: string[];
 }
 
 export const EditUnitDialog = ({
   open,
   onOpenChange,
-  title: initialTitle,
-  description: initialDescription,
-  videoUrl: initialVideoUrl,
+  title,
+  description,
+  videoUrl,
   onUpdate,
+  onDelete,
   id,
+  existingFiles = []
 }: EditUnitDialogProps) => {
-  const [title, setTitle] = useState(initialTitle);
-  const [description, setDescription] = useState(initialDescription || '');
-  const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title,
+    description,
+    videoUrl,
+  });
 
   const handleSubmit = async () => {
     try {
-      setIsSubmitting(true);
-      await onUpdate({ 
-        title, 
-        description,
-        videoUrl 
-      });
+      setIsLoading(true);
+      await onUpdate(formData);
       onOpenChange(false);
     } catch (error) {
-      console.error('Error updating unit:', error);
-      toast.error('Fehler beim Speichern der Änderungen');
+      console.error("Error updating unit:", error);
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader />
-        <div className="space-y-4">
-          <UnitForm
-            title={title}
-            setTitle={setTitle}
-            description={description}
-            setDescription={setDescription}
-            videoUrl={videoUrl}
-            setVideoUrl={setVideoUrl}
-          />
-          <DialogFooter
-            onCancel={() => onOpenChange(false)}
-            onSave={handleSubmit}
-            isSubmitting={isSubmitting}
-          />
-        </div>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>Lerneinheit bearbeiten</DialogHeader>
+        <UnitForm
+          value={formData}
+          onChange={setFormData}
+          existingFiles={existingFiles}
+        />
+        <DialogFooter className="flex justify-between mt-4">
+          <DeleteUnitButton onDelete={onDelete} />
+          <div className="flex space-x-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Abbrechen
+            </Button>
+            <Button disabled={isLoading} onClick={handleSubmit}>
+              {isLoading ? "Speichert..." : "Speichern"}
+            </Button>
+          </div>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
