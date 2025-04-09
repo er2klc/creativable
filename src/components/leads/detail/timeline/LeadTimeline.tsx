@@ -1,7 +1,7 @@
+
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
-import { LeadWithRelations } from "@/types/leads";
-import { useSocialMediaPosts } from "./hooks/useSocialMediaPosts";
+import { LeadWithRelations } from "@/integrations/supabase/types/leads";
 import { ActivityTimeline } from "./components/ActivityTimeline";
 import { SocialTimeline } from "./components/SocialTimeline";
 import { TimelineHeader } from "./timeline/TimelineHeader";
@@ -17,27 +17,16 @@ import {
 interface LeadTimelineProps {
   lead: LeadWithRelations;
   onDeletePhaseChange?: (noteId: string) => void;
+  onUpdateLead: (lead: LeadWithRelations) => void;
 }
 
-export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
+export const LeadTimeline = ({ lead, onDeletePhaseChange, onUpdateLead }: LeadTimelineProps) => {
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
-  const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
   
-  console.log("DEBUG - LeadTimeline render:", {
-    leadId: lead.id,
-    hasLinkedInPosts: Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0,
-    linkedInPostsData: lead.linkedin_posts,
-    socialMediaPosts: socialMediaPosts?.length || 0,
-    activeTimeline,
-    timestamp: new Date().toISOString()
-  });
-
   const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
-  const hasSocialPosts = Array.isArray(socialMediaPosts) && socialMediaPosts.length > 0;
-  const hasInstagramData = lead.apify_instagram_data && 
-    (typeof lead.apify_instagram_data === 'object' || 
-     Array.isArray(JSON.parse(typeof lead.apify_instagram_data === 'string' ? lead.apify_instagram_data : '[]')));
+  const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
+  const hasInstagramData = lead.platform === 'instagram' && lead.social_media_posts && lead.social_media_posts.length > 0;
   const showSocialTimeline = hasLinkedInPosts || hasSocialPosts || hasInstagramData;
 
   const statusChangeItem = createStatusChangeItem(
@@ -83,7 +72,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           platform={lead.platform}
           hasLinkedInPosts={hasLinkedInPosts}
           linkedInPosts={lead.linkedin_posts || []}
-          socialMediaPosts={socialMediaPosts || []}
+          socialMediaPosts={lead.social_media_posts || []}
           leadId={lead.id}
         />
       )}

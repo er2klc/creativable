@@ -1,39 +1,66 @@
-import { Button } from "@/components/ui/button";
-import { Trash2 } from "lucide-react";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
-interface DeleteUnitButtonProps {
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+
+export interface DeleteUnitButtonProps {
+  onDelete: () => Promise<void>;
   lerninhalteId: string;
-  onDelete: () => void;
 }
 
-export const DeleteUnitButton = ({ lerninhalteId, onDelete }: DeleteUnitButtonProps) => {
+export const DeleteUnitButton = ({ onDelete, lerninhalteId }: DeleteUnitButtonProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const handleDelete = async () => {
+    setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from('elevate_lerninhalte')
-        .delete()
-        .eq('id', lerninhalteId);
-
-      if (error) throw error;
-
-      toast.success("Lerneinheit erfolgreich gelöscht");
-      onDelete();
+      await onDelete();
+      setIsOpen(false);
     } catch (error) {
-      console.error('Error deleting learning unit:', error);
-      toast.error("Fehler beim Löschen der Lerneinheit");
+      console.error("Error deleting unit:", error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      onClick={handleDelete}
-      className="text-destructive hover:text-destructive/90 hover:bg-destructive/10"
-    >
-      <Trash2 className="h-4 w-4" />
-    </Button>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" size="icon" className="text-destructive">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Lerneinheit löschen</AlertDialogTitle>
+          <AlertDialogDescription>
+            Sind Sie sicher, dass Sie diese Lerneinheit löschen möchten? Diese
+            Aktion kann nicht rückgängig gemacht werden.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Abbrechen</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleDelete}
+            disabled={isDeleting}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {isDeleting ? "Löschen..." : "Löschen"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };

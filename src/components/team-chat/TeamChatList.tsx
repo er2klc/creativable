@@ -1,5 +1,5 @@
 
-import { TeamMember } from "./types";
+import { TeamMember } from "@/integrations/supabase/types/leads";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -45,10 +45,6 @@ export const TeamChatList = ({
     );
   }
 
-  const handleRemoveParticipant = (participantId: string) => {
-    removeParticipant.mutate({ teamId, participantId });
-  };
-
   return (
     <ScrollArea className="w-[300px] border-r">
       <div className="p-2 space-y-2">
@@ -78,7 +74,14 @@ export const TeamChatList = ({
                 )}
               </div>
               <button
-                onClick={() => onSelectUser(member)}
+                onClick={() => onSelectUser({
+                  id: member.id,
+                  level: 0, // Default level if not provided
+                  display_name: member.display_name,
+                  avatar_url: member.avatar_url,
+                  last_seen: member.last_seen,
+                  email: member.email
+                })}
                 className="flex flex-col items-start flex-1 text-left"
               >
                 <span className="text-sm font-medium">
@@ -97,7 +100,7 @@ export const TeamChatList = ({
                 variant="ghost"
                 size="icon"
                 className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => handleRemoveParticipant(member.id)}
+                onClick={() => removeParticipant?.mutate?.({ teamId, participantId: member.id })}
               >
                 <X className="h-4 w-4" />
               </Button>

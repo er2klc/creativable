@@ -54,12 +54,12 @@ export const EditUnitDialog = ({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>Lerneinheit bearbeiten</DialogHeader>
         <UnitForm
-          value={formData}
-          onChange={setFormData}
+          initialContent={formData}
+          onContentChange={setFormData}
           existingFiles={existingFiles}
         />
         <DialogFooter className="flex justify-between mt-4">
-          <DeleteUnitButton onDelete={onDelete} />
+          <DeleteUnitButton onDelete={onDelete} lerninhalteId={id} />
           <div className="flex space-x-2">
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Abbrechen

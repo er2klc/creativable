@@ -46,6 +46,10 @@ declare module '@radix-ui/react-dialog' {
   interface DialogDescriptionProps {
     children?: ReactNode;
   }
+
+  interface DialogFooterProps {
+    children?: ReactNode;
+  }
 }
 
 declare module '@radix-ui/react-dropdown-menu' {
@@ -88,6 +92,7 @@ declare module '@radix-ui/react-popover' {
 declare module '@radix-ui/react-scroll-area' {
   interface ScrollAreaProps {
     children?: ReactNode;
+    orientation?: string;
   }
 }
 
@@ -115,7 +120,7 @@ declare module '@radix-ui/react-tooltip' {
   }
 }
 
-// Fix the missing className property in the Progress component
+// Add Progress component class name support
 declare module '@/components/ui/progress' {
   interface ProgressProps {
     className?: string;

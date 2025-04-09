@@ -43,11 +43,13 @@ export const LearningUnitContent = ({
       </div>
 
       <PlatformContent 
-        unitId={unitId}
+        id={unitId}
+        moduleTitle=""
         title={title}
         description={description}
         videoUrl={videoUrl}
         documentUrl={documentUrl}
+        isAdmin={true}
         onUpdate={onUpdate}
         onDelete={onDelete}
       />

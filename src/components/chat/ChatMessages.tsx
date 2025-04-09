@@ -2,11 +2,10 @@
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Message } from "ai";
 import { useEffect } from "react";
 
 interface ChatMessagesProps {
-  messages: Message[];
+  messages: any[];
   scrollRef: React.RefObject<HTMLDivElement>;
 }
 
@@ -17,9 +16,7 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
     }
   }, [messages]);
 
-  const displayMessages = messages.filter((m) => m.role !== "system");
-
-  if (displayMessages.length === 0) {
+  if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
         <p className="text-muted-foreground">Keine Nachrichten vorhanden</p>
@@ -30,7 +27,7 @@ export const ChatMessages = ({ messages, scrollRef }: ChatMessagesProps) => {
   return (
     <div className="h-full overflow-y-auto px-4 py-4" ref={scrollRef}>
       <div className="space-y-4">
-        {displayMessages.map((message) => (
+        {messages.map((message) => (
           <div
             key={message.id}
             className={cn(

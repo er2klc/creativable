@@ -1,6 +1,6 @@
 
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { TeamChatHeader } from "./TeamChatHeader";
 import { TeamChatMessages } from "./TeamChatMessages";
 import { TeamChatInput } from "./TeamChatInput";
@@ -8,6 +8,7 @@ import { TeamChatList } from "./TeamChatList";
 import { useTeamChat } from "./hooks/useTeamChat";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { TeamMember } from "@/integrations/supabase/types/leads";
 
 interface TeamChatDialogProps {
   open: boolean;
@@ -17,6 +18,7 @@ interface TeamChatDialogProps {
 export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const [teamId, setTeamId] = useState<string | undefined>(undefined);
   
   const { 
     selectedUser,
@@ -47,10 +49,9 @@ export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
         
         <div className="flex-1 flex min-h-0">
           <TeamChatList 
-            members={teamMembers}
+            teamId={teamId}
             selectedUserId={selectedUser?.id}
             onSelectUser={selectUser}
-            currentUserLevel={currentUserLevel}
             unreadMessagesByUser={{}}
           />
           
