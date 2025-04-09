@@ -1,18 +1,6 @@
-import { Button } from "@/components/ui/button";
 
-interface DialogFooterProps {
-  onCancel: () => void;
-  onSave: () => void;
-  isSubmitting: boolean;
-}
+import { DialogFooter as UIDialogFooter } from "@/components/ui/dialog";
 
-export const DialogFooter = ({ onCancel, onSave, isSubmitting }: DialogFooterProps) => (
-  <div className="flex justify-end gap-2">
-    <Button variant="outline" onClick={onCancel}>
-      Abbrechen
-    </Button>
-    <Button onClick={onSave} disabled={isSubmitting}>
-      {isSubmitting ? 'Wird gespeichert...' : 'Speichern'}
-    </Button>
-  </div>
+export const DialogFooter: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className }) => (
+  <UIDialogFooter className={className}>{children}</UIDialogFooter>
 );

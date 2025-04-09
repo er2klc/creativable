@@ -1,7 +1,6 @@
-import { DialogHeader as UIDialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-export const DialogHeader = () => (
-  <UIDialogHeader>
-    <DialogTitle>Lerneinheit bearbeiten</DialogTitle>
-  </UIDialogHeader>
+import { DialogHeader as UIDialogHeader } from "@/components/ui/dialog";
+
+export const DialogHeader: React.FC<React.PropsWithChildren> = ({ children }) => (
+  <UIDialogHeader>{children}</UIDialogHeader>
 );

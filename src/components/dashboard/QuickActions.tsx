@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Plus, Instagram, Linkedin, CalendarPlus, FileText, Link2 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useSession } from "@supabase/auth-helpers-react";
@@ -20,7 +20,7 @@ const ShortcutDialog: React.FC<ShortcutDialogProps> = ({ isOpen, onClose }) => {
 };
 
 export const QuickActions = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
   const session = useSession();
   const { settings } = useSettings();
 
@@ -29,23 +29,23 @@ export const QuickActions = () => {
   const [showShortcutDialog, setShowShortcutDialog] = useState(false);
 
   const handleNewLeadClick = () => {
-    router.push("/leads/new");
+    navigate("/leads/new");
   };
 
   const handleNewTaskClick = () => {
-    router.push("/tasks/new");
+    navigate("/tasks/new");
   };
 
   const handleNewNoteClick = () => {
-    router.push("/notes/new");
+    navigate("/notes/new");
   };
 
   const handleNewLinkClick = () => {
-    router.push("/links/new");
+    navigate("/links/new");
   };
 
   const handleContactCreated = (leadId: string) => {
-    router.push(`/leads/${leadId}`);
+    navigate(`/leads/${leadId}`);
   };
 
   return (

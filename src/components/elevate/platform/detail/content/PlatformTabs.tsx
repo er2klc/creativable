@@ -1,3 +1,4 @@
+
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -53,17 +54,10 @@ export const PlatformTabs = ({
       {sortedSubmodules.map((submodule) => (
         <TabsContent key={submodule.id} value={submodule.id} className="bg-white rounded-b-lg">
           <LearningUnitContent
-            id={submodule.id}
-            moduleTitle={platform.name}
+            unitId={submodule.id}
             title={submodule.title}
             description={submodule.description}
             videoUrl={submodule.video_url}
-            isCompleted={isCompleted(submodule.id)}
-            onComplete={() => markAsCompleted(submodule.id, !isCompleted(submodule.id))}
-            onVideoProgress={(progress) => handleVideoProgress(submodule.id, progress)}
-            savedProgress={parseFloat(localStorage.getItem(`video-progress-${submodule.id}`) || '0')}
-            isAdmin={isAdmin}
-            onDelete={handleDeleteUnit}
             onUpdate={async (data) => {
               try {
                 const { error } = await supabase
@@ -83,6 +77,8 @@ export const PlatformTabs = ({
                 toast.error("Fehler beim Aktualisieren der Lerneinheit");
               }
             }}
+            onDelete={handleDeleteUnit}
+            existingFiles={[]}
           />
         </TabsContent>
       ))}

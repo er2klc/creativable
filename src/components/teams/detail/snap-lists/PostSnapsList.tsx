@@ -1,76 +1,110 @@
 
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { PostList } from "../../posts/PostList";
-import { CreatePostDialog } from "../../posts/CreatePostDialog";
-import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { CreatePostDialog } from "@/components/teams/posts/CreatePostDialog";
+import { useParams } from "react-router-dom";
+import { Post } from "@/components/teams/posts/types/post";
+import { PostCard } from "@/components/teams/posts/PostCard";
 
 interface PostSnapsListProps {
   teamId: string;
-  isAdmin: boolean;
+  limit?: number;
+  categoryId?: string;
+  title?: string;
 }
 
-export const PostSnapsList = ({ teamId, isAdmin }: PostSnapsListProps) => {
-  console.log("PostSnapsList rendered with teamId:", teamId);
+export const PostSnapsList = ({ teamId, limit = 3, categoryId, title = "Neueste Beiträge" }: PostSnapsListProps) => {
+  const { teamSlug } = useParams<{ teamSlug: string }>();
+  const [canPost, setCanPost] = useState(true); // Default to true, would normally check user permissions
 
-  const { data: categories, isLoading } = useQuery({
-    queryKey: ['team-categories', teamId],
+  const { data: posts, isLoading } = useQuery({
+    queryKey: ['team-posts-snap', teamId, categoryId, limit],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('team_categories')
-        .select('*')
+      let query = supabase
+        .from('team_posts')
+        .select(`
+          *,
+          team_categories (
+            name,
+            slug,
+            color,
+            settings
+          ),
+          author:profiles!team_posts_created_by_fkey (
+            display_name,
+            avatar_url,
+            email
+          ),
+          team_post_comments(count)
+        `)
         .eq('team_id', teamId)
-        .order('order_index');
-
+        .order('created_at', { ascending: false })
+        .limit(limit);
+        
+      if (categoryId) {
+        query = query.eq('category_id', categoryId);
+      }
+        
+      const { data, error } = await query;
+      
       if (error) throw error;
-      console.log("Fetched categories:", data);
-      return data;
+      
+      return data.map(post => ({
+        ...post,
+        team_post_comments: post.team_post_comments[0]?.count || 0
+      }));
     },
+    enabled: !!teamId
   });
 
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-4 bg-muted rounded w-1/4"></div>
-            <div className="h-4 bg-muted rounded w-3/4"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (!categories?.length) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center text-muted-foreground">
-            Keine Kategorien gefunden
-          </div>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-md font-medium">{title}</CardTitle>
+          <Skeleton className="h-10 w-[120px]" />
+        </CardHeader>
+        <CardContent className="pt-0">
+          {Array(3).fill(0).map((_, i) => (
+            <Skeleton key={i} className="h-[140px] w-full mt-2 rounded-lg" />
+          ))}
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="space-y-8">
-      {categories.map((category) => (
-        <div key={category.id} className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-semibold">{category.name}</h2>
-              {category.description && (
-                <span className="text-sm text-muted-foreground">
-                  {category.description}
-                </span>
-              )}
-            </div>
-            {isAdmin && <CreatePostDialog teamId={teamId} categoryId={category.id} />}
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between pb-2">
+        <CardTitle className="text-md font-medium">{title}</CardTitle>
+        <CreatePostDialog 
+          teamId={teamId} 
+          categoryId={categoryId}
+          canPost={canPost}
+          teamSlug={teamSlug || ""}
+        />
+      </CardHeader>
+      <CardContent className="pt-0">
+        {posts && posts.length > 0 ? (
+          <div className="space-y-4">
+            {posts.map((post: Post) => (
+              <PostCard
+                key={post.id}
+                post={post}
+                teamSlug={teamSlug || teamId}
+                size="small"
+              />
+            ))}
           </div>
-          <PostList teamId={teamId} categoryId={category.id} />
-        </div>
-      ))}
-    </div>
+        ) : (
+          <div className="text-center py-4 text-muted-foreground">
+            Keine Beiträge gefunden
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };

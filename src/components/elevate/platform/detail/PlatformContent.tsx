@@ -1,8 +1,8 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Edit, Eye, FileText, Film } from "lucide-react";
-import { EditUnitDialog } from "./EditUnitDialog";
+import { Edit, Eye, FileText } from "lucide-react";
+import { EditUnitDialog } from "./dialog/EditUnitDialog";
 
 interface PlatformContentProps {
   id: string;

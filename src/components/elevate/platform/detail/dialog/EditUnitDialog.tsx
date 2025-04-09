@@ -1,9 +1,9 @@
 
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader as UIDialogHeader, DialogFooter as UIDialogFooter } from "@/components/ui/dialog";
-import { UnitForm } from "./dialog/UnitForm";
+import { UnitForm } from "./UnitForm";
 import { Button } from "@/components/ui/button";
-import { DeleteUnitButton } from "./DeleteUnitButton";
+import { DeleteUnitButton } from "../DeleteUnitButton";
 
 export interface EditUnitDialogProps {
   open: boolean;

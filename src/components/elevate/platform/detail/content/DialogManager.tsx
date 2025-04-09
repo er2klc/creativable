@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { EditUnitDialog } from "../dialog/EditUnitDialog";
 import { CreateUnitDialog } from "../dialog/CreateUnitDialog";
@@ -70,9 +71,11 @@ export const DialogManager = ({ platformId, onUnitCreated }: DialogManagerProps)
           existingFiles={unitData.existingFiles}
           onUpdate={async (data: { title: string; description: string; videoUrl: string }) => {
             // Handle update logic here
+            console.log("Update unit:", data);
           }}
           onDelete={async () => {
             // Handle delete logic here
+            console.log("Delete unit:", selectedUnit);
           }}
         />
       )}

@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Edit, Eye, FileText, Film } from "lucide-react";
-import { EditUnitDialog } from "./EditUnitDialog";
+import { EditUnitDialog } from "./dialog/EditUnitDialog";
 import { PlatformContent } from "./PlatformContent";
 
 interface LearningUnitContentProps {
