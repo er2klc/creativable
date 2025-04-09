@@ -1,188 +1,132 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useLeadStore } from "@/store/useLeadStore";
+import { LeadRow } from "./LeadRow";
 import { Tables } from "@/integrations/supabase/types";
-import { useSettings } from "@/hooks/use-settings";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { LeadTableCell } from "./table/LeadTableCell";
-import { LeadTableActions } from "./table/LeadTableActions";
-import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Text } from "@/components/ui/text";
+import { useFilter } from "@/hooks/use-filter";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
-interface LeadTableViewProps {
-  leads: Tables<"leads">[];
-  onLeadClick: (id: string) => void;
-  selectedPipelineId: string | null;
-}
-
-export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTableViewProps) => {
-  const { settings } = useSettings();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
+export const LeadTableView = () => {
+  const navigate = useNavigate();
+  const filter = useFilter();
   const isMobile = useIsMobile();
+  const store = useLeadStore();
+  const [loadingLeads, setLoadingLeads] = useState<Record<string, boolean>>({});
 
-  const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases", selectedPipelineId],
-    queryFn: async () => {
-      if (!selectedPipelineId) return [];
-      const { data, error } = await supabase
-        .from("pipeline_phases")
-        .select("*")
-        .eq("pipeline_id", selectedPipelineId)
-        .order("order_index");
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!selectedPipelineId,
-  });
-
-  // Subscribe to lead deletions
-  const subscribeToLeadDeletions = async () => {
-    const channel = supabase
-      .channel('lead-deletions')
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'leads',
-        },
-        (payload) => {
-          // Update the cache to remove the deleted lead
-          queryClient.setQueryData(
-            ["leads", selectedPipelineId],
-            (oldData: Tables<"leads">[]) => {
-              if (!oldData) return [];
-              return oldData.filter(lead => lead.id !== payload.old.id);
-            }
-          );
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-
-  // Set up the subscription when the component mounts
-  useState(() => {
-    const unsubscribe = subscribeToLeadDeletions();
-    return () => {
-      unsubscribe.then(cleanup => cleanup());
-    };
-  }, [selectedPipelineId]);
-
-  const handlePhaseChange = async (leadId: string, phaseId: string) => {
+  const handleArchive = async (leadId: string) => {
+    setLoadingLeads((prev) => ({ ...prev, [leadId]: true }));
     try {
-      const { error } = await supabase
+      await supabase
         .from("leads")
-        .update({
-          phase_id: phaseId,
-          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
-          last_action_date: new Date().toISOString(),
-        })
+        .update({ archived: true })
         .eq("id", leadId);
 
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-
-      toast({
-        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-        description: settings?.language === "en"
-          ? "The phase has been successfully updated."
-          : "Die Phase wurde erfolgreich aktualisiert.",
-      });
+      store.archiveLead(leadId);
+      toast.success("Lead archiviert");
     } catch (error) {
-      console.error("Error updating phase:", error);
-      toast({
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: settings?.language === "en"
-          ? "Failed to update phase"
-          : "Phase konnte nicht aktualisiert werden",
-        variant: "destructive",
-      });
+      console.error("Error archiving lead:", error);
+      toast.error("Fehler beim Archivieren des Leads");
+    } finally {
+      setLoadingLeads((prev) => ({ ...prev, [leadId]: false }));
     }
   };
 
-  // Sort leads with favorites first
-  const sortedLeads = [...leads].sort((a, b) => {
-    if (a.is_favorite && !b.is_favorite) return -1;
-    if (!a.is_favorite && b.is_favorite) return 1;
-    return 0;
-  });
+  const handleSelect = (lead: Tables<"leads">) => {
+    store.setSelectedLeadId(lead.id);
+  };
+
+  // Filtering logic
+  let filteredLeads = [...store.leads];
+
+  if (filter.searchTerm) {
+    filteredLeads = filteredLeads.filter((lead) =>
+      lead.name?.toLowerCase().includes(filter.searchTerm.toLowerCase())
+    );
+  }
+
+  if (filter.platform && filter.platform !== "all") {
+    filteredLeads = filteredLeads.filter(
+      (lead) => lead.platform === filter.platform
+    );
+  }
+
+  if (filter.status && filter.status !== "all") {
+    filteredLeads = filteredLeads.filter(
+      (lead) => lead.status === filter.status
+    );
+  }
+
+  if (filter.phase && filter.phase !== "all") {
+    filteredLeads = filteredLeads.filter((lead) => {
+      // Handle 'no_phase' special case
+      if (filter.phase === "no_phase") {
+        return !lead.phase_id;
+      }
+      return lead.phase_id === filter.phase;
+    });
+  }
+
+  if (!isMobile) {
+    return (
+      <div className="overflow-x-auto">
+        <table className="w-full">
+          <thead className="text-left text-sm font-medium text-gray-500">
+            <tr className="border-b">
+              <th className="px-4 py-3 w-1/4">Name</th>
+              <th className="px-4 py-3 w-1/6">Plattform</th>
+              <th className="px-4 py-3 w-1/6">Status</th>
+              <th className="px-4 py-3 w-1/6">Phase</th>
+              <th className="px-4 py-3 w-1/6">Aktionen</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredLeads.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="text-center py-4 text-gray-500">
+                  Keine Leads gefunden
+                </td>
+              </tr>
+            ) : (
+              filteredLeads.map((lead) => (
+                <LeadRow
+                  key={lead.id}
+                  lead={lead}
+                  isSelected={store.selectedLeadId === lead.id}
+                  onSelect={() => handleSelect(lead)}
+                  onArchive={() => handleArchive(lead.id)}
+                  isLoading={loadingLeads[lead.id] || false}
+                />
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="min-w-full">
-        <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
-            <TableRow>
-              {!isMobile && (
-                <TableCell className="w-[30px] p-2">
-                  <span className="sr-only">Favorite</span>
-                </TableCell>
-              )}
-              <TableCell className={isMobile ? "p-2" : "w-[15%] min-w-[120px]"}>
-                {settings?.language === "en" ? "Contact" : "Kontakt"}
-              </TableCell>
-              {!isMobile && (
-                <>
-                  <TableCell className="w-[15%] min-w-[120px]">
-                    {settings?.language === "en" ? "Platform" : "Plattform"}
-                  </TableCell>
-                  <TableCell className="w-[15%] min-w-[120px]">
-                    {settings?.language === "en" ? "Phase" : "Phase"}
-                  </TableCell>
-                  <TableCell className="w-[20%] min-w-[120px]">
-                    {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
-                  </TableCell>
-                  <TableCell className="w-[15%] min-w-[120px]">
-                    {settings?.language === "en" ? "Status" : "Status"}
-                  </TableCell>
-                </>
-              )}
-              <TableCell className="w-[50px]">
-                <span className="sr-only">Actions</span>
-              </TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedLeads.map((lead) => (
-              <TableRow
-                key={lead.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => onLeadClick(lead.id)}
-              >
-                {!isMobile && <LeadTableCell type="favorite" value={null} lead={lead} />}
-                <LeadTableCell type="name" value={lead.name} lead={lead} />
-                {!isMobile && (
-                  <>
-                    <LeadTableCell type="platform" value={lead.platform} />
-                    <LeadTableCell type="phase" value={lead.phase_id} />
-                    <LeadTableCell type="lastAction" value={lead.last_action_date} />
-                    <LeadTableCell type="status" value={lead.status} lead={lead} />
-                  </>
-                )}
-                <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                  <LeadTableActions
-                    lead={lead}
-                    onShowDetails={() => onLeadClick(lead.id)}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+    <div className="space-y-3">
+      {filteredLeads.length === 0 ? (
+        <Text className="text-center py-4 text-gray-500">
+          Keine Leads gefunden
+        </Text>
+      ) : (
+        filteredLeads.map((lead) => (
+          <LeadRow
+            key={lead.id}
+            lead={lead}
+            isSelected={store.selectedLeadId === lead.id}
+            onSelect={() => handleSelect(lead)}
+            onArchive={() => handleArchive(lead.id)}
+            isLoading={loadingLeads[lead.id] || false}
+            isMobile={true}
+          />
+        ))
+      )}
     </div>
   );
 };

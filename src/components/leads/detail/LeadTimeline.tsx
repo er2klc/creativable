@@ -1,23 +1,15 @@
 
 import { useState, useEffect } from "react";
+import { useSession } from "@supabase/auth-helpers-react";
+import { format, formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
+import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "@/types/leads";
-import { useSocialMediaPosts } from "./hooks/useSocialMediaPosts";
-import { ActivityTimeline } from "./timeline/components/ActivityTimeline";
-import { SocialTimeline } from "./timeline/components/SocialTimeline";
-import { TimelineHeader } from "./timeline/TimelineHeader";
-import { 
-  mapNoteToTimelineItem, 
-  mapTaskToTimelineItem, 
-  mapMessageToTimelineItem, 
-  mapFileToTimelineItem,
-  mapBusinessMatchToTimelineItem,
-  createContactCreationItem,
-  createStatusChangeItem 
-} from "./timeline/utils/timelineMappers";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { Timeline } from "./timeline/Timeline";
+import { TimelineItem, TimelineItemType } from "./timeline/TimelineUtils";
+import { EmptyTimeline } from "./timeline/EmptyTimeline";
+import { useLeadActivities } from "@/hooks/use-lead-activities";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
@@ -26,135 +18,115 @@ interface LeadTimelineProps {
 
 export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) => {
   const { settings } = useSettings();
-  const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
-  const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
-  const [tasks, setTasks] = useState(lead.tasks || []);
-  const queryClient = useQueryClient();
-  
-  // Update local tasks when lead tasks change
+  const session = useSession();
+  const [timelineItems, setTimelineItems] = useState<TimelineItem[]>([]);
+  const { activities, isLoading } = useLeadActivities(lead.id);
+
   useEffect(() => {
+    if (!lead) return;
+
+    // Combine all types of activities into timeline items
+    const items: TimelineItem[] = [];
+
+    // Add messages
+    if (lead.messages) {
+      lead.messages.forEach((message) => {
+        items.push({
+          id: message.id,
+          type: "message" as TimelineItemType,
+          content: message.content || "",
+          timestamp: message.created_at,
+          platform: lead.platform || undefined,
+          metadata: {
+            sender: message.sender || "user",
+            receiver: message.receiver || "lead",
+          },
+        });
+      });
+    }
+
+    // Add tasks
     if (lead.tasks) {
-      setTasks(lead.tasks);
+      lead.tasks.forEach((task) => {
+        items.push({
+          id: task.id,
+          type: "task" as TimelineItemType,
+          content: task.content || "",
+          timestamp: task.created_at,
+          status: task.completed ? "completed" : "open",
+          metadata: {
+            due_date: task.due_date,
+            completed_at: task.completed_at,
+            priority: task.priority,
+          },
+        });
+      });
     }
-  }, [lead.tasks]);
-  
-  // Set up realtime subscription to tasks
-  useEffect(() => {
-    const taskChannel = supabase
-      .channel(`tasks-${lead.id}`)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'tasks',
-        filter: `lead_id=eq.${lead.id}`
-      }, () => {
-        // When tasks change, invalidate queries
-        queryClient.invalidateQueries({ queryKey: ['lead', lead.id] });
-        queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      })
-      .subscribe();
 
-    return () => {
-      supabase.removeChannel(taskChannel);
-    };
-  }, [lead.id, queryClient]);
-  
-  const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
-  const hasSocialPosts = Array.isArray(socialMediaPosts) && socialMediaPosts.length > 0;
-  const hasInstagramData = lead.apify_instagram_data && 
-    (typeof lead.apify_instagram_data === 'object' || 
-     Array.isArray(JSON.parse(typeof lead.apify_instagram_data === 'string' ? lead.apify_instagram_data : '[]')));
-  const showSocialTimeline = hasLinkedInPosts || hasSocialPosts || hasInstagramData;
-
-  const statusChangeItem = createStatusChangeItem(
-    lead.status || 'lead',
-    lead.updated_at || lead.created_at || new Date().toISOString()
-  );
-
-  // Holen der Business Match-Daten, falls vorhanden
-  const businessMatchItems = lead.business_match ? 
-    [mapBusinessMatchToTimelineItem(lead.business_match)] : 
-    [];
-
-  // Handle task completion toggle
-  const handleToggleTaskComplete = async (taskId: string, completed: boolean) => {
-    try {
-      // Update local state for immediate UI feedback
-      setTasks(prevTasks => prevTasks.map(task => 
-        task.id === taskId ? { ...task, completed } : task
-      ));
-      
-      // Update in database
-      const { error } = await supabase
-        .from('tasks')
-        .update({ completed })
-        .eq('id', taskId);
-        
-      if (error) throw error;
-      
-      // Invalidate queries to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ['lead', lead.id] });
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
-      
-    } catch (error) {
-      console.error("Error toggling task completion:", error);
-      toast.error(
-        settings?.language === "en" 
-          ? "Failed to update task" 
-          : "Fehler beim Aktualisieren der Aufgabe"
-      );
-      
-      // Revert local state on error
-      setTasks(prevTasks => prevTasks.map(task => 
-        task.id === taskId ? { ...task, completed: !completed } : task
-      ));
+    // Add notes
+    if (lead.notes) {
+      lead.notes.forEach((note) => {
+        items.push({
+          id: note.id,
+          type: "note" as TimelineItemType,
+          content: note.content || "",
+          timestamp: note.created_at,
+          metadata: {
+            last_edited_at: note.updated_at,
+            created_at: note.created_at,
+          },
+        });
+      });
     }
-  };
 
-  const allActivities = [
-    ...businessMatchItems,
-    ...(statusChangeItem ? [statusChangeItem] : []),
-    ...(lead.notes || []).map(mapNoteToTimelineItem),
-    ...(tasks || []).map(mapTaskToTimelineItem),
-    ...(lead.messages || []).map(mapMessageToTimelineItem),
-    ...(lead.lead_files || []).map(mapFileToTimelineItem),
-    createContactCreationItem(lead.name, lead.created_at)
-  ];
+    // Add activities
+    if (activities) {
+      activities.forEach((activity) => {
+        // Check if activity is phase change
+        if (activity.type === "phase_change") {
+          items.push({
+            id: activity.id,
+            type: "phase_change" as TimelineItemType,
+            content: activity.content || "",
+            timestamp: activity.created_at,
+            metadata: {
+              type: activity.metadata?.type || "phase_change",
+              oldPhase: activity.metadata?.old_phase,
+              newPhase: activity.metadata?.new_phase,
+              oldStatus: activity.metadata?.old_status,
+              newStatus: activity.metadata?.new_status,
+            },
+          });
+        }
+      });
+    }
 
-  const timelineItems = allActivities.sort((a, b) => 
-    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-  );
+    // Sort by timestamp in descending order (newest first)
+    items.sort((a, b) => {
+      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+    });
+
+    setTimelineItems(items);
+  }, [lead, activities]);
+
+  if (isLoading) {
+    return (
+      <div className="py-8 text-center text-sm text-gray-500">
+        {settings?.language === "en" ? "Loading timeline..." : "Timeline wird geladen..."}
+      </div>
+    );
+  }
+
+  if (timelineItems.length === 0) {
+    return <EmptyTimeline leadId={lead.id} />;
+  }
 
   return (
-    <div className="space-y-4">
-      <TimelineHeader 
-        title={activeTimeline === 'activities' ? 
-          (settings?.language === "en" ? "Activities" : "Aktivitäten") :
-          (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
-        }
-        showSocialTimeline={showSocialTimeline}
-        activeTimeline={activeTimeline}
-        onTimelineChange={setActiveTimeline}
-        platform={lead.platform}
-        hasLinkedInPosts={hasLinkedInPosts}
-      />
-
-      {activeTimeline === 'activities' ? (
-        <ActivityTimeline 
-          items={timelineItems}
-          onDeletePhaseChange={onDeletePhaseChange}
-          onToggleTaskComplete={handleToggleTaskComplete}
-          leadName={lead.name}
-        />
-      ) : (
-        <SocialTimeline 
-          platform={lead.platform}
-          hasLinkedInPosts={hasLinkedInPosts}
-          linkedInPosts={lead.linkedin_posts || []}
-          socialMediaPosts={socialMediaPosts || []}
-          leadId={lead.id}
-        />
-      )}
+    <div className="mt-6">
+      <h3 className="text-lg font-medium mb-4">
+        {settings?.language === "en" ? "Timeline" : "Zeitleiste"}
+      </h3>
+      <Timeline items={timelineItems} onDeletePhaseChange={onDeletePhaseChange} />
     </div>
   );
 };
