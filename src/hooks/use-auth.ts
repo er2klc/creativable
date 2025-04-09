@@ -1,5 +1,5 @@
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useSupabaseClient, useSessionContext, User } from '@supabase/auth-helpers-react';
 
 export const useAuth = () => {
@@ -8,6 +8,7 @@ export const useAuth = () => {
   const { session, isLoading: sessionLoading } = useSessionContext();
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const fetchAttemptedRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
 
@@ -31,9 +32,11 @@ export const useAuth = () => {
       
       if (session?.user) {
         setUser(session.user);
+        setIsAuthenticated(true);
       } else {
         // If no session is present, set user to null
         setUser(null);
+        setIsAuthenticated(false);
       }
     } catch (err: any) {
       setError(err);
@@ -57,6 +60,7 @@ export const useAuth = () => {
   return { 
     user, 
     isLoading: isLoading || sessionLoading, 
-    error 
+    error,
+    isAuthenticated
   };
 };

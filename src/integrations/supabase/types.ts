@@ -9,6 +9,45 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_email_settings: {
+        Row: {
+          created_at: string | null
+          folder: string
+          host: string
+          id: string
+          password: string
+          port: number
+          tls: boolean
+          updated_at: string | null
+          user_id: string
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          folder?: string
+          host: string
+          id?: string
+          password: string
+          port?: number
+          tls?: boolean
+          updated_at?: string | null
+          user_id: string
+          username: string
+        }
+        Update: {
+          created_at?: string | null
+          folder?: string
+          host?: string
+          id?: string
+          password?: string
+          port?: number
+          tls?: boolean
+          updated_at?: string | null
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
       changelog_entries: {
         Row: {
           created_at: string | null
@@ -750,7 +789,11 @@ export type Database = {
           folder: string
           id: string
           items_synced: number | null
+          last_error: string | null
           last_sync_time: string | null
+          last_uid: number | null
+          sync_in_progress: boolean | null
+          total_items: number | null
           updated_at: string | null
           user_id: string
         }
@@ -759,7 +802,11 @@ export type Database = {
           folder?: string
           id?: string
           items_synced?: number | null
+          last_error?: string | null
           last_sync_time?: string | null
+          last_uid?: number | null
+          sync_in_progress?: boolean | null
+          total_items?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -768,7 +815,11 @@ export type Database = {
           folder?: string
           id?: string
           items_synced?: number | null
+          last_error?: string | null
           last_sync_time?: string | null
+          last_uid?: number | null
+          sync_in_progress?: boolean | null
+          total_items?: number | null
           updated_at?: string | null
           user_id?: string
         }
@@ -875,18 +926,28 @@ export type Database = {
           created_at: string | null
           direction: string
           error_message: string | null
+          flags: Json | null
           folder: string
           from_email: string
+          from_name: string | null
+          has_attachments: boolean | null
+          headers: Json | null
+          html_content: string | null
           id: string
           in_reply_to: string | null
           lead_id: string | null
+          message_id: string | null
           read: boolean | null
           received_at: string | null
           sent_at: string | null
+          starred: boolean | null
           status: string
           subject: string
+          text_content: string | null
           thread_id: string | null
           to_email: string
+          to_name: string | null
+          uid: number | null
           user_id: string
         }
         Insert: {
@@ -897,18 +958,28 @@ export type Database = {
           created_at?: string | null
           direction: string
           error_message?: string | null
+          flags?: Json | null
           folder?: string
           from_email: string
+          from_name?: string | null
+          has_attachments?: boolean | null
+          headers?: Json | null
+          html_content?: string | null
           id?: string
           in_reply_to?: string | null
           lead_id?: string | null
+          message_id?: string | null
           read?: boolean | null
           received_at?: string | null
           sent_at?: string | null
+          starred?: boolean | null
           status?: string
           subject: string
+          text_content?: string | null
           thread_id?: string | null
           to_email: string
+          to_name?: string | null
+          uid?: number | null
           user_id: string
         }
         Update: {
@@ -919,18 +990,28 @@ export type Database = {
           created_at?: string | null
           direction?: string
           error_message?: string | null
+          flags?: Json | null
           folder?: string
           from_email?: string
+          from_name?: string | null
+          has_attachments?: boolean | null
+          headers?: Json | null
+          html_content?: string | null
           id?: string
           in_reply_to?: string | null
           lead_id?: string | null
+          message_id?: string | null
           read?: boolean | null
           received_at?: string | null
           sent_at?: string | null
+          starred?: boolean | null
           status?: string
           subject?: string
+          text_content?: string | null
           thread_id?: string | null
           to_email?: string
+          to_name?: string | null
+          uid?: number | null
           user_id?: string
         }
         Relationships: [
@@ -981,6 +1062,7 @@ export type Database = {
           auto_reconnect: boolean | null
           connection_timeout: number | null
           created_at: string | null
+          force_insecure: boolean | null
           historical_sync: boolean | null
           historical_sync_date: string | null
           historical_sync_progress: number | null
@@ -994,6 +1076,7 @@ export type Database = {
           max_historical_emails: number | null
           password: string
           port: number
+          progressive_loading: boolean | null
           secure: boolean
           sync_progress: number | null
           sync_start_date: string | null
@@ -1007,6 +1090,7 @@ export type Database = {
           auto_reconnect?: boolean | null
           connection_timeout?: number | null
           created_at?: string | null
+          force_insecure?: boolean | null
           historical_sync?: boolean | null
           historical_sync_date?: string | null
           historical_sync_progress?: number | null
@@ -1020,6 +1104,7 @@ export type Database = {
           max_historical_emails?: number | null
           password: string
           port: number
+          progressive_loading?: boolean | null
           secure?: boolean
           sync_progress?: number | null
           sync_start_date?: string | null
@@ -1033,6 +1118,7 @@ export type Database = {
           auto_reconnect?: boolean | null
           connection_timeout?: number | null
           created_at?: string | null
+          force_insecure?: boolean | null
           historical_sync?: boolean | null
           historical_sync_date?: string | null
           historical_sync_progress?: number | null
@@ -1046,6 +1132,7 @@ export type Database = {
           max_historical_emails?: number | null
           password?: string
           port?: number
+          progressive_loading?: boolean | null
           secure?: boolean
           sync_progress?: number | null
           sync_start_date?: string | null
@@ -4906,10 +4993,7 @@ export type Database = {
     }
     Functions: {
       array_append: {
-        Args: {
-          arr: Json
-          elem: Json
-        }
+        Args: { arr: Json; elem: Json }
         Returns: Json
       }
       award_team_points: {
@@ -4922,36 +5006,25 @@ export type Database = {
         }
         Returns: undefined
       }
-      binary_quantize:
-        | {
-            Args: {
-              "": string
-            }
-            Returns: unknown
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: unknown
-          }
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       check_platform_access: {
-        Args: {
-          platform_id: string
-          user_id: string
-        }
+        Args: { platform_id: string; user_id: string }
         Returns: boolean
       }
       check_team_member: {
-        Args: {
-          team_id: string
-          user_id: string
-        }
+        Args: { team_id: string; user_id: string }
         Returns: boolean
       }
       check_time_discrepancy: {
         Args: Record<PropertyKey, never>
         Returns: Json
+      }
+      cleanup_user_email_data: {
+        Args: { user_id_param: string }
+        Returns: boolean
       }
       create_phase_analysis: {
         Args: {
@@ -5060,16 +5133,16 @@ export type Database = {
         Returns: Json
       }
       decrement: {
-        Args: {
-          x: number
-        }
+        Args: { x: number }
         Returns: number
       }
       delete_team_cascade: {
-        Args: {
-          team_id_param: string
-        }
+        Args: { team_id_param: string }
         Returns: undefined
+      }
+      fix_duplicate_email_folders: {
+        Args: { user_id_param: string }
+        Returns: Json
       }
       generate_elevate_invite_code: {
         Args: Record<PropertyKey, never>
@@ -5080,32 +5153,19 @@ export type Database = {
         Returns: string
       }
       generate_presentation_slug: {
-        Args: {
-          title: string
-          video_id: string
-        }
+        Args: { title: string; video_id: string }
         Returns: string
       }
       generate_profile_slug: {
-        Args: {
-          display_name: string
-          email: string
-        }
+        Args: { display_name: string; email: string }
         Returns: string
       }
       generate_unique_slug: {
-        Args: {
-          base_slug: string
-          table_name: string
-          existing_id?: string
-        }
+        Args: { base_slug: string; table_name: string; existing_id?: string }
         Returns: string
       }
       get_contact_context: {
-        Args: {
-          p_user_id: string
-          p_contact_id: string
-        }
+        Args: { p_user_id: string; p_contact_id: string }
         Returns: {
           id: string
           name: string
@@ -5123,9 +5183,7 @@ export type Database = {
         }[]
       }
       get_contact_social_insights: {
-        Args: {
-          contact_id: string
-        }
+        Args: { contact_id: string }
         Returns: {
           recent_posts: Json
           engagement_stats: Json
@@ -5158,9 +5216,7 @@ export type Database = {
         }[]
       }
       get_user_teams: {
-        Args: {
-          uid: string
-        }
+        Args: { uid: string }
         Returns: {
           created_at: string | null
           created_by: string
@@ -5176,81 +5232,55 @@ export type Database = {
         }[]
       }
       gtrgm_compress: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       gtrgm_decompress: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       gtrgm_in: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       gtrgm_options: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: undefined
       }
       gtrgm_out: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       halfvec_avg: {
-        Args: {
-          "": number[]
-        }
+        Args: { "": number[] }
         Returns: unknown
       }
       halfvec_out: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       halfvec_send: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: string
       }
       halfvec_typmod_in: {
-        Args: {
-          "": unknown[]
-        }
+        Args: { "": unknown[] }
         Returns: number
       }
       hnsw_bit_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       hnsw_halfvec_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       hnsw_sparsevec_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       hnswhandler: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       is_super_admin: {
@@ -5258,72 +5288,35 @@ export type Database = {
         Returns: boolean
       }
       is_team_admin: {
-        Args: {
-          team_id: string
-        }
+        Args: { team_id: string }
         Returns: boolean
       }
       ivfflat_bit_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       ivfflat_halfvec_support: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       ivfflathandler: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       jsonb_array_append: {
-        Args: {
-          arr: Json
-          elem: Json
-        }
+        Args: { arr: Json; elem: Json }
         Returns: Json
       }
-      l2_norm:
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: number
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: number
-          }
-      l2_normalize:
-        | {
-            Args: {
-              "": string
-            }
-            Returns: string
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: unknown
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: unknown
-          }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
       mark_all_notifications_as_read: {
-        Args: {
-          user_id_input: string
-        }
+        Args: { user_id_input: string }
         Returns: undefined
       }
       match_combined_content: {
@@ -5359,11 +5352,7 @@ export type Database = {
         }[]
       }
       match_lead_content: {
-        Args: {
-          p_user_id: string
-          query_text: string
-          match_count?: number
-        }
+        Args: { p_user_id: string; query_text: string; match_count?: number }
         Returns: {
           id: string
           name: string
@@ -5411,10 +5400,12 @@ export type Database = {
           content_type: string
         }[]
       }
+      reset_email_sync: {
+        Args: { user_id_param: string }
+        Returns: Json
+      }
       reset_imap_settings: {
-        Args: {
-          user_id_param: string
-        }
+        Args: { user_id_param: string }
         Returns: boolean
       }
       retry_failed_embeddings: {
@@ -5422,9 +5413,7 @@ export type Database = {
         Returns: undefined
       }
       set_limit: {
-        Args: {
-          "": number
-        }
+        Args: { "": number }
         Returns: number
       }
       show_limit: {
@@ -5432,70 +5421,43 @@ export type Database = {
         Returns: number
       }
       show_trgm: {
-        Args: {
-          "": string
-        }
+        Args: { "": string }
         Returns: string[]
       }
       sparsevec_out: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: unknown
       }
       sparsevec_send: {
-        Args: {
-          "": unknown
-        }
+        Args: { "": unknown }
         Returns: string
       }
       sparsevec_typmod_in: {
-        Args: {
-          "": unknown[]
-        }
+        Args: { "": unknown[] }
         Returns: number
       }
       vector_avg: {
-        Args: {
-          "": number[]
-        }
+        Args: { "": number[] }
         Returns: string
       }
-      vector_dims:
-        | {
-            Args: {
-              "": string
-            }
-            Returns: number
-          }
-        | {
-            Args: {
-              "": unknown
-            }
-            Returns: number
-          }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
       vector_norm: {
-        Args: {
-          "": string
-        }
+        Args: { "": string }
         Returns: number
       }
       vector_out: {
-        Args: {
-          "": string
-        }
+        Args: { "": string }
         Returns: unknown
       }
       vector_send: {
-        Args: {
-          "": string
-        }
+        Args: { "": string }
         Returns: string
       }
       vector_typmod_in: {
-        Args: {
-          "": unknown[]
-        }
+        Args: { "": unknown[] }
         Returns: number
       }
     }
@@ -5554,27 +5516,29 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -5582,20 +5546,22 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -5603,20 +5569,22 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -5624,21 +5592,23 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
@@ -5647,6 +5617,57 @@ export type CompositeTypes<
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      communication_channel: [
+        "phone",
+        "email",
+        "sms",
+        "whatsapp",
+        "social_media",
+      ],
+      context_type: [
+        "user_profile",
+        "business_info",
+        "contact_info",
+        "team_content",
+        "learning_content",
+        "calendar_events",
+        "tasks",
+      ],
+      gender_type: ["male", "female", "other", "prefer_not_to_say"],
+      link_group_type: ["zoom", "youtube", "documents", "custom", "other"],
+      notification_type: [
+        "post_reaction",
+        "level_up",
+        "admin_points",
+        "new_comment",
+        "comment_reply",
+        "new_follower",
+        "follower_post",
+        "post_mention",
+        "comment_mention",
+        "presentation_view",
+        "presentation_completed",
+        "presentation_halfway",
+      ],
+      post_type: ["post", "video", "reel", "story", "igtv", "Image", "Sidecar"],
+      reaction_type: ["👍", "❤️", "😂", "🎉", "😮"],
+      recurring_pattern: ["none", "daily", "weekly", "monthly", "yearly"],
+      shortcut_type: [
+        "team",
+        "team_calendar",
+        "personal_calendar",
+        "create_contact",
+        "learning_platform",
+        "todo_list",
+      ],
+      team_post_comment_reaction_type: ["👍", "❤️", "😂", "🎉", "😮"],
+    },
+  },
+} as const

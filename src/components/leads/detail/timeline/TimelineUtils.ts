@@ -14,6 +14,7 @@ export type TimelineItemType =
   | 'upload'
   | 'file_upload'
   | 'business_match'
+  | 'youtube'
   | string;
 
 export interface TimelineItem {
@@ -48,6 +49,13 @@ export interface TimelineItem {
     commonalities?: string[];
     potential_needs?: string[];
     strengths?: string[];
+    script_type?: string;
+    message_type?: string;
+    platform?: string;
+    sender?: string;
+    receiver?: string;
+    emoji?: string;
+    location?: string;
   };
   created_at?: string;
 }

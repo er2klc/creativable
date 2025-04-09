@@ -1,4 +1,5 @@
-import { useEffect } from "react";
+
+import React, { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { isTokenExpired, handleSessionExpiration } from "@/utils/auth-utils";

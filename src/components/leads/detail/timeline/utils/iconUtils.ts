@@ -1,3 +1,4 @@
+
 import { 
   MessageSquare, 
   CheckSquare, 
@@ -9,15 +10,18 @@ import {
   Linkedin,
   MessageCircle,
   UserPlus,
-  ListTodo,
+  ListCheck,
   Send,
-  ArrowUpCircle,
+  ArrowUp,
   Upload,
   X,
   Check,
   Heart,
   Clock,
-  ThumbsDown
+  ThumbsDown,
+  SquareCheck,
+  Youtube,
+  Target
 } from "lucide-react";
 import { TimelineItemType } from "../TimelineUtils";
 
@@ -44,7 +48,7 @@ export const getTimelineIcon = (
       case 'customer': return { icon: UserPlus };
       case 'not_for_now': return { icon: Clock };
       case 'no_interest': return { icon: ThumbsDown };
-      default: return { icon: ArrowUpCircle };
+      default: return { icon: ArrowUp };
     }
   }
 
@@ -59,7 +63,7 @@ export const getTimelineIcon = (
       return { icon: MessageSquare };
     case 'task':
       return { 
-        icon: status === 'completed' ? Check : ListTodo 
+        icon: status === 'completed' ? Check : SquareCheck 
       };
     case 'appointment':
       return { 
@@ -68,7 +72,7 @@ export const getTimelineIcon = (
     case 'note':
       return { icon: StickyNote };
     case 'phase_change':
-      return { icon: ArrowUpCircle };
+      return { icon: ArrowUp };
     case 'reminder':
       return { icon: Bell };
     case 'file_upload':
@@ -77,6 +81,10 @@ export const getTimelineIcon = (
       return { icon: Send };
     case 'upload':
       return { icon: Upload };
+    case 'business_match':
+      return { icon: Target };
+    case 'youtube':
+      return { icon: Youtube };
     default:
       return { icon: MessageSquare };
   }
