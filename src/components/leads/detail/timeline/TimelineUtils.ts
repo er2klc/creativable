@@ -1,85 +1,61 @@
 
 export type TimelineItemType = 
-  | 'message'
+  | 'message' 
+  | 'note' 
   | 'task' 
-  | 'appointment'
-  | 'note'
-  | 'phase_change'
-  | 'status_change'
+  | 'appointment' 
+  | 'phase_change' 
+  | 'status_change' 
+  | 'file_upload' 
   | 'contact_created'
-  | 'file_upload'
-  | string;
+  | 'youtube'
+  | 'business_match'
+  | 'facebook'
+  | 'instagram'
+  | 'linkedin'
+  | 'tiktok';
 
 export interface TimelineItem {
   id: string;
   type: TimelineItemType;
   content: string;
   timestamp: string;
-  platform?: string;
   status?: string;
-  metadata?: {
-    dueDate?: string;
-    fileName?: string;
-    fileType?: string;
-    fileSize?: number;
-    filePath?: string;
-    status?: "completed" | "cancelled" | "outdated";
-    completedAt?: string;
-    cancelledAt?: string;
-    updatedAt?: string;
-    oldDate?: string;
-    newDate?: string;
-    oldStatus?: string;
-    newStatus?: string;
-    oldPhase?: string;
-    newPhase?: string;
-    last_edited_at?: string;
-    sender?: string;
-    receiver?: string;
-    due_date?: string;
-    completed_at?: string;
-  };
+  platform?: string;
+  metadata?: any;
 }
 
-// Helper function to format a date
-export const formatDate = (date: string | Date): string => {
-  if (!date) return '';
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
-  return dateObj.toLocaleDateString();
-};
-
-// This function creates a timeline item for a status change
-export const createStatusChangeItem = (
-  status: string, 
-  timestamp: string
-): TimelineItem => {
-  let statusMessage = '';
-  
-  switch (status) {
-    case 'partner':
-      statusMessage = `Contact is now your partner! 🚀`;
-      break;
-    case 'customer':
-      statusMessage = `Contact is now a customer – success! 🎉`;
-      break;
-    case 'not_for_now':
-      statusMessage = `Contact is not ready at the moment – keep in touch! ⏳`;
-      break;
-    case 'no_interest':
-      statusMessage = `Contact has no interest – move forward! 🚀`;
-      break;
+export const getTimelineItemTypeColor = (type: TimelineItemType, status?: string): string => {
+  switch (type) {
+    case 'message':
+      return 'bg-blue-500';
+    case 'note':
+      return 'bg-yellow-500';
+    case 'task':
+      return status === 'completed' ? 'bg-green-500' : 'bg-cyan-500';
+    case 'appointment':
+      return status === 'cancelled' ? 'bg-gray-400' : 'bg-orange-500';
+    case 'phase_change':
+      return 'bg-purple-500';
+    case 'status_change':
+      return 'bg-red-500';
+    case 'youtube':
+      return 'bg-red-600';
+    case 'business_match':
+      return 'bg-blue-600';
+    case 'file_upload':
+      return 'bg-blue-500';
+    case 'contact_created':
+      return 'bg-emerald-500';
+    case 'facebook':
+      return 'bg-blue-600';
+    case 'instagram':
+      return 'bg-pink-500';
+    case 'linkedin':
+      return 'bg-blue-800';
+    case 'tiktok':
+      return 'bg-black';
     default:
-      statusMessage = `Status changed to ${status}`;
+      return 'bg-gray-500';
   }
-
-  return {
-    id: `status-${Date.now()}`,
-    type: 'status_change',
-    content: statusMessage,
-    timestamp,
-    metadata: {
-      oldStatus: 'lead',
-      newStatus: status,
-    }
-  };
 };

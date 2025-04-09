@@ -11,6 +11,7 @@ import { StatusCard } from "./cards/StatusCard";
 import { NexusTimelineCard } from "./cards/NexusTimelineCard";
 import { CallScriptCard } from "./cards/CallScriptCard";
 import { MessageTemplateCard } from "./cards/MessageTemplateCard";
+import { YoutubeCard } from "./cards/YoutubeCard";
 
 interface TimelineItemCardProps {
   type: string;
@@ -50,6 +51,17 @@ interface TimelineItemCardProps {
       };
     };
     emoji?: string;
+    // YouTube-spezifische Felder
+    view_id?: string;
+    url?: string;
+    title?: string;
+    video_progress?: number;
+    completed?: boolean;
+    presentationUrl?: string;
+    event_type?: string;
+    id?: string;
+    ip?: string;
+    location?: string;
   };
   status?: string;
   onDelete?: () => void;
@@ -57,6 +69,7 @@ interface TimelineItemCardProps {
   created_at?: string;
   isCompleted?: boolean;
   onToggleComplete?: (id: string, completed: boolean) => void;
+  timestamp?: string;
 }
 
 export const TimelineItemCard = ({
@@ -69,10 +82,22 @@ export const TimelineItemCard = ({
   created_at,
   isCompleted,
   onToggleComplete,
+  timestamp,
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
 
-  // If this is a phase analysis, use the NexusTimelineCard
+  // YouTube-Karten speziell behandeln
+  if (metadata?.type === 'youtube') {
+    return (
+      <YoutubeCard 
+        content={content}
+        metadata={metadata}
+        timestamp={timestamp || created_at}
+      />
+    );
+  }
+
+  // Wenn es eine Phasenanalyse ist, verwenden wir die NexusTimelineCard
   if (metadata?.type === 'phase_analysis') {
     return (
       <NexusTimelineCard
@@ -83,7 +108,7 @@ export const TimelineItemCard = ({
     );
   }
 
-  // For call scripts
+  // Für Telefonscripts
   if (metadata?.type === 'call_script') {
     return (
       <CallScriptCard
@@ -95,7 +120,7 @@ export const TimelineItemCard = ({
     );
   }
 
-  // For message templates
+  // Für Nachrichtenvorlagen
   if (metadata?.type === 'message_template') {
     return (
       <MessageTemplateCard
@@ -142,6 +167,8 @@ export const TimelineItemCard = ({
         return "border-emerald-500";
       case "file_upload":
         return "border-blue-500";
+      case "youtube":
+        return "border-red-500";
       default:
         return "border-gray-500";
     }
@@ -194,12 +221,12 @@ export const TimelineItemCard = ({
           content={content}
           timestamp={metadata?.timestamp || new Date().toISOString()}
           metadata={metadata}
-          onDelete={onDelete ? () => onDelete(id!) : undefined}
+          onDelete={onDelete ? () => onDelete() : undefined}
         />
       );
     }
 
-    // For phase_change and other types
+    // Für phase_change und andere Typen
     return (
       <div className="relative group">
         <div className="flex items-center">

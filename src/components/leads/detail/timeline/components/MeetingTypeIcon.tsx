@@ -8,7 +8,7 @@ interface MeetingTypeIconProps {
 }
 
 export const MeetingTypeIcon: React.FC<MeetingTypeIconProps> = ({ type, className }) => {
-  switch (type.toLowerCase()) {
+  switch (type?.toLowerCase()) {
     case 'in_person':
       return <MapPin className={className} />;
     case 'video':

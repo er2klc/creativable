@@ -20,24 +20,42 @@ interface LeadActivity {
 }
 
 export function useLeadActivities(leadId?: string) {
-  return useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ["lead-activities", leadId],
     queryFn: async (): Promise<LeadActivity[]> => {
       if (!leadId) return [];
 
+      // Keine Tabelle "lead_activities" - stattdessen verwenden wir die notes-Tabelle
+      // und filtern nach solchen mit phase_change in den Metadaten
       const { data, error } = await supabase
-        .from("lead_activities")
+        .from("notes")
         .select("*")
         .eq("lead_id", leadId)
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching lead activities:", error);
-        throw new Error("Failed to fetch lead activities");
+        console.error("Error fetching activities:", error);
+        throw new Error("Failed to fetch activities");
       }
 
-      return data || [];
+      // Konvertieren der notes zu activities
+      return (data || []).map(note => ({
+        id: note.id,
+        type: note.metadata?.type === 'phase_change' ? 'phase_change' : 
+              note.metadata?.type === 'youtube' ? 'youtube' : 'note',
+        content: note.content,
+        created_at: note.created_at,
+        lead_id: note.lead_id,
+        user_id: note.user_id,
+        metadata: note.metadata || {}
+      }));
     },
     enabled: !!leadId
   });
+
+  return {
+    activities: data || [],
+    isLoading,
+    error
+  };
 }

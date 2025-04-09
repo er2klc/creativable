@@ -39,34 +39,150 @@ export const mapTasksToTimelineItems = (tasks: any[]): TimelineItem[] => {
 };
 
 // Map notes to timeline items
-export const mapNotesToTimelineItems = (notes: any[]): TimelineItem[] => {
-  return notes.map(note => ({
+export const mapNotesToTimelineItems = (tasks: any[]): TimelineItem[] => {
+  return tasks.map(note => {
+    // Check if this is a YouTube note
+    if (note.metadata?.type === 'youtube') {
+      return {
+        id: note.id,
+        type: "youtube",
+        content: note.content || "",
+        timestamp: note.created_at,
+        metadata: note.metadata
+      };
+    }
+    
+    return {
+      id: note.id,
+      type: "note",
+      content: note.content || "",
+      timestamp: note.created_at,
+      metadata: {
+        type: note.metadata?.type,
+        updatedAt: note.updated_at,
+        lastEditedAt: note.updated_at,
+        ...note.metadata
+      }
+    };
+  });
+};
+
+// Map notes to timeline items specifically for the view
+export const mapNoteToTimelineItem = (note: any): TimelineItem => {
+  // Check if this is a YouTube note
+  if (note.metadata?.type === 'youtube') {
+    return {
+      id: note.id,
+      type: "youtube",
+      content: note.content || "",
+      timestamp: note.created_at,
+      metadata: note.metadata
+    };
+  }
+  
+  return {
     id: note.id,
     type: "note",
     content: note.content || "",
     timestamp: note.created_at,
     metadata: {
-      updatedAt: note.updated_at,
-      lastEditedAt: note.updated_at
+      ...note.metadata,
+      lastEditedAt: note.updated_at,
     }
-  }));
+  };
 };
 
-// Map activities to timeline items
-export const mapActivitiesToTimelineItems = (activities: any[]): TimelineItem[] => {
-  return activities.filter(activity => activity.type === "phase_change").map(activity => ({
-    id: activity.id,
-    type: "phase_change",
-    content: activity.content || "",
-    timestamp: activity.created_at,
+// Map tasks to timeline items specifically for the view
+export const mapTaskToTimelineItem = (task: any): TimelineItem => {
+  return {
+    id: task.id,
+    type: "task",
+    content: task.title || "",
+    timestamp: task.created_at,
+    status: task.completed ? "completed" : "open",
     metadata: {
-      type: activity.metadata?.type || "phase_change",
-      oldPhase: activity.metadata?.old_phase,
-      newPhase: activity.metadata?.new_phase,
-      oldStatus: activity.metadata?.old_status,
-      newStatus: activity.metadata?.new_status
+      dueDate: task.due_date,
+      completedAt: task.completed_at,
+      status: task.completed ? "completed" : task.cancelled ? "cancelled" : "open",
+      priority: task.priority
     }
-  }));
+  };
+};
+
+// Map messages to timeline items
+export const mapMessageToTimelineItem = (message: any): TimelineItem => {
+  return {
+    id: message.id,
+    type: "message",
+    content: message.content || "",
+    timestamp: message.created_at || message.sent_at,
+    platform: message.platform,
+    metadata: {
+      sender: message.sender || "user",
+      receiver: message.receiver || "lead",
+    }
+  };
+};
+
+// Map files to timeline items
+export const mapFileToTimelineItem = (file: any): TimelineItem => {
+  return {
+    id: file.id,
+    type: "file_upload",
+    content: file.file_name || "",
+    timestamp: file.created_at,
+    metadata: {
+      fileName: file.file_name,
+      fileType: file.file_type,
+      fileSize: file.file_size,
+      filePath: file.file_path
+    }
+  };
+};
+
+// Create a contact creation item
+export const createContactCreationItem = (name: string, created_at: string): TimelineItem => {
+  return {
+    id: `contact-created-${Date.now()}`,
+    type: "contact_created",
+    content: `Kontakt ${name} wurde erstellt`,
+    timestamp: created_at,
+    metadata: {
+      contactName: name
+    }
+  };
+};
+
+// Create a status change item
+export const createStatusChangeItem = (status: string, timestamp: string, leadName: string): TimelineItem | null => {
+  if (!status || status === 'lead') return null;
+  
+  const getStatusText = (status: string): string => {
+    switch (status) {
+      case 'partner':
+        return 'Partner';
+      case 'customer':
+        return 'Kunde';
+      case 'not_for_now':
+        return 'Aktuell nicht interessiert';
+      case 'no_interest':
+        return 'Kein Interesse';
+      default:
+        return status;
+    }
+  };
+  
+  return {
+    id: `status-${Date.now()}`,
+    type: "status_change",
+    content: `Status wurde auf "${getStatusText(status)}" gesetzt`,
+    timestamp: timestamp,
+    metadata: {
+      newStatus: status,
+      timestamp: timestamp,
+      contactName: leadName
+    }
+  };
 };
 
 // Sort timeline items by timestamp (newest first)
@@ -86,7 +202,13 @@ export const combineTimelineItems = (
   const timelineItems = [
     ...mapTasksToTimelineItems(tasks),
     ...mapNotesToTimelineItems(notes),
-    ...mapActivitiesToTimelineItems(activities),
+    ...activities.map(activity => ({
+      id: activity.id,
+      type: activity.type as TimelineItemType,
+      content: activity.content || "",
+      timestamp: activity.created_at,
+      metadata: activity.metadata
+    })),
     ...mapSocialMediaPostsToTimelineItems(socialMediaPosts)
   ];
   

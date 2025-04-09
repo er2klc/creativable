@@ -1,23 +1,24 @@
 
+import { MapPin } from "lucide-react";
+
 interface ViewInfoProps {
   id?: string;
-  ip?: string;
+  ip?: string; 
   location?: string;
 }
 
 export const ViewInfo = ({ id, ip, location }: ViewInfoProps) => {
   if (!ip && !location) return null;
   
-  const locationInfo = `${ip || 'Unknown IP'} | ${location || 'Unknown Location'}`;
-  
   return (
-    <>
-      <div className="text-gray-500 text-sm">
-        View ID: {id || 'No ID'}
-      </div>
-      <div className="text-gray-500 text-sm flex items-center gap-2">
-        {locationInfo}
-      </div>
-    </>
+    <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+      {location && (
+        <div className="flex items-center gap-1">
+          <MapPin className="h-3 w-3" />
+          <span>{location}</span>
+        </div>
+      )}
+      {ip && <span className="text-gray-400">IP: {ip}</span>}
+    </div>
   );
 };

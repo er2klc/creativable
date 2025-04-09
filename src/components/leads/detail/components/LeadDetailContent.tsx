@@ -2,12 +2,19 @@
 import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadInfoCard } from "../LeadInfoCard";
-import { CompactPhaseSelector } from "../CompactPhaseSelector";
+import { LeadTimeline } from "../LeadTimeline";
 import { ContactFieldManager } from "../contact-info/ContactFieldManager";
 import { LeadWithRelations } from "@/types/leads";
 import { LeadDetailTabs } from "../LeadDetailTabs";
-import { LeadTimeline } from "../LeadTimeline";
-import { LeadSummary } from "../LeadSummary";
+import { useEffect, useState } from "react";
+import { PhaseAnalysisButton } from "./PhaseAnalysisButton";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+
+// Korrigiere Placeholder-Image-URL
+const PLACEHOLDER_PROFILE_URL = "https://agqaitxlmxztqyhpcjau.supabase.co/storage/v1/object/public/contact-avatars/placeholder-profile.png";
 
 interface LeadDetailContentProps {
   lead: LeadWithRelations;
@@ -25,38 +32,121 @@ export const LeadDetailContent = ({
   onDeletePhaseChange
 }: LeadDetailContentProps) => {
   const { settings } = useSettings();
-  
-  // Only hide phase selector if lead has a status other than 'lead'
-  const showPhaseSelector = !lead.status || lead.status === 'lead';
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [hasAnalysis, setHasAnalysis] = useState(false);
+  const [isGeneratingAnalysis, setIsGeneratingAnalysis] = useState(false);
+
+  useEffect(() => {
+    if (lead.phase_id) {
+      checkExistingAnalysis();
+    }
+  }, [lead.phase_id, lead.id]);
+
+  const checkExistingAnalysis = async () => {
+    if (!lead.phase_id) return;
+    
+    const { data } = await supabase
+      .from("phase_based_analyses")
+      .select("*")
+      .eq("lead_id", lead.id)
+      .eq("phase_id", lead.phase_id)
+      .maybeSingle();
+    
+    setHasAnalysis(!!data);
+  };
+
+  const generateAnalysis = async () => {
+    if (!user) {
+      return;
+    }
+
+    if (!lead.phase_id) {
+      return;
+    }
+
+    try {
+      setIsGeneratingAnalysis(true);
+      
+      // Verwende die neue Edge Function
+      const { data, error } = await supabase.functions.invoke('generate-lead-phase-analysis', {
+        body: {
+          leadId: lead.id,
+          phaseId: lead.phase_id,
+          userId: user.id
+        }
+      });
+
+      if (error) {
+        console.error("Edge function error:", error);
+        toast.error(settings?.language === "en" 
+          ? `Analysis generation failed: ${error.message}` 
+          : `Fehler bei der Analyse-Generierung: ${error.message}`);
+        throw error;
+      }
+      
+      if (data.error) {
+        console.error("Analysis generation error:", data.error);
+        toast.error(settings?.language === "en" 
+          ? `Analysis generation failed: ${data.error}` 
+          : `Fehler bei der Analyse-Generierung: ${data.error}`);
+        return;
+      }
+      
+      queryClient.invalidateQueries({ queryKey: ["lead", lead.id] });
+      queryClient.invalidateQueries({ queryKey: ["lead-with-relations", lead.id] });
+      setHasAnalysis(true);
+      
+      toast.success(settings?.language === "en" 
+        ? "Phase analysis created successfully" 
+        : "Phasenanalyse erfolgreich erstellt");
+    } catch (error: any) {
+      console.error("Error generating analysis:", error);
+      toast.error(settings?.language === "en" 
+        ? `Error generating analysis: ${error.message}` 
+        : `Fehler bei der Analyse-Generierung: ${error.message}`);
+    } finally {
+      setIsGeneratingAnalysis(false);
+    }
+  };
+
+  // Funktion zum Normalisieren von Kontaktbildern
+  const normalizeProfileImage = (lead: LeadWithRelations) => {
+    // Wenn kein Profilbild gesetzt ist oder es einen 404-Fehler gibt, verwenden wir den Platzhalter
+    if (!lead.social_media_profile_image_url) {
+      return { ...lead, social_media_profile_image_url: PLACEHOLDER_PROFILE_URL };
+    }
+    
+    // Alte URL mit der relativen /placeholder-profile.png ersetzen
+    if (lead.social_media_profile_image_url.includes('/placeholder-profile.png')) {
+      return { ...lead, social_media_profile_image_url: PLACEHOLDER_PROFILE_URL };
+    }
+    
+    return lead;
+  };
+
+  // Normalisierter Lead für die Anzeige
+  const normalizedLead = normalizeProfileImage(lead);
 
   if (isLoading) {
     return <div className="p-6">{settings?.language === "en" ? "Loading..." : "Lädt..."}</div>;
   }
 
-  console.log('LeadDetailContent rendering with lead:', {
-    id: lead.id,
-    phase_id: lead.phase_id,
-    status: lead.status,
-    timestamp: new Date().toISOString()
-  });
-
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="grid grid-cols-12 gap-6 p-6 bg-gray-50 min-h-[calc(100vh-10rem)] mt-32">
-        {/* Left Column - 8/12 */}
-        <div className="col-span-8 space-y-6">
-          {showPhaseSelector && (
-            <CompactPhaseSelector
-              lead={lead}
-              onUpdateLead={onUpdateLead}
+        {/* Left Column - 4/12 */}
+        <div className="col-span-4 space-y-6">
+          {lead.phase_id && !hasAnalysis && (
+            <PhaseAnalysisButton 
+              isLoading={isGeneratingAnalysis}
+              leadId={lead.id}
+              phaseId={lead.phase_id}
+              onGenerateAnalysis={generateAnalysis}
             />
           )}
-          
-          {/* AI Analysis Section */}
-          <LeadSummary lead={lead} />
-          
           <LeadInfoCard 
-            lead={lead} 
+            lead={normalizedLead} 
             onUpdate={(updates) => {
               // Only call onUpdateLead if we're actually changing something
               const hasChanges = Object.entries(updates).some(
@@ -68,17 +158,16 @@ export const LeadDetailContent = ({
             }} 
             onDelete={onDeleteClick}
           />
-
-          <LeadTimeline 
-            lead={lead} 
-            onDeletePhaseChange={onDeletePhaseChange}
-          />
         </div>
 
-        {/* Right Column - 4/12 */}
-        <div className="col-span-4 space-y-6">
+        {/* Right Column - 8/12 */}
+        <div className="col-span-8 space-y-6">
           <ContactFieldManager />
-          <LeadDetailTabs lead={lead} />
+          <LeadDetailTabs lead={normalizedLead} />
+          <LeadTimeline 
+            lead={normalizedLead} 
+            onDeletePhaseChange={onDeletePhaseChange}
+          />
         </div>
       </div>
     </div>

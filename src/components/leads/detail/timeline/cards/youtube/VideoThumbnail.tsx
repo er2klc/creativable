@@ -28,4 +28,3 @@ export const VideoThumbnail = ({ videoId, latestProgress }: VideoThumbnailProps)
     </div>
   );
 };
-

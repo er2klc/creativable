@@ -1,7 +1,9 @@
+
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { LeadWithRelations } from "@/types/leads";
 import { useSocialMediaPosts } from "./hooks/useSocialMediaPosts";
+import { useLeadActivities } from "@/hooks/use-lead-activities";
 import { ActivityTimeline } from "./components/ActivityTimeline";
 import { SocialTimeline } from "./components/SocialTimeline";
 import { TimelineHeader } from "./timeline/TimelineHeader";
@@ -23,6 +25,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   const { settings } = useSettings();
   const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
   const { data: socialMediaPosts } = useSocialMediaPosts(lead.id);
+  const { activities, isLoading } = useLeadActivities(lead.id);
   
   console.log("DEBUG - LeadTimeline render:", {
     leadId: lead.id,
@@ -40,6 +43,17 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
      Array.isArray(JSON.parse(typeof lead.apify_instagram_data === 'string' ? lead.apify_instagram_data : '[]')));
   const showSocialTimeline = hasLinkedInPosts || hasSocialPosts || hasInstagramData;
 
+  // Wir kombinieren die Aktivitäten aus verschiedenen Quellen
+  const mapActivitiesToTimelineItems = (activities: any[]) => {
+    return activities.map(activity => ({
+      id: activity.id,
+      type: activity.type as any, // Hier wird der Typ aus der Aktivität verwendet
+      content: activity.content || "",
+      timestamp: activity.created_at,
+      metadata: activity.metadata || {},
+    }));
+  };
+
   const statusChangeItem = createStatusChangeItem(
     lead.status || 'lead',
     lead.updated_at || lead.created_at || new Date().toISOString(),
@@ -52,7 +66,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     ...(lead.tasks || []).map(mapTaskToTimelineItem),
     ...(lead.messages || []).map(mapMessageToTimelineItem),
     ...(lead.lead_files || []).map(mapFileToTimelineItem),
-    createContactCreationItem(lead.name, lead.created_at)
+    createContactCreationItem(lead.name, lead.created_at),
+    ...mapActivitiesToTimelineItems(activities || [])
   ];
 
   const timelineItems = allActivities.sort((a, b) => 
@@ -77,6 +92,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         <ActivityTimeline 
           items={timelineItems}
           onDeletePhaseChange={onDeletePhaseChange}
+          leadName={lead.name}
         />
       ) : (
         <SocialTimeline 
