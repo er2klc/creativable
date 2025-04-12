@@ -146,6 +146,7 @@ export const LeadDetailContent = ({
           <LeadTimeline 
             lead={lead} 
             onDeletePhaseChange={onDeletePhaseChange}
+            onUpdateLead={onUpdateLead}
           />
         </div>
       </div>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, User, CreditCard, Receipt, LogOut, MessageCircle } from "lucide-react";
@@ -75,16 +76,17 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
         .from('team_direct_messages')
         .select(`
           team_id,
-          sender:sender_id (
-            id,
-            display_name,
-            avatar_url
-          ),
+          sender_id,
           teams!inner (
             id,
             name,
             slug,
             logo_url
+          ),
+          sender_profile:profiles!team_direct_messages_sender_id_fkey (
+            id,
+            display_name,
+            avatar_url
           )
         `)
         .eq('receiver_id', user.id)
@@ -92,8 +94,13 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
 
       if (error) throw error;
 
-      const teamMessages = messages.reduce((acc, msg) => {
+      // Process the results safely
+      const teamMessages = (messages || []).reduce((acc, msg) => {
+        if (!msg.teams || !msg.sender_profile) return acc;
+        
         const team = msg.teams;
+        const sender = msg.sender_profile;
+        
         if (!acc[team.id]) {
           acc[team.id] = {
             id: team.id,
@@ -105,17 +112,17 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
           };
         }
         
-        const sender = msg.sender;
-        if (!acc[team.id].unread_by_user[sender.id]) {
-          acc[team.id].unread_by_user[sender.id] = {
+        const senderId = sender.id; 
+        if (!acc[team.id].unread_by_user[senderId]) {
+          acc[team.id].unread_by_user[senderId] = {
             count: 0,
-            display_name: sender.display_name,
+            display_name: sender.display_name || 'Unknown',
             avatar_url: sender.avatar_url
           };
         }
         
         acc[team.id].unread_count++;
-        acc[team.id].unread_by_user[sender.id].count++;
+        acc[team.id].unread_by_user[senderId].count++;
         
         return acc;
       }, {} as Record<string, TeamWithUnreadCount>);

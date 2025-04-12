@@ -1,26 +1,10 @@
+
 import { format } from "date-fns";
-import { de } from "date-fns/locale";
-import { MEETING_TYPES } from "../../../../../constants/meetingTypes";
+import { de, enUS } from "date-fns/locale";
 
-export const getMeetingTypeLabel = (meetingTypeValue: string) => {
-  return MEETING_TYPES.find(type => type.value === meetingTypeValue)?.label || meetingTypeValue;
-};
-
-export const formatDateTime = (dateString: string | undefined, language: string = 'de') => {
-  if (!dateString) return '';
+export const formatDateTime = (date: string | Date, language?: string): string => {
+  const dateObj = typeof date === "string" ? new Date(date) : date;
+  const locale = language === "en" ? enUS : de;
   
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
-      console.error('Invalid date:', dateString);
-      return '';
-    }
-    
-    return format(date, "EEEE', den' d. MMM yyyy '|' HH:mm 'Uhr'", { 
-      locale: language === 'en' ? undefined : de 
-    });
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return '';
-  }
+  return format(dateObj, "PPpp", { locale });
 };

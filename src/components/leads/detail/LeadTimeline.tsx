@@ -1,106 +1,59 @@
-import React from "react";
+
+import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
-import {
-  Timeline,
-  TimelineContent,
-  TimelineItem,
-  TimelineSeparator,
-  TimelineConnector,
-  TimelineIcon,
-} from "@/components/ui/timeline";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CalendarDays, MessageSquare, User } from "lucide-react";
-import { format } from "date-fns";
-import { de, enUS } from "date-fns/locale";
 import { LeadWithRelations } from "@/integrations/supabase/types/leads";
-import { Note } from "@/integrations/supabase/types/notes";
-import { StatusBadge } from "@/components/changelog/StatusBadge";
+import { ActivityTimeline } from "./timeline/components/ActivityTimeline";
+import { SocialTimeline } from "./timeline/components/SocialTimeline";
 import { TimelineHeader } from "./timeline/TimelineHeader";
-import { LeadPhase } from "@/integrations/supabase/types/lead-phases";
-import { LeadDetailNote } from "./timeline/LeadDetailNote";
-import { LeadDetailStatusChange } from "./timeline/LeadDetailStatusChange";
-import { LeadDetailAppointment } from "./timeline/LeadDetailAppointment";
-import { LeadDetailSocialPost } from "./timeline/LeadDetailSocialPost";
+import { 
+  mapNoteToTimelineItem, 
+  mapTaskToTimelineItem, 
+  mapMessageToTimelineItem, 
+  mapFileToTimelineItem,
+  createContactCreationItem,
+  createStatusChangeItem 
+} from "./timeline/utils/timelineMappers";
 
 interface LeadTimelineProps {
   lead: LeadWithRelations;
-  onUpdateLead: (values: Partial<LeadWithRelations>) => void;
-  onDeletePhaseChange: (noteId: string) => void;
+  onDeletePhaseChange?: (noteId: string) => void;
+  onUpdateLead: (lead: LeadWithRelations) => void;
 }
 
-export const LeadTimeline = ({ 
-  lead, 
-  onUpdateLead,
-  onDeletePhaseChange
-}: LeadTimelineProps) => {
+export const LeadTimeline = ({ lead, onDeletePhaseChange, onUpdateLead }: LeadTimelineProps) => {
   const { settings } = useSettings();
-  const [activeTimeline, setActiveTimeline] = React.useState<'activities' | 'social'>('activities');
-  const hasLinkedInPosts = lead.linkedin_posts && lead.linkedin_posts.length > 0;
-  const showSocialTimeline = !!lead.platform && (lead.platform === 'linkedin' || hasLinkedInPosts);
+  const [activeTimeline, setActiveTimeline] = useState<'activities' | 'social'>('activities');
+  
+  const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
+  const hasSocialPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.length > 0;
+  const hasInstagramData = lead.platform === 'instagram' && lead.social_media_posts && lead.social_media_posts.length > 0;
+  const showSocialTimeline = hasLinkedInPosts || hasSocialPosts || hasInstagramData;
 
-  const sortedNotes = React.useMemo(() => {
-    const allNotes = [
-      ...(lead.notes || []),
-      ...(lead.appointments || []).map(appointment => ({
-        ...appointment,
-        type: 'appointment'
-      }))
-    ];
+  const statusChangeItem = createStatusChangeItem(
+    lead.status || 'lead',
+    lead.updated_at || lead.created_at || new Date().toISOString(),
+    lead.name
+  );
 
-    return allNotes.sort((a: any, b: any) => {
-      const dateA = new Date(a.created_at).getTime();
-      const dateB = new Date(b.created_at).getTime();
-      return dateB - dateA;
-    });
-  }, [lead.notes, lead.appointments]);
+  const allActivities = [
+    ...(statusChangeItem ? [statusChangeItem] : []),
+    ...(lead.notes || []).map(mapNoteToTimelineItem),
+    ...(lead.tasks || []).map(mapTaskToTimelineItem),
+    ...(lead.messages || []).map(mapMessageToTimelineItem),
+    ...(lead.lead_files || []).map(mapFileToTimelineItem),
+    createContactCreationItem(lead.name, lead.created_at)
+  ];
 
-  const locale = settings?.language === "de" ? de : enUS;
-
-  const getInitials = (name: string) => {
-    return name?.charAt(0).toUpperCase() || "U";
-  };
-
-  const renderTimelineItem = (note: Note | any) => {
-    if (note.type === 'status_change') {
-      return (
-        <LeadDetailStatusChange 
-          note={note} 
-          lead={lead}
-          onUpdateLead={onUpdateLead}
-          onDeleteClick={onDeletePhaseChange}
-        />
-      );
-    } else if (note.type === 'appointment') {
-      return (
-        <LeadDetailAppointment 
-          appointment={note}
-          locale={locale}
-        />
-      );
-    } else {
-      return (
-        <LeadDetailNote 
-          note={note} 
-          locale={locale}
-          onDeleteClick={onDeletePhaseChange}
-        />
-      );
-    }
-  };
-
-  const renderSocialTimelineItem = (post: any) => {
-    return (
-      <LeadDetailSocialPost 
-        post={post}
-      />
-    );
-  };
+  const timelineItems = allActivities.sort((a, b) => 
+    new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+  );
 
   return (
-    <div className="relative">
-      <TimelineHeader
-        title={
-          settings?.language === "en" ? "Timeline" : "Zeitleiste"
+    <div className="space-y-4">
+      <TimelineHeader 
+        title={activeTimeline === 'activities' ? 
+          (settings?.language === "en" ? "Activities" : "Aktivitäten") :
+          (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
         }
         showSocialTimeline={showSocialTimeline}
         activeTimeline={activeTimeline}
@@ -108,41 +61,21 @@ export const LeadTimeline = ({
         platform={lead.platform}
         hasLinkedInPosts={hasLinkedInPosts}
       />
-      <Timeline>
-        {activeTimeline === 'activities' && sortedNotes.map((note: Note | any) => (
-          <TimelineItem key={note.id}>
-            <TimelineSeparator>
-              <TimelineIcon>
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={note.created_by_avatar} alt={note.created_by_name} />
-                  <AvatarFallback>{getInitials(note.created_by_name)}</AvatarFallback>
-                </Avatar>
-              </TimelineIcon>
-              <TimelineConnector />
-            </TimelineSeparator>
-            <TimelineContent className="pb-5">
-              {renderTimelineItem(note)}
-            </TimelineContent>
-          </TimelineItem>
-        ))}
 
-        {activeTimeline === 'social' && lead.linkedin_posts && lead.linkedin_posts.map((post: any) => (
-          <TimelineItem key={post.id}>
-            <TimelineSeparator>
-              <TimelineIcon>
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={lead.linkedin_profile_picture} alt={lead.linkedin_profile_name} />
-                  <AvatarFallback>{getInitials(lead.linkedin_profile_name)}</AvatarFallback>
-                </Avatar>
-              </TimelineIcon>
-              <TimelineConnector />
-            </TimelineSeparator>
-            <TimelineContent className="pb-5">
-              {renderSocialTimelineItem(post)}
-            </TimelineContent>
-          </TimelineItem>
-        ))}
-      </Timeline>
+      {activeTimeline === 'activities' ? (
+        <ActivityTimeline 
+          items={timelineItems}
+          onDeletePhaseChange={onDeletePhaseChange}
+        />
+      ) : (
+        <SocialTimeline 
+          platform={lead.platform}
+          hasLinkedInPosts={hasLinkedInPosts}
+          linkedInPosts={lead.linkedin_posts || []}
+          socialMediaPosts={lead.social_media_posts || []}
+          leadId={lead.id}
+        />
+      )}
     </div>
   );
 };

@@ -1,5 +1,7 @@
 
 import { LeadWithRelations } from "@/types/leads";
+import { format } from "date-fns";
+import { de, enUS } from "date-fns/locale";
 
 export type TimelineItemType = 
   | 'contact_created'
@@ -15,6 +17,7 @@ export type TimelineItemType =
   | 'file_upload'
   | 'business_match'
   | 'youtube'
+  | 'phase_analysis'
   | string;
 
 export interface TimelineItem {
@@ -56,9 +59,15 @@ export interface TimelineItem {
     receiver?: string;
     emoji?: string;
     location?: string;
+    timestamp?: string;
   };
   created_at?: string;
 }
+
+export const formatDate = (date: Date | string, language?: string): string => {
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  return format(dateObj, 'PPpp', { locale: language === 'en' ? enUS : de });
+};
 
 export const createStatusChangeItem = (
   status: string, 

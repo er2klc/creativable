@@ -1,8 +1,10 @@
 
 import { useState } from "react";
-import { Dialog, DialogContent, DialogHeader as UIDialogHeader, DialogFooter as UIDialogFooter } from "@/components/ui/dialog";
-import { UnitForm } from "./UnitForm";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { DialogHeader } from "./DialogHeader";
+import { DialogFooter } from "./DialogFooter";
+import { UnitForm } from "./UnitForm";
 import { DeleteUnitButton } from "../DeleteUnitButton";
 
 export interface EditUnitDialogProps {
@@ -16,15 +18,6 @@ export interface EditUnitDialogProps {
   id: string;
   existingFiles?: string[];
 }
-
-// Simple wrapper components to avoid the type errors
-const DialogHeader: React.FC<React.PropsWithChildren> = ({ children }) => (
-  <UIDialogHeader>{children}</UIDialogHeader>
-);
-
-const DialogFooter: React.FC<React.PropsWithChildren<{ className?: string }>> = ({ children, className }) => (
-  <UIDialogFooter className={className}>{children}</UIDialogFooter>
-);
 
 export const EditUnitDialog = ({
   open,
@@ -71,8 +64,8 @@ export const EditUnitDialog = ({
             <Button variant="outline" onClick={() => onOpenChange(false)}>
               Abbrechen
             </Button>
-            <Button disabled={isLoading} onClick={handleSubmit}>
-              {isLoading ? "Speichert..." : "Speichern"}
+            <Button onClick={handleSubmit} disabled={isLoading}>
+              {isLoading ? "Wird gespeichert..." : "Speichern"}
             </Button>
           </div>
         </DialogFooter>

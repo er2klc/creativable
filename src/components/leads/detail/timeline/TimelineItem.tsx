@@ -1,14 +1,10 @@
 
 import { TimelineItemType } from "./TimelineUtils";
-import { TimelineItemIcon } from "./TimelineItemIcon";
+import { TimelineItemIcon } from "./components/TimelineItemIcon";
 import { TimelineItemCard } from "./TimelineItemCard";
 import { motion } from "framer-motion";
 import { formatDateTime } from "./utils/dateUtils";
 import { useSettings } from "@/hooks/use-settings";
-import { StatusCard } from "./cards/StatusCard";
-import { YoutubeCard } from "./cards/YoutubeCard";
-import { BusinessMatchCard } from "./cards/BusinessMatchCard";
-import { NexusTimelineCard } from "./cards/NexusTimelineCard";
 
 interface TimelineItemProps {
   item: {
@@ -23,83 +19,13 @@ interface TimelineItemProps {
     created_at?: string;
   };
   onDelete?: (noteId: string) => void;
-  onToggleTaskComplete?: (id: string, completed: boolean) => void;
-  leadName?: string;
 }
 
 export const TimelineItem = ({ 
   item, 
-  onDelete,
-  onToggleTaskComplete,
-  leadName
+  onDelete
 }: TimelineItemProps) => {
   const { settings } = useSettings();
-
-  const renderContent = () => {
-    // Nexus AI Analyse
-    if (item.metadata?.type === 'phase_analysis') {
-      return (
-        <NexusTimelineCard 
-          content={item.content}
-          metadata={item.metadata}
-          onDelete={onDelete ? () => onDelete(item.id) : undefined}
-        />
-      );
-    }
-
-    // Business Match Karte
-    if (item.type === 'business_match') {
-      return (
-        <BusinessMatchCard
-          matchScore={item.metadata?.match_score || 0}
-          skills={item.metadata?.skills || []}
-          commonalities={item.metadata?.commonalities || []}
-          potentialNeeds={item.metadata?.potential_needs || []}
-          strengths={item.metadata?.strengths || []}
-          content={item.metadata?.content || ''}
-        />
-      );
-    }
-
-    // YouTube Karte - Berücksichtigen sowohl "youtube" Typ als auch Metadata-Typ
-    if (item.type === 'youtube' || item.metadata?.type === 'youtube') {
-      return (
-        <YoutubeCard 
-          content={item.content} 
-          metadata={item.metadata}
-          timestamp={item.timestamp}
-        />
-      );
-    }
-
-    // Status Change Karte
-    if (item.type === 'status_change') {
-      return (
-        <StatusCard
-          content={item.content}
-          timestamp={item.timestamp}
-          metadata={item.metadata}
-          onDelete={onDelete ? () => onDelete(item.id) : undefined}
-        />
-      );
-    }
-
-    // Alle anderen Kartentypen
-    return (
-      <TimelineItemCard 
-        type={item.type}
-        content={item.content}
-        metadata={item.metadata}
-        status={item.status}
-        onDelete={onDelete ? () => onDelete(item.id) : undefined}
-        id={item.id}
-        created_at={item.created_at}
-        isCompleted={item.type === 'task' ? item.completed : undefined}
-        onToggleComplete={onToggleTaskComplete && item.type === 'task' ? onToggleTaskComplete : undefined}
-        leadName={leadName}
-      />
-    );
-  };
 
   return (
     <motion.div
@@ -127,7 +53,16 @@ export const TimelineItem = ({
           <div className="absolute left-8 top-4 w-8 h-0.5 bg-gray-400" />
           
           <div className="flex-1 min-w-0 pl-2">
-            {renderContent()}
+            <TimelineItemCard 
+              type={item.type}
+              content={item.content}
+              metadata={item.metadata}
+              status={item.status}
+              onDelete={onDelete ? () => onDelete(item.id) : undefined}
+              id={item.id}
+              created_at={item.created_at}
+              isCompleted={item.type === 'task' ? item.completed : undefined}
+            />
           </div>
         </div>
       </div>

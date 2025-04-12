@@ -40,6 +40,7 @@ export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadCon
         <LeadTimeline 
           lead={lead} 
           onDeletePhaseChange={onDeletePhaseChange}
+          onUpdateLead={onUpdateLead}
         />
         <TaskList leadId={lead.id} />
         <NoteList leadId={lead.id} />

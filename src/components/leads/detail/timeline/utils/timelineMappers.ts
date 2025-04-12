@@ -1,102 +1,102 @@
 
-import { Tables } from "@/integrations/supabase/types";
-import { TimelineItem } from "../TimelineUtils";
+import { TimelineItem, TimelineItemType } from "../TimelineUtils";
+import { format } from "date-fns";
 
-export const mapNoteToTimelineItem = (note: Tables<"notes">): TimelineItem => {
+export const mapNoteToTimelineItem = (note: any): TimelineItem => {
+  // Extract metadata if present
+  let metadata: any = {};
+  
+  try {
+    metadata = note.metadata || {};
+  } catch (e) {
+    console.error("Error parsing note metadata:", e);
+  }
+
+  // Determine type
+  let type: TimelineItemType = "note";
+  if (metadata && (metadata.type === "phase_analysis" || metadata.icon_type === "phase_analysis")) {
+    type = "phase_analysis";
+  }
+
   return {
     id: note.id,
-    type: "note",
+    type,
     content: note.content,
-    timestamp: note.created_at || new Date().toISOString(),
+    timestamp: note.created_at,
     metadata: {
-      type: note.type,
+      ...metadata,
       last_edited_at: note.updated_at,
-      ...note.metadata
+      color: note.color,
     },
     created_at: note.created_at,
   };
 };
 
-export const mapTaskToTimelineItem = (task: Tables<"tasks">): TimelineItem => {
+export const mapTaskToTimelineItem = (task: any): TimelineItem => {
   return {
     id: task.id,
     type: "task",
-    content: task.title,
-    timestamp: task.created_at || new Date().toISOString(),
-    completed: task.completed,
-    status: task.completed ? "completed" : "open",
+    content: task.title || task.task, // Support both legacy and new format
+    timestamp: task.created_at || task.due_date || new Date().toISOString(),
+    completed: !!task.completed,
+    status: task.completed ? "completed" : "pending",
     metadata: {
       dueDate: task.due_date,
-      status: task.completed ? "completed" : undefined,
-      completedAt: task.completed ? task.updated_at : undefined,
+      completedAt: task.completed_at,
+      color: task.color,
+      meetingType: task.meeting_type,
       priority: task.priority,
-      type: "task"
     },
     created_at: task.created_at,
   };
 };
 
-export const mapMessageToTimelineItem = (message: Tables<"messages">): TimelineItem => {
+export const mapMessageToTimelineItem = (message: any): TimelineItem => {
   return {
     id: message.id,
     type: "message",
     content: message.content,
-    timestamp: message.sent_at || message.created_at || new Date().toISOString(),
+    timestamp: message.created_at || message.sent_at || new Date().toISOString(),
     platform: message.platform,
     metadata: {
-      sender: message.sender || undefined,
-      receiver: message.receiver || undefined,
-      type: "message"
+      sender: message.sender, // This may be a user object
+      receiver: message.receiver, // This may be a user object
     },
     created_at: message.created_at,
   };
 };
 
-export const mapFileToTimelineItem = (file: Tables<"lead_files">): TimelineItem => {
+export const mapFileToTimelineItem = (file: any): TimelineItem => {
   return {
     id: file.id,
     type: "file_upload",
-    content: file.file_name || "Uploaded file",
+    content: file.file_name,
     timestamp: file.created_at || new Date().toISOString(),
     metadata: {
       fileName: file.file_name,
+      filePath: file.file_path,
       fileType: file.file_type,
       fileSize: file.file_size,
-      filePath: file.file_path,
-      type: "file"
+      content: file.file_name,
     },
     created_at: file.created_at,
   };
 };
 
-export const mapBusinessMatchToTimelineItem = (match: any): TimelineItem => {
+export const createContactCreationItem = (
+  name: string,
+  timestamp?: string
+): TimelineItem => {
+  const createdAt = timestamp || new Date().toISOString();
   return {
-    id: match.id || `match-${Date.now()}`,
-    type: "business_match",
-    content: "Business Match Analysis",
-    timestamp: match.created_at || new Date().toISOString(),
-    metadata: {
-      match_score: match.match_score || 0,
-      skills: match.skills || [],
-      commonalities: match.commonalities || [],
-      potential_needs: match.potential_needs || [],
-      strengths: match.strengths || [],
-      content: match.content || '',
-      type: "business_match"
-    },
-    created_at: match.created_at,
-  };
-};
-
-export const createContactCreationItem = (name: string, timestamp: string): TimelineItem => {
-  return {
-    id: `creation-${Date.now()}`,
+    id: `contact-creation-${createdAt}`,
     type: "contact_created",
-    content: `Kontakt ${name} erstellt`,
-    timestamp: timestamp || new Date().toISOString(),
+    content: `Kontakt "${name}" erstellt`,
+    timestamp: createdAt,
     metadata: {
-      type: "system"
-    }
+      timestamp: createdAt,
+    },
+    created_at: createdAt,
   };
 };
 
@@ -104,21 +104,36 @@ export const createStatusChangeItem = (
   status: string, 
   timestamp: string,
   name?: string
-): TimelineItem => {
+): TimelineItem | null => {
+  if (status === "lead") return null; // No status change item for default lead status
+  
   let statusMessage = '';
+  let emoji = '';
   
   switch (status) {
     case 'partner':
-      statusMessage = `Kontakt${name ? ' ' + name : ''} ist jetzt dein Partner! 🚀`;
+      statusMessage = name 
+        ? `${name} ist jetzt Partner! 🚀` 
+        : `Kontakt ist jetzt Partner! 🚀`;
+      emoji = '🚀';
       break;
     case 'customer':
-      statusMessage = `Kontakt${name ? ' ' + name : ''} ist jetzt Kunde – viel Erfolg! 🎉`;
+      statusMessage = name 
+        ? `${name} ist jetzt Kunde – viel Erfolg! 🎉` 
+        : `Kontakt ist jetzt Kunde – viel Erfolg! 🎉`;
+      emoji = '🎉';
       break;
     case 'not_for_now':
-      statusMessage = `Kontakt${name ? ' ' + name : ''} ist aktuell nicht bereit – bleib dran! ⏳`;
+      statusMessage = name 
+        ? `${name} ist aktuell nicht bereit – bleib dran! ⏳` 
+        : `Kontakt ist aktuell nicht bereit – bleib dran! ⏳`;
+      emoji = '⏳';
       break;
     case 'no_interest':
-      statusMessage = `Kontakt${name ? ' ' + name : ''} hat kein Interesse – weiter geht's! 🚀`;
+      statusMessage = name 
+        ? `${name} hat kein Interesse – weiter geht's! 🚀` 
+        : `Kontakt hat kein Interesse – weiter geht's! 🚀`;
+      emoji = '🚀';
       break;
     default:
       statusMessage = `Status geändert zu ${status}`;
@@ -132,7 +147,9 @@ export const createStatusChangeItem = (
     metadata: {
       oldStatus: 'lead',
       newStatus: status,
-      timestamp
-    }
+      timestamp,
+      emoji
+    },
+    created_at: timestamp,
   };
 };
