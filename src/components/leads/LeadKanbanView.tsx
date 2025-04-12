@@ -1,117 +1,93 @@
+import { useEffect, useState } from "react";
+import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { KanbanBoard } from "@/components/ui/kanban/KanbanBoard";
+import { KanbanColumn } from "@/components/ui/kanban/KanbanColumn";
 
-import { useState } from "react";
-import { useSettings } from "@/hooks/use-settings";
-import { Tables } from "@/integrations/supabase/types";
-import { useNavigate } from "react-router-dom";
-import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
-import { usePhaseQuery } from "./kanban/usePhaseQuery";
-import { usePhaseMutations } from "./kanban/usePhaseMutations";
-import { useLeadsSubscription } from "./kanban/hooks/useLeadsSubscription";
-import { KanbanBoard } from "./kanban/KanbanBoard";
-
-interface LeadKanbanViewProps {
-  leads: Tables<"leads">[];
-  selectedPipelineId: string | null;
-  setSelectedPipelineId: (id: string | null) => void;
-  isEditMode?: boolean;
-}
-
-export const LeadKanbanView = ({ 
-  leads, 
-  selectedPipelineId,
-  setSelectedPipelineId,
-  isEditMode = false
-}: LeadKanbanViewProps) => {
-  const { settings } = useSettings();
-  const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
-  const [targetPhase, setTargetPhase] = useState<string>("");
-  const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
-  const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
-  const navigate = useNavigate();
-
-  // Subscribe to lead changes
-  useLeadsSubscription(selectedPipelineId);
-
-  const handleLeadClick = (id: string) => {
-    navigate(`/contacts/${id}`);
+// Wrapper function to handle type compatibility issues
+const createUpdatePhaseMutation = (mutationFn: any) => {
+  return (id: string, name: string) => {
+    mutationFn({ id, name });
   };
+};
 
-  const handleDeletePhase = async () => {
-    if (!phaseToDelete || !targetPhase) return;
+export const LeadKanbanView = () => {
+  const [phases, setPhases] = useState([
+    { id: "lead", name: "Lead" },
+    { id: "discovery", name: "Discovery" },
+    { id: "solution", name: "Solution" },
+    { id: "negotiation", name: "Negotiation" },
+    { id: "won", name: "Won" },
+  ]);
+  const queryClient = useQueryClient();
 
-    try {
-      await deletePhase.mutateAsync({ 
-        phaseId: phaseToDelete.id, 
-        targetPhaseId: targetPhase 
-      });
-      setPhaseToDelete(null);
-      setTargetPhase("");
-    } catch (error) {
-      console.error("Error deleting phase:", error);
-    }
-  };
+  const { data: leads, isLoading } = useQuery({
+    queryKey: ["leads"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("leads").select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
 
-  const handleUpdatePhase = async (leadId: string, newPhaseId: string) => {
-    try {
-      const oldPhase = phases.find(p => p.id === leads.find(l => l.id === leadId)?.phase_id)?.name || '';
-      const newPhase = phases.find(p => p.id === newPhaseId)?.name || '';
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 10,
+      },
+    })
+  );
 
-      await updateLeadPhase.mutateAsync({ 
-        leadId, 
-        phaseId: newPhaseId,
-        oldPhaseName: oldPhase,
-        newPhaseName: newPhase
-      });
-    } catch (error) {
+  const updatePhaseMutation = useMutation({
+    mutationFn: async ({ id, name }: { id: string; name: string }) => {
+      if (!id) return;
+
+      await supabase
+        .from("leads")
+        .update({ 
+          phase_id: name,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      toast.success("Lead updated successfully");
+    },
+    onError: (error) => {
       console.error("Error updating lead phase:", error);
-    }
-  };
+      toast.error("Failed to update lead phase");
+    },
+  });
 
-  const handleMovePhase = async (phaseId: string, direction: 'left' | 'right') => {
-    const currentIndex = phases.findIndex(p => p.id === phaseId);
-    if (currentIndex === -1) return;
+  // Create wrapper function that transforms the parameters to match the expected format
+  const handleUpdatePhase = createUpdatePhaseMutation(updatePhaseMutation.mutate);
 
-    const newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
-    if (newIndex < 0 || newIndex >= phases.length) return;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
 
-    const updatedPhases = [...phases];
-    const [movedPhase] = updatedPhases.splice(currentIndex, 1);
-    updatedPhases.splice(newIndex, 0, movedPhase);
-
-    const phasesWithNewOrder = updatedPhases.map((phase, index) => ({
-      ...phase,
-      order_index: index
-    }));
-
-    try {
-      await updatePhaseOrder.mutateAsync(phasesWithNewOrder);
-    } catch (error) {
-      console.error("Error updating phase order:", error);
+    if (over) {
+      handleUpdatePhase(active.id, over.id);
     }
   };
 
   return (
-    <>
-      <KanbanBoard
-        phases={phases}
-        leads={leads}
-        isEditMode={isEditMode}
-        selectedPipelineId={selectedPipelineId}
-        onLeadClick={handleLeadClick}
-        onUpdatePhase={handleUpdatePhase}
-        onDeletePhase={setPhaseToDelete}
-        onUpdatePhaseName={updatePhaseName.mutate}
-        onMovePhase={handleMovePhase}
-      />
-
-      <DeletePhaseDialog
-        phaseToDelete={phaseToDelete}
-        targetPhase={targetPhase}
-        setTargetPhase={setTargetPhase}
-        onClose={() => setPhaseToDelete(null)}
-        onConfirm={handleDeletePhase}
-        phases={phases}
-      />
-    </>
+    <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <KanbanBoard>
+        {phases.map((phase) => (
+          <KanbanColumn key={phase.id} id={phase.id} title={phase.name}>
+            {leads
+              ?.filter((lead) => lead.phase_id === phase.id)
+              .map((lead) => (
+                <div key={lead.id} id={lead.id}>
+                  {lead.name}
+                </div>
+              ))}
+          </KanbanColumn>
+        ))}
+      </KanbanBoard>
+    </DndContext>
   );
 };
