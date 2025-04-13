@@ -69,7 +69,7 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   
   if (!apiSettings) {
     return (
-      <div className="flex flex-col items-center justify-center h-full p-4 pt-20">
+      <div className="flex flex-col items-center justify-center h-full p-4">
         <Settings className="h-12 w-12 text-gray-400 mb-4" />
         <h2 className="text-xl font-semibold mb-2">Email Not Configured</h2>
         <p className="text-center text-muted-foreground mb-4">
@@ -83,7 +83,7 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
   }
   
   return (
-    <div className="grid md:grid-cols-3 lg:grid-cols-12 h-full pt-16 md:pt-0">
+    <div className="grid md:grid-cols-3 lg:grid-cols-12 h-full">
       <div className="md:col-span-1 lg:col-span-3 border-r">
         <Tabs defaultValue="inbox" value={currentFolder} onValueChange={setCurrentFolder}>
           <div className="p-2 border-b">
