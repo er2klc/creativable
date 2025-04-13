@@ -7,9 +7,11 @@ export const imapSettingsSchema = z.object({
   username: z.string().min(1, "Benutzername ist erforderlich"),
   password: z.string().min(1, "Passwort ist erforderlich"),
   secure: z.boolean().default(true),
-  max_emails: z.coerce.number().int().positive().default(100),
+  max_emails: z.coerce.number().int().positive().default(500),
   auto_reconnect: z.boolean().default(true),
-  connection_timeout: z.coerce.number().int().positive().default(30000)
+  connection_timeout: z.coerce.number().int().positive().default(60000),
+  historical_sync: z.boolean().default(true),
+  progressive_loading: z.boolean().default(true)
 });
 
 // Documentation for common IMAP servers

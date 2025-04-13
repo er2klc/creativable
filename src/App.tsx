@@ -1,5 +1,4 @@
 
-import React, { Suspense } from "react";
 import { AppProvider } from "@/providers/AppProvider";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
@@ -9,6 +8,7 @@ import { publicRoutes } from "@/config/public-routes";
 import { protectedRoutes } from "@/config/protected-routes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { Suspense } from "react";
 
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen bg-[#0A0A0A]">
@@ -95,3 +95,4 @@ const App = () => {
 };
 
 export default App;
+

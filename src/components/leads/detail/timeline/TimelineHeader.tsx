@@ -1,5 +1,3 @@
-
-import React from "react";
 import { Activity, MessageCircle } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
 import { cn } from "@/lib/utils";

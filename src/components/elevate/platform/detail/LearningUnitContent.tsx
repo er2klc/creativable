@@ -1,69 +1,112 @@
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Edit, Eye, FileText, Film } from "lucide-react";
-import { EditUnitDialog } from "./dialog/EditUnitDialog";
-import { PlatformContent } from "./PlatformContent";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useUser } from "@supabase/auth-helpers-react";
+import { EditUnitDialog } from "./EditUnitDialog";
+import { VideoSection } from "./content/VideoSection";
+import { NotesManager } from "./content/NotesManager";
+import { DescriptionSection } from "./content/DescriptionSection";
+import { DocumentManager } from "./content/DocumentManager";
 
 interface LearningUnitContentProps {
-  unitId: string;
+  id: string;
+  moduleTitle: string;
   title: string;
   description: string;
   videoUrl: string;
-  documentUrl?: string;
+  isCompleted: boolean;
+  onComplete: () => void;
+  onVideoProgress: (progress: number) => void;
+  savedProgress?: number;
+  isAdmin: boolean;
+  onDelete: () => void;
   onUpdate: (data: { title: string; description: string; videoUrl: string }) => Promise<void>;
-  onDelete: () => Promise<void>;
-  existingFiles?: string[];
 }
 
 export const LearningUnitContent = ({
-  unitId,
+  id,
   title,
   description,
   videoUrl,
-  documentUrl,
+  onVideoProgress,
+  savedProgress,
+  isAdmin,
   onUpdate,
-  onDelete,
-  existingFiles = []
+  isCompleted,
+  onComplete,
 }: LearningUnitContentProps) => {
-  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [files, setFiles] = useState<File[]>([]);
+  const [videoDuration, setVideoDuration] = useState(0);
+  const [hasCompletedNotification, setHasCompletedNotification] = useState(false);
+  const user = useUser();
+
+  const handleUpdate = async (data: { title: string; description: string; videoUrl: string }) => {
+    try {
+      await onUpdate(data);
+      setIsEditing(false);
+      setFiles([]);
+      toast.success('Lerneinheit erfolgreich aktualisiert');
+    } catch (error) {
+      console.error('Error updating learning unit:', error);
+      toast.error('Fehler beim Aktualisieren der Lerneinheit');
+    }
+  };
+
+  const handleVideoProgress = async (progress: number) => {
+    try {
+      onVideoProgress(progress);
+      if (progress >= 95 && !isCompleted && !hasCompletedNotification) {
+        setHasCompletedNotification(true);
+        await onComplete();
+      }
+    } catch (error) {
+      console.error('Error updating progress:', error);
+    }
+  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        <div className="flex gap-2">
-          <Button variant="outline" size="icon">
-            <Eye className="h-4 w-4" />
-          </Button>
-          <Button variant="outline" size="icon" onClick={() => setShowEditDialog(true)}>
-            <Edit className="h-4 w-4" />
-          </Button>
-        </div>
+    <div className="space-y-8 py-6 px-6 bg-gray-50">
+      <div className="grid grid-cols-12 gap-8">
+        <VideoSection
+          videoUrl={videoUrl}
+          onVideoProgress={handleVideoProgress}
+          savedProgress={savedProgress}
+          onDuration={(duration) => setVideoDuration(duration)}
+        />
+        
+        <NotesManager lerninhalteId={id} />
+
+        <DescriptionSection
+          title={title}
+          description={description}
+          isAdmin={isAdmin}
+          onEdit={() => setIsEditing(true)}
+        />
+        
+        <DocumentManager 
+          isAdmin={isAdmin}
+          lerninhalteId={id}
+        />
       </div>
 
-      <PlatformContent 
-        id={unitId}
-        moduleTitle=""
-        title={title}
-        description={description}
-        videoUrl={videoUrl}
-        documentUrl={documentUrl}
-        isAdmin={true}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
-      />
-
       <EditUnitDialog
-        open={showEditDialog}
-        onOpenChange={setShowEditDialog}
+        open={isEditing}
+        onOpenChange={setIsEditing}
         title={title}
         description={description}
         videoUrl={videoUrl}
-        onUpdate={onUpdate}
-        onDelete={onDelete}
-        id={unitId}
-        existingFiles={existingFiles}
+        onUpdate={handleUpdate}
+        existingFiles={[]}
+        onFileRemove={async (index) => {
+          const newFiles = [...files];
+          newFiles.splice(index, 1);
+          setFiles(newFiles);
+        }}
+        onFilesSelected={setFiles}
+        files={files}
+        id={id}
       />
     </div>
   );

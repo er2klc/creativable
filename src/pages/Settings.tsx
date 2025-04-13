@@ -1,10 +1,11 @@
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { GeneralSettings } from "@/components/settings/GeneralSettings";
 import { MLMSettings } from "@/components/settings/MLMSettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { AboutSettings } from "@/components/settings/AboutSettings";
 import { BillingSettings } from "@/components/settings/BillingSettings";
-import { EmailSettings } from "@/components/settings/EmailSettings";
+import { NewEmailSettings } from "@/components/settings/NewEmailSettings";
 import { useSettings } from "@/hooks/use-settings";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
@@ -73,7 +74,7 @@ export default function Settings() {
           </TabsContent>
 
           <TabsContent value="email" className="space-y-4">
-            <EmailSettings />
+            <NewEmailSettings />
           </TabsContent>
 
           <TabsContent value="mlm" className="space-y-4">

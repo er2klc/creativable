@@ -1,8 +1,16 @@
 
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
-import { Button } from "@/components/ui/button";
-import { Trash } from "lucide-react";
+import { NoteCard } from "./cards/NoteCard";
+import { TaskCard } from "./cards/TaskCard";
+import { FileCard } from "./cards/FileCard";
+import { AppointmentCard } from "./cards/AppointmentCard";
+import { MetadataDisplay } from "./cards/MetadataDisplay";
+import { DeleteButton } from "./cards/DeleteButton";
+import { StatusCard } from "./cards/StatusCard";
+import { NexusTimelineCard } from "./cards/NexusTimelineCard";
+import { CallScriptCard } from "./cards/CallScriptCard";
+import { MessageTemplateCard } from "./cards/MessageTemplateCard";
 
 interface TimelineItemCardProps {
   type: string;
@@ -26,6 +34,21 @@ interface TimelineItemCardProps {
     meetingType?: string;
     color?: string;
     timestamp?: string;
+    script_type?: string;
+    message_type?: string;
+    platform?: string;
+    phase?: {
+      id: string;
+      name: string;
+    };
+    analysis?: {
+      social_media_bio?: string;
+      hashtags?: string[];
+      engagement_metrics?: {
+        followers?: number;
+        engagement_rate?: number;
+      };
+    };
     emoji?: string;
   };
   status?: string;
@@ -49,6 +72,42 @@ export const TimelineItemCard = ({
 }: TimelineItemCardProps) => {
   const { settings } = useSettings();
 
+  // If this is a phase analysis, use the NexusTimelineCard
+  if (metadata?.type === 'phase_analysis') {
+    return (
+      <NexusTimelineCard
+        content={content}
+        metadata={metadata}
+        onDelete={onDelete}
+      />
+    );
+  }
+
+  // For call scripts
+  if (metadata?.type === 'call_script') {
+    return (
+      <CallScriptCard
+        content={content}
+        scriptType={metadata.script_type || 'introduction'}
+        created_at={created_at}
+        onDelete={onDelete}
+      />
+    );
+  }
+
+  // For message templates
+  if (metadata?.type === 'message_template') {
+    return (
+      <MessageTemplateCard
+        content={content}
+        messageType={metadata.message_type || 'introduction'}
+        platform={metadata.platform || 'Generic'}
+        created_at={created_at}
+        onDelete={onDelete}
+      />
+    );
+  }
+
   const getBorderColor = () => {
     if (type === "status_change") {
       switch (metadata?.newStatus) {
@@ -67,7 +126,7 @@ export const TimelineItemCard = ({
       }
     }
 
-    // Fallback colors for other types
+    // Fallback-Farben für andere Typen
     switch (type) {
       case "task":
         return status === "completed" ? "border-green-500" : "border-cyan-500";
@@ -88,10 +147,60 @@ export const TimelineItemCard = ({
     }
   };
 
-  return (
-    <div
-      className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-sm border ${getBorderColor()} group relative`}
-    >
+  const renderContent = () => {
+    // Separate case for appointments
+    if (type === "appointment" && id) {
+      return (
+        <AppointmentCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          onDelete={onDelete}
+        />
+      );
+    }
+
+    if (type === "task" && id) {
+      return (
+        <TaskCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          isCompleted={isCompleted}
+          onDelete={onDelete}
+          onToggleComplete={onToggleComplete}
+        />
+      );
+    }
+
+    if (type === "file_upload") {
+      return <FileCard content={content} metadata={metadata} />;
+    }
+
+    if (type === "note" && id) {
+      return (
+        <NoteCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          onDelete={onDelete}
+        />
+      );
+    }
+
+    if (type === "status_change") {
+      return (
+        <StatusCard
+          content={content}
+          timestamp={metadata?.timestamp || new Date().toISOString()}
+          metadata={metadata}
+          onDelete={onDelete ? () => onDelete(id!) : undefined}
+        />
+      );
+    }
+
+    // For phase_change and other types
+    return (
       <div className="relative group">
         <div className="flex items-center">
           {metadata?.emoji && (
@@ -99,17 +208,20 @@ export const TimelineItemCard = ({
           )}
           <div className="whitespace-pre-wrap break-words">{content}</div>
         </div>
-        {onDelete && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onDelete}
-            className="absolute top-0 right-0 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <Trash className="h-4 w-4 text-gray-400 hover:text-red-500" />
-          </Button>
-        )}
+        {onDelete && <DeleteButton onDelete={onDelete} />}
       </div>
+    );
+  };
+
+  return (
+    <div
+      className={`flex-1 min-w-0 rounded-lg p-4 bg-white shadow-sm border ${getBorderColor()} group relative`}
+    >
+      {renderContent()}
+      <MetadataDisplay
+        last_edited_at={metadata?.last_edited_at}
+        created_at={created_at}
+      />
     </div>
   );
 };

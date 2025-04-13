@@ -6,7 +6,6 @@ import { useState } from "react";
 import { CreatePostForm } from "./CreatePostForm";
 import { Post } from "../types/post";
 import { useTeamMembers } from "./useTeamMembers";
-import { useParams } from "react-router-dom";
 
 interface EditPostDialogProps {
   post: Post;
@@ -16,7 +15,6 @@ interface EditPostDialogProps {
 
 export const EditPostDialog = ({ post, teamId, isAdmin = false }: EditPostDialogProps) => {
   const [open, setOpen] = useState(false);
-  const { teamSlug } = useParams<{ teamSlug: string }>();
   const { data: teamMembers } = useTeamMembers(teamId);
 
   return (
@@ -45,7 +43,6 @@ export const EditPostDialog = ({ post, teamId, isAdmin = false }: EditPostDialog
           onSuccess={() => setOpen(false)}
           teamMembers={teamMembers}
           isAdmin={isAdmin}
-          teamSlug={teamSlug || teamId} // Use teamSlug from params or fallback to teamId
         />
       </DialogContent>
     </Dialog>

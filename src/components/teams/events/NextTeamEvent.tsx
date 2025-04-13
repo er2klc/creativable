@@ -1,238 +1,227 @@
+import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { format, isWithinInterval, formatDistanceToNow, addWeeks, parseISO, isBefore, isAfter, addMonths, addDays, addHours, differenceInDays, startOfDay, endOfDay, isSameDay } from "date-fns";
+import { de } from "date-fns/locale";
+import { Calendar } from "lucide-react";
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { useUser } from '@supabase/auth-helpers-react';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { parseISO, addDays, format, isAfter } from 'date-fns';
-import { de } from 'date-fns/locale';
-import { MapPin, Users, Calendar, Clock, ChevronRight, Ban } from 'lucide-react';
-import { TeamEvent } from '@/components/calendar/types/calendar';
-import { Button as UIButton } from '@/components/ui/button';
-
-export function NextTeamEvent() {
-  const user = useUser();
-  const [isExpanded, setIsExpanded] = useState(false);
-  
-  const { data: userTeams = [] } = useQuery({
-    queryKey: ['user-teams'],
-    queryFn: async () => {
-      if (!user) return [];
-      
-      const { data, error } = await supabase
-        .from('team_members')
-        .select('team_id, teams(id, name)')
-        .eq('user_id', user.id);
-        
-      if (error) throw error;
-      
-      return data.map((item) => ({
-        id: item.teams.id,
-        name: item.teams.name
-      }));
-    },
-    enabled: !!user,
-  });
-  
-  const teamIds = userTeams.map((team) => team.id);
-  
-  const { data: nextEvent, isLoading } = useQuery({
-    queryKey: ['next-team-event', teamIds],
-    queryFn: async () => {
-      if (!teamIds.length) return null;
-      
-      const today = new Date();
-      
-      const { data, error } = await supabase
-        .from('team_calendar_events')
-        .select('*')
-        .in('team_id', teamIds)
-        .gte('start_time', today.toISOString())
-        .order('start_time', { ascending: true })
-        .limit(1);
-        
-      if (error) throw error;
-      
-      if (!data || data.length === 0) return null;
-      
-      return data[0] as TeamEvent;
-    },
-    enabled: teamIds.length > 0,
-  });
-  
-  const formatEventTime = (event?: TeamEvent) => {
-    if (!event) return '';
-    
-    const startTime = parseISO(event.start_time);
-    const endTime = event.end_time ? parseISO(event.end_time) : addDays(startTime, 1);
-    
-    return `${format(startTime, 'HH:mm')} - ${format(endTime, 'HH:mm')}`;
-  };
-  
-  const getEventDateString = (event?: TeamEvent) => {
-    if (!event) return '';
-    
-    const startDate = parseISO(event.start_time);
-    const now = new Date();
-    
-    if (
-      startDate.getDate() === now.getDate() &&
-      startDate.getMonth() === now.getMonth() &&
-      startDate.getFullYear() === now.getFullYear()
-    ) {
-      return 'Heute';
-    }
-    
-    const tomorrow = new Date(now);
-    tomorrow.setDate(now.getDate() + 1);
-    
-    if (
-      startDate.getDate() === tomorrow.getDate() &&
-      startDate.getMonth() === tomorrow.getMonth() &&
-      startDate.getFullYear() === tomorrow.getFullYear()
-    ) {
-      return 'Morgen';
-    }
-    
-    return format(startDate, 'EEEE, d. MMMM', { locale: de });
-  };
-  
-  const handleParticipate = async (event: TeamEvent) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('team_event_participants')
-        .insert({
-          event_id: event.id,
-          user_id: user.id,
-          status: 'confirmed'
-        });
-        
-      if (error) throw error;
-      
-      // Success message or notification here
-    } catch (error) {
-      console.error('Error participating in event:', error);
-      // Error message here
-    }
-  };
-  
-  const handleDecline = async (event: TeamEvent) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('team_event_participants')
-        .insert({
-          event_id: event.id,
-          user_id: user.id,
-          status: 'declined'
-        });
-        
-      if (error) throw error;
-      
-      // Success message or notification here
-    } catch (error) {
-      console.error('Error declining event:', error);
-      // Error message here
-    }
-  };
-  
-  if (isLoading) {
-    return (
-      <Card className="bg-white border rounded-lg shadow">
-        <CardContent className="py-6">
-          <div className="flex justify-center">
-            <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  if (!nextEvent) {
-    return (
-      <Card className="bg-white border rounded-lg shadow">
-        <CardContent className="py-6">
-          <div className="text-center text-gray-500">
-            <Calendar className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-            <p>Keine anstehenden Team-Events</p>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-  
-  return (
-    <Card className="bg-white border rounded-lg shadow">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-lg">Nächstes Event</CardTitle>
-        <CardDescription>
-          {getEventDateString(nextEvent)}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pb-2">
-        <div className="space-y-3">
-          <div className="flex justify-between items-start">
-            <h3 className="font-medium text-base">{nextEvent.title}</h3>
-            <div 
-              className="w-3 h-3 rounded-full" 
-              style={{ backgroundColor: nextEvent.color || '#3B82F6' }}
-            />
-          </div>
-          
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Clock className="h-4 w-4" />
-            <span>{formatEventTime(nextEvent)}</span>
-          </div>
-          
-          {nextEvent.location && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <MapPin className="h-4 w-4" />
-              <span>{nextEvent.location}</span>
-            </div>
-          )}
-          
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Users className="h-4 w-4" />
-            <span>Team Event</span>
-          </div>
-          
-          {isExpanded && nextEvent.description && (
-            <div className="text-sm mt-2 text-gray-700">
-              {nextEvent.description}
-            </div>
-          )}
-        </div>
-      </CardContent>
-      <CardFooter className="flex justify-between pt-2">
-        <div className="flex gap-2">
-          <UIButton
-            size="sm"
-            variant="default"
-            onClick={() => handleParticipate(nextEvent)}
-          >
-            Teilnehmen
-          </UIButton>
-          <UIButton
-            size="sm"
-            variant="outline"
-            onClick={() => handleDecline(nextEvent)}
-          >
-            Ablehnen
-          </UIButton>
-        </div>
-        <UIButton
-          size="sm"
-          variant="ghost"
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          {isExpanded ? 'Weniger' : 'Mehr'} <ChevronRight className={`h-4 w-4 ml-1 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
-        </UIButton>
-      </CardFooter>
-    </Card>
-  );
+interface TeamEvent {
+  id: string;
+  title: string;
+  description?: string;
+  start_time: string;
+  end_time?: string;
+  recurring_pattern?: 'none' | 'daily' | 'weekly' | 'monthly';
+  is_admin_only: boolean;
+  meeting_link?: string;
+  color: string;
 }
 
-export default NextTeamEvent;
+interface NextTeamEventProps {
+  teamId: string;
+  teamSlug: string;
+}
+
+export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
+  const navigate = useNavigate();
+  const [showDetails, setShowDetails] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<TeamEvent | null>(null);
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(new Date());
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const { data: nextEvents = [] } = useQuery({
+    queryKey: ["next-team-events", teamId],
+    queryFn: async () => {
+      const { data: events = [], error } = await supabase
+        .from("team_calendar_events")
+        .select("*")
+        .eq("team_id", teamId)
+        .order("start_time");
+
+      if (error) {
+        console.error("Error fetching events:", error);
+        return [];
+      }
+
+      const processedEvents: TeamEvent[] = [];
+      const cutoffDate = addMonths(now, 3);
+      const today = startOfDay(now);
+
+      events.forEach((event) => {
+        const originalStartTime = parseISO(event.start_time);
+        const startTimeOfDay = new Date(originalStartTime);
+        const hours = originalStartTime.getHours();
+        const minutes = originalStartTime.getMinutes();
+        
+        if (!event.recurring_pattern || event.recurring_pattern === 'none') {
+          if (isAfter(originalStartTime, now)) {
+            processedEvents.push(event);
+          }
+          return;
+        }
+
+        let nextDate = today;
+        
+        if (isSameDay(today, originalStartTime) && isAfter(originalStartTime, now)) {
+          nextDate = originalStartTime;
+        } else {
+          while (isBefore(nextDate, cutoffDate)) {
+            switch (event.recurring_pattern) {
+              case 'daily':
+                nextDate = addDays(nextDate, 1);
+                break;
+              case 'weekly':
+                if (nextDate.getDay() !== originalStartTime.getDay()) {
+                  const daysUntilNext = (originalStartTime.getDay() - nextDate.getDay() + 7) % 7;
+                  nextDate = addDays(nextDate, daysUntilNext);
+                } else {
+                  nextDate = addWeeks(nextDate, 1);
+                }
+                break;
+              case 'monthly':
+                nextDate = addMonths(nextDate, 1);
+                break;
+            }
+
+            nextDate = new Date(nextDate.setHours(hours, minutes, 0, 0));
+
+            if (isAfter(nextDate, now)) {
+              break;
+            }
+          }
+        }
+
+        if (isBefore(nextDate, cutoffDate)) {
+          const duration = event.end_time 
+            ? differenceInDays(parseISO(event.end_time), originalStartTime)
+            : 0;
+
+          const recurringEvent = {
+            ...event,
+            id: `${event.id}-${format(nextDate, 'yyyy-MM-dd')}`,
+            start_time: format(nextDate, "yyyy-MM-dd'T'HH:mm:ssxxx"),
+            end_time: duration > 0 
+              ? format(addDays(nextDate, duration), "yyyy-MM-dd'T'HH:mm:ssxxx")
+              : format(addHours(nextDate, 1), "yyyy-MM-dd'T'HH:mm:ssxxx")
+          };
+          processedEvents.push(recurringEvent);
+        }
+      });
+
+      return processedEvents
+        .sort((a, b) => parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime())
+        .slice(0, 3);
+    },
+    refetchInterval: 60000,
+  });
+
+  const isEventLive = (event: TeamEvent) => {
+    const startTime = parseISO(event.start_time);
+    const endTime = event.end_time ? parseISO(event.end_time) : addHours(startTime, 1);
+    return isWithinInterval(now, { start: startTime, end: endTime });
+  };
+
+  const formatTimeDistance = (date: Date) => {
+    return formatDistanceToNow(date, { locale: de, addSuffix: true });
+  };
+
+  const handleEventClick = (event: TeamEvent) => {
+    setSelectedEvent(event);
+    setShowDetails(true);
+  };
+
+  const handleCalendarClick = () => {
+    navigate(`/unity/team/${teamSlug}/calendar`);
+  };
+
+  if (nextEvents.length === 0) return null;
+
+  return (
+    <>
+      <div className="flex items-center justify-center mt-2 text-muted-foreground">
+        <div className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer group relative"
+             onClick={() => handleEventClick(nextEvents[0])}>
+          <Calendar className="h-4 w-4" />
+          <span className="text-sm">
+            {nextEvents[0].title}
+            <span className="ml-1 text-xs opacity-75">
+              ({formatTimeDistance(parseISO(nextEvents[0].start_time))})
+            </span>
+          </span>
+          
+          {nextEvents.length > 1 && (
+            <div className="absolute left-0 top-full mt-2 bg-background/95 backdrop-blur-sm border rounded-md p-2 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity z-10 w-64">
+              {nextEvents.slice(1).map((event) => (
+                <div 
+                  key={event.id}
+                  className="flex items-center gap-2 py-1 px-2 hover:bg-accent rounded-sm cursor-pointer text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEventClick(event);
+                  }}
+                >
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: event.color || '#FEF7CD' }} />
+                  <span>{event.title}</span>
+                  <span className="ml-auto opacity-75">
+                    {formatTimeDistance(parseISO(event.start_time))}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Termin Details</DialogTitle>
+          </DialogHeader>
+          {selectedEvent && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: selectedEvent.color || '#FEF7CD' }} />
+                  <h4 className="font-medium">{selectedEvent.title}</h4>
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  {format(parseISO(selectedEvent.start_time), "d. MMMM yyyy, HH:mm", { locale: de })} - 
+                  {format(selectedEvent.end_time ? parseISO(selectedEvent.end_time) : addHours(parseISO(selectedEvent.start_time), 1), "HH:mm", { locale: de })} Uhr
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {formatTimeDistance(parseISO(selectedEvent.start_time))}
+                </p>
+              </div>
+              {selectedEvent.description && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium">Beschreibung</h4>
+                  <p className="text-sm text-muted-foreground">{selectedEvent.description}</p>
+                </div>
+              )}
+              {selectedEvent.meeting_link && (
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium">Meeting Link</h4>
+                  <Button 
+                    variant="link" 
+                    onClick={() => window.open(selectedEvent.meeting_link)}
+                    className="h-8 px-0 text-sm"
+                  >
+                    Zum Meeting beitreten
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}

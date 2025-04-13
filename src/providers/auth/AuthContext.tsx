@@ -1,5 +1,4 @@
-
-import React, { createContext, useContext } from "react";
+import { createContext, useContext } from "react";
 import { User } from "@supabase/supabase-js";
 
 interface AuthContextType {

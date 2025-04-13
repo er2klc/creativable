@@ -1,12 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { ImapFlow } from 'npm:imapflow@1.0.98';
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-};
+import { corsHeaders } from "../_shared/cors.ts";
 
 interface ImapSettings {
   host: string;

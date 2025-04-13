@@ -1,20 +1,26 @@
 
-import { clsx, type ClassValue } from "clsx"
+import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
-
+ 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function formatDuration(seconds: number): string {
-  if (!seconds) return "0 min";
+export function formatDate(dateString: string | null | undefined, localeString: string = 'de-DE'): string {
+  if (!dateString) return '';
   
-  const hours = Math.floor(seconds / 3600);
-  const minutes = Math.floor((seconds % 3600) / 60);
-  
-  if (hours > 0) {
-    return `${hours} Std ${minutes} min`;
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    return date.toLocaleString(localeString, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  } catch (e) {
+    return dateString;
   }
-  
-  return `${minutes} min`;
 }

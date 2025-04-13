@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -8,18 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { Users, CheckSquare, Calendar, Star, AlertTriangle, Flag } from "lucide-react";
 import { format, isToday, isTomorrow } from "date-fns";
 import { Instagram, Linkedin, Facebook, Video } from "lucide-react";
-import { useEffect, useState } from "react";
-
-// Define proper types
-interface PlatformCount {
-  platform: string;
-  count: number;
-}
-
-interface ContactsByPlatform {
-  platforms: PlatformCount[];
-  statuses: Record<string, number>;
-}
 
 const platformIcons = {
   "Instagram": Instagram,
@@ -38,13 +25,12 @@ const priorityIcons = {
 export const DashboardMetrics = () => {
   const session = useSession();
   const { settings } = useSettings();
-  const [contactData, setContactData] = useState<ContactsByPlatform>({ platforms: [], statuses: {} });
 
   // Get contacts by platform
-  const { data: contactsByPlatform = [], isLoading } = useQuery({
+  const { data: contactsByPlatform = [] } = useQuery({
     queryKey: ["contacts-by-platform"],
     queryFn: async () => {
-      if (!session?.user?.id) return { platforms: [], statuses: {} };
+      if (!session?.user?.id) return [];
 
       const { data, error } = await supabase
         .from("leads")
@@ -53,18 +39,18 @@ export const DashboardMetrics = () => {
 
       if (error) {
         console.error("Error fetching contacts:", error);
-        return { platforms: [], statuses: {} };
+        return [];
       }
 
       const platforms = data.reduce((acc, curr) => {
         acc[curr.platform] = (acc[curr.platform] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>);
+      }, {});
 
       const statuses = data.reduce((acc, curr) => {
         acc[curr.status || 'lead'] = (acc[curr.status || 'lead'] || 0) + 1;
         return acc;
-      }, {} as Record<string, number>);
+      }, {});
 
       return {
         platforms: Object.entries(platforms).map(([platform, count]) => ({
@@ -76,13 +62,6 @@ export const DashboardMetrics = () => {
     },
     enabled: !!session?.user?.id,
   });
-
-  // Update state when data changes
-  useEffect(() => {
-    if (!isLoading) {
-      setContactData(contactsByPlatform as ContactsByPlatform);
-    }
-  }, [contactsByPlatform, isLoading]);
 
   // Get task completion stats and high priority tasks
   const { data: taskStats = { total: 0, completed: 0, highPriorityTasks: [] } } = useQuery({
@@ -163,7 +142,7 @@ export const DashboardMetrics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {contactData.platforms?.map(({ platform, count }) => {
+              {contactsByPlatform.platforms?.map(({ platform, count }) => {
                 const Icon = platformIcons[platform] || Users;
                 return (
                   <div key={platform} className="flex justify-between items-center p-2 hover:bg-black/5 rounded-lg transition-colors">
@@ -272,11 +251,11 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Partner</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactData.statuses?.partner || 0}</span>
+                  <span>{contactsByPlatform.statuses?.partner || 0}</span>
                 </div>
                 <Progress 
-                  value={contactData.statuses?.partner 
-                    ? (contactData.statuses.partner / Object.values(contactData.statuses).reduce((a, b) => a + (b || 0), 0)) * 100 
+                  value={contactsByPlatform.statuses?.partner 
+                    ? (contactsByPlatform.statuses.partner / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
                     : 0
                   } 
                   className="h-2" 
@@ -286,11 +265,11 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Kunde</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactData.statuses?.customer || 0}</span>
+                  <span>{contactsByPlatform.statuses?.customer || 0}</span>
                 </div>
                 <Progress 
-                  value={contactData.statuses?.customer 
-                    ? (contactData.statuses.customer / Object.values(contactData.statuses).reduce((a, b) => a + (b || 0), 0)) * 100 
+                  value={contactsByPlatform.statuses?.customer 
+                    ? (contactsByPlatform.statuses.customer / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
                     : 0
                   } 
                   className="h-2" 
@@ -300,11 +279,11 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Not for now</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactData.statuses?.not_for_now || 0}</span>
+                  <span>{contactsByPlatform.statuses?.not_for_now || 0}</span>
                 </div>
                 <Progress 
-                  value={contactData.statuses?.not_for_now 
-                    ? (contactData.statuses.not_for_now / Object.values(contactData.statuses).reduce((a, b) => a + (b || 0), 0)) * 100 
+                  value={contactsByPlatform.statuses?.not_for_now 
+                    ? (contactsByPlatform.statuses.not_for_now / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
                     : 0
                   } 
                   className="h-2" 
@@ -314,11 +293,11 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Kein Interesse</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactData.statuses?.no_interest || 0}</span>
+                  <span>{contactsByPlatform.statuses?.no_interest || 0}</span>
                 </div>
                 <Progress 
-                  value={contactData.statuses?.no_interest 
-                    ? (contactData.statuses.no_interest / Object.values(contactData.statuses).reduce((a, b) => a + (b || 0), 0)) * 100 
+                  value={contactsByPlatform.statuses?.no_interest 
+                    ? (contactsByPlatform.statuses.no_interest / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
                     : 0
                   } 
                   className="h-2" 

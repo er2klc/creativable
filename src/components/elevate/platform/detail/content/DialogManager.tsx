@@ -1,69 +1,74 @@
-
 import { useState } from "react";
-import { EditUnitDialog } from "../dialog/EditUnitDialog";
-import { CreateUnitDialog } from "../dialog/CreateUnitDialog";
-
-// Define your interface for unit content
-interface UnitContent {
-  title: string;
-  description: string;
-  videoUrl: string;
-}
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { UnitCreation } from "../UnitCreation";
+import { EditUnitDialog } from "../EditUnitDialog";
 
 interface DialogManagerProps {
-  moduleId: string;
-  onCreateUnit: (data: UnitContent) => Promise<void>;
-  onUpdateUnit: (unitId: string, data: UnitContent) => Promise<void>;
-  onDeleteUnit: (unitId: string) => Promise<void>;
-  currentUnitId: string | null;
-  currentUnitContent: UnitContent | null;
-  existingFiles?: string[];
+  platform: any;
+  sortedSubmodules: any[];
+  refetch: () => Promise<void>;
+  isDialogOpen: boolean;
+  setIsDialogOpen: (open: boolean) => void;
+  isEditDialogOpen: boolean;
+  setIsEditDialogOpen: (open: boolean) => void;
+  activeUnit: any;
 }
 
 export const DialogManager = ({
-  moduleId,
-  onCreateUnit,
-  onUpdateUnit,
-  onDeleteUnit,
-  currentUnitId,
-  currentUnitContent,
-  existingFiles = []
+  platform,
+  sortedSubmodules,
+  refetch,
+  isDialogOpen,
+  setIsDialogOpen,
+  isEditDialogOpen,
+  setIsEditDialogOpen,
+  activeUnit
 }: DialogManagerProps) => {
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  // Function to handle opening the create dialog
-  const openCreateDialog = () => {
-    setIsCreateDialogOpen(true);
-  };
-
-  // Function to handle opening the edit dialog
-  const openEditDialog = (unitId: string) => {
-    setIsEditDialogOpen(true);
-  };
+  const [files, setFiles] = useState<File[]>([]);
 
   return (
     <>
-      {/* Create Unit Dialog */}
-      <CreateUnitDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onCreateUnit={onCreateUnit}
-        moduleId={moduleId}
+      <UnitCreation
+        platform={platform}
+        sortedSubmodules={sortedSubmodules}
+        refetch={refetch}
+        isDialogOpen={isDialogOpen}
+        setIsDialogOpen={setIsDialogOpen}
       />
 
-      {/* Edit Unit Dialog */}
-      {currentUnitId && currentUnitContent && (
+      {activeUnit && (
         <EditUnitDialog
           open={isEditDialogOpen}
           onOpenChange={setIsEditDialogOpen}
-          title={currentUnitContent.title}
-          description={currentUnitContent.description}
-          videoUrl={currentUnitContent.videoUrl}
-          onUpdate={(data) => onUpdateUnit(currentUnitId, data)}
-          onDelete={() => onDeleteUnit(currentUnitId)}
-          id={currentUnitId}
-          existingFiles={existingFiles}
+          title={activeUnit.title}
+          description={activeUnit.description || ""}
+          videoUrl={activeUnit.video_url || ""}
+          onUpdate={async (data) => {
+            try {
+              const { error } = await supabase
+                .from('elevate_lerninhalte')
+                .update({
+                  title: data.title,
+                  description: data.description,
+                  video_url: data.videoUrl
+                })
+                .eq('id', activeUnit.id);
+
+              if (error) throw error;
+              await refetch();
+              setIsEditDialogOpen(false);
+              toast.success("Lerneinheit erfolgreich aktualisiert");
+            } catch (error) {
+              console.error('Error updating learning unit:', error);
+              toast.error("Fehler beim Aktualisieren der Lerneinheit");
+            }
+          }}
+          existingFiles={[]}
+          onFileRemove={() => {}}
+          onFilesSelected={setFiles}
+          files={files}
+          id={activeUnit.id}
         />
       )}
     </>

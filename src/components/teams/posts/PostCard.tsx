@@ -5,7 +5,7 @@ import { Bell, Link2, Flag, MoreHorizontal } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
-import { Post } from "./types/post";
+import { Post } from "../types/post";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl, getCategoryStyle } from "@/lib/supabase-utils";
 import { PostReactions } from "./components/reactions/PostReactions";
@@ -25,11 +25,9 @@ import {
 interface PostCardProps {
   post: Post;
   teamSlug: string;
-  size?: "small" | "medium" | "large";
-  isAdmin?: boolean;
 }
 
-export const PostCard = ({ post, teamSlug, size = "medium", isAdmin = false }: PostCardProps) => {
+export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -208,14 +206,6 @@ export const PostCard = ({ post, teamSlug, size = "medium", isAdmin = false }: P
               />
             )}
           </div>
-
-          {post.file_urls && post.file_urls.length > 0 && (
-            <div className="mt-2">
-              <span className="text-xs text-muted-foreground">
-                {post.file_urls.length} {post.file_urls.length === 1 ? 'Anhang' : 'Anhänge'}
-              </span>
-            </div>
-          )}
         </div>
         
         <div className="px-4 pb-4">

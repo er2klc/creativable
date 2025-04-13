@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { checkEmailConfigStatus } from "@/utils/debug-helper";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmailDiagnostics } from "./EmailDiagnostics";
+import { EmailSyncService } from '@/features/email/services/EmailSyncService';
 
 export function EmailSettings() {
   const { settings, updateSettings } = useSettings();
@@ -31,6 +32,8 @@ export function EmailSettings() {
   const settingsLoadedRef = useRef(false);
   const loadAttemptedRef = useRef(false);
   const [showSettingsForm, setShowSettingsForm] = useState(false);
+  const [isResyncing, setIsResyncing] = useState(false);
+  const [isRepairing, setIsRepairing] = useState(false);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
@@ -63,8 +66,8 @@ export function EmailSettings() {
         setSmtpSettings(configStatus.smtpSettings);
 
         // Update last sync time if available
-        if (configStatus.imapSettings?.last_sync_at) {
-          setLastSyncTime(configStatus.imapSettings.last_sync_at);
+        if (configStatus.imapSettings?.last_sync_date) {
+          setLastSyncTime(configStatus.imapSettings.last_sync_date);
         }
 
         // Update settings if connection status has changed
@@ -170,7 +173,7 @@ export function EmailSettings() {
       if (imapSettings?.id) {
         await supabase
           .from('imap_settings')
-          .update({ last_sync_at: now })
+          .update({ last_sync_date: now })
           .eq('id', imapSettings.id);
       }
       
@@ -183,6 +186,99 @@ export function EmailSettings() {
       toast.error("Fehler bei der E-Mail-Synchronisation");
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const triggerFullResync = async () => {
+    if (!user) return;
+    
+    if (!confirm("Achtung: Diese Aktion löscht alle vorhandenen E-Mails und lädt sie komplett neu. Fortfahren?")) {
+      return;
+    }
+    
+    setIsResyncing(true);
+    
+    try {
+      await EmailSyncService.resetAndResyncAll();
+      
+      // Aktualisiere UI nach erfolgreicher Neusynchronisierung
+      const now = new Date().toISOString();
+      setLastSyncTime(now);
+      settingsLoadedRef.current = false;
+      loadAttemptedRef.current = false;
+      loadEmailSettings();
+      
+    } catch (error) {
+      console.error("Fehler bei voller Neusynchronisierung:", error);
+      toast.error("Fehler bei der vollständigen Neusynchronisierung");
+    } finally {
+      setIsResyncing(false);
+    }
+  };
+
+  // Verbindungsreparatur-Funktion
+  const triggerRepairConnection = async () => {
+    if (!user) return;
+    
+    if (!confirm("Dies ist eine erweiterte Reparaturfunktion für Verbindungsprobleme. Es werden alle E-Mails gelöscht und die Verbindungseinstellungen optimiert. Fortfahren?")) {
+      return;
+    }
+    
+    setIsRepairing(true);
+    
+    try {
+      // Erst einen Verbindungstest durchführen, um detaillierte Diagnose zu bekommen
+      const testResult = await EmailSyncService.testImapConnection();
+      
+      if (!testResult.success) {
+        console.log("IMAP-Verbindungstest fehlgeschlagen:", testResult);
+        // Zeige spezifischere Meldung basierend auf Diagnose
+        let errorMessage = "Verbindungsproblem erkannt: ";
+        
+        if (testResult.diagnostics?.certificateIssue) {
+          errorMessage += "SSL/TLS-Zertifikat-Problem. ";
+        }
+        
+        if (testResult.diagnostics?.timeoutIssue) {
+          errorMessage += "Timeout bei der Verbindung. ";
+        }
+        
+        if (testResult.diagnostics?.networkIssue) {
+          errorMessage += "Netzwerkverbindungsproblem. ";
+        }
+        
+        if (testResult.diagnostics?.authenticationIssue) {
+          errorMessage += "Authentifizierungsproblem. ";
+        }
+        
+        // Benachrichtigung mit spezifischeren Informationen
+        toast.warning("Verbindungsproblem erkannt", {
+          description: errorMessage + "Versuche Verbindungsreparatur...",
+          duration: 5000
+        });
+      }
+      
+      const result = await EmailSyncService.resetAndRepairConnection();
+      
+      // Aktualisiere UI nach erfolgreicher Reparatur
+      const now = new Date().toISOString();
+      setLastSyncTime(now);
+      settingsLoadedRef.current = false;
+      loadAttemptedRef.current = false;
+      loadEmailSettings();
+      
+      toast.success("Verbindungseinstellungen wurden repariert und optimiert", {
+        description: result.data?.portChanged 
+          ? "Die Verbindungseinstellungen wurden angepasst, um Kompatibilitätsprobleme zu beheben." 
+          : "Die Verbindung wurde mit optimierten Einstellungen neu hergestellt."
+      });
+    } catch (error) {
+      console.error("Fehler bei Verbindungsreparatur:", error);
+      toast.error("Fehler bei der Verbindungsreparatur", {
+        description: error.message || "Ein unbekannter Fehler ist aufgetreten. Bitte überprüfen Sie Ihre E-Mail-Einstellungen und versuchen Sie es erneut."
+      });
+    } finally {
+      setIsRepairing(false);
     }
   };
 
@@ -314,12 +410,38 @@ export function EmailSettings() {
                   size="sm" 
                   className="flex items-center gap-1.5"
                   onClick={triggerSync}
-                  disabled={isSyncing}
+                  disabled={isSyncing || isResyncing || isRepairing}
                 >
                   {isSyncing ? (
                     <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Synchronisiere...</>
                   ) : (
                     <><RefreshCw className="h-3.5 w-3.5" /> Synchronisieren</>
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1.5"
+                  onClick={triggerFullResync}
+                  disabled={isSyncing || isResyncing || isDisconnecting || isRepairing}
+                >
+                  {isResyncing ? (
+                    <><RefreshCw className="h-3.5 w-3.5 animate-spin" /> Vollständig neu laden...</>
+                  ) : (
+                    <><RefreshCw className="h-3.5 w-3.5" /> Vollständig neu laden</>
+                  )}
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1.5 text-orange-600"
+                  onClick={triggerRepairConnection}
+                  disabled={isSyncing || isResyncing || isDisconnecting || isRepairing}
+                >
+                  {isRepairing ? (
+                    <><AlertCircle className="h-3.5 w-3.5 animate-pulse" /> Wird repariert...</>
+                  ) : (
+                    <><AlertCircle className="h-3.5 w-3.5" /> Verbindung reparieren</>
                   )}
                 </Button>
                 <Button 
@@ -335,7 +457,7 @@ export function EmailSettings() {
                   size="sm" 
                   className="flex items-center gap-1.5"
                   onClick={disconnectEmail}
-                  disabled={isDisconnecting}
+                  disabled={isDisconnecting || isSyncing || isResyncing || isRepairing}
                 >
                   {isDisconnecting ? (
                     <><XCircle className="h-3.5 w-3.5" /> Trennen...</>
@@ -527,7 +649,7 @@ export function EmailSettings() {
       </TabsList>
       
       <TabsContent value="imap" className="space-y-4">
-        <ImapSettings onSettingsSaved={handleSettingsSaved} />
+        {emailConnected ? <ConnectedView /> : <ConfigurationView />}
       </TabsContent>
       
       <TabsContent value="smtp" className="space-y-4">

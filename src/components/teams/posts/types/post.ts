@@ -1,29 +1,18 @@
 
-export interface Post {
-  id: string;
-  title: string;
-  content: string;
-  created_at: string;
-  created_by: string;
-  team_id: string;
-  category_id?: string;
-  slug: string;
-  pinned?: boolean;
-  team_post_comments: number;
-  file_urls?: string[];
-  edited?: boolean;
-  last_edited_at?: string;
-  team_categories?: {
+import { Tables } from "@/integrations/supabase/types";
+
+export interface Post extends Tables<"team_posts"> {
+  team_categories: {
     name: string;
     slug: string;
     color: string;
-    settings?: {
-      size?: "small" | "medium" | "large";
-    };
   };
-  author?: {
-    display_name?: string;
-    avatar_url?: string;
-    email?: string;
+  author: {
+    display_name: string | null;
+    avatar_url?: string | null;
+    email?: string | null;
   };
+  team_post_comments: number;
+  edited?: boolean;
+  last_edited_at?: string;
 }
