@@ -27,10 +27,10 @@ export const DashboardMetrics = () => {
   const { settings } = useSettings();
 
   // Get contacts by platform
-  const { data: contactsByPlatform = [] } = useQuery({
+  const { data: contactsByPlatform = { platforms: [], statuses: {} } } = useQuery({
     queryKey: ["contacts-by-platform"],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
+      if (!session?.user?.id) return { platforms: [], statuses: {} };
 
       const { data, error } = await supabase
         .from("leads")
@@ -39,7 +39,7 @@ export const DashboardMetrics = () => {
 
       if (error) {
         console.error("Error fetching contacts:", error);
-        return [];
+        return { platforms: [], statuses: {} };
       }
 
       const platforms = data.reduce((acc, curr) => {

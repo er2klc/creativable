@@ -1,4 +1,3 @@
-
 import { Tables } from "@/integrations/supabase/types";
 import { ChatContactCard } from "./ChatContactCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -14,7 +13,7 @@ export const ChatContactList = ({ contacts, onSelect, selectedId }: ChatContactL
 
   return (
     <div className="w-full h-[90px] border-t overflow-hidden">
-      <ScrollArea className="w-full h-full" orientation="horizontal">
+      <ScrollArea className="w-full h-full">
         <div className="flex gap-2 px-4 py-2 snap-x snap-mandatory h-full">
           {contacts.map((contact) => (
             <ChatContactCard

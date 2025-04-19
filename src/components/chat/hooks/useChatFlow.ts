@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Tables } from "@/integrations/supabase/types";
 import { MessageTemplateType } from '@/config/messageTemplates';
@@ -134,6 +133,7 @@ export const useChatFlow = (userId: string | null) => {
 
   return {
     flowState,
+    setFlowState,
     selectedContact,
     selectedTemplateType,
     contacts,

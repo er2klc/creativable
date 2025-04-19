@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRef } from "react";
 import { useChatContext } from "@/hooks/use-chat-context";
@@ -41,7 +40,8 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     handleContactSelection,
     handleTemplateSelection,
     generateTemplateMessage,
-    reset
+    reset,
+    setFlowState
   } = useChatFlow(userId);
 
   const {

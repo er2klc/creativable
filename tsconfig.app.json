@@ -15,6 +15,10 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
+    /* 🔧 Fix: React-Import-Probleme beheben */
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+
     /* Linting */
     "strict": false,
     "noUnusedLocals": false,
