@@ -1,7 +1,7 @@
-
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { PlatformIndicator } from "./PlatformIndicator";
 import { cn } from "@/lib/utils";
+import { getAvatarUrl } from "@/lib/supabase-utils";
 
 interface LeadAvatarProps {
   imageUrl?: string | null;
@@ -53,17 +53,14 @@ export const LeadAvatar = ({
         sizeClasses[avatarSize], 
         className
       )}>
-        {imageUrl ? (
-          <AvatarImage 
-            src={imageUrl} 
-            alt={name}
-            className="object-cover"
-          />
-        ) : (
-          <AvatarFallback className="bg-primary/10 text-sm font-semibold">
-            {initials}
-          </AvatarFallback>
-        )}
+        <AvatarImage 
+          src={getAvatarUrl(imageUrl)}
+          alt={name}
+          className="object-cover"
+        />
+        <AvatarFallback className="bg-primary/10 text-sm font-semibold">
+          {initials}
+        </AvatarFallback>
       </Avatar>
       
       {showPlatform && (
