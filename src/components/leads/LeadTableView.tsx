@@ -1,97 +1,73 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  SortingState,
+  ColumnDef
+} from "@tanstack/react-table";
 import { Tables } from "@/integrations/supabase/types";
-import { useSettings } from "@/hooks/use-settings";
-import { LeadAvatar } from "./LeadAvatar";
-import { Input } from "@/components/ui/input";
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "@/components/ui/table";
 
 interface LeadTableViewProps {
   leads: Tables<"leads">[];
-  onLeadClick: (id: string) => void;
-  selectedPipelineId: string | null;
 }
 
-export function LeadTableView({ leads, onLeadClick, selectedPipelineId }: LeadTableViewProps) {
-  const { settings } = useSettings();
-  const [searchQuery, setSearchQuery] = useState("");
+export const LeadTableView = ({ leads }: LeadTableViewProps) => {
+  const [sorting, setSorting] = useState<SortingState>([]);
 
-  // Filter leads based on search query
-  const filteredLeads = leads.filter((lead) => {
-    const query = searchQuery.toLowerCase();
-    return (
-      lead.name?.toLowerCase().includes(query) ||
-      lead.company_name?.toLowerCase().includes(query) ||
-      lead.social_media_username?.toLowerCase().includes(query) ||
-      lead.email?.toLowerCase().includes(query) ||
-      lead.phone_number?.toLowerCase().includes(query) ||
-      lead.industry?.toLowerCase().includes(query)
-    );
+  const columns: ColumnDef<Tables<"leads">>[] = [
+    {
+      accessorKey: "name",
+      header: "Name"
+    },
+    {
+      accessorKey: "platform",
+      header: "Platform"
+    },
+    {
+      accessorKey: "status",
+      header: "Status"
+    }
+  ];
+
+  const table = useReactTable({
+    data: leads,
+    columns,
+    state: {
+      sorting
+    },
+    onSortingChange: setSorting,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel()
   });
 
   return (
-    <div className="space-y-4">
-      <div className="p-4">
-        <Input
-          placeholder={settings?.language === "en" ? "Search leads..." : "Kontakte suchen..."}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="max-w-md"
-        />
-      </div>
-
-      <div className="rounded-md border overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[250px]">{settings?.language === "en" ? "Name" : "Name"}</TableHead>
-              <TableHead>{settings?.language === "en" ? "Platform" : "Plattform"}</TableHead>
-              <TableHead>{settings?.language === "en" ? "Username" : "Benutzername"}</TableHead>
-              <TableHead>{settings?.language === "en" ? "Company" : "Unternehmen"}</TableHead>
-              <TableHead>{settings?.language === "en" ? "Industry" : "Branche"}</TableHead>
-              <TableHead>{settings?.language === "en" ? "Status" : "Status"}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredLeads.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="h-24 text-center">
-                  {settings?.language === "en" ? "No leads found." : "Keine Kontakte gefunden."}
-                </TableCell>
-              </TableRow>
-            ) : (
-              filteredLeads.map((lead) => (
-                <TableRow
-                  key={lead.id}
-                  className="cursor-pointer hover:bg-muted/50"
-                  onClick={() => onLeadClick(lead.id)}
-                >
-                  <TableCell className="font-medium">
-                    <div className="flex items-center space-x-3">
-                      <LeadAvatar lead={lead} />
-                      <span>{lead.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{lead.platform}</TableCell>
-                  <TableCell>{lead.social_media_username || "-"}</TableCell>
-                  <TableCell>{lead.company_name || "-"}</TableCell>
-                  <TableCell>{lead.industry || "-"}</TableCell>
-                  <TableCell>
-                    <div className="capitalize">{lead.status || "lead"}</div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+    <div className="p-4">
+      <table className="w-full">
+        <thead>
+          {table.getHeaderGroups().map(headerGroup => (
+            <tr key={headerGroup.id}>
+              {headerGroup.headers.map(header => (
+                <th key={header.id} className="text-left p-2">
+                  {header.column.columnDef.header as string}
+                </th>
+              ))}
+            </tr>
+          ))}
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id} className="p-2">
+                  {cell.getValue() as string}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
-}
+};
