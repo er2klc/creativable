@@ -1,5 +1,5 @@
 
-import { cn } from "@/lib/utils";
+import { getInitials, getPlatformColor } from "@/lib/utils";
 
 interface LeadAvatarProps {
   name: string;
@@ -8,21 +8,11 @@ interface LeadAvatarProps {
 }
 
 export const LeadAvatar = ({ name, platform, imageUrl }: LeadAvatarProps) => {
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(n => n[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  };
-
   return (
     <div className="flex-shrink-0">
-      <div className={cn(
-        "h-10 w-10 rounded-full overflow-hidden",
+      <div className={`h-10 w-10 rounded-full overflow-hidden ${
         platform.toLowerCase() === "offline" && "border border-gray-300"
-      )}>
+      }`}>
         {imageUrl ? (
           <img 
             src={imageUrl} 
