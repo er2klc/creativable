@@ -1,150 +1,97 @@
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { LeadWithRelations } from "@/types/leads";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Link } from "react-router-dom";
+
+import { useState } from "react";
+import { Tables } from "@/integrations/supabase/types";
 import { useSettings } from "@/hooks/use-settings";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+import { LeadAvatar } from "./LeadAvatar";
+import { Input } from "@/components/ui/input";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
 } from "@/components/ui/table";
 
 interface LeadTableViewProps {
-  leads: LeadWithRelations[];
+  leads: Tables<"leads">[];
   onLeadClick: (id: string) => void;
   selectedPipelineId: string | null;
 }
 
-export const LeadTableView = ({
-  leads,
-  onLeadClick,
-  selectedPipelineId,
-}: LeadTableViewProps) => {
+export function LeadTableView({ leads, onLeadClick, selectedPipelineId }: LeadTableViewProps) {
   const { settings } = useSettings();
+  const [searchQuery, setSearchQuery] = useState("");
 
-  const columns: ColumnDef<LeadWithRelations>[] = [
-    {
-      accessorKey: "name",
-      header: () => <TableHeaderCell>Name</TableHeaderCell>,
-      cell: ({ row }) => (
-        <TableRowCell>
-          <div className="flex items-center space-x-2">
-            <Avatar>
-              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
-              <AvatarFallback>CN</AvatarFallback>
-            </Avatar>
-            <Link
-              to={`/contacts/${row.original.id}`}
-              className="font-medium hover:underline"
-            >
-              {row.getValue("name")}
-            </Link>
-          </div>
-        </TableRowCell>
-      ),
-    },
-    {
-      accessorKey: "platform",
-      header: () => <TableHeaderCell>Platform</TableHeaderCell>,
-      cell: ({ row }) => <TableRowCell>{row.getValue("platform")}</TableRowCell>,
-    },
-    {
-      accessorKey: "industry",
-      header: () => <TableHeaderCell>Industry</TableHeaderCell>,
-      cell: ({ row }) => <TableRowCell>{row.getValue("industry")}</TableRowCell>,
-    },
-    {
-      accessorKey: "email",
-      header: () => <TableHeaderCell>Email</TableHeaderCell>,
-      cell: ({ row }) => <TableRowCell>{row.getValue("email")}</TableRowCell>,
-    },
-    {
-      accessorKey: "phone_number",
-      header: () => <TableHeaderCell>Phone Number</TableHeaderCell>,
-      cell: ({ row }) => <TableRowCell>{row.getValue("phone_number")}</TableRowCell>,
-    },
-  ];
-
-  const table = useReactTable({
-    data: leads,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
+  // Filter leads based on search query
+  const filteredLeads = leads.filter((lead) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      lead.name?.toLowerCase().includes(query) ||
+      lead.company_name?.toLowerCase().includes(query) ||
+      lead.social_media_username?.toLowerCase().includes(query) ||
+      lead.email?.toLowerCase().includes(query) ||
+      lead.phone_number?.toLowerCase().includes(query) ||
+      lead.industry?.toLowerCase().includes(query)
+    );
   });
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>
-          {settings?.language === "en" ? "Contacts" : "Kontakte"}
-        </CardTitle>
-        <CardDescription>
-          {settings?.language === "en"
-            ? "All your contacts in one place."
-            : "Alle deine Kontakte an einem Ort."}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="overflow-auto">
-          <Table>
-            <TableHeader>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead key={header.id}>
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRow>
-              ))}
-            </TableHeader>
-            <TableBody>
-              {leads.map((lead) => (
+    <div className="space-y-4">
+      <div className="p-4">
+        <Input
+          placeholder={settings?.language === "en" ? "Search leads..." : "Kontakte suchen..."}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="max-w-md"
+        />
+      </div>
+
+      <div className="rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[250px]">{settings?.language === "en" ? "Name" : "Name"}</TableHead>
+              <TableHead>{settings?.language === "en" ? "Platform" : "Plattform"}</TableHead>
+              <TableHead>{settings?.language === "en" ? "Username" : "Benutzername"}</TableHead>
+              <TableHead>{settings?.language === "en" ? "Company" : "Unternehmen"}</TableHead>
+              <TableHead>{settings?.language === "en" ? "Industry" : "Branche"}</TableHead>
+              <TableHead>{settings?.language === "en" ? "Status" : "Status"}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredLeads.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-24 text-center">
+                  {settings?.language === "en" ? "No leads found." : "Keine Kontakte gefunden."}
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredLeads.map((lead) => (
                 <TableRow
                   key={lead.id}
+                  className="cursor-pointer hover:bg-muted/50"
                   onClick={() => onLeadClick(lead.id)}
-                  className="cursor-pointer hover:bg-gray-50"
                 >
-                  {columns.map((column) => (
-                    <TableCell key={column.accessorKey as string}>
-                      {lead[column.accessorKey as keyof LeadWithRelations]}
-                    </TableCell>
-                  ))}
+                  <TableCell className="font-medium">
+                    <div className="flex items-center space-x-3">
+                      <LeadAvatar lead={lead} />
+                      <span>{lead.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{lead.platform}</TableCell>
+                  <TableCell>{lead.social_media_username || "-"}</TableCell>
+                  <TableCell>{lead.company_name || "-"}</TableCell>
+                  <TableCell>{lead.industry || "-"}</TableCell>
+                  <TableCell>
+                    <div className="capitalize">{lead.status || "lead"}</div>
+                  </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </CardContent>
-    </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
-};
-
-const TableHeaderCell = ({ children }: { children: React.ReactNode }) => {
-  return <div className="font-medium text-left">{children}</div>;
-};
-
-const TableRowCell = ({ children }: { children: React.ReactNode }) => {
-  return <div className="text-left">{children}</div>;
-};
+}

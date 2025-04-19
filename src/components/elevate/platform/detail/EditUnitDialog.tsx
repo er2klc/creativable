@@ -14,6 +14,10 @@ interface EditUnitDialogProps {
   description: string;
   videoUrl: string;
   onUpdate: (data: { title: string; description: string; videoUrl: string }) => Promise<void>;
+  existingFiles: any[];
+  onFileRemove: (index: number) => Promise<void>;
+  onFilesSelected: (files: File[]) => void;
+  files: File[];
   id: string;
 }
 
@@ -24,6 +28,10 @@ export const EditUnitDialog = ({
   description: initialDescription,
   videoUrl: initialVideoUrl,
   onUpdate,
+  existingFiles,
+  onFileRemove,
+  onFilesSelected,
+  files,
   id,
 }: EditUnitDialogProps) => {
   const [title, setTitle] = useState(initialTitle);
