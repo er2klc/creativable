@@ -76,16 +76,6 @@ export const platformRoutes = [
     path: "/elevate/modul/:slug",
     element: <PlatformDetail />,
     label: "Platform Detail",
-  },
-  // Legacy routes for backward compatibility
-  {
-    path: "/unity/team/:teamSlug",
-    element: <TeamDetail />,
-    label: "Team Detail Legacy",
-  },
-  {
-    path: "/unity/team/:teamSlug/*",
-    element: <TeamDetail />,
-    label: "Team Detail Legacy Wildcard",
   }
 ];
+
