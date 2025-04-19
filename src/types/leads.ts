@@ -1,3 +1,4 @@
+
 import { Tables } from "@/integrations/supabase/types";
 import { Platform } from "@/config/platforms";
 
@@ -15,6 +16,7 @@ export interface LeadWithRelations extends Tables<"leads"> {
   linkedin_posts?: any[];
   social_media_posts?: SocialMediaPost[];
   platform: Platform;
+  business_match?: any; // Add business_match property
 }
 
 export interface SocialMediaPost {

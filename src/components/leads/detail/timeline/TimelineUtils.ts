@@ -48,42 +48,7 @@ export interface TimelineItem {
     commonalities?: string[];
     potential_needs?: string[];
     strengths?: string[];
+    timestamp?: string;
   };
   created_at?: string;
 }
-
-export const createStatusChangeItem = (
-  status: string, 
-  timestamp: string
-): TimelineItem => {
-  let statusMessage = '';
-  
-  switch (status) {
-    case 'partner':
-      statusMessage = `Kontakt ist jetzt dein Partner! 🚀`;
-      break;
-    case 'customer':
-      statusMessage = `Kontakt ist jetzt Kunde – viel Erfolg! 🎉`;
-      break;
-    case 'not_for_now':
-      statusMessage = `Kontakt ist aktuell nicht bereit – bleib dran! ⏳`;
-      break;
-    case 'no_interest':
-      statusMessage = `Kontakt hat kein Interesse – weiter geht's! 🚀`;
-      break;
-    default:
-      statusMessage = `Status geändert zu ${status}`;
-  }
-
-  return {
-    id: `status-${Date.now()}`,
-    type: 'status_change',
-    content: statusMessage,
-    timestamp,
-    metadata: {
-      oldStatus: 'lead',
-      newStatus: status,
-      timestamp
-    }
-  };
-};

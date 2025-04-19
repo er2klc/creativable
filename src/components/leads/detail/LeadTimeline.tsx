@@ -73,7 +73,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
 
   // Holen der Business Match-Daten, falls vorhanden
   const businessMatchItems = lead.business_match ? 
-    [mapBusinessMatchToTimelineItem(lead.business_match as any)] : 
+    [(lead.business_match as any && mapBusinessMatchToTimelineItem(lead.business_match as any))] : 
     [];
 
   // Handle task completion toggle
@@ -112,7 +112,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   };
 
   const allActivities = [
-    ...businessMatchItems,
+    ...businessMatchItems.filter(Boolean),
     ...(statusChangeItem ? [statusChangeItem] : []),
     ...(lead.notes || []).map(mapNoteToTimelineItem),
     ...(tasks || []).map(mapTaskToTimelineItem),

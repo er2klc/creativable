@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { toast } from "sonner";
@@ -10,6 +11,43 @@ import { useQueryClient } from "@tanstack/react-query";
 import { BusinessMatchCard } from "./timeline/cards/BusinessMatchCard";
 import { Gauge, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
+// Helper function to create a status change item
+const createStatusChangeItem = (
+  status: string, 
+  timestamp: string
+) => {
+  let statusMessage = '';
+  
+  switch (status) {
+    case 'partner':
+      statusMessage = `Kontakt ist jetzt dein Partner! 🚀`;
+      break;
+    case 'customer':
+      statusMessage = `Kontakt ist jetzt Kunde – viel Erfolg! 🎉`;
+      break;
+    case 'not_for_now':
+      statusMessage = `Kontakt ist aktuell nicht bereit – bleib dran! ⏳`;
+      break;
+    case 'no_interest':
+      statusMessage = `Kontakt hat kein Interesse – weiter geht's! 🚀`;
+      break;
+    default:
+      statusMessage = `Status geändert zu ${status}`;
+  }
+
+  return {
+    id: `status-${Date.now()}`,
+    type: 'status_change',
+    content: statusMessage,
+    timestamp,
+    metadata: {
+      oldStatus: 'lead',
+      newStatus: status,
+      timestamp
+    }
+  };
+};
 
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
@@ -66,7 +104,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
               type: 'phase_analysis',
               phase: {
                 id: lead.phase_id,
-                name: lead.phase?.name || "Current Phase"
+                name: lead.phase_id ? "Current Phase" : "No Phase"
               },
               timestamp: existingAnalysis.created_at,
               metadata: existingAnalysis.metadata
@@ -119,7 +157,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
     
     loadAnalysisData();
-  }, [lead.id, lead.phase_id, lead.phase?.name, settings?.language, user?.id]);
+  }, [lead.id, lead.phase_id, settings?.language, user?.id]);
 
   const generateBusinessMatch = async () => {
     if (!user) {
@@ -235,7 +273,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         type: 'phase_analysis',
         phase: {
           id: lead.phase_id,
-          name: lead.phase?.name || "Current Phase"
+          name: "Current Phase"
         },
         timestamp: new Date().toISOString(),
         metadata: data.analysis?.metadata || {}

@@ -1,4 +1,21 @@
 import {
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+} from "@tanstack/react-table";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { LeadWithRelations } from "@/types/leads";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Link } from "react-router-dom";
+import { useSettings } from "@/hooks/use-settings";
+import {
   Table,
   TableBody,
   TableCell,
@@ -6,183 +23,128 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Tables } from "@/integrations/supabase/types";
-import { useSettings } from "@/hooks/use-settings";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import { LeadTableCell } from "./table/LeadTableCell";
-import { LeadTableActions } from "./table/LeadTableActions";
-import { useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LeadTableViewProps {
-  leads: Tables<"leads">[];
+  leads: LeadWithRelations[];
   onLeadClick: (id: string) => void;
   selectedPipelineId: string | null;
 }
 
-export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTableViewProps) => {
+export const LeadTableView = ({
+  leads,
+  onLeadClick,
+  selectedPipelineId,
+}: LeadTableViewProps) => {
   const { settings } = useSettings();
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
 
-  const { data: phases = [] } = useQuery({
-    queryKey: ["pipeline-phases", selectedPipelineId],
-    queryFn: async () => {
-      if (!selectedPipelineId) return [];
-      const { data, error } = await supabase
-        .from("pipeline_phases")
-        .select("*")
-        .eq("pipeline_id", selectedPipelineId)
-        .order("order_index");
-      if (error) throw error;
-      return data;
+  const columns: ColumnDef<LeadWithRelations>[] = [
+    {
+      accessorKey: "name",
+      header: () => <TableHeaderCell>Name</TableHeaderCell>,
+      cell: ({ row }) => (
+        <TableRowCell>
+          <div className="flex items-center space-x-2">
+            <Avatar>
+              <AvatarImage src="https://github.com/shadcn.png" alt="@shadcn" />
+              <AvatarFallback>CN</AvatarFallback>
+            </Avatar>
+            <Link
+              to={`/contacts/${row.original.id}`}
+              className="font-medium hover:underline"
+            >
+              {row.getValue("name")}
+            </Link>
+          </div>
+        </TableRowCell>
+      ),
     },
-    enabled: !!selectedPipelineId,
-  });
+    {
+      accessorKey: "platform",
+      header: () => <TableHeaderCell>Platform</TableHeaderCell>,
+      cell: ({ row }) => <TableRowCell>{row.getValue("platform")}</TableRowCell>,
+    },
+    {
+      accessorKey: "industry",
+      header: () => <TableHeaderCell>Industry</TableHeaderCell>,
+      cell: ({ row }) => <TableRowCell>{row.getValue("industry")}</TableRowCell>,
+    },
+    {
+      accessorKey: "email",
+      header: () => <TableHeaderCell>Email</TableHeaderCell>,
+      cell: ({ row }) => <TableRowCell>{row.getValue("email")}</TableRowCell>,
+    },
+    {
+      accessorKey: "phone_number",
+      header: () => <TableHeaderCell>Phone Number</TableHeaderCell>,
+      cell: ({ row }) => <TableRowCell>{row.getValue("phone_number")}</TableRowCell>,
+    },
+  ];
 
-  // Subscribe to lead deletions
-  const subscribeToLeadDeletions = async () => {
-    const channel = supabase
-      .channel('lead-deletions')
-      .on(
-        'postgres_changes',
-        {
-          event: 'DELETE',
-          schema: 'public',
-          table: 'leads',
-        },
-        (payload) => {
-          // Update the cache to remove the deleted lead
-          queryClient.setQueryData(
-            ["leads", selectedPipelineId],
-            (oldData: Tables<"leads">[]) => {
-              if (!oldData) return [];
-              return oldData.filter(lead => lead.id !== payload.old.id);
-            }
-          );
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  };
-
-  // Set up the subscription when the component mounts
-  useState(() => {
-    const unsubscribe = subscribeToLeadDeletions();
-    return () => {
-      unsubscribe.then(cleanup => cleanup());
-    };
-  }, [selectedPipelineId]);
-
-  const handlePhaseChange = async (leadId: string, phaseId: string) => {
-    try {
-      const { error } = await supabase
-        .from("leads")
-        .update({
-          phase_id: phaseId,
-          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
-          last_action_date: new Date().toISOString(),
-        })
-        .eq("id", leadId);
-
-      if (error) throw error;
-
-      queryClient.invalidateQueries({ queryKey: ["leads"] });
-
-      toast({
-        title: settings?.language === "en" ? "Phase updated" : "Phase aktualisiert",
-        description: settings?.language === "en"
-          ? "The phase has been successfully updated."
-          : "Die Phase wurde erfolgreich aktualisiert.",
-      });
-    } catch (error) {
-      console.error("Error updating phase:", error);
-      toast({
-        title: settings?.language === "en" ? "Error" : "Fehler",
-        description: settings?.language === "en"
-          ? "Failed to update phase"
-          : "Phase konnte nicht aktualisiert werden",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // Sort leads with favorites first
-  const sortedLeads = [...leads].sort((a, b) => {
-    if (a.is_favorite && !b.is_favorite) return -1;
-    if (!a.is_favorite && b.is_favorite) return 1;
-    return 0;
+  const table = useReactTable({
+    data: leads,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
   });
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="min-w-full">
-        <Table>
-          <TableHeader className="sticky top-0 bg-background z-10">
-            <TableRow>
-              {!isMobile && (
-                <TableCell className="w-[30px] p-2">
-                  <span className="sr-only">Favorite</span>
-                </TableCell>
-              )}
-              <TableCell className={isMobile ? "p-2" : "w-[15%] min-w-[120px]"}>
-                {settings?.language === "en" ? "Contact" : "Kontakt"}
-              </TableCell>
-              {!isMobile && (
-                <>
-                  <TableCell className="w-[15%] min-w-[120px]">
-                    {settings?.language === "en" ? "Platform" : "Plattform"}
-                  </TableCell>
-                  <TableCell className="w-[15%] min-w-[120px]">
-                    {settings?.language === "en" ? "Phase" : "Phase"}
-                  </TableCell>
-                  <TableCell className="w-[20%] min-w-[120px]">
-                    {settings?.language === "en" ? "Last Action" : "Letzte Aktion"}
-                  </TableCell>
-                  <TableCell className="w-[15%] min-w-[120px]">
-                    {settings?.language === "en" ? "Status" : "Status"}
-                  </TableCell>
-                </>
-              )}
-              <TableCell className="w-[50px]">
-                <span className="sr-only">Actions</span>
-              </TableCell>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedLeads.map((lead) => (
-              <TableRow
-                key={lead.id}
-                className="cursor-pointer hover:bg-muted/50"
-                onClick={() => onLeadClick(lead.id)}
-              >
-                {!isMobile && <LeadTableCell type="favorite" value={null} lead={lead} />}
-                <LeadTableCell type="name" value={lead.name} lead={lead} />
-                {!isMobile && (
-                  <>
-                    <LeadTableCell type="platform" value={lead.platform} />
-                    <LeadTableCell type="phase" value={lead.phase_id} />
-                    <LeadTableCell type="lastAction" value={lead.last_action_date} />
-                    <LeadTableCell type="status" value={lead.status} lead={lead} />
-                  </>
-                )}
-                <TableCell className="whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                  <LeadTableActions
-                    lead={lead}
-                    onShowDetails={() => onLeadClick(lead.id)}
-                  />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {settings?.language === "en" ? "Contacts" : "Kontakte"}
+        </CardTitle>
+        <CardDescription>
+          {settings?.language === "en"
+            ? "All your contacts in one place."
+            : "Alle deine Kontakte an einem Ort."}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-auto">
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => {
+                    return (
+                      <TableHead key={header.id}>
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    );
+                  })}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {leads.map((lead) => (
+                <TableRow
+                  key={lead.id}
+                  onClick={() => onLeadClick(lead.id)}
+                  className="cursor-pointer hover:bg-gray-50"
+                >
+                  {columns.map((column) => (
+                    <TableCell key={column.accessorKey as string}>
+                      {lead[column.accessorKey as keyof LeadWithRelations]}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   );
+};
+
+const TableHeaderCell = ({ children }: { children: React.ReactNode }) => {
+  return <div className="font-medium text-left">{children}</div>;
+};
+
+const TableRowCell = ({ children }: { children: React.ReactNode }) => {
+  return <div className="text-left">{children}</div>;
 };
