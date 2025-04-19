@@ -73,7 +73,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
 
   // Holen der Business Match-Daten, falls vorhanden
   const businessMatchItems = lead.business_match ? 
-    [mapBusinessMatchToTimelineItem(lead.business_match)] : 
+    [mapBusinessMatchToTimelineItem(lead.business_match as any)] : 
     [];
 
   // Handle task completion toggle

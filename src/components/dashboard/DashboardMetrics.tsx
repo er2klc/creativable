@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -16,18 +17,23 @@ const platformIcons = {
   "Offline": Users
 };
 
-const priorityIcons = {
+const priorityIcons: Record<string, React.ReactNode> = {
   "High": <Star className="h-4 w-4 text-yellow-500" />,
   "Medium": <Flag className="h-4 w-4 text-blue-500" />,
   "Low": <AlertTriangle className="h-4 w-4 text-gray-500" />
 };
+
+interface PlatformStats {
+  platforms: { platform: string; count: number }[];
+  statuses: Record<string, number>;
+}
 
 export const DashboardMetrics = () => {
   const session = useSession();
   const { settings } = useSettings();
 
   // Get contacts by platform
-  const { data: contactsByPlatform = { platforms: [], statuses: {} } } = useQuery({
+  const { data: contactsByPlatform = { platforms: [], statuses: {} } } = useQuery<PlatformStats>({
     queryKey: ["contacts-by-platform"],
     queryFn: async () => {
       if (!session?.user?.id) return { platforms: [], statuses: {} };
@@ -42,12 +48,12 @@ export const DashboardMetrics = () => {
         return { platforms: [], statuses: {} };
       }
 
-      const platforms = data.reduce((acc, curr) => {
+      const platforms = data.reduce((acc: Record<string, number>, curr) => {
         acc[curr.platform] = (acc[curr.platform] || 0) + 1;
         return acc;
       }, {});
 
-      const statuses = data.reduce((acc, curr) => {
+      const statuses = data.reduce((acc: Record<string, number>, curr) => {
         acc[curr.status || 'lead'] = (acc[curr.status || 'lead'] || 0) + 1;
         return acc;
       }, {});
@@ -55,7 +61,7 @@ export const DashboardMetrics = () => {
       return {
         platforms: Object.entries(platforms).map(([platform, count]) => ({
           platform,
-          count,
+          count: count as number,
         })),
         statuses
       };
@@ -129,6 +135,19 @@ export const DashboardMetrics = () => {
     ? Math.round((taskStats.completed / taskStats.total) * 100) 
     : 0;
 
+  // Helper function to safely calculate percentage
+  const calculatePercentage = (value: number | undefined, total: number): number => {
+    if (!value || total === 0) return 0;
+    return (value / total) * 100;
+  };
+
+  // Helper function to get total of all status counts
+  const getTotalStatusCount = (): number => {
+    return Object.values(contactsByPlatform.statuses).reduce((sum, count) => sum + (count || 0), 0);
+  };
+
+  const totalStatusCount = getTotalStatusCount();
+
   return (
     <div className="space-y-6 w-full mb-8">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -184,7 +203,7 @@ export const DashboardMetrics = () => {
                     {taskStats.highPriorityTasks.map(task => (
                       <div key={task.id} className="flex items-center justify-between p-2 bg-red-50/50 dark:bg-red-900/20 rounded-lg">
                         <span className="text-sm truncate flex-1">{task.title}</span>
-                        {priorityIcons[task.priority]}
+                        {task.priority && priorityIcons[task.priority]}
                       </div>
                     ))}
                   </div>
@@ -254,10 +273,7 @@ export const DashboardMetrics = () => {
                   <span>{contactsByPlatform.statuses?.partner || 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.partner 
-                    ? (contactsByPlatform.statuses.partner / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
-                    : 0
-                  } 
+                  value={calculatePercentage(contactsByPlatform.statuses?.partner, totalStatusCount)} 
                   className="h-2" 
                 />
               </div>
@@ -268,10 +284,7 @@ export const DashboardMetrics = () => {
                   <span>{contactsByPlatform.statuses?.customer || 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.customer 
-                    ? (contactsByPlatform.statuses.customer / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
-                    : 0
-                  } 
+                  value={calculatePercentage(contactsByPlatform.statuses?.customer, totalStatusCount)} 
                   className="h-2" 
                 />
               </div>
@@ -282,10 +295,7 @@ export const DashboardMetrics = () => {
                   <span>{contactsByPlatform.statuses?.not_for_now || 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.not_for_now 
-                    ? (contactsByPlatform.statuses.not_for_now / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
-                    : 0
-                  } 
+                  value={calculatePercentage(contactsByPlatform.statuses?.not_for_now, totalStatusCount)} 
                   className="h-2" 
                 />
               </div>
@@ -296,10 +306,7 @@ export const DashboardMetrics = () => {
                   <span>{contactsByPlatform.statuses?.no_interest || 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.no_interest 
-                    ? (contactsByPlatform.statuses.no_interest / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
-                    : 0
-                  } 
+                  value={calculatePercentage(contactsByPlatform.statuses?.no_interest, totalStatusCount)} 
                   className="h-2" 
                 />
               </div>
