@@ -1,14 +1,12 @@
 
 import { useEffect, useState } from "react";
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, horizontalListSortingStrategy, arrayMove } from "@dnd-kit/sortable";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { LeadAvatar } from "./LeadAvatar";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { toast } from "sonner";
-import { SortablePhaseItem } from "./SortablePhaseItem";
 
 interface Phase {
   id: string;
@@ -74,20 +72,15 @@ export const LeadKanbanView = () => {
     }
   });
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || active.id === over.id) return;
-    
-    setPhases((phases) => {
-      const oldIndex = phases.findIndex((phase) => phase.id === active.id);
-      const newIndex = phases.findIndex((phase) => phase.id === over.id);
-      
-      const newPhases = arrayMove(phases, oldIndex, newIndex);
-      updatePhaseOrderMutation.mutate(newPhases);
-      
-      return newPhases;
-    });
+  const onDragEnd = (result: any) => {
+    if (!result.destination) return;
+
+    const items = Array.from(phases);
+    const [reorderedItem] = items.splice(result.source.index, 1);
+    items.splice(result.destination.index, 0, reorderedItem);
+
+    setPhases(items);
+    updatePhaseOrderMutation.mutate(items);
   };
 
   const handleAddPhase = () => {
@@ -105,20 +98,48 @@ export const LeadKanbanView = () => {
 
   return (
     <div className="p-4">
-      <DndContext 
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
+      <DragDropContext onDragEnd={onDragEnd}>
         <div className="flex gap-4 overflow-x-auto pb-4">
-          <SortableContext 
-            items={phases.map(phase => phase.id)} 
-            strategy={horizontalListSortingStrategy}
-          >
-            {phases.map((phase) => (
-              <SortablePhaseItem key={phase.id} phase={phase} />
-            ))}
-          </SortableContext>
-          
+          <Droppable droppableId="phases" direction="horizontal">
+            {(provided) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                className="flex gap-4"
+              >
+                {phases.map((phase, index) => (
+                  <Draggable
+                    key={phase.id}
+                    draggableId={phase.id}
+                    index={index}
+                  >
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.draggableProps}
+                        {...provided.dragHandleProps}
+                        className="bg-white p-4 rounded-lg shadow min-w-[300px]"
+                      >
+                        <h3 className="font-semibold mb-4">{phase.name}</h3>
+                        {phase.leads?.map((lead) => (
+                          <div
+                            key={lead.id}
+                            className="bg-gray-50 p-3 rounded mb-2"
+                          >
+                            <div className="flex items-center gap-2">
+                              <LeadAvatar lead={lead} />
+                              <span>{lead.name}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Draggable>
+                ))}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
           <Button
             onClick={handleAddPhase}
             variant="outline"
@@ -128,7 +149,7 @@ export const LeadKanbanView = () => {
             Add Phase
           </Button>
         </div>
-      </DndContext>
+      </DragDropContext>
     </div>
   );
 };
