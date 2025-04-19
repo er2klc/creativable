@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +66,10 @@ export const DialogManager = ({
             }
           }}
           existingFiles={[]}
-          onFileRemove={() => {}}
+          onFileRemove={() => {
+            console.log("File remove action triggered");
+            // Implement file removal logic if needed
+          }}
           onFilesSelected={setFiles}
           files={files}
           id={activeUnit.id}

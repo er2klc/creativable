@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -98,7 +99,10 @@ export const LearningUnitContent = ({
         videoUrl={videoUrl}
         onUpdate={handleUpdate}
         existingFiles={[]}
-        onFileRemove={async () => {}}
+        onFileRemove={async () => {
+          console.log("File remove action triggered");
+          // Implementation for file removal would go here
+        }}
         onFilesSelected={setFiles}
         files={files}
         id={id}
