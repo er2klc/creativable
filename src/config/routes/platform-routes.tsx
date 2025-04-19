@@ -18,52 +18,52 @@ export const platformRoutes = [
     label: "Unity",
   },
   {
-    path: "/unity/:teamSlug",
+    path: "/unity/team/:teamSlug",
     element: <TeamDetail />,
     label: "Team Detail",
   },
   {
-    path: "/unity/:teamSlug/members",
+    path: "/unity/team/:teamSlug/members",
     element: <TeamMembers />,
     label: "Team Members",
   },
   {
-    path: "/unity/:teamSlug/members/:memberSlug",
+    path: "/unity/team/:teamSlug/members/:memberSlug",
     element: <MemberProfile />,
     label: "Member Profile",
   },
   {
-    path: "/unity/:teamSlug/member-management",
+    path: "/unity/team/:teamSlug/member-management",
     element: <MemberManagement />,
     label: "Member Management",
   },
   {
-    path: "/unity/:teamSlug/posts",
+    path: "/unity/team/:teamSlug/posts",
     element: <PostsAndDiscussions />,
     label: "Team Posts",
   },
   {
-    path: "/unity/:teamSlug/posts/category/:categorySlug",
+    path: "/unity/team/:teamSlug/posts/category/:categorySlug",
     element: <PostsAndDiscussions />,
     label: "Team Posts Category",
   },
   {
-    path: "/unity/:teamSlug/posts/:postSlug",
+    path: "/unity/team/:teamSlug/posts/:postSlug",
     element: <PostsAndDiscussions />,
     label: "Post Detail",
   },
   {
-    path: "/unity/:teamSlug/calendar",
+    path: "/unity/team/:teamSlug/calendar",
     element: <TeamCalendar />,
     label: "Team Calendar",
   },
   {
-    path: "/unity/:teamSlug/pulse",
+    path: "/unity/team/:teamSlug/pulse",
     element: <TeamPulse />,
     label: "Team Pulse",
   },
   {
-    path: "/unity/:teamSlug/leaderboard",
+    path: "/unity/team/:teamSlug/leaderboard",
     element: <LeaderBoard />,
     label: "Leaderboard",
   },
@@ -78,4 +78,3 @@ export const platformRoutes = [
     label: "Platform Detail",
   }
 ];
-
