@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -129,12 +128,12 @@ export const LeadPhases = () => {
                 <li key={lead.id} className="py-2 border-b last:border-b-0">
                   <div className="flex items-center">
                     <img
-                      src={lead.avatar_url || "/placeholder-profile.png"}
+                      src={lead.avatar_url || "/placeholder.svg"}
                       alt={lead.name}
                       className="w-8 h-8 rounded-full mr-2 object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder-profile.png";
+                        target.src = "/placeholder.svg";
                       }}
                     />
                     <span className="truncate">{lead.name}</span>
