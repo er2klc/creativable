@@ -127,7 +127,11 @@ export const LeadKanbanView = () => {
                             className="bg-gray-50 p-3 rounded mb-2"
                           >
                             <div className="flex items-center gap-2">
-                              <LeadAvatar lead={lead} />
+                              <LeadAvatar 
+                                name={lead.name}
+                                platform={lead.platform}
+                                imageUrl={lead.social_media_profile_image_url}
+                              />
                               <span>{lead.name}</span>
                             </div>
                           </div>

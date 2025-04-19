@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   useReactTable,
   getCoreRowModel,
@@ -11,9 +11,11 @@ import { Tables } from "@/integrations/supabase/types";
 
 interface LeadTableViewProps {
   leads: Tables<"leads">[];
+  onLeadClick?: (id: string) => void;
+  selectedPipelineId?: string | null;
 }
 
-export const LeadTableView = ({ leads }: LeadTableViewProps) => {
+export const LeadTableView = ({ leads, onLeadClick }: LeadTableViewProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const columns: ColumnDef<Tables<"leads">>[] = [
@@ -58,7 +60,11 @@ export const LeadTableView = ({ leads }: LeadTableViewProps) => {
         </thead>
         <tbody>
           {table.getRowModel().rows.map(row => (
-            <tr key={row.id}>
+            <tr 
+              key={row.id} 
+              onClick={() => onLeadClick && onLeadClick(row.original.id)}
+              className="cursor-pointer hover:bg-gray-50"
+            >
               {row.getVisibleCells().map(cell => (
                 <td key={cell.id} className="p-2">
                   {cell.getValue() as string}

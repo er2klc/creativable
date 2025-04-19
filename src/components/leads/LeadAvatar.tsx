@@ -1,37 +1,40 @@
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getInitials } from "@/lib/utils";
-import { Tables } from "@/integrations/supabase/types";
+import { cn } from "@/lib/utils";
 
 interface LeadAvatarProps {
-  lead: Tables<"leads">;
+  name: string;
+  platform: string;
+  imageUrl?: string | null;
 }
 
-export const LeadAvatar = ({ lead }: LeadAvatarProps) => {
-  const initials = getInitials(lead.name);
-  const imageUrl = lead.social_media_profile_image_url;
-  
-  const getPlatformColor = () => {
-    switch (lead.platform) {
-      case "LinkedIn":
-        return "bg-[#0077B5]";
-      case "Instagram":
-        return "bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#FCAF45]";
-      case "Facebook":
-        return "bg-[#3b5998]";
-      case "Email":
-        return "bg-[#EA4335]";
-      default:
-        return "bg-primary";
-    }
+export const LeadAvatar = ({ name, platform, imageUrl }: LeadAvatarProps) => {
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
-    <Avatar className="h-10 w-10">
-      <AvatarImage src={imageUrl || undefined} alt={lead.name} />
-      <AvatarFallback className={getPlatformColor()}>
-        <span className="text-white">{initials}</span>
-      </AvatarFallback>
-    </Avatar>
+    <div className="flex-shrink-0">
+      <div className={cn(
+        "h-10 w-10 rounded-full overflow-hidden",
+        platform.toLowerCase() === "offline" && "border border-gray-300"
+      )}>
+        {imageUrl ? (
+          <img 
+            src={imageUrl} 
+            alt={name}
+            className="h-full w-full object-cover"
+          />
+        ) : (
+          <div className="h-full w-full bg-gray-100 flex items-center justify-center text-sm font-medium">
+            {getInitials(name)}
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
