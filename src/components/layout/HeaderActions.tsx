@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, User, CreditCard, Receipt, LogOut, MessageCircle } from "lucide-react";
@@ -183,7 +184,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Avatar className="h-8 w-8 cursor-pointer">
-              <AvatarImage src={getAvatarUrl(profile?.avatar_url)} />
+              <AvatarImage src={profile?.avatar_url || ""} alt={profile?.display_name || ""} />
               <AvatarFallback>{(profile?.display_name || "").substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
           </DropdownMenuTrigger>
