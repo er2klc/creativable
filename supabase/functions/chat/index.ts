@@ -220,9 +220,17 @@ serve(async (req) => {
 
       console.log("Sending request to OpenAI with context...");
 
+      // Prüfe und logge vorhandene OpenAI-Modelle
+      try {
+        const models = await openai.models.list();
+        console.log("Available models:", models.data.map(m => m.id).join(", "));
+      } catch (modelError) {
+        console.error("Error listing models:", modelError);
+      }
+
       // Get response from OpenAI using the streaming API
       const stream = await openai.chat.completions.create({
-        model: "gpt-4.1-nano",
+        model: "gpt-3.5-turbo",
         messages: enhancedMessages,
         stream: true,
         temperature: 0.7,
