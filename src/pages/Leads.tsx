@@ -6,7 +6,7 @@ import { LeadTableView } from "@/components/leads/LeadTableView";
 import { useLeadsQuery } from "@/hooks/use-leads-query";
 import { useNavigate } from "react-router-dom";
 import { useSettings } from "@/hooks/use-settings";
-import { usePipelineManagement } from "@/components/leads/pipeline/hooks/usePipelineManagement";
+import { usePipelineManagement } from "@/hooks/use-pipeline-management";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Leads = () => {
@@ -27,11 +27,6 @@ const Leads = () => {
     navigate(`/contacts/${id}`);
   };
 
-  const handlePipelineSelect = (id: string) => {
-    console.log("Pipeline selected:", id);
-    setSelectedPipelineId(id);
-  };
-
   return (
     <div className="flex flex-col h-screen">
       <div className={`fixed ${isMobile ? 'top-[48px]' : 'top-0 md:left-[72px] group-hover:left-[240px]'} right-0 z-50 bg-background transition-[left] duration-300`}>
@@ -39,8 +34,8 @@ const Leads = () => {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           selectedPipelineId={selectedPipelineId}
-          setSelectedPipelineId={handlePipelineSelect}
-          viewMode={isMobile ? "list" : viewMode}
+          setSelectedPipelineId={setSelectedPipelineId}
+          viewMode={viewMode}
           setViewMode={setViewMode}
           setIsEditMode={setIsEditMode}
         />
@@ -51,7 +46,7 @@ const Leads = () => {
           <LeadKanbanView
             leads={leads}
             selectedPipelineId={selectedPipelineId}
-            setSelectedPipelineId={handlePipelineSelect}
+            setSelectedPipelineId={setSelectedPipelineId}
             isEditMode={isEditMode}
           />
         ) : (
