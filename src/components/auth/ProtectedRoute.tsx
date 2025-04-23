@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
+  const isAuthenticated = !!user;
   const [isSessionChecked, setIsSessionChecked] = useState(false);
   const [hasSession, setHasSession] = useState(false);
   const location = useLocation();

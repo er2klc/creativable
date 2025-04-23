@@ -23,9 +23,6 @@ const preloadRoutes = () => {
   });
 };
 
-// Starte Preloading
-preloadRoutes();
-
 export const mainRoutes = [
   {
     path: "/dashboard",
@@ -78,3 +75,6 @@ export const mainRoutes = [
     label: "Links",
   },
 ];
+
+// Starte Preloading nach Definition der Routen
+preloadRoutes();

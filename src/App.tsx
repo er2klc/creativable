@@ -7,24 +7,51 @@ import { publicRoutes } from "@/config/public-routes";
 import { protectedRoutes } from "@/config/protected-routes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Suspense, lazy } from "react";
+import { Suspense, lazy, memo } from "react";
 
 // Optimierter LoadingSpinner mit memo
-const LoadingSpinner = () => (
+const LoadingSpinner = memo(() => (
   <div className="flex items-center justify-center min-h-screen bg-[#0A0A0A]">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
   </div>
-);
+));
 
-// Zentrale Suspense-Wrapper-Komponente
-const RouteWrapper = ({ children }) => (
+// Optimierte Suspense-Wrapper-Komponente mit memo
+const RouteWrapper = memo(({ children }: { children: React.ReactNode }) => (
   <Suspense fallback={<LoadingSpinner />}>
     {children}
   </Suspense>
-);
+));
+
+// Memoized Public Routes
+const PublicRoutesElement = memo(() => (
+  <>
+    {publicRoutes.map((route) => (
+      <Route
+        key={route.path}
+        path={route.path}
+        element={route.element}
+      />
+    ))}
+  </>
+));
+
+// Memoized Protected Routes
+const ProtectedRoutesElement = memo(() => (
+  <>
+    {protectedRoutes.map((route) => (
+      <Route
+        key={route.path}
+        path={route.path}
+        element={route.element}
+      />
+    ))}
+  </>
+));
 
 const AppRoutes = () => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
+  const isAuthenticated = !!user;
   const publicPaths = publicRoutes.map((route) => route.path);
   const showChat = useChatVisibility(publicPaths);
 
@@ -37,13 +64,7 @@ const AppRoutes = () => {
       <RouteWrapper>
         <Routes>
           {/* Public Routes */}
-          {publicRoutes.map((route) => (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={route.element}
-            />
-          ))}
+          <PublicRoutesElement />
 
           {/* Protected Routes */}
           <Route
@@ -55,13 +76,7 @@ const AppRoutes = () => {
               </ProtectedRoute>
             }
           >
-            {protectedRoutes.map((route) => (
-              <Route
-                key={route.path}
-                path={route.path}
-                element={route.element}
-              />
-            ))}
+            <ProtectedRoutesElement />
           </Route>
 
           {/* Catch-all Route */}
@@ -82,13 +97,14 @@ const AppRoutes = () => {
   );
 };
 
-const App = () => {
+// Optimieren der App-Komponente
+const App = memo(() => {
   return (
     <AppProvider>
       <AppRoutes />
     </AppProvider>
   );
-};
+});
 
 export default App;
 
