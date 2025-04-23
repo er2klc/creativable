@@ -80,7 +80,7 @@ export const useCalendarEvents = (
     },
   });
 
-  // Team events query
+  // Team events query - Modified to fetch all events without date filtering
   const { data: teamData = { events: [] }, isLoading: isLoadingTeamEvents } = useQuery({
     queryKey: ["team-appointments", format(currentDate, "yyyy-MM")],
     queryFn: async () => {
@@ -106,7 +106,7 @@ export const useCalendarEvents = (
         ["admin", "owner"].includes(tm.role)
       );
 
-      // Fetch team events including admin-only events if user is admin
+      // Fetch team events without date filtering
       const { data: events = [], error: eventsError } = await supabase
         .from("team_calendar_events")
         .select(`
@@ -114,8 +114,6 @@ export const useCalendarEvents = (
           teams:team_id (name)
         `)
         .in("team_id", teamIds)
-        .gte("start_time", startOfMonth(currentDate).toISOString())
-        .lte("start_time", endOfMonth(currentDate).toISOString())
         .or(
           isAdmin 
             ? `is_admin_only.eq.false,is_admin_only.eq.true`
