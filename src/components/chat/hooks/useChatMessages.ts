@@ -72,6 +72,7 @@ export const useChatMessages = ({
     setIsProcessing(true);
     
     try {
+      console.log("🔄 Chat Anfrage wird vorbereitet...");
       // Setze die Benutzernachricht sofort
       const userMessage = { id: Date.now().toString(), role: 'user' as const, content: currentInput };
       const assistantMessage = { id: crypto.randomUUID(), role: 'assistant' as const, content: '' };
@@ -95,7 +96,7 @@ export const useChatMessages = ({
         ? [...messages.slice(0, 1), ...messages.slice(-9)] // Keep system prompt + last 9 messages
         : messages;
 
-      console.log('Sending chat request to Supabase function with API key length:', apiKey ? apiKey.length : 0);
+      console.log('📤 Sende Chat-Anfrage an Supabase-Funktion | API Key vorhanden:', !!apiKey);
       
       const requestData = {
         messages: [
@@ -107,9 +108,17 @@ export const useChatMessages = ({
         userId: userId,
         currentRoute: window.location.pathname
       };
-      console.log('Request data (excluding system message):', {
-        ...requestData, 
-        messages: [`${requestData.messages[0].content.substring(0, 50)}...`, '...remaining messages']
+      
+      // Debugging-Informationen
+      console.log('📊 Request-Details:', {
+        endpoint: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+        headers: {
+          'Authorization vorhanden': !!sessionToken,
+          'API-Key vorhanden': !!apiKey,
+        },
+        userId,
+        messageCount: requestData.messages.length,
+        userMessage: currentInput
       });
 
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
@@ -123,13 +132,16 @@ export const useChatMessages = ({
       });
 
       if (!response.ok) {
-        console.error(`Server responded with ${response.status}:`, await response.text());
-        throw new Error(`Server responded with ${response.status}`);
+        const responseText = await response.text();
+        console.error(`❌ Server antwortete mit ${response.status}:`, responseText);
+        throw new Error(`Server antwortete mit ${response.status}: ${responseText}`);
       }
 
+      console.log('✅ Server-Antwort erhalten:', response.status, response.statusText);
+
       if (!response.body) {
-        console.error("Response body is null");
-        throw new Error("Response body is null");
+        console.error("❌ Response body ist null");
+        throw new Error("Response body ist null");
       }
 
       const reader = response.body.getReader();
@@ -137,18 +149,18 @@ export const useChatMessages = ({
       let accumulatedContent = '';
 
       try {
-        console.log("Starting to read stream response");
+        console.log("🔄 Beginne Antwort-Stream zu lesen");
         let messageCount = 0;
         
         while (true) {
           const { value, done } = await reader.read();
           if (done) {
-            console.log("Stream reading complete");
+            console.log("✅ Stream-Lesen abgeschlossen");
             break;
           }
 
           const chunk = decoder.decode(value);
-          console.log(`Received chunk of length ${chunk.length}`);
+          console.log(`📩 Chunk erhalten: ${chunk.length} Zeichen`);
           const lines = chunk.split('\n');
 
           for (const line of lines) {
@@ -156,21 +168,21 @@ export const useChatMessages = ({
 
             const data = line.slice(6);
             if (data === '[DONE]') {
-              console.log("Received [DONE] marker");
+              console.log("🏁 [DONE]-Marker erhalten");
               continue;
             }
 
             try {
               messageCount++;
               const parsed = JSON.parse(data);
-              console.log(`Parsed message #${messageCount}:`, 
-                parsed.delta ? `delta of length ${parsed.delta.length}` : 
-                parsed.content ? `content of length ${parsed.content.length}` : 
-                parsed.error ? `ERROR: ${parsed.message}` : 'unknown format');
+              console.log(`📝 Nachricht #${messageCount} verarbeitet:`, 
+                parsed.delta ? `Delta mit ${parsed.delta.length} Zeichen` : 
+                parsed.content ? `Inhalt mit ${parsed.content.length} Zeichen` : 
+                parsed.error ? `FEHLER: ${parsed.message}` : 'unbekanntes Format');
               
               // Check for error responses
               if (parsed.error) {
-                console.error('Error from chat service:', parsed);
+                console.error('❌ Fehler vom Chat-Service:', parsed);
                 toast.error(parsed.message || 'Ein Fehler ist beim Chat aufgetreten');
                 
                 // Update the assistant message with the error
@@ -206,16 +218,17 @@ export const useChatMessages = ({
                 });
               }
             } catch (error) {
-              console.error('Error parsing chunk:', error, 'Raw data:', data);
+              console.error('❌ Fehler beim Parsen des Chunks:', error, 'Rohdaten:', data);
             }
           }
         }
         
         // Reset retry count on success
         setRetryCount(0);
+        console.log("✅ Chat-Antwort erfolgreich verarbeitet");
         
       } catch (streamError) {
-        console.error('Stream processing error:', streamError);
+        console.error('❌ Stream-Verarbeitungsfehler:', streamError);
         
         if (retryCount < MAX_RETRIES) {
           // Increment retry count and try again

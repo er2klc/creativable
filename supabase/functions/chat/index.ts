@@ -219,54 +219,67 @@ serve(async (req) => {
       ];
 
       console.log("Sending request to OpenAI with context...");
+      console.log("Using API key of length:", apiKey.length);
+      console.log("First 5 characters of API key:", apiKey.substring(0, 5));
+      console.log("Last 5 characters of API key:", apiKey.substring(apiKey.length - 5));
 
       // Prüfe und logge vorhandene OpenAI-Modelle
       try {
+        console.log("Attempting to list available models...");
         const models = await openai.models.list();
         console.log("Available models:", models.data.map(m => m.id).join(", "));
       } catch (modelError) {
         console.error("Error listing models:", modelError);
+        console.error("Error details:", JSON.stringify(modelError, null, 2));
       }
 
       // Get response from OpenAI using the streaming API
-      const stream = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: enhancedMessages,
-        stream: true,
-        temperature: 0.7,
-        max_tokens: 1000,
-      });
+      console.log("About to request chat completion with model: gpt-4.1-nano");
+      try {
+        const stream = await openai.chat.completions.create({
+          model: "gpt-4.1-nano",
+          messages: enhancedMessages,
+          stream: true,
+          temperature: 0.7,
+          max_tokens: 1000,
+        });
 
-      const messageId = crypto.randomUUID();
-      let accumulatedContent = '';
+        const messageId = crypto.randomUUID();
+        let accumulatedContent = '';
 
-      // Stream the response in smaller chunks to avoid timeouts
-      for await (const part of stream) {
-        const delta = part.choices[0]?.delta?.content || '';
-        console.log("Received delta:", delta ? delta.substring(0, 20) + "..." : "empty");
-        if (delta) {
-          accumulatedContent += delta;
-          const message = {
-            id: messageId,
-            role: 'assistant',
-            delta: delta
-          };
-          console.log("Streaming delta of length:", delta.length);
-          await writer.write(textEncoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+        // Stream the response in smaller chunks to avoid timeouts
+        console.log("Stream created successfully, starting to process chunks");
+        for await (const part of stream) {
+          const delta = part.choices[0]?.delta?.content || '';
+          console.log("Received delta:", delta ? delta.substring(0, 20) + "..." : "empty");
+          if (delta) {
+            accumulatedContent += delta;
+            const message = {
+              id: messageId,
+              role: 'assistant',
+              delta: delta
+            };
+            console.log("Streaming delta of length:", delta.length);
+            await writer.write(textEncoder.encode(`data: ${JSON.stringify(message)}\n\n`));
+          }
         }
-      }
       
-      // Send the final message
-      const finalMessage = {
-        id: messageId,
-        role: 'assistant',
-        content: accumulatedContent,
-        done: true
-      };
-      console.log("Streaming complete, final message length:", accumulatedContent.length);
-      await writer.write(textEncoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
-      await writer.write(textEncoder.encode('data: [DONE]\n\n'));
-      console.log("Successfully streamed OpenAI response");
+        // Send the final message
+        const finalMessage = {
+          id: messageId,
+          role: 'assistant',
+          content: accumulatedContent,
+          done: true
+        };
+        console.log("Streaming complete, final message length:", accumulatedContent.length);
+        await writer.write(textEncoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
+        await writer.write(textEncoder.encode('data: [DONE]\n\n'));
+        console.log("Successfully streamed OpenAI response");
+      } catch (streamError) {
+        console.error("Error creating or processing stream:", streamError);
+        console.error("Error details:", JSON.stringify(streamError, null, 2));
+        throw streamError; // Rethrow to be caught by the outer try-catch
+      }
     } catch (innerError) {
       console.error("Inner processing error:", innerError);
       const errorMessage = {
