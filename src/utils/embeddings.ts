@@ -1,12 +1,14 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-export type ContentType = 'personal' | 'team' | 'platform' | 'lead' | 'document' | 'settings';
+export type ContentType = 'personal' | 'team' | 'platform' | 'lead' | 'document' | 'settings' | 'profile' | 'note';
 
 export interface ProcessingOptions {
   sourceType?: string;
   sourceId?: string;
   metadata?: Record<string, any>;
+  teamId?: string;
+  leadId?: string;
 }
 
 export const processContentForEmbeddings = async (
@@ -23,7 +25,13 @@ export const processContentForEmbeddings = async (
         userId: user.id,
         contentType,
         content,
-        metadata: options.metadata || {},
+        metadata: {
+          ...options.metadata || {},
+          sourceType: options.sourceType,
+          sourceId: options.sourceId,
+          teamId: options.teamId,
+          leadId: options.leadId
+        },
         sourceType: options.sourceType,
         sourceId: options.sourceId
       }
@@ -42,7 +50,7 @@ export const searchSimilarContent = async (query: string, contentType: ContentTy
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    const { data, error } = await supabase.rpc('match_similar_content', {
+    const { data, error } = await supabase.rpc('match_user_embeddings', {
       query_text: query,
       match_threshold: 0.7,
       match_count: 5,
