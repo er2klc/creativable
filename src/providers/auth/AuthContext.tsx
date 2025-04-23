@@ -1,3 +1,4 @@
+
 import { createContext, useContext } from "react";
 import { User } from "@supabase/supabase-js";
 
@@ -5,6 +6,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: User | null;
+  error?: Error;
 }
 
 export const AuthContext = createContext<AuthContextType>({

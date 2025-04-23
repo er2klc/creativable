@@ -66,6 +66,29 @@ export const QuickActions = () => {
     }
   });
 
+  // Fetch default pipeline for dialogs that need it
+  const { data: defaultPipeline } = useQuery({
+    queryKey: ['default-pipeline'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data, error } = await supabase
+        .from('pipelines')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_default', true)
+        .single();
+
+      if (error) {
+        console.error('Error fetching default pipeline:', error);
+        return null;
+      }
+
+      return data;
+    }
+  });
+
   const handleTeamClick = () => {
     if (!teams?.length) {
       navigate('/unity');
@@ -210,11 +233,13 @@ export const QuickActions = () => {
       <CreateInstagramContactDialog
         open={showInstagramDialog}
         onOpenChange={setShowInstagramDialog}
+        pipelineId={defaultPipeline?.id || ''}
       />
 
       <CreateLinkedInContactDialog
         open={showLinkedInDialog}
         onOpenChange={setShowLinkedInDialog}
+        pipelineId={defaultPipeline?.id || ''}
       />
 
       <NewAppointmentDialog 
