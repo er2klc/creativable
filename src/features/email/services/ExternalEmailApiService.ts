@@ -1,9 +1,8 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // External email API configuration
-const API_ENDPOINT = 'http://142.132.191.233:3001/fetch-emails';
+const API_ENDPOINT = 'https://creativable-email-api.onrender.com/fetch-emails';
 const API_KEY = '7b5d3a9f2c4e1d6a8b0e5f3c7a9d2e4f1b8c5a0d3e6f7c2a9b8e5d4f3a1c7e';
 
 interface EmailApiSettings {
@@ -70,8 +69,12 @@ export class ExternalEmailApiService {
           .eq('folder', settings.folder)
           .maybeSingle();
           
-        if (syncStatus && syncStatus.last_sync_date) {
-          since = syncStatus.last_sync_date;
+        // Typensichere Überprüfung mit type guard
+        if (syncStatus && typeof syncStatus === 'object') { 
+          const status = syncStatus as {last_sync_date?: string};
+          if (status.last_sync_date) {
+            since = status.last_sync_date;
+          }
         }
       }
 
@@ -93,45 +96,74 @@ export class ExternalEmailApiService {
       this.lastSyncTime[folderKey] = now;
       
       // Make request to external API
-      const response = await fetch(API_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': API_KEY
-        },
-        body: JSON.stringify({
-          host: settings.host,
-          port: settings.port,
-          user: settings.user,
-          password: settings.password,
-          folder: settings.folder,
-          tls: settings.tls,
-          limit,
-          offset,
-          since
-        })
-      });
+      try {
+        const response = await fetch(API_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': API_KEY
+          },
+          body: JSON.stringify({
+            host: settings.host,
+            port: settings.port,
+            user: settings.user,
+            password: settings.password,
+            folder: settings.folder,
+            tls: settings.tls,
+            limit,
+            offset,
+            since
+          }),
+          // Timeout nach 30 Sekunden
+          signal: AbortSignal.timeout(30000)
+        });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-      }
+        if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
+        }
 
-      const result = await response.json();
-      
-      if (!result.success) {
+        const result = await response.json();
+        
+        if (!result.success) {
+          return {
+            success: false,
+            error: result.message || "Failed to fetch emails"
+          };
+        }
+        
         return {
-          success: false,
-          error: result.message || "Failed to fetch emails"
+          success: true,
+          emails: result.data || [],
+          hasMore: result.pagination ? (result.pagination.page < result.pagination.totalPages) : false,
+          total: result.pagination?.totalItems || 0,
+          message: result.message
         };
+      } catch (fetchError: any) {
+        // Spezifische Fehlerbehandlung für Netzwerkprobleme
+        if (fetchError.name === 'AbortError') {
+          return {
+            success: false,
+            error: "Die Anfrage hat zu lange gedauert und wurde abgebrochen. Bitte versuchen Sie es später erneut.",
+            message: "Timeout bei der API-Anfrage"
+          };
+        }
+        
+        if (fetchError.message && fetchError.message.includes('Failed to fetch')) {
+          return {
+            success: false,
+            error: "Der E-Mail-Server ist nicht erreichbar. Bitte überprüfen Sie Ihre Internetverbindung oder versuchen Sie es später erneut.",
+            message: "E-Mail-API nicht erreichbar"
+          };
+        }
+        
+        throw fetchError;
       }
-      
-      return result;
     } catch (error: any) {
       console.error("Error fetching emails from external API:", error);
       return {
         success: false,
-        error: error.message
+        error: error.message || "Ein unbekannter Fehler ist aufgetreten."
       };
     }
   }
@@ -177,8 +209,10 @@ export class ExternalEmailApiService {
         const formattedEmails = batch.map((email: any) => ({
           user_id: user.id,
           folder: folder,
-          message_id: email.messageId || email.message_id || `${email.date}_${email.subject}_${email.from}`,
-          from: email.from,
+          // Unterstütze beide Formate: das neue Server-Format und das alte Format
+          message_id: email.id || email.messageId || email.message_id || `${email.date}_${email.subject}_${email.from}`,
+          imap_uid: email.uid || email.imap_uid || null,
+          from: typeof email.from === 'object' ? (email.from?.text || email.from?.value || JSON.stringify(email.from)) : email.from,
           subject: email.subject || "(No Subject)",
           text: email.text || null,
           html: email.html || null,
@@ -254,18 +288,18 @@ export class ExternalEmailApiService {
     
     try {
       const limit = options.limit || 50;
-      let offset = 0;
+      let page = 1;
       let hasMore = true;
       let totalSaved = 0;
       
       const startToast = toast.loading("Synchronisiere E-Mails...");
       
       while (hasMore) {
-        // Fetch batch of emails
+        // Fetch batch of emails with pagination
         const result = await this.fetchEmails(settings, {
           ...options,
           limit,
-          offset
+          offset: (page - 1) * limit // Berechne Offset basierend auf Seite
         });
         
         if (!result.success) {
@@ -309,16 +343,23 @@ export class ExternalEmailApiService {
         hasMore = result.hasMore || false;
         
         if (hasMore) {
-          offset += limit;
+          page += 1; // Nächste Seite
           // Short delay between batches
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
       
       toast.dismiss(startToast);
-      toast.success(`E-Mail-Synchronisierung abgeschlossen`, {
-        description: `${totalSaved} E-Mails wurden synchronisiert`
-      });
+      
+      if (totalSaved > 0) {
+        toast.success(`E-Mail-Synchronisierung abgeschlossen`, {
+          description: `${totalSaved} E-Mails wurden synchronisiert`
+        });
+      } else {
+        toast.info(`Keine neuen E-Mails gefunden`, {
+          description: `Alle E-Mails sind bereits synchronisiert`
+        });
+      }
       
       return {
         success: true,
