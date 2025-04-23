@@ -11,18 +11,6 @@ const Pool = lazy(() => import("@/pages/Pool"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const Links = lazy(() => import("@/pages/Links"));
 
-// Preload wichtige Routen
-const preloadRoutes = () => {
-  const routesToPreload = ["/dashboard", "/contacts", "/messages"];
-  routesToPreload.forEach(route => {
-    const component = mainRoutes.find(r => r.path === route)?.element;
-    if (component) {
-      // @ts-ignore
-      component.preload?.();
-    }
-  });
-};
-
 export const mainRoutes = [
   {
     path: "/dashboard",
@@ -76,5 +64,8 @@ export const mainRoutes = [
   },
 ];
 
-// Starte Preloading nach Definition der Routen
-preloadRoutes();
+// Vorsichtigeres Preloading ohne potenzielle zirkuläre Referenzen
+setTimeout(() => {
+  // Dashboard vorausladen - häufig besuchte Seite
+  import("@/pages/Dashboard").catch(console.error);
+}, 1000);
