@@ -2,7 +2,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 // External email API configuration
-const API_ENDPOINT = 'https://creativable-email-api.onrender.com/fetch-emails';
+// Nutze Supabase Functions für den Proxy statt direktem API-Aufruf
+const API_ENDPOINT = 'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/email-proxy';
 const API_KEY = '7b5d3a9f2c4e1d6a8b0e5f3c7a9d2e4f1b8c5a0d3e6f7c2a9b8e5d4f3a1c7e';
 
 interface EmailApiSettings {
@@ -62,19 +63,25 @@ export class ExternalEmailApiService {
       // Get last sync date if not provided and not forcing refresh
       let since = options.since;
       if (!since && !options.forceRefresh) {
-        const { data: syncStatus } = await supabase
-          .from('email_sync_status')
-          .select('last_sync_date')
-          .eq('user_id', user.id)
-          .eq('folder', settings.folder)
-          .maybeSingle();
+        try {
+          const { data: syncStatus, error } = await supabase
+            .from('email_sync_status')
+            .select('last_sync')  // Geändert von last_sync_date zu last_sync
+            .eq('user_id', user.id)
+            .eq('folder', settings.folder)
+            .maybeSingle();
           
-        // Typensichere Überprüfung mit type guard
-        if (syncStatus && typeof syncStatus === 'object') { 
-          const status = syncStatus as {last_sync_date?: string};
-          if (status.last_sync_date) {
-            since = status.last_sync_date;
+          // Verwende den Wert nur, wenn keine Fehler aufgetreten sind
+          if (!error && syncStatus) {
+            // Non-null assertion nach vorherigem Check
+            const syncObj = syncStatus as Record<string, any>;
+            // Prüfe auf last_sync oder last_sync_date Feld
+            const syncDate = syncObj.last_sync || syncObj.last_sync_date;
+            if (syncDate) since = syncDate;
           }
+        } catch (e) {
+          console.log("Hinweis: Ignoriere Fehler beim Abrufen des Sync-Status:", e);
+          // Fehler ignorieren, keine last_sync Verwendung
         }
       }
 
@@ -97,10 +104,23 @@ export class ExternalEmailApiService {
       
       // Make request to external API
       try {
+        // Hole zuerst den Supabase-Token für die Authentifizierung der Edge Function
+        const { data: authData } = await supabase.auth.getSession();
+        const accessToken = authData?.session?.access_token;
+
+        if (!accessToken) {
+          return {
+            success: false,
+            error: "Nicht authentifiziert oder Session abgelaufen",
+            message: "Bitte melden Sie sich erneut an"
+          };
+        }
+        
         const response = await fetch(API_ENDPOINT, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
             'x-api-key': API_KEY
           },
           body: JSON.stringify({
@@ -241,17 +261,22 @@ export class ExternalEmailApiService {
       
       // Update last sync date
       const now = new Date().toISOString();
-      const { error: syncError } = await supabase
-        .from('email_sync_status')
-        .upsert({
-          user_id: user.id,
-          folder: folder,
-          last_sync_date: now,
-          updated_at: now
-        }, { onConflict: 'user_id,folder' });
-      
-      if (syncError) {
-        console.error("Error updating sync status:", syncError);
+      try {
+        const { error: syncError } = await supabase
+          .from('email_sync_status')
+          .upsert({
+            user_id: user.id,
+            folder: folder,
+            last_sync: now,  // Geändert von last_sync_date zu last_sync
+            updated_at: now
+          }, { onConflict: 'user_id,folder' });
+        
+        if (syncError) {
+          console.warn("Hinweis: Fehler beim Aktualisieren des Sync-Status ignoriert:", syncError);
+        }
+      } catch (syncErr) {
+        console.warn("Ignoriere Fehler beim Speichern des Sync-Status:", syncErr);
+        // Weitermachen auch wenn Update fehlschlägt
       }
       
       return {
