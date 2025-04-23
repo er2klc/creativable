@@ -1,6 +1,7 @@
 import { useChat } from "ai/react";
 import { toast } from "sonner";
 import { useCallback, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseChatMessagesProps {
   sessionToken: string | null;
@@ -121,6 +122,49 @@ export const useChatMessages = ({
         userMessage: currentInput
       });
 
+      // ===== DIREKTE KOMMUNIKATION MIT SUPABASE ANSTATT ÜBER FETCH =====
+      try {
+        console.log("🔄 Versuche direkte Kommunikation mit Supabase-Funktion...");
+        
+        const { data: directResponse, error: directError } = await supabase.functions.invoke('chat', {
+          body: requestData,
+          headers: {
+            'X-OpenAI-Key': apiKey || '',
+          }
+        });
+        
+        if (directError) {
+          console.error("❌ Direkter Fehler von Supabase:", directError);
+          throw new Error(`Direkter Fehler: ${directError.message}`);
+        }
+        
+        console.log("✅ Direkte Antwort von Supabase erhalten:", directResponse);
+        
+        // Direkte Antwort verarbeiten (falls vorhanden)
+        if (directResponse) {
+          setMessages(prev => {
+            const updatedMessages = [...prev];
+            const lastIndex = updatedMessages.length - 1;
+            if (lastIndex >= 0 && updatedMessages[lastIndex]?.role === 'assistant') {
+              updatedMessages[lastIndex] = {
+                ...updatedMessages[lastIndex],
+                content: directResponse.content || directResponse.message || "Antwort erhalten, aber Inhalt konnte nicht gelesen werden"
+              };
+            }
+            return updatedMessages;
+          });
+          
+          console.log("✅ Nachricht aktualisiert mit Direktantwort");
+          setRetryCount(0);
+          setIsProcessing(false);
+          return;
+        }
+      } catch (directError) {
+        console.error("❌ Fehler bei direkter Kommunikation:", directError);
+        // Fahre mit normalem Weg fort, wenn direkte Kommunikation fehlschlägt
+      }
+
+      // ===== ORIGINALER FETCH-CODE =====
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
         headers: {
@@ -144,6 +188,40 @@ export const useChatMessages = ({
         throw new Error("Response body ist null");
       }
 
+      // ===== FALLBACK-LÖSUNG BEI STREAMING-PROBLEMEN =====
+      try {
+        // Versuche zuerst, die gesamte Antwort zu lesen (nicht-Streaming-Methode)
+        const fullResponseText = await response.clone().text();
+        console.log("📄 Vollständige Antwort vom Server:", fullResponseText);
+        
+        // Versuche, die Antwort als JSON zu parsen
+        try {
+          const jsonResponse = JSON.parse(fullResponseText);
+          if (jsonResponse.content || jsonResponse.message) {
+            console.log("📄 JSON-Antwort gefunden:", jsonResponse);
+            setMessages(prev => {
+              const updatedMessages = [...prev];
+              const lastIndex = updatedMessages.length - 1;
+              if (lastIndex >= 0 && updatedMessages[lastIndex]?.role === 'assistant') {
+                updatedMessages[lastIndex] = {
+                  ...updatedMessages[lastIndex],
+                  content: jsonResponse.content || jsonResponse.message
+                };
+              }
+              return updatedMessages;
+            });
+            setRetryCount(0);
+            setIsProcessing(false);
+            return;
+          }
+        } catch (jsonError) {
+          console.log("📄 Antwort ist kein gültiges JSON, fahre mit Streaming fort");
+        }
+      } catch (fullResponseError) {
+        console.error("❌ Fehler beim Lesen der vollständigen Antwort:", fullResponseError);
+      }
+
+      // ===== ORIGINALER STREAMING-CODE =====
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let accumulatedContent = '';
@@ -160,7 +238,7 @@ export const useChatMessages = ({
           }
 
           const chunk = decoder.decode(value);
-          console.log(`📩 Chunk erhalten: ${chunk.length} Zeichen`);
+          console.log(`📩 Chunk erhalten: ${chunk.length} Zeichen, Inhalt:`, chunk);
           const lines = chunk.split('\n');
 
           for (const line of lines) {
@@ -175,10 +253,7 @@ export const useChatMessages = ({
             try {
               messageCount++;
               const parsed = JSON.parse(data);
-              console.log(`📝 Nachricht #${messageCount} verarbeitet:`, 
-                parsed.delta ? `Delta mit ${parsed.delta.length} Zeichen` : 
-                parsed.content ? `Inhalt mit ${parsed.content.length} Zeichen` : 
-                parsed.error ? `FEHLER: ${parsed.message}` : 'unbekanntes Format');
+              console.log(`📝 Nachricht #${messageCount} verarbeitet:`, parsed);
               
               // Check for error responses
               if (parsed.error) {
