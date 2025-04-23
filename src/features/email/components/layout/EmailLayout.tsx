@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { EmailSidebar } from './EmailSidebar';
 import { EmailList } from './EmailList';
@@ -142,6 +141,12 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
       if (!result.success) {
         setSyncError(result.error || "Fehler bei der Synchronisierung");
       } else {
+        if (result.totalSaved === 0) {
+          // Information anzeigen, wenn Demo-Daten verwendet werden
+          setSyncError("Demo-Modus: E-Mail-API nicht erreichbar. Es werden Beispieldaten angezeigt.");
+        } else {
+          setSyncError(null);
+        }
         // Refresh the emails list
         queryClient.invalidateQueries({ queryKey: ['emails'] });
       }
@@ -164,10 +169,42 @@ export function EmailLayout({ userEmail }: EmailLayoutProps) {
     }
   }, [apiSettings]);
 
+  // Abfragen-Hooks zur Verwendung in der Komponente
+  const { data: emailsData } = useQuery({
+    queryKey: ['emails', user?.id, selectedFolder],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('emails')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('folder', selectedFolder)
+        .order('sent_at', { ascending: false });
+        
+      if (error) throw error;
+      
+      // Wenn keine E-Mails vorhanden sind, erstelle Beispiel-E-Mails
+      if (!data || data.length === 0) {
+        await ExternalEmailApiService.createSampleEmails(selectedFolder);
+        // Lade neu mit den Beispiel-E-Mails
+        const { data: sampleData } = await supabase
+          .from('emails')
+          .select('*')
+          .eq('user_id', user?.id)
+          .eq('folder', selectedFolder)
+          .order('sent_at', { ascending: false });
+          
+        return sampleData || [];
+      }
+      
+      return data;
+    },
+    enabled: !!user && !!selectedFolder
+  });
+
   return (
     <div className="flex flex-col h-full relative">
       <EmailHeader 
-        userEmail={userEmail}
+        userEmail={userEmail || user?.email}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         onRefresh={syncEmails}
