@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,6 +18,7 @@ export const useChatSetup = (open: boolean) => {
     setSetupError(null);
     
     try {
+      console.log("Starting chat setup process");
       const { data: { session }, error: sessionError } = await supabase.auth.getSession();
       
       if (sessionError) {
@@ -27,11 +27,13 @@ export const useChatSetup = (open: boolean) => {
       }
       
       if (!session) {
+        console.error("No session found");
         setSetupError("Bitte melde dich an.");
         toast.error("Bitte melde dich an.");
         return;
       }
       
+      console.log("Session found, user ID:", session.user.id);
       setSessionToken(session.access_token);
       setUserId(session.user.id);
 
@@ -48,6 +50,8 @@ export const useChatSetup = (open: boolean) => {
         } else if (teamMembers) {
           setCurrentTeamId(teamMembers.team_id);
           console.log("Set current team ID:", teamMembers.team_id);
+        } else {
+          console.log("No team found for user");
         }
       } catch (teamLookupError) {
         console.error("Team lookup failed:", teamLookupError);
@@ -55,6 +59,7 @@ export const useChatSetup = (open: boolean) => {
       }
 
       try {
+        console.log("Fetching OpenAI API key from settings");
         const { data: settings, error: settingsError } = await supabase
           .from("settings")
           .select("openai_api_key")
@@ -67,9 +72,11 @@ export const useChatSetup = (open: boolean) => {
         }
 
         if (settings?.openai_api_key) {
+          console.log("OpenAI API key found with length:", settings.openai_api_key.length);
           setApiKey(settings.openai_api_key);
           console.log("OpenAI API key loaded successfully");
         } else {
+          console.error("No OpenAI API key found in settings");
           setSetupError("Kein OpenAI API-Key gefunden. Bitte hinterlege ihn in den Einstellungen.");
           toast.error("Kein OpenAI API-Key gefunden. Bitte hinterlege ihn in den Einstellungen.");
           return;
@@ -80,6 +87,7 @@ export const useChatSetup = (open: boolean) => {
       }
 
       setIsReady(true);
+      console.log("Chat setup completed successfully");
       setSetupAttempts(0); // Reset attempts on success
     } catch (error) {
       console.error("Error in setupChat:", error);

@@ -95,6 +95,23 @@ export const useChatMessages = ({
         ? [...messages.slice(0, 1), ...messages.slice(-9)] // Keep system prompt + last 9 messages
         : messages;
 
+      console.log('Sending chat request to Supabase function with API key length:', apiKey ? apiKey.length : 0);
+      
+      const requestData = {
+        messages: [
+          { role: 'system', content: systemMessage },
+          ...recentMessages.filter(m => m.role !== 'system'),
+          { role: 'user', content: currentInput }
+        ],
+        teamId: currentTeamId,
+        userId: userId,
+        currentRoute: window.location.pathname
+      };
+      console.log('Request data (excluding system message):', {
+        ...requestData, 
+        messages: [`${requestData.messages[0].content.substring(0, 50)}...`, '...remaining messages']
+      });
+
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
         method: 'POST',
         headers: {
@@ -102,23 +119,16 @@ export const useChatMessages = ({
           Authorization: `Bearer ${sessionToken}`,
           'X-OpenAI-Key': apiKey || '',
         },
-        body: JSON.stringify({
-          messages: [
-            { role: 'system', content: systemMessage },
-            ...recentMessages.filter(m => m.role !== 'system'),
-            { role: 'user', content: currentInput }
-          ],
-          teamId: currentTeamId,
-          userId: userId,
-          currentRoute: window.location.pathname
-        }),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
+        console.error(`Server responded with ${response.status}:`, await response.text());
         throw new Error(`Server responded with ${response.status}`);
       }
 
       if (!response.body) {
+        console.error("Response body is null");
         throw new Error("Response body is null");
       }
 
@@ -127,21 +137,36 @@ export const useChatMessages = ({
       let accumulatedContent = '';
 
       try {
+        console.log("Starting to read stream response");
+        let messageCount = 0;
+        
         while (true) {
           const { value, done } = await reader.read();
-          if (done) break;
+          if (done) {
+            console.log("Stream reading complete");
+            break;
+          }
 
           const chunk = decoder.decode(value);
+          console.log(`Received chunk of length ${chunk.length}`);
           const lines = chunk.split('\n');
 
           for (const line of lines) {
             if (!line.trim() || !line.startsWith('data: ')) continue;
 
             const data = line.slice(6);
-            if (data === '[DONE]') continue;
+            if (data === '[DONE]') {
+              console.log("Received [DONE] marker");
+              continue;
+            }
 
             try {
+              messageCount++;
               const parsed = JSON.parse(data);
+              console.log(`Parsed message #${messageCount}:`, 
+                parsed.delta ? `delta of length ${parsed.delta.length}` : 
+                parsed.content ? `content of length ${parsed.content.length}` : 
+                parsed.error ? `ERROR: ${parsed.message}` : 'unknown format');
               
               // Check for error responses
               if (parsed.error) {
@@ -220,7 +245,6 @@ export const useChatMessages = ({
           });
         }
       }
-      
     } catch (error) {
       console.error('Error in handleSubmit:', error);
       toast.error('Fehler beim Senden der Nachricht');

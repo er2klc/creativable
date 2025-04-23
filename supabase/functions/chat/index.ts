@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
 import OpenAI from "https://esm.sh/openai@4.28.0";
@@ -223,7 +222,7 @@ serve(async (req) => {
 
       // Get response from OpenAI using the streaming API
       const stream = await openai.chat.completions.create({
-        model: "gpt-4-0125-preview",
+        model: "gpt-4.1-nano",
         messages: enhancedMessages,
         stream: true,
         temperature: 0.7,
@@ -236,6 +235,7 @@ serve(async (req) => {
       // Stream the response in smaller chunks to avoid timeouts
       for await (const part of stream) {
         const delta = part.choices[0]?.delta?.content || '';
+        console.log("Received delta:", delta ? delta.substring(0, 20) + "..." : "empty");
         if (delta) {
           accumulatedContent += delta;
           const message = {
@@ -243,6 +243,7 @@ serve(async (req) => {
             role: 'assistant',
             delta: delta
           };
+          console.log("Streaming delta of length:", delta.length);
           await writer.write(textEncoder.encode(`data: ${JSON.stringify(message)}\n\n`));
         }
       }
@@ -254,6 +255,7 @@ serve(async (req) => {
         content: accumulatedContent,
         done: true
       };
+      console.log("Streaming complete, final message length:", accumulatedContent.length);
       await writer.write(textEncoder.encode(`data: ${JSON.stringify(finalMessage)}\n\n`));
       await writer.write(textEncoder.encode('data: [DONE]\n\n'));
       console.log("Successfully streamed OpenAI response");
@@ -264,6 +266,10 @@ serve(async (req) => {
         message: "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
         details: innerError.message
       };
+      
+      // Log the full error details
+      console.error("Error details:", JSON.stringify(innerError, null, 2));
+      
       await writer.write(textEncoder.encode(`data: ${JSON.stringify(errorMessage)}\n\n`));
       await writer.write(textEncoder.encode('data: [DONE]\n\n'));
     }
