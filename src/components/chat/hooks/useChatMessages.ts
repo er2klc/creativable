@@ -65,12 +65,23 @@ export const useChatMessages = ({
       e.preventDefault();
     }
     
-    if (isProcessing) return;
+    if (isProcessing) {
+      console.log("🚫 Already processing a request, skipping...");
+      return;
+    }
     
     const currentInput = overrideMessage || input.trim();
     if (!currentInput) return;
     
     setIsProcessing(true);
+    console.log("🎯 Starting chat request preparation...");
+    console.log("📝 Configuration check:", {
+      supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
+      hasSessionToken: !!sessionToken,
+      hasApiKey: !!apiKey,
+      userId,
+      teamId: currentTeamId
+    });
     
     try {
       console.log("🔄 Chat Anfrage wird vorbereitet...");
