@@ -1,6 +1,6 @@
-
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { format } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -39,4 +39,22 @@ export function getPlatformIcon(platform: string) {
   // This would typically return the appropriate icon component
   // but for simplicity just returning a string identifier
   return platform.toLowerCase();
+}
+
+export function formatDate(date: Date | string, formatStr: string = 'dd.MM.yyyy HH:mm'): string {
+  if (!date) return '';
+  
+  const dateObj = typeof date === 'string' ? new Date(date) : date;
+  
+  // Check if date is valid
+  if (isNaN(dateObj.getTime())) {
+    return '';
+  }
+  
+  try {
+    return format(dateObj, formatStr);
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return '';
+  }
 }
