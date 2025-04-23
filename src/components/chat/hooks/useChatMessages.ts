@@ -75,41 +75,24 @@ export const useChatMessages = ({
     
     setIsProcessing(true);
     console.log("🎯 Starting chat request preparation...");
-    console.log("📝 Configuration check:", {
-      supabaseUrl: import.meta.env.VITE_SUPABASE_URL,
-      hasSessionToken: !!sessionToken,
-      hasApiKey: !!apiKey,
-      userId,
-      teamId: currentTeamId
-    });
     
     try {
-      console.log("🔄 Chat Anfrage wird vorbereitet...");
-      // Setze die Benutzernachricht sofort
       const userMessage = { id: Date.now().toString(), role: 'user' as const, content: currentInput };
       const assistantMessage = { id: crypto.randomUUID(), role: 'assistant' as const, content: '' };
       
-      // Setze zuerst die Benutzernachricht
       setMessages(prev => [...prev, userMessage]);
       
-      // Leere das Input-Feld wenn es keine Override-Nachricht ist
       if (!overrideMessage) {
         setInput('');
       }
       
-      // Warte einen Frame für das Rendering
       await new Promise(resolve => requestAnimationFrame(resolve));
-      
-      // Füge dann die leere Assistentennachricht hinzu
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Limit messages to prevent context length issues (keeping last 10 messages)
       const recentMessages = messages.length > 10 
-        ? [...messages.slice(0, 1), ...messages.slice(-9)] // Keep system prompt + last 9 messages
+        ? [...messages.slice(0, 1), ...messages.slice(-9)]
         : messages;
 
-      console.log('📤 Sende Chat-Anfrage an Supabase-Funktion | API Key vorhanden:', !!apiKey);
-      
       const requestData = {
         messages: [
           { role: 'system', content: systemMessage },
@@ -120,235 +103,35 @@ export const useChatMessages = ({
         userId: userId,
         currentRoute: window.location.pathname
       };
-      
-      // Debugging-Informationen
-      console.log('📊 Request-Details:', {
-        endpoint: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
-        headers: {
-          'Authorization vorhanden': !!sessionToken,
-          'API-Key vorhanden': !!apiKey,
-        },
-        userId,
-        messageCount: requestData.messages.length,
-        userMessage: currentInput
-      });
 
-      // ===== DIREKTE KOMMUNIKATION MIT SUPABASE ANSTATT ÜBER FETCH =====
-      try {
-        console.log("🔄 Versuche direkte Kommunikation mit Supabase-Funktion...");
-        
-        const { data: directResponse, error: directError } = await supabase.functions.invoke('chat', {
-          body: requestData,
-          headers: {
-            'X-OpenAI-Key': apiKey || '',
-          }
-        });
-        
-        if (directError) {
-          console.error("❌ Direkter Fehler von Supabase:", directError);
-          throw new Error(`Direkter Fehler: ${directError.message}`);
-        }
-        
-        console.log("✅ Direkte Antwort von Supabase erhalten:", directResponse);
-        
-        // Direkte Antwort verarbeiten (falls vorhanden)
-        if (directResponse) {
-          setMessages(prev => {
-            const updatedMessages = [...prev];
-            const lastIndex = updatedMessages.length - 1;
-            if (lastIndex >= 0 && updatedMessages[lastIndex]?.role === 'assistant') {
-              updatedMessages[lastIndex] = {
-                ...updatedMessages[lastIndex],
-                content: directResponse.content || directResponse.message || "Antwort erhalten, aber Inhalt konnte nicht gelesen werden"
-              };
-            }
-            return updatedMessages;
-          });
-          
-          console.log("✅ Nachricht aktualisiert mit Direktantwort");
-          setRetryCount(0);
-          setIsProcessing(false);
-          return;
-        }
-      } catch (directError) {
-        console.error("❌ Fehler bei direkter Kommunikation:", directError);
-        // Fahre mit normalem Weg fort, wenn direkte Kommunikation fehlschlägt
-      }
-
-      // ===== ORIGINALER FETCH-CODE =====
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`, {
-        method: 'POST',
+      const { data: response, error } = await supabase.functions.invoke('chat', {
+        body: requestData,
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${sessionToken}`,
           'X-OpenAI-Key': apiKey || '',
-        },
-        body: JSON.stringify(requestData),
+        }
       });
 
-      if (!response.ok) {
-        const responseText = await response.text();
-        console.error(`❌ Server antwortete mit ${response.status}:`, responseText);
-        throw new Error(`Server antwortete mit ${response.status}: ${responseText}`);
+      if (error) {
+        throw new Error(`Chat error: ${error.message}`);
       }
 
-      console.log('✅ Server-Antwort erhalten:', response.status, response.statusText);
-
-      if (!response.body) {
-        console.error("❌ Response body ist null");
-        throw new Error("Response body ist null");
-      }
-
-      // ===== FALLBACK-LÖSUNG BEI STREAMING-PROBLEMEN =====
-      try {
-        // Versuche zuerst, die gesamte Antwort zu lesen (nicht-Streaming-Methode)
-        const fullResponseText = await response.clone().text();
-        console.log("📄 Vollständige Antwort vom Server:", fullResponseText);
-        
-        // Versuche, die Antwort als JSON zu parsen
-        try {
-          const jsonResponse = JSON.parse(fullResponseText);
-          if (jsonResponse.content || jsonResponse.message) {
-            console.log("📄 JSON-Antwort gefunden:", jsonResponse);
-            setMessages(prev => {
-              const updatedMessages = [...prev];
-              const lastIndex = updatedMessages.length - 1;
-              if (lastIndex >= 0 && updatedMessages[lastIndex]?.role === 'assistant') {
-                updatedMessages[lastIndex] = {
-                  ...updatedMessages[lastIndex],
-                  content: jsonResponse.content || jsonResponse.message
-                };
-              }
-              return updatedMessages;
-            });
-            setRetryCount(0);
-            setIsProcessing(false);
-            return;
-          }
-        } catch (jsonError) {
-          console.log("📄 Antwort ist kein gültiges JSON, fahre mit Streaming fort");
+      setMessages(prev => {
+        const updatedMessages = [...prev];
+        const lastIndex = updatedMessages.length - 1;
+        if (lastIndex >= 0 && updatedMessages[lastIndex]?.role === 'assistant') {
+          updatedMessages[lastIndex] = {
+            ...updatedMessages[lastIndex],
+            content: response.content || "Antwort erhalten, aber Inhalt konnte nicht gelesen werden"
+          };
         }
-      } catch (fullResponseError) {
-        console.error("❌ Fehler beim Lesen der vollständigen Antwort:", fullResponseError);
-      }
-
-      // ===== ORIGINALER STREAMING-CODE =====
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let accumulatedContent = '';
-
-      try {
-        console.log("🔄 Beginne Antwort-Stream zu lesen");
-        let messageCount = 0;
-        
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) {
-            console.log("✅ Stream-Lesen abgeschlossen");
-            break;
-          }
-
-          const chunk = decoder.decode(value);
-          console.log(`📩 Chunk erhalten: ${chunk.length} Zeichen, Inhalt:`, chunk);
-          const lines = chunk.split('\n');
-
-          for (const line of lines) {
-            if (!line.trim() || !line.startsWith('data: ')) continue;
-
-            const data = line.slice(6);
-            if (data === '[DONE]') {
-              console.log("🏁 [DONE]-Marker erhalten");
-              continue;
-            }
-
-            try {
-              messageCount++;
-              const parsed = JSON.parse(data);
-              console.log(`📝 Nachricht #${messageCount} verarbeitet:`, parsed);
-              
-              // Check for error responses
-              if (parsed.error) {
-                console.error('❌ Fehler vom Chat-Service:', parsed);
-                toast.error(parsed.message || 'Ein Fehler ist beim Chat aufgetreten');
-                
-                // Update the assistant message with the error
-                setMessages(prev => {
-                  const updatedMessages = [...prev];
-                  const lastMessage = updatedMessages[updatedMessages.length - 1];
-                  if (lastMessage?.role === 'assistant') {
-                    updatedMessages[updatedMessages.length - 1] = {
-                      ...lastMessage,
-                      content: 'Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.'
-                    };
-                  }
-                  return updatedMessages;
-                });
-                
-                break;
-              }
-
-              if (parsed.delta) {
-                accumulatedContent += parsed.delta;
-                // Erzwinge ein Re-Rendering mit einer neuen Referenz
-                setMessages(prev => {
-                  const updatedMessages = [...prev];
-                  const lastMessage = updatedMessages[updatedMessages.length - 1];
-                  if (lastMessage?.role === 'assistant') {
-                    // Erstelle ein neues Objekt für die letzte Nachricht
-                    updatedMessages[updatedMessages.length - 1] = {
-                      ...lastMessage,
-                      content: accumulatedContent
-                    };
-                  }
-                  return updatedMessages;
-                });
-              }
-            } catch (error) {
-              console.error('❌ Fehler beim Parsen des Chunks:', error, 'Rohdaten:', data);
-            }
-          }
-        }
-        
-        // Reset retry count on success
-        setRetryCount(0);
-        console.log("✅ Chat-Antwort erfolgreich verarbeitet");
-        
-      } catch (streamError) {
-        console.error('❌ Stream-Verarbeitungsfehler:', streamError);
-        
-        if (retryCount < MAX_RETRIES) {
-          // Increment retry count and try again
-          setRetryCount(prev => prev + 1);
-          toast.error(`Verbindungsfehler. Automatischer Neuversuch (${retryCount + 1}/${MAX_RETRIES})...`);
-          
-          // Remove the assistant message before retrying
-          setMessages(prev => prev.slice(0, -1));
-          
-          // Wait a bit before retrying
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          await handleSubmit({ preventDefault: () => {} } as React.FormEvent, currentInput);
-          return;
-        } else {
-          // Max retries reached, show error
-          toast.error('Chat konnte nach mehreren Versuchen nicht abgeschlossen werden');
-          setMessages(prev => {
-            const updatedMessages = [...prev];
-            const lastMessage = updatedMessages[updatedMessages.length - 1];
-            if (lastMessage?.role === 'assistant') {
-              updatedMessages[updatedMessages.length - 1] = {
-                ...lastMessage,
-                content: 'Es ist ein Verbindungsfehler aufgetreten. Bitte versuchen Sie es später erneut.'
-              };
-            }
-            return updatedMessages;
-          });
-        }
-      }
-    } catch (error) {
+        return updatedMessages;
+      });
+      
+      setRetryCount(0);
+    } catch (error: any) {
       console.error('Error in handleSubmit:', error);
       toast.error('Fehler beim Senden der Nachricht');
       
-      // Update the assistant message with the error
       setMessages(prev => {
         const updatedMessages = [...prev];
         const lastIndex = updatedMessages.length - 1;

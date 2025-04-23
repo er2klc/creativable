@@ -14,7 +14,6 @@ const corsHeaders = {
 serve(async (req) => {
   console.log("📥 Received request to chat function");
   
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     console.log("✨ Handling CORS preflight request");
     return new Response(null, {
@@ -38,19 +37,51 @@ serve(async (req) => {
       throw new Error("OpenAI API key is required");
     }
 
-    // Initialize OpenAI with debug logging
+    // Initialize Supabase client
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      throw new Error("Missing Supabase environment variables");
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    // Initialize OpenAI client
     console.log("🔄 Initializing OpenAI client");
     const openai = new OpenAI({ apiKey });
 
-    // Verify OpenAI connection
-    try {
-      console.log("🔍 Verifying OpenAI connection...");
-      const models = await openai.models.list();
-      console.log("✅ OpenAI connection verified, available models:", 
-        models.data.map(m => m.id).join(", "));
-    } catch (openAiError) {
-      console.error("❌ OpenAI connection test failed:", openAiError);
-      throw new Error("Failed to connect to OpenAI");
+    // Get the last user message for context search
+    const lastUserMessage = messages[messages.length - 1]?.content || "";
+
+    // Search for relevant context in embeddings
+    console.log("🔍 Searching for relevant context...");
+    const { data: relevantContext, error: searchError } = await supabase.rpc(
+      'match_user_embeddings',
+      {
+        query_text: lastUserMessage,
+        match_count: 3
+      }
+    );
+
+    if (searchError) {
+      console.error("❌ Error searching embeddings:", searchError);
+    }
+
+    // Prepare context from embeddings
+    let contextMessage = "";
+    if (relevantContext && relevantContext.length > 0) {
+      contextMessage = "Relevant context:\n" + relevantContext
+        .map((ctx: any) => ctx.content)
+        .join("\n---\n");
+      
+      console.log("📚 Found relevant context:", contextMessage);
+      
+      // Add context to messages array
+      messages.unshift({
+        role: "system",
+        content: contextMessage
+      });
     }
 
     // Create chat completion
