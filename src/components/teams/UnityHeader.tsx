@@ -19,7 +19,6 @@ export const UnityHeader = ({ onTeamCreated, onTeamJoined }: UnityHeaderProps) =
   const navigate = useNavigate();
 
   const handleTeamClick = (teamSlug: string) => {
-    if (!teamSlug) return;
     navigate(`/unity/${teamSlug}`);
   };
 

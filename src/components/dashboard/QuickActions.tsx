@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -209,13 +210,11 @@ export const QuickActions = () => {
       <CreateInstagramContactDialog
         open={showInstagramDialog}
         onOpenChange={setShowInstagramDialog}
-        pipelineId={null}
       />
 
       <CreateLinkedInContactDialog
         open={showLinkedInDialog}
         onOpenChange={setShowLinkedInDialog}
-        pipelineId={null}
       />
 
       <NewAppointmentDialog 

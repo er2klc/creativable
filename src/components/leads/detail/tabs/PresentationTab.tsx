@@ -10,8 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useSettings } from "@/hooks/use-settings";
 
-type PresentationType = "youtube" | "zoom" | "documents" | "custom" | "other";
-
 interface PresentationTabProps {
   leadId: string;
   type: string;
@@ -72,7 +70,7 @@ export const PresentationTab = ({
       const { data, error } = await supabase
         .from('user_links')
         .select('*')
-        .eq('group_type', type as PresentationType)
+        .eq('group_type', type)
         .order('is_favorite', { ascending: false });
 
       if (error) throw error;
@@ -120,18 +118,19 @@ export const PresentationTab = ({
         const slug = generateSlug(title || url, videoId);
         const expiryDate = calculateExpiryDate(expiresIn);
         
-        // Create a single presentation page record
         const { data: pageData, error: pageError } = await supabase
           .from('presentation_pages')
-          .insert({
-            lead_id: leadId,
-            user_id: user?.id,
-            title: title || url,
-            video_url: url,
-            slug: slug,
-            expires_at: expiryDate,
-            is_url_active: true
-          })
+          .insert([
+            {
+              lead_id: leadId,
+              user_id: user?.id,
+              title: title || url,
+              video_url: url,
+              slug: slug,
+              expires_at: expiryDate,
+              is_url_active: true
+            }
+          ])
           .select()
           .single();
 

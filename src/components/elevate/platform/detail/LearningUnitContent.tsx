@@ -99,9 +99,10 @@ export const LearningUnitContent = ({
         videoUrl={videoUrl}
         onUpdate={handleUpdate}
         existingFiles={[]}
-        onFileRemove={async () => {
-          console.log("File remove action triggered");
-          // Implementation for file removal would go here
+        onFileRemove={async (index) => {
+          const newFiles = [...files];
+          newFiles.splice(index, 1);
+          setFiles(newFiles);
         }}
         onFilesSelected={setFiles}
         files={files}

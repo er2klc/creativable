@@ -12,43 +12,6 @@ import { BusinessMatchCard } from "./timeline/cards/BusinessMatchCard";
 import { Gauge, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Helper function to create a status change item
-const createStatusChangeItem = (
-  status: string, 
-  timestamp: string
-) => {
-  let statusMessage = '';
-  
-  switch (status) {
-    case 'partner':
-      statusMessage = `Kontakt ist jetzt dein Partner! 🚀`;
-      break;
-    case 'customer':
-      statusMessage = `Kontakt ist jetzt Kunde – viel Erfolg! 🎉`;
-      break;
-    case 'not_for_now':
-      statusMessage = `Kontakt ist aktuell nicht bereit – bleib dran! ⏳`;
-      break;
-    case 'no_interest':
-      statusMessage = `Kontakt hat kein Interesse – weiter geht's! 🚀`;
-      break;
-    default:
-      statusMessage = `Status geändert zu ${status}`;
-  }
-
-  return {
-    id: `status-${Date.now()}`,
-    type: 'status_change',
-    content: statusMessage,
-    timestamp,
-    metadata: {
-      oldStatus: 'lead',
-      newStatus: status,
-      timestamp
-    }
-  };
-};
-
 export function LeadSummary({ lead }: LeadSummaryProps) {
   const { settings } = useSettings();
   const { user } = useAuth();
@@ -104,7 +67,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
               type: 'phase_analysis',
               phase: {
                 id: lead.phase_id,
-                name: lead.phase_id ? "Current Phase" : "No Phase"
+                name: lead.phase_name || "Current Phase"
               },
               timestamp: existingAnalysis.created_at,
               metadata: existingAnalysis.metadata
@@ -157,7 +120,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
     
     loadAnalysisData();
-  }, [lead.id, lead.phase_id, settings?.language, user?.id]);
+  }, [lead.id, lead.phase_id, lead.phase_name, settings?.language, user?.id]);
 
   const generateBusinessMatch = async () => {
     if (!user) {
@@ -273,7 +236,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         type: 'phase_analysis',
         phase: {
           id: lead.phase_id,
-          name: "Current Phase"
+          name: lead.phase_name || "Current Phase"
         },
         timestamp: new Date().toISOString(),
         metadata: data.analysis?.metadata || {}
@@ -299,10 +262,47 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
   };
 
-  const statusChangeItem = createStatusChangeItem(
-    lead.status || 'lead',
-    lead.updated_at || lead.created_at || new Date().toISOString()
-  );
+  // Render business match score if it exists
+  if (businessMatch) {
+    return (
+      <BusinessMatchCard 
+        matchScore={businessMatch.match_score}
+        skills={businessMatch.skills || []}
+        commonalities={businessMatch.commonalities || []}
+        potentialNeeds={businessMatch.potential_needs || []}
+        strengths={businessMatch.strengths || []}
+        content={businessMatch.analysis_content}
+        onRegenerate={generateBusinessMatch}
+        isRegenerating={isLoadingBusinessMatch}
+      />
+    );
+  }
+
+  // Show business match analysis button if no analysis exists yet
+  if (!businessMatch && !analysisContent) {
+    return (
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center">
+            <Target className="w-5 h-5 mr-2 text-blue-600" />
+            <h3 className="text-lg font-semibold">Business Match Analyse</h3>
+          </div>
+        </div>
+        
+        <p className="text-gray-600 mb-4">
+          Analysieren Sie, wie gut dieser Kontakt zu Ihrem Geschäft passt. Die KI bewertet auf einer Skala von 0-100 die Übereinstimmung basierend auf dem Profil und identifiziert Gemeinsamkeiten, Stärken und Bedarfe.
+        </p>
+        
+        <Button
+          className="w-full"
+          onClick={generateBusinessMatch}
+          disabled={isLoadingBusinessMatch}
+        >
+          {isLoadingBusinessMatch ? "Analyse wird erstellt..." : "Business Match Analyse erstellen"}
+        </Button>
+      </div>
+    );
+  }
 
   // Use phase info from metadata if available, otherwise use our calculated info
   if (analysisContent) {

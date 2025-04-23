@@ -1,159 +1,117 @@
 
-import { useEffect, useState } from "react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { LeadAvatar } from "./LeadAvatar";
-import { Button } from "@/components/ui/button";
-import { PlusCircle } from "lucide-react";
-import { toast } from "sonner";
+import { useState } from "react";
+import { useSettings } from "@/hooks/use-settings";
+import { Tables } from "@/integrations/supabase/types";
+import { useNavigate } from "react-router-dom";
+import { DeletePhaseDialog } from "./phases/DeletePhaseDialog";
+import { usePhaseQuery } from "./kanban/usePhaseQuery";
+import { usePhaseMutations } from "./kanban/usePhaseMutations";
+import { useLeadsSubscription } from "./kanban/hooks/useLeadsSubscription";
+import { KanbanBoard } from "./kanban/KanbanBoard";
 
-interface Phase {
-  id: string;
-  name: string;
-  order_index: number;
-  leads: any[];
+interface LeadKanbanViewProps {
+  leads: Tables<"leads">[];
+  selectedPipelineId: string | null;
+  setSelectedPipelineId: (id: string | null) => void;
+  isEditMode?: boolean;
 }
 
-export const LeadKanbanView = () => {
-  const queryClient = useQueryClient();
-  const [phases, setPhases] = useState<Phase[]>([]);
+export const LeadKanbanView = ({ 
+  leads, 
+  selectedPipelineId,
+  setSelectedPipelineId,
+  isEditMode = false
+}: LeadKanbanViewProps) => {
+  const { settings } = useSettings();
+  const [phaseToDelete, setPhaseToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [targetPhase, setTargetPhase] = useState<string>("");
+  const { data: phases = [] } = usePhaseQuery(selectedPipelineId);
+  const { updateLeadPhase, addPhase, updatePhaseName, deletePhase, updatePhaseOrder } = usePhaseMutations();
+  const navigate = useNavigate();
 
-  // Fetch phases
-  const { data: phasesData } = useQuery({
-    queryKey: ["phases"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("phases")
-        .select("*")
-        .order("order_index");
+  // Subscribe to lead changes
+  useLeadsSubscription(selectedPipelineId);
 
-      if (error) throw error;
-      return data;
-    }
-  });
-
-  // Add phase mutation
-  const addPhaseMutation = useMutation({
-    mutationFn: async ({ name }: { name: string; }) => {
-      const { data, error } = await supabase
-        .from("phases")
-        .insert({
-          name,
-          pipeline_id: "default",
-          order_index: phases.length
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["phases"] });
-      toast.success("Phase added successfully");
-    }
-  });
-
-  // Update phase order mutation
-  const updatePhaseOrderMutation = useMutation({
-    mutationFn: async (updatedPhases: Phase[]) => {
-      const updates = updatedPhases.map((phase, index) => ({
-        id: phase.id,
-        order_index: index
-      }));
-
-      const { error } = await supabase
-        .from("phases")
-        .upsert(updates);
-
-      if (error) throw error;
-      return null;
-    }
-  });
-
-  const onDragEnd = (result: any) => {
-    if (!result.destination) return;
-
-    const items = Array.from(phases);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
-
-    setPhases(items);
-    updatePhaseOrderMutation.mutate(items);
+  const handleLeadClick = (id: string) => {
+    navigate(`/contacts/${id}`);
   };
 
-  const handleAddPhase = () => {
-    const name = prompt("Enter phase name");
-    if (name) {
-      addPhaseMutation.mutate({ name });
+  const handleDeletePhase = async () => {
+    if (!phaseToDelete || !targetPhase) return;
+
+    try {
+      await deletePhase.mutateAsync({ 
+        phaseId: phaseToDelete.id, 
+        targetPhaseId: targetPhase 
+      });
+      setPhaseToDelete(null);
+      setTargetPhase("");
+    } catch (error) {
+      console.error("Error deleting phase:", error);
     }
   };
 
-  useEffect(() => {
-    if (phasesData) {
-      setPhases(phasesData);
+  const handleUpdatePhase = async (leadId: string, newPhaseId: string) => {
+    try {
+      const oldPhase = phases.find(p => p.id === leads.find(l => l.id === leadId)?.phase_id)?.name || '';
+      const newPhase = phases.find(p => p.id === newPhaseId)?.name || '';
+
+      await updateLeadPhase.mutateAsync({ 
+        leadId, 
+        phaseId: newPhaseId,
+        oldPhaseName: oldPhase,
+        newPhaseName: newPhase
+      });
+    } catch (error) {
+      console.error("Error updating lead phase:", error);
     }
-  }, [phasesData]);
+  };
+
+  const handleMovePhase = async (phaseId: string, direction: 'left' | 'right') => {
+    const currentIndex = phases.findIndex(p => p.id === phaseId);
+    if (currentIndex === -1) return;
+
+    const newIndex = direction === 'left' ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= phases.length) return;
+
+    const updatedPhases = [...phases];
+    const [movedPhase] = updatedPhases.splice(currentIndex, 1);
+    updatedPhases.splice(newIndex, 0, movedPhase);
+
+    const phasesWithNewOrder = updatedPhases.map((phase, index) => ({
+      ...phase,
+      order_index: index
+    }));
+
+    try {
+      await updatePhaseOrder.mutateAsync(phasesWithNewOrder);
+    } catch (error) {
+      console.error("Error updating phase order:", error);
+    }
+  };
 
   return (
-    <div className="p-4">
-      <DragDropContext onDragEnd={onDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
-          <Droppable droppableId="phases" direction="horizontal">
-            {(provided) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                className="flex gap-4"
-              >
-                {phases.map((phase, index) => (
-                  <Draggable
-                    key={phase.id}
-                    draggableId={phase.id}
-                    index={index}
-                  >
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.draggableProps}
-                        {...provided.dragHandleProps}
-                        className="bg-white p-4 rounded-lg shadow min-w-[300px]"
-                      >
-                        <h3 className="font-semibold mb-4">{phase.name}</h3>
-                        {phase.leads?.map((lead) => (
-                          <div
-                            key={lead.id}
-                            className="bg-gray-50 p-3 rounded mb-2"
-                          >
-                            <div className="flex items-center gap-2">
-                              <LeadAvatar 
-                                name={lead.name}
-                                platform={lead.platform}
-                                imageUrl={lead.social_media_profile_image_url}
-                              />
-                              <span>{lead.name}</span>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-          <Button
-            onClick={handleAddPhase}
-            variant="outline"
-            className="flex items-center gap-2 min-w-[300px] h-auto"
-          >
-            <PlusCircle className="h-5 w-5" />
-            Add Phase
-          </Button>
-        </div>
-      </DragDropContext>
-    </div>
+    <>
+      <KanbanBoard
+        phases={phases}
+        leads={leads}
+        isEditMode={isEditMode}
+        selectedPipelineId={selectedPipelineId}
+        onLeadClick={handleLeadClick}
+        onUpdatePhase={handleUpdatePhase}
+        onDeletePhase={setPhaseToDelete}
+        onUpdatePhaseName={updatePhaseName.mutate}
+        onMovePhase={handleMovePhase}
+      />
+
+      <DeletePhaseDialog
+        phaseToDelete={phaseToDelete}
+        targetPhase={targetPhase}
+        setTargetPhase={setTargetPhase}
+        onClose={() => setPhaseToDelete(null)}
+        onConfirm={handleDeletePhase}
+        phases={phases}
+      />
+    </>
   );
 };

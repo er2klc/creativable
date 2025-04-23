@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSupabaseClient, useSessionContext, User } from '@supabase/auth-helpers-react';
 
@@ -56,7 +57,6 @@ export const useAuth = () => {
   return { 
     user, 
     isLoading: isLoading || sessionLoading, 
-    error,
-    isAuthenticated: !!user
+    error 
   };
 };

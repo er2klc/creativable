@@ -1,435 +1,367 @@
+
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
+// External email API configuration
+const API_ENDPOINT = 'http://142.132.191.233:3001/fetch-emails';
+const API_KEY = '7b5d3a9f2c4e1d6a8b0e5f3c7a9d2e4f1b8c5a0d3e6f7c2a9b8e5d4f3a1c7e';
+
+interface EmailApiSettings {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  folder: string;
+  tls: boolean;
+}
+
+interface EmailSyncOptions {
+  limit?: number;
+  offset?: number;
+  since?: string;
+  forceRefresh?: boolean;
+}
+
+interface EmailApiResponse {
+  success: boolean;
+  emails?: any[];
+  error?: string;
+  message?: string;
+  hasMore?: boolean;
+  total?: number;
+}
+
+/**
+ * Service to handle communication with the external Email API
+ */
 export class ExternalEmailApiService {
-  private static THROTTLE_DURATION = 60000; // 1 minute throttle by default
-  private static MAX_BATCH_SIZE = 50; // Max emails to fetch in one batch
+  private static isSyncing = false;
+  private static lastSyncTime: Record<string, Date> = {};
+  private static THROTTLE_TIME = 15000; // 15 seconds throttle
 
   /**
-   * Fetches emails from the external email service using Supabase Edge Function
+   * Fetch emails from the external API
    */
-  static async fetchEmails(config: {
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-    folder: string;
-    tls: boolean;
-  }, options?: {
-    limit?: number;
-    offset?: number;
-    since?: Date;
-    onProgress?: (progress: number) => void;
-  }): Promise<{ 
-    success: boolean; 
-    emails?: any[];
-    count?: number;
-    error?: string;
-  }> {
+  public static async fetchEmails(
+    settings: EmailApiSettings, 
+    options: EmailSyncOptions = {}
+  ): Promise<EmailApiResponse> {
     try {
-      // Default options
-      const fetchOptions = {
-        limit: options?.limit || 25,
-        offset: options?.offset || 0,
-        since: options?.since,
-      };
-
-      console.log(`Fetching emails for ${config.username} from folder ${config.folder}`, {
-        ...config, 
-        password: '********', // Don't log the password
-        options: fetchOptions
-      });
-
-      // Get user auth session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("User not authenticated");
-      }
-
-      // Call the sync-emails edge function with proper parameters
-      const response = await fetch(
-        'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify({
-            host: config.host,
-            port: config.port,
-            username: config.username,
-            password: config.password,
-            folder: config.folder,
-            tls: config.tls,
-            limit: fetchOptions.limit,
-            offset: fetchOptions.offset,
-            forceRefresh: false,
-            batchProcessing: true,
-            maxBatchSize: 10,
-            detailed_logging: true
-          })
-        }
-      );
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-      }
-
-      const result = await response.json();
-
-      // Implement progress updates if callback provided
-      if (options?.onProgress) {
-        options.onProgress(100); // Set to 100% as edge function handles sync
-      }
-
-      return { 
-        success: result.success, 
-        emails: result.emails || [],
-        count: result.emailsCount || 0,
-        error: result.error
-      };
-    } catch (error) {
-      console.error("Error fetching emails:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Unknown error while fetching emails"
-      };
-    }
-  }
-
-  /**
-   * Synchronizes emails with pagination and throttling, using the Edge Function
-   */
-  static async syncEmailsWithPagination(config: {
-    host: string;
-    port: number;
-    user: string;
-    password: string;
-    folder: string;
-    tls: boolean;
-  }): Promise<{
-    success: boolean;
-    emailsCount?: number;
-    message?: string;
-    error?: string;
-  }> {
-    try {
-      console.log(`Starting email sync for ${config.user} in folder ${config.folder}`);
-      
-      // Check if there's an active throttle for this folder
-      const throttleTime = await this.getThrottleTimeRemaining(config.folder);
-      if (throttleTime > 0) {
-        return {
-          success: false,
-          error: `Too many requests. Please wait ${Math.ceil(throttleTime / 1000)} seconds before trying again.`
-        };
-      }
-      
-      // Get the current user to ensure we have a user_id for database operations
+      // Get the current user
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         return { 
           success: false, 
-          error: "User not authenticated" 
+          error: "Not authenticated"
         };
       }
-
-      // Update the sync status to indicate sync is in progress
-      await this.updateSyncStatus(user.id, config.folder, true);
-
-      try {
-        // Get user auth session for the Edge Function call
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (!session) {
-          throw new Error("No active session found");
+      
+      // Default options
+      const limit = options.limit || 50;
+      const offset = options.offset || 0;
+      
+      // Get last sync date if not provided and not forcing refresh
+      let since = options.since;
+      if (!since && !options.forceRefresh) {
+        const { data: syncStatus } = await supabase
+          .from('email_sync_status')
+          .select('last_sync_date')
+          .eq('user_id', user.id)
+          .eq('folder', settings.folder)
+          .maybeSingle();
+          
+        if (syncStatus && syncStatus.last_sync_date) {
+          since = syncStatus.last_sync_date;
         }
+      }
 
-        // Call the sync-emails edge function
-        const response = await fetch(
-          'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/sync-emails',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`
-            },
-            body: JSON.stringify({
-              host: config.host,
-              port: config.port,
-              username: config.user,
-              password: config.password,
-              folder: config.folder,
-              tls: config.tls,
-              forceRefresh: false,
-              batchProcessing: true,
-              maxBatchSize: 10,
-              connectionTimeout: 60000,
-              retryAttempts: 3
-            })
-          }
-        );
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
-        }
-
-        const result = await response.json();
-
-        // Set throttle for this folder
-        await this.setThrottle(config.folder);
-
-        // Update sync status to indicate sync is complete
-        await this.updateSyncStatus(user.id, config.folder, false);
-
-        return { 
-          success: result.success, 
-          emailsCount: result.emailsCount || 0,
-          message: result.message || `Successfully synced ${result.emailsCount || 0} emails` 
+      // Throttle check based on folder
+      const folderKey = `${user.id}:${settings.folder}`;
+      const now = new Date();
+      if (
+        this.lastSyncTime[folderKey] && 
+        now.getTime() - this.lastSyncTime[folderKey].getTime() < this.THROTTLE_TIME
+      ) {
+        return {
+          success: false,
+          error: "Rate limited. Please wait before making another request.",
+          message: "Too many requests. Please wait a moment before trying again."
         };
-      } catch (error) {
-        // Update sync status with error
-        if (user) {
-          await this.updateSyncStatus(user.id, config.folder, false, error instanceof Error ? error.message : "Unknown error");
-        }
-        throw error;
-      }
-    } catch (error) {
-      console.error("Email sync error:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Unknown error during email sync"
-      };
-    }
-  }
-
-  /**
-   * Save emails to database, avoiding duplicates
-   */
-  private static async saveEmailsToDatabase(userId: string, folder: string, emails: any[]): Promise<number> {
-    if (!emails.length) return 0;
-    
-    try {
-      console.log(`Saving ${emails.length} emails to database for folder ${folder}`);
-      
-      let savedCount = 0;
-      
-      // Process emails in chunks to avoid large transactions
-      const chunkSize = 10;
-      for (let i = 0; i < emails.length; i += chunkSize) {
-        const chunk = emails.slice(i, i + chunkSize);
-        
-        // For each email, we'll insert it individually to better handle errors
-        for (const email of chunk) {
-          try {
-            // Insert a new email record
-            const { data, error } = await supabase
-              .from('emails')
-              .insert({
-                user_id: userId,
-                message_id: email.message_id,
-                folder: folder,
-                subject: email.subject,
-                from_name: email.from_name,
-                from_email: email.from_email,
-                to_name: email.to_name,
-                to_email: email.to_email,
-                cc: email.cc || [],
-                bcc: email.bcc || [],
-                html_content: email.html_content,
-                text_content: email.text_content,
-                sent_at: email.sent_at,
-                received_at: new Date().toISOString(),
-                read: false,
-                starred: false,
-                has_attachments: !!email.has_attachments,
-                flags: email.flags || {},
-                headers: email.headers || {},
-                // Required fields for upsert
-                direction: 'inbound',
-                status: 'delivered'
-              })
-              // Use on_conflict parameter to handle duplicates
-              .select();
-            
-            if (error) {
-              // Log but continue processing other emails
-              console.error("Error saving email to database:", error);
-            } else {
-              savedCount++;
-            }
-          } catch (emailError) {
-            console.error("Error processing email:", emailError);
-            // Continue with next email
-          }
-        }
       }
       
-      return savedCount;
-    } catch (error) {
-      console.error("Error saving emails to database:", error);
-      return 0;
-    }
-  }
-
-  /**
-   * Update the sync status in the database
-   */
-  private static async updateSyncStatus(
-    userId: string, 
-    folder: string, 
-    inProgress: boolean, 
-    error?: string
-  ): Promise<void> {
-    try {
-      const now = new Date().toISOString();
+      // Set last sync time
+      this.lastSyncTime[folderKey] = now;
       
-      // Check if a record exists
-      const { data } = await supabase
-        .from('email_sync_status')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('folder', folder)
-        .single();
-      
-      if (data) {
-        // Update existing record - use user_id and folder in the query, not id
-        await supabase
-          .from('email_sync_status')
-          .update({
-            sync_in_progress: inProgress,
-            last_error: error || null,
-            updated_at: now,
-            ...(inProgress ? {} : { last_sync_time: now }) // Only update last_sync_date if sync is complete
-          })
-          .eq('user_id', userId)
-          .eq('folder', folder);
-      } else {
-        // Create new record
-        await supabase
-          .from('email_sync_status')
-          .insert({
-            user_id: userId,
-            folder: folder,
-            sync_in_progress: inProgress,
-            last_error: error || null,
-            last_sync_time: inProgress ? null : now
-          });
-      }
-    } catch (error) {
-      console.error("Error updating sync status:", error);
-    }
-  }
-
-  /**
-   * Set a throttle for the specified folder
-   */
-  private static async setThrottle(folder: string): Promise<void> {
-    try {
-      // In a real implementation, this would set a timestamp in storage/cache
-      // For now, we'll use localStorage as a simple example
-      const throttleKey = `email_throttle_${folder}`;
-      const expiresAt = Date.now() + this.THROTTLE_DURATION;
-      localStorage.setItem(throttleKey, expiresAt.toString());
-    } catch (error) {
-      console.error("Error setting throttle:", error);
-    }
-  }
-
-  /**
-   * Get the remaining throttle time for the specified folder
-   */
-  static async getThrottleTimeRemaining(folder: string): Promise<number> {
-    try {
-      // In a real implementation, this would check for a timestamp in storage/cache
-      // For now, we'll use localStorage as a simple example
-      const throttleKey = `email_throttle_${folder}`;
-      const expiresAtStr = localStorage.getItem(throttleKey);
-      
-      if (!expiresAtStr) return 0;
-      
-      const expiresAt = parseInt(expiresAtStr);
-      const now = Date.now();
-      
-      if (now >= expiresAt) {
-        // Throttle has expired, clean up
-        localStorage.removeItem(throttleKey);
-        return 0;
-      }
-      
-      return expiresAt - now;
-    } catch (error) {
-      console.error("Error checking throttle:", error);
-      return 0;
-    }
-  }
-
-  /**
-   * Test email connection via Edge Function
-   */
-  static async testConnection(config: {
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-    folder: string;
-    tls: boolean;
-  }): Promise<{ success: boolean; message?: string; error?: string }> {
-    try {
-      console.log("Testing email connection:", {
-        ...config,
-        password: "********" // Don't log the actual password
+      // Make request to external API
+      const response = await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': API_KEY
+        },
+        body: JSON.stringify({
+          host: settings.host,
+          port: settings.port,
+          user: settings.user,
+          password: settings.password,
+          folder: settings.folder,
+          tls: settings.tls,
+          limit,
+          offset,
+          since
+        })
       });
-      
-      // Get user auth session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error("User not authenticated");
-      }
 
-      // Call the test-imap-connection edge function
-      const response = await fetch(
-        'https://agqaitxlmxztqyhpcjau.supabase.co/functions/v1/test-imap-connection',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session.access_token}`
-          },
-          body: JSON.stringify({
-            host: config.host,
-            port: config.port,
-            username: config.username,
-            password: config.password,
-            folder: config.folder,
-            tls: config.tls,
-            detailed_diagnostics: true
-          })
-        }
-      );
-      
       if (!response.ok) {
         const errorText = await response.text();
         throw new Error(`Error ${response.status}: ${errorText || response.statusText}`);
       }
-      
+
       const result = await response.json();
       
-      return { 
-        success: result.success, 
-        message: result.message || "Connection successful",
-        error: result.error
-      };
-    } catch (error) {
-      console.error("Email connection test error:", error);
-      return { 
-        success: false, 
-        error: error instanceof Error ? error.message : "Unknown error testing connection" 
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.message || "Failed to fetch emails"
+        };
+      }
+      
+      return result;
+    } catch (error: any) {
+      console.error("Error fetching emails from external API:", error);
+      return {
+        success: false,
+        error: error.message
       };
     }
+  }
+
+  /**
+   * Save fetched emails to Supabase database
+   */
+  public static async saveEmailsToDatabase(
+    emails: any[],
+    folder: string
+  ): Promise<{ success: boolean; savedCount: number; error?: string }> {
+    try {
+      // Get the current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { 
+          success: false, 
+          savedCount: 0, 
+          error: "Not authenticated"
+        };
+      }
+      
+      if (!emails || emails.length === 0) {
+        return {
+          success: true,
+          savedCount: 0
+        };
+      }
+      
+      // Process emails in batches to prevent memory issues
+      const batchSize = 25;
+      const batches = [];
+      
+      for (let i = 0; i < emails.length; i += batchSize) {
+        batches.push(emails.slice(i, i + batchSize));
+      }
+      
+      let savedCount = 0;
+      
+      // Process each batch
+      for (const batch of batches) {
+        // Format emails for insertion
+        const formattedEmails = batch.map((email: any) => ({
+          user_id: user.id,
+          folder: folder,
+          message_id: email.messageId || email.message_id || `${email.date}_${email.subject}_${email.from}`,
+          from: email.from,
+          subject: email.subject || "(No Subject)",
+          text: email.text || null,
+          html: email.html || null,
+          date: email.date,
+          created_at: new Date().toISOString()
+        }));
+        
+        // Insert emails, skipping conflicts by message_id
+        const { data, error } = await supabase
+          .from('emails')
+          .upsert(formattedEmails, { 
+            onConflict: 'message_id,user_id',
+            ignoreDuplicates: true 
+          });
+        
+        if (error) {
+          console.error("Error saving emails:", error);
+          throw error;
+        }
+        
+        savedCount += formattedEmails.length;
+        
+        // Brief pause between batches to prevent overloading the database
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Update last sync date
+      const now = new Date().toISOString();
+      const { error: syncError } = await supabase
+        .from('email_sync_status')
+        .upsert({
+          user_id: user.id,
+          folder: folder,
+          last_sync_date: now,
+          updated_at: now
+        }, { onConflict: 'user_id,folder' });
+      
+      if (syncError) {
+        console.error("Error updating sync status:", syncError);
+      }
+      
+      return {
+        success: true,
+        savedCount
+      };
+    } catch (error: any) {
+      console.error("Error saving emails to database:", error);
+      return {
+        success: false,
+        savedCount: 0,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Sync emails in batches with pagination
+   */
+  public static async syncEmailsWithPagination(
+    settings: EmailApiSettings, 
+    options: EmailSyncOptions = {}
+  ): Promise<{ success: boolean; totalSaved: number; error?: string }> {
+    // Prevent multiple sync processes
+    if (this.isSyncing) {
+      return {
+        success: false,
+        totalSaved: 0,
+        error: "Sync already in progress"
+      };
+    }
+    
+    this.isSyncing = true;
+    
+    try {
+      const limit = options.limit || 50;
+      let offset = 0;
+      let hasMore = true;
+      let totalSaved = 0;
+      
+      const startToast = toast.loading("Synchronisiere E-Mails...");
+      
+      while (hasMore) {
+        // Fetch batch of emails
+        const result = await this.fetchEmails(settings, {
+          ...options,
+          limit,
+          offset
+        });
+        
+        if (!result.success) {
+          toast.dismiss(startToast);
+          toast.error("Fehler bei der Synchronisierung", {
+            description: result.error
+          });
+          return {
+            success: false,
+            totalSaved,
+            error: result.error
+          };
+        }
+        
+        // Save emails to database
+        if (result.emails && result.emails.length > 0) {
+          const saveResult = await this.saveEmailsToDatabase(result.emails, settings.folder);
+          
+          if (!saveResult.success) {
+            toast.dismiss(startToast);
+            toast.error("Fehler beim Speichern", {
+              description: saveResult.error
+            });
+            return {
+              success: false,
+              totalSaved,
+              error: saveResult.error
+            };
+          }
+          
+          totalSaved += saveResult.savedCount;
+          
+          // Update progress toast
+          toast.dismiss(startToast);
+          if (result.hasMore) {
+            toast.loading(`${totalSaved} E-Mails synchronisiert, lade weitere...`);
+          }
+        }
+        
+        // Check if we need to continue
+        hasMore = result.hasMore || false;
+        
+        if (hasMore) {
+          offset += limit;
+          // Short delay between batches
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+      
+      toast.dismiss(startToast);
+      toast.success(`E-Mail-Synchronisierung abgeschlossen`, {
+        description: `${totalSaved} E-Mails wurden synchronisiert`
+      });
+      
+      return {
+        success: true,
+        totalSaved
+      };
+    } catch (error: any) {
+      console.error("Error in syncEmailsWithPagination:", error);
+      toast.error("Synchronisierungsfehler", {
+        description: error.message
+      });
+      return {
+        success: false,
+        totalSaved: 0,
+        error: error.message
+      };
+    } finally {
+      this.isSyncing = false;
+    }
+  }
+  
+  /**
+   * Check if a sync is currently in progress
+   */
+  public static isSyncInProgress(): boolean {
+    return this.isSyncing;
+  }
+  
+  /**
+   * Get remaining throttle time for a specific folder
+   */
+  public static async getThrottleTimeRemaining(folder: string): Promise<number> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return this.THROTTLE_TIME;
+    
+    const folderKey = `${user.id}:${folder}`;
+    const lastSync = this.lastSyncTime[folderKey];
+    
+    if (!lastSync) return 0;
+    
+    const now = new Date();
+    const timeSinceLastSync = now.getTime() - lastSync.getTime();
+    const timeRemaining = Math.max(0, this.THROTTLE_TIME - timeSinceLastSync);
+    
+    return timeRemaining;
   }
 }

@@ -1,11 +1,11 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
-import { FileUpload } from "./FileUpload";
-import { TiptapEditor } from "@/components/ui/tiptap-editor";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { DialogHeader } from "./dialog/DialogHeader";
+import { UnitForm } from "./dialog/UnitForm";
+import { DialogFooter } from "./dialog/DialogFooter";
 
 interface EditUnitDialogProps {
   open: boolean;
@@ -13,14 +13,8 @@ interface EditUnitDialogProps {
   title: string;
   description: string;
   videoUrl: string;
-  onUpdate: (data: {
-    title: string;
-    description: string;
-    videoUrl: string;
-    files: File[];
-  }) => Promise<void>;
+  onUpdate: (data: { title: string; description: string; videoUrl: string }) => Promise<void>;
   id: string;
-  existingFiles?: File[];
 }
 
 export const EditUnitDialog = ({
@@ -30,81 +24,49 @@ export const EditUnitDialog = ({
   description: initialDescription,
   videoUrl: initialVideoUrl,
   onUpdate,
-  existingFiles = [],
-  id
+  id,
 }: EditUnitDialogProps) => {
   const [title, setTitle] = useState(initialTitle);
-  const [description, setDescription] = useState(initialDescription);
+  const [description, setDescription] = useState(initialDescription || '');
   const [videoUrl, setVideoUrl] = useState(initialVideoUrl);
-  const [files, setFiles] = useState<File[]>(existingFiles);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async () => {
-    await onUpdate({
-      title,
-      description,
-      videoUrl,
-      files
-    });
-    
-    setTitle(initialTitle);
-    setDescription(initialDescription);
-    setVideoUrl(initialVideoUrl);
-    setFiles(existingFiles);
+    try {
+      setIsSubmitting(true);
+      await onUpdate({ 
+        title, 
+        description,
+        videoUrl 
+      });
+      onOpenChange(false);
+    } catch (error) {
+      console.error('Error updating unit:', error);
+      toast.error('Fehler beim Speichern der Änderungen');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Lerneinheit bearbeiten</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="title">Titel</Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Titel der Lerneinheit"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description">Beschreibung</Label>
-            <TiptapEditor
-              content={description}
-              onChange={setDescription}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="videoUrl">Video URL</Label>
-            <Input
-              id="videoUrl"
-              value={videoUrl}
-              onChange={(e) => setVideoUrl(e.target.value)}
-              placeholder="https://youtube.com/..."
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Dokumente</Label>
-            <FileUpload
-              onFilesSelected={(newFiles) => setFiles([...files, ...newFiles])}
-              files={files}
-              onFileRemove={(index) => {
-                const newFiles = [...files];
-                newFiles.splice(index, 1);
-                setFiles(newFiles);
-              }}
-            />
-          </div>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader />
+        <div className="space-y-4">
+          <UnitForm
+            title={title}
+            setTitle={setTitle}
+            description={description}
+            setDescription={setDescription}
+            videoUrl={videoUrl}
+            setVideoUrl={setVideoUrl}
+          />
+          <DialogFooter
+            onCancel={() => onOpenChange(false)}
+            onSave={handleSubmit}
+            isSubmitting={isSubmitting}
+          />
         </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Abbrechen
-          </Button>
-          <Button onClick={handleSubmit}>
-            Änderungen speichern
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

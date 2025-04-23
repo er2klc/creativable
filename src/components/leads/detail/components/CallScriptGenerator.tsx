@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Bot, Copy, Loader2, Phone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -72,70 +73,39 @@ export function CallScriptGenerator({
         settings
       };
 
-      try {
-        const response = await supabase.functions.invoke('generate-call-script', {
-          body: requestData
-        });
-        
-        // Check if response has error property
-        if ('error' in response && response.error) {
-          throw new Error(response.error.message || "Error calling function");
-        }
-        
-        // Otherwise process the data
-        const scriptContent = response.data?.script || "Could not generate script";
-        setGeneratedScript(scriptContent);
-
-        // Save the script to the database as a note
-        await supabase
-          .from('notes')
-          .insert({
-            lead_id: leadId,
-            user_id: user.id,
-            content: scriptContent,
-            metadata: { 
-              type: 'call_script',
-              script_type: scriptType,
-              generated_at: new Date().toISOString()
-            }
-          });
-
-        toast.success(
-          settings?.language === "en"
-            ? "Call script generated successfully"
-            : "Telefonscript erfolgreich erstellt"
-        );
-      } catch (err) {
+      const { data, error } = await supabase.functions.invoke('generate-call-script', {
+        body: requestData
+      }).catch(err => {
         console.error("Error calling function:", err);
+        
         // Fallback to direct OpenAI call if Edge function fails
-        const result = await generateScriptFallback(requestData);
-        if (result.data?.script) {
-          setGeneratedScript(result.data.script);
-          
-          // Save the fallback script to the database as a note
-          await supabase
-            .from('notes')
-            .insert({
-              lead_id: leadId,
-              user_id: user.id,
-              content: result.data.script,
-              metadata: { 
-                type: 'call_script',
-                script_type: scriptType,
-                generated_at: new Date().toISOString(),
-                fallback: true
-              }
-            });
-            
-          toast.success(
-            settings?.language === "en"
-              ? "Call script generated successfully (fallback)"
-              : "Telefonscript erfolgreich erstellt (Fallback-Methode)"
-          );
-        } else {
-          throw new Error("Failed to generate script with fallback method");
-        }
-      }
+        return generateScriptFallback(requestData);
+      });
+
+      if (error) throw error;
+
+      const scriptContent = data?.script || "Could not generate script";
+      setGeneratedScript(scriptContent);
+
+      // Save the script to the database as a note
+      await supabase
+        .from('notes')
+        .insert({
+          lead_id: leadId,
+          user_id: user.id,
+          content: scriptContent,
+          metadata: { 
+            type: 'call_script',
+            script_type: scriptType,
+            generated_at: new Date().toISOString()
+          }
+        });
+
+      toast.success(
+        settings?.language === "en"
+          ? "Call script generated successfully"
+          : "Telefonscript erfolgreich erstellt"
+      );
     } catch (error: any) {
       console.error("Error generating call script:", error);
       toast.error(

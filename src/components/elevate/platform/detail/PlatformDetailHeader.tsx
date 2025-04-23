@@ -2,14 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, Pencil } from "lucide-react";
-import { cn } from "@/lib/utils";
-
-// Helper function to format video duration
-const formatDuration = (seconds: number): string => {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = Math.floor(seconds % 60);
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-};
+import { formatDuration } from "@/lib/utils";
 
 interface PlatformDetailHeaderProps {
   moduleTitle: string;

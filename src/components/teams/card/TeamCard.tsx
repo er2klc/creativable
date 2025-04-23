@@ -43,9 +43,7 @@ export const TeamCard = ({
       return;
     }
     
-    if (team.slug) {
-      navigateToTeam(team.slug);
-    }
+    navigateToTeam(team.slug);
   };
 
   const isTeamOwner = isSuperAdmin || user?.id === team.created_by;

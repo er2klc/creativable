@@ -66,78 +66,62 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
     refetchInterval: 30000
   });
 
-  const { data: teamsWithUnreadMessages = [] } = useQuery<TeamWithUnreadCount[]>({
+  const { data: teamsWithUnreadMessages = [] } = useQuery({
     queryKey: ['teams-unread-messages'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
 
-      try {
-        const { data: messages, error } = await supabase
-          .from('team_direct_messages')
-          .select(`
-            team_id,
-            sender_id,
-            teams!inner (
-              id,
-              name,
-              slug,
-              logo_url
-            )
-          `)
-          .eq('receiver_id', user.id)
-          .eq('read', false);
+      const { data: messages, error } = await supabase
+        .from('team_direct_messages')
+        .select(`
+          team_id,
+          sender:sender_id (
+            id,
+            display_name,
+            avatar_url
+          ),
+          teams!inner (
+            id,
+            name,
+            slug,
+            logo_url
+          )
+        `)
+        .eq('receiver_id', user.id)
+        .eq('read', false);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        // Fetch all sender profiles in one batch
-        const senderIds = [...new Set(messages.map(msg => msg.sender_id))];
-        const { data: senderProfiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, display_name, avatar_url')
-          .in('id', senderIds);
+      const teamMessages = messages.reduce((acc, msg) => {
+        const team = msg.teams;
+        if (!acc[team.id]) {
+          acc[team.id] = {
+            id: team.id,
+            name: team.name,
+            slug: team.slug,
+            logo_url: team.logo_url,
+            unread_count: 0,
+            unread_by_user: {}
+          };
+        }
+        
+        const sender = msg.sender;
+        if (!acc[team.id].unread_by_user[sender.id]) {
+          acc[team.id].unread_by_user[sender.id] = {
+            count: 0,
+            display_name: sender.display_name,
+            avatar_url: sender.avatar_url
+          };
+        }
+        
+        acc[team.id].unread_count++;
+        acc[team.id].unread_by_user[sender.id].count++;
+        
+        return acc;
+      }, {} as Record<string, TeamWithUnreadCount>);
 
-        if (profilesError) throw profilesError;
-
-        // Create a lookup map for profiles
-        const profileMap = senderProfiles.reduce((acc, profile) => {
-          acc[profile.id] = profile;
-          return acc;
-        }, {} as Record<string, any>);
-
-        const teamMessages = messages.reduce((acc, msg) => {
-          const team = msg.teams;
-          if (!acc[team.id]) {
-            acc[team.id] = {
-              id: team.id,
-              name: team.name,
-              slug: team.slug,
-              logo_url: team.logo_url,
-              unread_count: 0,
-              unread_by_user: {}
-            };
-          }
-          
-          const sender = profileMap[msg.sender_id] || { id: msg.sender_id, display_name: 'Unknown', avatar_url: null };
-          if (!acc[team.id].unread_by_user[sender.id]) {
-            acc[team.id].unread_by_user[sender.id] = {
-              count: 0,
-              display_name: sender.display_name,
-              avatar_url: sender.avatar_url
-            };
-          }
-          
-          acc[team.id].unread_count++;
-          acc[team.id].unread_by_user[sender.id].count++;
-          
-          return acc;
-        }, {} as Record<string, TeamWithUnreadCount>);
-
-        return Object.values(teamMessages).sort((a, b) => b.unread_count - a.unread_count);
-      } catch (err) {
-        console.error("Error fetching unread messages:", err);
-        return [];
-      }
+      return Object.values(teamMessages).sort((a, b) => b.unread_count - a.unread_count);
     },
     refetchInterval: 10000
   });
@@ -153,84 +137,87 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
     setTeamChatOpen(true);
   };
 
-  const totalUnreadMessages = teamsWithUnreadMessages.reduce((sum, team) => sum + team.unread_count, 0);
+  const totalUnreadMessages = teamsWithUnreadMessages.reduce(
+    (sum, team) => sum + team.unread_count, 
+    0
+  );
 
   return (
-    <div className="flex items-center gap-2">
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => setNotificationsOpen(true)}
-        className="relative"
-      >
-        <Bell className="h-5 w-5" />
-        {unreadCount > 0 && (
-          <Badge
-            variant="destructive"
-            className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-[10px]"
-          >
-            {unreadCount > 9 ? "9+" : unreadCount}
-          </Badge>
-        )}
-      </Button>
+    <>
+      <div className="hidden md:flex items-center gap-2">
+        <div className="h-8 w-px bg-gray-500" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={() => setNotificationsOpen(true)}
+        >
+          <Bell className="h-5 w-5" />
+          {unreadCount > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {unreadCount}
+            </Badge>
+          )}
+        </Button>
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleChatClick}
-        className="relative"
-      >
-        <MessageCircle className="h-5 w-5" />
-        {totalUnreadMessages > 0 && (
-          <Badge
-            variant="secondary"
-            className="absolute -top-1 -right-1 h-4 w-4 flex items-center justify-center p-0 text-[10px] bg-blue-500 text-white"
-          >
-            {totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
-          </Badge>
-        )}
-      </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative"
+          onClick={handleChatClick}
+        >
+          <MessageCircle className="h-5 w-5" />
+          {totalUnreadMessages > 0 && (
+            <Badge 
+              variant="destructive" 
+              className="absolute -top-2 -right-2 h-5 w-5 flex items-center justify-center p-0 text-xs"
+            >
+              {totalUnreadMessages}
+            </Badge>
+          )}
+        </Button>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={profile?.avatar_url || ""} />
-              <AvatarFallback>
-                {profile?.display_name?.charAt(0) || userEmail?.charAt(0) || "U"}
-              </AvatarFallback>
+        <div className="h-6 w-px bg-gray-200" />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Avatar className="h-8 w-8 cursor-pointer">
+              <AvatarImage src={profile?.avatar_url || ""} alt={profile?.display_name || ""} />
+              <AvatarFallback>{(profile?.display_name || "").substring(0, 2).toUpperCase()}</AvatarFallback>
             </Avatar>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => navigate("/profile")}>
-            <User className="mr-2 h-4 w-4" />
-            <span>Profil</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/billing")}>
-            <CreditCard className="mr-2 h-4 w-4" />
-            <span>Abonnement</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/invoices")}>
-            <Receipt className="mr-2 h-4 w-4" />
-            <span>Rechnungen</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={handleLogout}>
-            <LogOut className="mr-2 h-4 w-4" />
-            <span>Abmelden</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={() => navigate("/settings")}>
+              <User className="mr-2 h-4 w-4" />
+              <span>Profil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <CreditCard className="mr-2 h-4 w-4" />
+              <span>Plan</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Receipt className="mr-2 h-4 w-4" />
+              <span>Rechnung</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Abmelden</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
 
       <NotificationSidebar
         open={notificationsOpen}
         onOpenChange={setNotificationsOpen}
       />
 
-      <TeamChatDialog
+      <TeamChatDialog 
         open={teamChatOpen}
         onOpenChange={setTeamChatOpen}
       />
-    </div>
+    </>
   );
 };

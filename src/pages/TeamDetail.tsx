@@ -1,3 +1,4 @@
+
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,11 +26,12 @@ const TeamDetail = () => {
   const [activeSnapView, setActiveSnapView] = useState<string | null>(null);
 
   useEffect(() => {
-    // Remove the path rewriting effect as it's causing navigation issues
-    if (!teamSlug) {
-      navigate('/unity');
+    const path = window.location.pathname;
+    if (path.includes('/unity/team/')) {
+      const newPath = path.replace('/unity/team/', '/unity/');
+      navigate(newPath, { replace: true });
     }
-  }, [teamSlug, navigate]);
+  }, [navigate]);
 
   const { data: teamData, isLoading: isTeamLoading } = useQuery({
     queryKey: ["team-with-stats", teamSlug],

@@ -4,7 +4,7 @@ import * as z from "zod";
 export const externalApiSettingsSchema = z.object({
   host: z.string().min(1, "Server ist erforderlich"),
   port: z.number().min(1, "Port ist erforderlich").default(993),
-  username: z.string().min(1, "Benutzername ist erforderlich"),
+  user: z.string().min(1, "Benutzername ist erforderlich"),
   password: z.string().min(1, "Passwort ist erforderlich"),
   folder: z.string().min(1, "Ordner ist erforderlich").default("INBOX"),
   tls: z.boolean().default(true)

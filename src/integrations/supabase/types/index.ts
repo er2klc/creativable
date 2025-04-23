@@ -1,34 +1,24 @@
+// Base types
+export type { Json } from './database/entities/base/json';
+export type { 
+  PostType, 
+  RecurringPattern, 
+  ShortcutType, 
+  CommunicationChannel, 
+  GenderType 
+} from './database/entities/base/enums';
 
-export interface Tables<T extends keyof Database['public']['Tables']> {
-  [key: string]: any;
-}
+// Database types
+export type * from './database/entities';
+export type * from './database/relationships';
 
-export interface Database {
-  public: {
-    Tables: {
-      leads: {
-        Row: {
-          id: string;
-          name: string;
-          platform: string;
-          status?: string;
-          email?: string | null;
-          phone_number?: string | null;
-          phase_id?: string;
-          pipeline_id?: string;
-          social_media_profile_image_url?: string | null;
-          is_favorite?: boolean;
-        };
-      };
-      phases: {
-        Row: {
-          id: string;
-          name: string;
-          order_index: number;
-          pipeline_id: string;
-        };
-      };
-      // Add other tables as needed
-    };
-  };
-}
+// Feature-specific types 
+export type { Message } from './database/entities/core';
+export type { Setting } from './database/entities/settings';
+export type { UserDocument } from './database/entities/core';
+export type { Platform } from './platforms';
+export type { Profile } from './database/entities/profile';
+export type { SocialMediaPost } from './database/entities/social';
+export type { Task } from './database/entities/core';
+export type { Note } from './database/entities/core';
+export type { LeadFile } from './database/entities/core';

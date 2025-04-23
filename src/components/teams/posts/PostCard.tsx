@@ -1,153 +1,217 @@
+
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Bell, Link2, Flag, MoreHorizontal } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { Post } from "../types/post";
-import { Pin } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getAvatarUrl, getCategoryStyle } from "@/lib/supabase-utils";
+import { PostReactions } from "./components/reactions/PostReactions";
+import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
-import { LinkPreview } from "@/components/links/components/LinkPreview";
-import { PostHeader } from "./card/PostHeader";
-import { PostContent } from "./card/PostContent";
-import { PostFooter } from "./card/PostFooter";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 
 interface PostCardProps {
   post: Post;
   teamSlug: string;
-  size?: 'small' | 'medium' | 'large';
-  isAdmin?: boolean;
 }
 
-const sizeToGridClass = {
-  small: 'col-span-1',
-  medium: 'col-span-2',
-  large: 'col-span-3'
-};
-
-const extractColorFromClass = (colorClass: string) => {
-  if (!colorClass) return '#e5e7eb';
-  const match = colorClass.match(/#[0-9A-Fa-f]{6}/);
-  return match ? match[0] : colorClass.startsWith('bg-[') ? colorClass.slice(4, -1) : '#e5e7eb';
-};
-
-const getYouTubeVideoId = (content: string) => {
-  // Erst nach YouTube-spezifischen href-Attributen suchen
-  const hrefRegex = /href="((?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s"]+)"/g;
-  const hrefs = [...content.matchAll(hrefRegex)].map(match => match[1]);
-  
-  // Dann nach YouTube-URLs im Text suchen
-  const urlRegex = /((?:https?:\/\/)?(?:www\.)?(?:youtube\.com|youtu\.be)\/[^\s<]+)/g;
-  const plainUrls = content.match(urlRegex) || [];
-  
-  // Alle gefundenen URLs kombinieren
-  const allUrls = [...hrefs, ...plainUrls];
-
-  for (const url of allUrls) {
-    // Prüfen ob es überhaupt eine YouTube-URL ist
-    if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
-      continue;
-    }
-    
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      return match[2];
-    }
-  }
-  return null;
-};
-
-export const PostCard = ({ 
-  post, 
-  teamSlug,
-  size = 'medium',
-  isAdmin = false
-}: PostCardProps) => {
+export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   const navigate = useNavigate();
-  const [showVideoPreview, setShowVideoPreview] = useState(false);
+  const queryClient = useQueryClient();
+
+  const { data: subscription } = useQuery({
+    queryKey: ['post-subscription', post.id],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+
+      const { data } = await supabase
+        .from('team_post_subscriptions')
+        .select('subscribed')
+        .eq('post_id', post.id)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      return data;
+    }
+  });
 
   if (!post?.team_categories || !post?.author) {
     return null;
   }
 
-  const categoryColor = extractColorFromClass(post.team_categories.color);
-  const videoId = post.content ? getYouTubeVideoId(post.content) : null;
-  const effectiveSize = post.pinned ? 'large' : post.team_categories?.settings?.size || size;
-  const hasMedia = post.file_urls && post.file_urls.length > 0;
-  const contentLength = post.pinned ? 400 : 200;
-  const imageHeight = post.pinned ? "h-[200px]" : "h-[120px]";
-  const lineClamp = post.pinned ? "line-clamp-4" : "line-clamp-2";
-  const backgroundColor = `${categoryColor}`;
-  const borderColor = `${categoryColor}CC`;
+  const categoryStyle = getCategoryStyle(post.team_categories.color);
+  const displayName = post.author.display_name || 'Unbekannt';
+  const avatarUrl = getAvatarUrl(post.author.avatar_url, post.author.email);
+  const isSubscribed = subscription?.subscribed || false;
 
-  const handleCardClick = () => {
-    navigate(`/unity/team/${teamSlug}/posts/${post.slug}`);
+  const handleCopyUrl = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/unity/team/${teamSlug}/posts/${post.slug}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Link kopiert!");
   };
 
-  const handleVideoClick = (e: React.MouseEvent) => {
+  const handleSubscription = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowVideoPreview(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      await supabase
+        .from('team_post_subscriptions')
+        .upsert({
+          post_id: post.id,
+          user_id: user.id,
+          subscribed: !isSubscribed
+        });
+
+      queryClient.invalidateQueries({ queryKey: ['post-subscription', post.id] });
+      
+      toast.success(!isSubscribed
+        ? "Benachrichtigungen aktiviert" 
+        : "Benachrichtigungen deaktiviert"
+      );
+    } catch (error) {
+      console.error('Error toggling subscription:', error);
+      toast.error("Fehler beim Ändern der Benachrichtigungen");
+    }
+  };
+
+  const handleReport = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from('team_post_reports')
+        .insert({
+          post_id: post.id,
+          reported_by: user.id,
+          reason: "Unangemessener Inhalt"
+        });
+
+      if (error) throw error;
+      toast.success("Beitrag wurde gemeldet");
+    } catch (error) {
+      console.error('Error reporting post:', error);
+      toast.error("Fehler beim Melden des Beitrags");
+    }
   };
 
   return (
-    <>
-      <Card 
-        className={cn(
-          "hover:shadow-lg transition-all duration-200 overflow-hidden flex flex-col",
-          sizeToGridClass[effectiveSize],
-          post.pinned && "shadow-md"
-        )}
-        onClick={handleCardClick}
-        style={{
-          borderColor: borderColor,
-          borderWidth: '2px',
-          backgroundColor: backgroundColor
-        }}
-      >
-        {post.pinned && (
-          <div className="bg-[#FFF8E7] px-4 py-2 flex items-center gap-2 text-yellow-800 border-b border-yellow-200">
-            <Pin className="h-3 w-3" />
-            <span className="text-xs font-medium">Angepinnt</span>
-          </div>
-        )}
-
-        <div className="p-4 flex-1">
-          <PostHeader 
-            post={post} 
-            teamSlug={teamSlug}
-            categoryColor={categoryColor}
-          />
-          
-          <PostContent 
-            title={post.title}
-            content={post.content}
-            contentLength={contentLength}
-            lineClamp={lineClamp}
-            videoId={videoId}
-            fileUrls={post.file_urls}
-            imageHeight={imageHeight}
-            onVideoClick={handleVideoClick}
-            hasMedia={hasMedia}
-          />
+    <Card 
+      key={post.id} 
+      className="hover:shadow-lg transition-all duration-200 cursor-pointer overflow-hidden"
+      onClick={() => navigate(`/unity/team/${teamSlug}/posts/${post.slug}`)}
+    >
+      <div className="relative">
+        <div className="absolute top-4 right-4 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleSubscription}
+            className={cn(
+              "text-muted-foreground hover:text-primary",
+              isSubscribed && "text-primary"
+            )}
+          >
+            <Bell className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopyUrl}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <Link2 className="h-4 w-4" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-primary"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleReport}>
+                <Flag className="h-4 w-4 mr-2" />
+                Beitrag melden
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
-        <PostFooter 
-          postId={post.id}
-          teamId={teamSlug}
-          postTitle={post.title}
-          isAdmin={isAdmin}
-          isPinned={post.pinned}
-          borderColor={borderColor}
-          commentCount={post.team_post_comments}
-        />
-      </Card>
-
-      {videoId && (
-        <LinkPreview
-          isOpen={showVideoPreview}
-          onOpenChange={setShowVideoPreview}
-          title={post.title}
-          videoId={videoId}
-        />
-      )}
-    </>
+        <div className="p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <Avatar className="h-10 w-10 border-2 border-primary/10">
+              <AvatarImage 
+                src={avatarUrl}
+                alt={displayName}
+              />
+              <AvatarFallback className="bg-primary/5">
+                {displayName.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
+            <div className="flex flex-col">
+              <span className="font-medium">
+                {displayName}
+              </span>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <span>{formatDistanceToNow(new Date(post.created_at), {
+                  addSuffix: true,
+                  locale: de,
+                })}</span>
+                <span>•</span>
+                <Badge 
+                  style={categoryStyle}
+                  className="hover:opacity-90"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
+                  }}
+                >
+                  {post.team_categories.name}
+                </Badge>
+              </div>
+            </div>
+          </div>
+          
+          <div>
+            <h3 className="text-lg font-semibold mb-2">
+              {post.title}
+            </h3>
+            {post.content && (
+              <div 
+                className="text-muted-foreground line-clamp-2 text-sm"
+                dangerouslySetInnerHTML={{ 
+                  __html: post.content.substring(0, 150) + (post.content.length > 150 ? '...' : '') 
+                }}
+              />
+            )}
+          </div>
+        </div>
+        
+        <div className="px-4 pb-4">
+          <PostReactions postId={post.id} teamId={teamSlug} />
+        </div>
+      </div>
+    </Card>
   );
 };

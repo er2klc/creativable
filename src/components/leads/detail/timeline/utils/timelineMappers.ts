@@ -1,42 +1,65 @@
 
 import { TimelineItem } from "../TimelineUtils";
+import { Tables } from "@/integrations/supabase/types";
 
 export const mapNoteToTimelineItem = (note: any): TimelineItem => ({
   id: note.id,
-  type: 'note',
+  type: note.metadata?.type === 'phase_analysis' ? 'phase_analysis' : 
+        note.metadata?.type === 'phase_change' ? 'phase_change' : 'note',
   content: note.content,
-  timestamp: note.created_at,
   created_at: note.created_at,
-  metadata: {
-    last_edited_at: note.updated_at,
-    type: note.type
-  }
+  timestamp: note.metadata?.timestamp || note.created_at,
+  metadata: note.metadata,
+  status: note.status
 });
 
-export const mapTaskToTimelineItem = (task: any): TimelineItem => ({
-  id: task.id,
-  type: 'task',
-  content: task.title,
-  timestamp: task.due_date || task.created_at,
-  completed: task.completed,
-  status: task.completed ? 'completed' : 'pending',
-  created_at: task.created_at,
-  metadata: {
-    dueDate: task.due_date,
-    completedAt: task.completed_at,
-    status: task.completed ? 'completed' : 'pending'
+export const mapTaskToTimelineItem = (task: any): TimelineItem => {
+  // Check if this is an appointment (meeting) or a regular task
+  if (task.meeting_type || task.type === 'appointment') {
+    return {
+      id: task.id,
+      type: 'appointment',
+      content: task.title,
+      created_at: task.created_at,
+      timestamp: task.created_at,
+      metadata: {
+        dueDate: task.due_date,
+        status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
+        completedAt: task.completed ? task.updated_at : undefined,
+        cancelledAt: task.cancelled ? task.updated_at : undefined,
+        color: task.color,
+        meetingType: task.meeting_type,
+        duration: 60, // Default duration in minutes
+      }
+    };
   }
-});
+  
+  // Regular task
+  return {
+    id: task.id,
+    type: task.type || 'task',
+    content: task.title,
+    created_at: task.created_at,
+    timestamp: task.created_at,
+    completed: task.completed || false,
+    metadata: {
+      dueDate: task.due_date,
+      status: task.completed ? 'completed' : task.cancelled ? 'cancelled' : undefined,
+      completedAt: task.completed ? task.updated_at : undefined,
+      color: task.color,
+    }
+  };
+};
 
 export const mapMessageToTimelineItem = (message: any): TimelineItem => ({
   id: message.id,
   type: 'message',
   content: message.content,
-  timestamp: message.created_at,
   created_at: message.created_at,
+  timestamp: message.sent_at || message.created_at,
+  platform: message.platform,
   metadata: {
-    type: message.type,
-    platform: message.platform
+    type: message.platform
   }
 });
 
@@ -44,8 +67,8 @@ export const mapFileToTimelineItem = (file: any): TimelineItem => ({
   id: file.id,
   type: 'file_upload',
   content: file.file_name,
-  timestamp: file.created_at,
   created_at: file.created_at,
+  timestamp: file.created_at,
   metadata: {
     fileName: file.file_name,
     filePath: file.file_path,
@@ -54,28 +77,31 @@ export const mapFileToTimelineItem = (file: any): TimelineItem => ({
   }
 });
 
-export const mapBusinessMatchToTimelineItem = (match: any): TimelineItem => ({
-  id: match.id || `business-match-${Date.now()}`,
+export const mapBusinessMatchToTimelineItem = (businessMatch: any): TimelineItem => ({
+  id: businessMatch.id,
   type: 'business_match',
-  content: match.content || 'Business Match Analysis',
-  timestamp: match.created_at || new Date().toISOString(),
+  content: `Business Match Analyse: ${businessMatch.match_score}%`,
+  created_at: businessMatch.created_at,
+  timestamp: businessMatch.created_at,
   metadata: {
-    match_score: match.match_score || 0,
-    skills: match.skills || [],
-    commonalities: match.commonalities || [],
-    potential_needs: match.potential_needs || [],
-    strengths: match.strengths || [],
-    content: match.content || ''
+    match_score: businessMatch.match_score,
+    skills: businessMatch.skills || [],
+    commonalities: businessMatch.commonalities || [],
+    potential_needs: businessMatch.potential_needs || [],
+    strengths: businessMatch.strengths || [],
+    type: 'business_match',
+    content: businessMatch.analysis_content
   }
 });
 
 export const createContactCreationItem = (name: string, created_at: string): TimelineItem => ({
-  id: `contact-creation-${Date.now()}`,
+  id: `contact-creation-${created_at}`,
   type: 'contact_created',
-  content: `Kontakt "${name}" wurde erstellt`,
+  content: `Kontakt ${name} wurde erstellt`,
+  created_at: created_at,
   timestamp: created_at,
   metadata: {
-    emoji: '👋'
+    type: 'contact_created'
   }
 });
 
@@ -83,35 +109,59 @@ export const createStatusChangeItem = (
   status: string, 
   timestamp: string,
   name?: string
-): TimelineItem => {
-  let statusMessage = '';
-  
+): TimelineItem | null => {
+  if (status === 'lead') return null;
+
+  let content = '';
   switch (status) {
     case 'partner':
-      statusMessage = `Kontakt ist jetzt dein Partner! 🚀`;
+      content = `${name || 'Kontakt'} ist jetzt dein neuer Partner! 🚀`;
       break;
     case 'customer':
-      statusMessage = `Kontakt ist jetzt Kunde – viel Erfolg! 🎉`;
+      content = `${name || 'Kontakt'} ist jetzt Kunde – viel Erfolg! 🎉`;
       break;
     case 'not_for_now':
-      statusMessage = `Kontakt ist aktuell nicht bereit – bleib dran! ⏳`;
+      content = `${name || 'Kontakt'} ist aktuell nicht bereit – bleib dran! ⏳`;
       break;
     case 'no_interest':
-      statusMessage = `Kontakt hat kein Interesse – weiter geht's! 🚀`;
+      content = `${name || 'Kontakt'} hat kein Interesse – weiter geht's! 🚀`;
       break;
     default:
-      statusMessage = `Status geändert zu ${status}`;
+      content = `Status geändert zu ${status}`;
   }
 
   return {
-    id: `status-${Date.now()}`,
+    id: `status-${timestamp}`,
     type: 'status_change',
-    content: statusMessage,
+    content,
     timestamp,
     metadata: {
-      oldStatus: 'lead',
+      type: 'status_change',
       newStatus: status,
       timestamp
     }
   };
+};
+
+export const deduplicateTimelineItems = (items: TimelineItem[]): TimelineItem[] => {
+  const uniqueItems = new Map<string, TimelineItem>();
+  
+  items.forEach(item => {
+    // Für Phasenänderungen einen spezifischen Schlüssel erstellen
+    const key = item.type === 'phase_change' 
+      ? `${item.metadata?.oldPhase}-${item.metadata?.newPhase}-${item.timestamp}`
+      : item.content;
+      
+    const existingItem = uniqueItems.get(key);
+    
+    if (!existingItem || new Date(item.timestamp) > new Date(existingItem.timestamp)) {
+      uniqueItems.set(key, item);
+    }
+  });
+
+  return Array.from(uniqueItems.values()).sort((a, b) => {
+    const dateA = new Date(a.timestamp || a.created_at || '');
+    const dateB = new Date(b.timestamp || b.created_at || '');
+    return dateB.getTime() - dateA.getTime();
+  });
 };
