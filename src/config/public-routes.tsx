@@ -8,35 +8,30 @@ const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
 const InstagramDataDeletion = lazy(() => import("@/pages/legal/InstagramDataDeletion"));
 const Index = lazy(() => import("@/pages/Index"));
 
-// Füge Suspense-Fallback zu jeder Komponente hinzu
-const withSuspense = (Component) => (
-  <Component />
-);
-
 export const publicRoutes = [
   {
     path: "/",
-    element: withSuspense(Index),
+    element: <Index />,
   },
   {
     path: "/auth",
-    element: withSuspense(Auth),
+    element: <Auth />,
   },
   {
     path: "/register",
-    element: withSuspense(Register),
+    element: <Register />,
   },
   {
     path: "/privacy-policy",
-    element: withSuspense(PrivacyPolicy),
+    element: <PrivacyPolicy />,
   },
   {
     path: "/auth/data-deletion/instagram",
-    element: withSuspense(InstagramDataDeletion),
+    element: <InstagramDataDeletion />,
   },
   {
     path: "/presentation/:leadId/:pageId",
-    element: withSuspense(PresentationPage),
+    element: <PresentationPage />,
   },
 ];
 

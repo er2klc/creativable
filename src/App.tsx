@@ -37,7 +37,10 @@ const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
       console.error("Global error caught:", event);
-      setHasError(true);
+      // Verwende requestAnimationFrame, um setState außerhalb des Render-Zyklus auszuführen
+      requestAnimationFrame(() => {
+        setHasError(true);
+      });
     };
     
     window.addEventListener('error', handleError);

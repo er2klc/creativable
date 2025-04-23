@@ -1,5 +1,4 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +15,7 @@ import { EmailLayout } from '@/features/email/components/layout/EmailLayout';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 
 export default function Messages() {
+  // Alle State-Hooks immer zu Beginn der Komponente
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -23,7 +23,8 @@ export default function Messages() {
   const [isCheckingConfig, setIsCheckingConfig] = useState(true);
   const configCheckCompletedRef = useRef(false);
 
-  // Fetch user profile for header
+  // Alle Query-Hooks immer unabhängig von Bedingungen deklarieren
+  // Nutze enabled für bedingte Ausführung
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -39,6 +40,23 @@ export default function Messages() {
       return data;
     },
     enabled: !!user
+  });
+
+  // Zweiter Query - immer deklarieren, nur mit enabled kontrollieren
+  const { data: apiSettings } = useQuery({
+    queryKey: ['api-email-settings'],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('api_email_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user && isConfigured && !isCheckingConfig,
   });
 
   // Check email configuration only once - simplified for external API
@@ -98,6 +116,7 @@ export default function Messages() {
     }
   }, [user]);
 
+  // Rendering-Logik nach allen Hooks
   if (!user) {
     return (
       <div className="container mx-auto p-4 overflow-x-hidden">
@@ -173,29 +192,12 @@ export default function Messages() {
     );
   }
 
-  // Query for settings if configured
-  const { data: apiSettings } = useQuery({
-    queryKey: ['api-email-settings'],
-    queryFn: async () => {
-      if (!user) return null;
-      const { data, error } = await supabase
-        .from('api_email_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user && isConfigured && !isCheckingConfig,
-  });
-
   return (
     <div className="container-fluid p-0 h-[calc(100vh-4rem)] overflow-hidden">
       <Card className="w-full h-full rounded-none border-0 shadow-none">
         <CardContent className="p-0 h-full">
           <EmailLayout 
-            userEmail={apiSettings?.user || user?.email}
+            userEmail={apiSettings?.username || user?.email}
           />
         </CardContent>
       </Card>
