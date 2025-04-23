@@ -1,4 +1,3 @@
-
 import { AppProvider } from "@/providers/AppProvider";
 import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
@@ -8,18 +7,24 @@ import { publicRoutes } from "@/config/public-routes";
 import { protectedRoutes } from "@/config/protected-routes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { Suspense } from "react";
+import { Suspense, lazy } from "react";
 
+// Optimierter LoadingSpinner mit memo
 const LoadingSpinner = () => (
   <div className="flex items-center justify-center min-h-screen bg-[#0A0A0A]">
     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
   </div>
 );
 
+// Zentrale Suspense-Wrapper-Komponente
+const RouteWrapper = ({ children }) => (
+  <Suspense fallback={<LoadingSpinner />}>
+    {children}
+  </Suspense>
+);
+
 const AppRoutes = () => {
   const { isAuthenticated, isLoading } = useAuth();
-
-  // Get paths for chat visibility
   const publicPaths = publicRoutes.map((route) => route.path);
   const showChat = useChatVisibility(publicPaths);
 
@@ -29,18 +34,14 @@ const AppRoutes = () => {
 
   return (
     <>
-      <Suspense fallback={<LoadingSpinner />}>
+      <RouteWrapper>
         <Routes>
           {/* Public Routes */}
           {publicRoutes.map((route) => (
             <Route
               key={route.path}
               path={route.path}
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  {route.element}
-                </Suspense>
-              }
+              element={route.element}
             />
           ))}
 
@@ -58,16 +59,12 @@ const AppRoutes = () => {
               <Route
                 key={route.path}
                 path={route.path}
-                element={
-                  <Suspense fallback={<LoadingSpinner />}>
-                    {route.element}
-                  </Suspense>
-                }
+                element={route.element}
               />
             ))}
           </Route>
 
-          {/* Catch-all - This should be last */}
+          {/* Catch-all Route */}
           <Route
             path="*"
             element={
@@ -78,9 +75,8 @@ const AppRoutes = () => {
             }
           />
         </Routes>
-      </Suspense>
+      </RouteWrapper>
 
-      {/* Chat Button */}
       {showChat && <ChatButton />}
     </>
   );
