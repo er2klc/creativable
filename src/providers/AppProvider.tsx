@@ -16,8 +16,7 @@ const queryClient = new QueryClient({
       gcTime: 1000 * 60 * 60, // 1 hour (früher cacheTime genannt)
       retry: 3,
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-      refetchOnWindowFocus: false,
-      placeholderData: 'keepPreviousData'
+      refetchOnWindowFocus: false
     },
   },
 });
@@ -27,14 +26,18 @@ export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Überprüfe, ob der Benutzer angemeldet ist
     const checkAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        console.log("Benutzer ist angemeldet, starte automatische Verarbeitung von Embeddings");
-        // Wenn angemeldet, starte die automatische Verarbeitung
-        autoProcessEmbeddings();
-        
-        // Richte Listener für Datenänderungen ein
-        setupEmbeddingsChangeListeners();
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          console.log("Benutzer ist angemeldet, starte automatische Verarbeitung von Embeddings");
+          // Wenn angemeldet, starte die automatische Verarbeitung
+          autoProcessEmbeddings();
+          
+          // Richte Listener für Datenänderungen ein
+          setupEmbeddingsChangeListeners();
+        }
+      } catch (error) {
+        console.error("Fehler beim Überprüfen der Authentifizierung:", error);
       }
     };
     
