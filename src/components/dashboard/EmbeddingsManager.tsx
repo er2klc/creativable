@@ -1,14 +1,15 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
+import { processUserDataForEmbeddings } from "@/utils/embeddings";
 
 export function EmbeddingsManager() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isBackfilling, setIsBackfilling] = useState(false);
+  const [isProcessingUserData, setIsProcessingUserData] = useState(false);
 
   const { data: settings } = useQuery({
     queryKey: ['chatbot-settings'],
@@ -27,7 +28,7 @@ export function EmbeddingsManager() {
     }
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats, refetch: refetchStats } = useQuery({
     queryKey: ['embedding-stats'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -50,6 +51,20 @@ export function EmbeddingsManager() {
     }
   });
 
+  const handleProcessUserData = async () => {
+    try {
+      setIsProcessingUserData(true);
+      await processUserDataForEmbeddings();
+      toast.success("Benutzerdaten wurden erfolgreich für AI-Embeddings verarbeitet");
+      refetchStats();
+    } catch (error) {
+      console.error("Fehler bei der Verarbeitung von Benutzerdaten:", error);
+      toast.error("Fehler bei der Verarbeitung von Benutzerdaten: " + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setIsProcessingUserData(false);
+    }
+  };
+
   const handleBackfillEmbeddings = async () => {
     try {
       setIsBackfilling(true);
@@ -65,7 +80,7 @@ export function EmbeddingsManager() {
       });
 
       if (!response.error) {
-        toast.success("Die Verarbeitung bestehender Daten wurde gestartet");
+        toast.success("Die Verarbeitung bestehenden Daten wurde gestartet");
       } else {
         throw response.error;
       }
@@ -110,40 +125,43 @@ export function EmbeddingsManager() {
   };
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader>
-        <CardTitle>KI-Verarbeitung</CardTitle>
+        <CardTitle>AI Embeddings Manager</CardTitle>
         <CardDescription>
-          Verarbeiten Sie Ihre bestehenden Daten mit KI für verbesserte Suchfunktionen
+          Verwalten Sie die AI-Embeddings für Ihren Chatbot
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex flex-col gap-4">
-          {stats && (
-            <div className="text-sm text-muted-foreground">
-              Verarbeitete Daten: 
-              <ul className="list-disc list-inside mt-2">
-                <li>Content Embeddings: {stats.contentCount}</li>
-                <li>Nexus Embeddings: {stats.nexusCount}</li>
-              </ul>
+      <CardContent>
+        <div className="grid gap-4">
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-medium">Status</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-muted rounded-md p-3">
+                <div className="text-xs text-muted-foreground">Content Embeddings</div>
+                <div className="text-xl font-bold">{stats?.contentCount || 0}</div>
+              </div>
+              <div className="bg-muted rounded-md p-3">
+                <div className="text-xs text-muted-foreground">Nexus Embeddings</div>
+                <div className="text-xl font-bold">{stats?.nexusCount || 0}</div>
+              </div>
             </div>
-          )}
+          </div>
           
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <Button 
-              onClick={handleGenerateEmbeddings}
-              disabled={isProcessing || !settings?.openai_api_key}
-            >
-              {isProcessing ? "Wird verarbeitet..." : "Neue Daten verarbeiten"}
-            </Button>
-            
-            <Button 
-              variant="outline"
-              onClick={handleBackfillEmbeddings}
-              disabled={isBackfilling || !settings?.openai_api_key}
-            >
-              {isBackfilling ? "Wird verarbeitet..." : "Bestehende Daten verarbeiten"}
-            </Button>
+          <div className="flex flex-col gap-2">
+            <h3 className="text-sm font-medium">Aktionen</h3>
+            <div className="flex flex-col gap-2">
+              <Button 
+                onClick={handleProcessUserData} 
+                disabled={isProcessingUserData}
+                variant="default"
+              >
+                {isProcessingUserData ? "Verarbeite Benutzerdaten..." : "Benutzerdaten verarbeiten"}
+              </Button>
+              <p className="text-xs text-muted-foreground">
+                Konvertiert alle Benutzerdaten (Einstellungen, Aufgaben, Leads usw.) in Embeddings für den KI-Zugriff.
+              </p>
+            </div>
           </div>
         </div>
       </CardContent>

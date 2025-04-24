@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export type ContentType = 'personal' | 'team' | 'platform' | 'lead' | 'document' | 'settings';
@@ -42,18 +41,163 @@ export const searchSimilarContent = async (query: string, contentType: ContentTy
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    const { data, error } = await supabase.rpc('match_similar_content', {
-      query_text: query,
+    const embedding = await createEmbedding(query);
+
+    const { data, error } = await supabase.rpc('match_combined_content', {
+      query_embedding: embedding,
       match_threshold: 0.7,
       match_count: 5,
-      user_id: user.id,
-      content_type: contentType
+      p_user_id: user.id,
+      p_team_id: teamId || ''
     });
 
     if (error) throw error;
     return data;
   } catch (error) {
     console.error('Error searching similar content:', error);
+    throw error;
+  }
+};
+
+/**
+ * Erstellt einen Embedding für einen Textinhalt und gibt diesen zurück
+ */
+export const createEmbedding = async (text: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const response = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.NEXT_PUBLIC_OPENAI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: "text-embedding-3-small",
+        input: text
+      })
+    });
+
+    const result = await response.json();
+    if (!result.data || !result.data[0].embedding) {
+      throw new Error('Failed to generate embedding');
+    }
+
+    return result.data[0].embedding;
+  } catch (error) {
+    console.error('Error creating embedding:', error);
+    throw error;
+  }
+};
+
+/**
+ * Durchsucht Benutzerinhalte mit einer textbasierten Abfrage
+ */
+export const searchUserContent = async (query: string, contentType?: ContentType) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+
+    const embedding = await createEmbedding(query);
+    
+    const { data, error } = await supabase.rpc('match_user_embeddings', {
+      p_user_id: user.id,
+      query_embedding: embedding,
+      similarity_threshold: 0.7,
+      match_count: 5,
+      p_content_type: contentType
+    });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error searching user content:', error);
+    throw error;
+  }
+};
+
+/**
+ * Verarbeitet alle Benutzerdaten aus der Datenbank und wandelt sie in Embeddings um.
+ * Diese Funktion holt verschiedene Arten von Benutzerdaten und übergibt sie an den Embedding-Prozess.
+ */
+export const processUserDataForEmbeddings = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+    
+    // Benutzereinstellungen abrufen
+    const { data: settings } = await supabase
+      .from('settings')
+      .select('*')
+      .eq('user_id', user.id)
+      .single();
+    
+    if (settings) {
+      const settingsContent = `
+        Unternehmen: ${settings.company_name || 'Nicht angegeben'}
+        Produkte/Dienstleistungen: ${settings.products_services || 'Nicht angegeben'}
+        Zielgruppe: ${settings.target_audience || 'Nicht angegeben'}
+        Unternehmensbeschreibung: ${settings.business_description || 'Nicht angegeben'}
+      `.trim();
+      
+      await processContentForEmbeddings(settingsContent, 'personal', {
+        sourceType: 'settings',
+        sourceId: settings.id,
+        metadata: { type: 'user_settings' }
+      });
+    }
+    
+    // Aufgaben abrufen
+    const { data: tasks } = await supabase
+      .from('tasks')
+      .select('*')
+      .eq('user_id', user.id);
+    
+    if (tasks && tasks.length > 0) {
+      for (const task of tasks) {
+        const taskContent = `
+          Aufgabe: ${task.title}
+          Fälligkeitsdatum: ${task.due_date || 'Kein Fälligkeitsdatum'}
+          Status: ${task.completed ? 'Abgeschlossen' : 'Ausstehend'}
+        `.trim();
+        
+        await processContentForEmbeddings(taskContent, 'personal', {
+          sourceType: 'task',
+          sourceId: task.id,
+          metadata: { type: 'user_task' }
+        });
+      }
+    }
+    
+    // Leads abrufen
+    const { data: leads } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('user_id', user.id);
+    
+    if (leads && leads.length > 0) {
+      for (const lead of leads) {
+        let leadContent = `
+          Lead: ${lead.name}
+          Unternehmen: ${lead.company_name || 'Nicht angegeben'}
+          Branche: ${lead.industry || 'Nicht angegeben'}
+          Status: ${lead.status || 'Nicht angegeben'}
+        `.trim();
+        
+        await processContentForEmbeddings(leadContent, 'personal', {
+          sourceType: 'lead',
+          sourceId: lead.id,
+          metadata: { type: 'user_lead' }
+        });
+      }
+    }
+    
+    // Weitere Benutzerdaten wie Emails, Notizen, etc. könnten hier verarbeitet werden
+    
+    return { success: true, message: "Alle Benutzerdaten wurden erfolgreich für KI-Embeddings verarbeitet" };
+  } catch (error) {
+    console.error('Fehler bei der Verarbeitung von Benutzerdaten für Embeddings:', error);
     throw error;
   }
 };
