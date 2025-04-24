@@ -1,3 +1,4 @@
+
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
 import { QuickActions } from "@/components/dashboard/QuickActions";
@@ -8,13 +9,33 @@ import { useNavigate } from "react-router-dom";
 import { autoProcessEmbeddings } from "@/lib/auto-embeddings";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useState } from "react";
+import { ErrorBoundary } from "react-error-boundary";
+
+const ErrorFallback = ({ error, resetErrorBoundary }) => {
+  return (
+    <div className="p-4 bg-red-50 text-red-700 rounded-md">
+      <h2 className="text-lg font-semibold mb-2">Something went wrong:</h2>
+      <pre className="text-sm overflow-auto">{error.message}</pre>
+      <Button 
+        className="mt-4" 
+        onClick={resetErrorBoundary}
+        variant="outline"
+      >
+        Try again
+      </Button>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const handleManualProcessing = async () => {
     try {
+      setIsProcessing(true);
       const result = await autoProcessEmbeddings(false);
       if (result) {
         toast.success("Daten wurden für den KI-Zugriff verarbeitet");
@@ -22,8 +43,10 @@ const Dashboard = () => {
         toast.info("Keine Verarbeitung erforderlich");
       }
     } catch (error) {
+      console.error("Fehler bei der Datenverarbeitung:", error);
       toast.error("Fehler bei der Datenverarbeitung");
-      console.error(error);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -46,21 +69,39 @@ const Dashboard = () => {
         </div>
       </div>
       <DashboardHeader userEmail={user?.email} />
-      <div className="pt-[132px] md:pt-[84px] space-y-8">
+      <div className="pt-[132px] md:pt-[84px] space-y-8 px-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-bold">Dashboard</h1>
           <Button 
             variant="outline" 
             size="sm" 
             onClick={handleManualProcessing}
+            disabled={isProcessing}
             className="text-xs"
           >
-            KI-Daten aktualisieren
+            {isProcessing ? "Verarbeite..." : "KI-Daten aktualisieren"}
           </Button>
         </div>
-        <QuickActions />
-        <DashboardMetrics />
-        <LeadPhases />
+        <ErrorBoundary
+          FallbackComponent={ErrorFallback}
+          onReset={() => window.location.reload()}
+        >
+          <QuickActions />
+        </ErrorBoundary>
+        
+        <ErrorBoundary
+          FallbackComponent={ErrorFallback}
+          onReset={() => window.location.reload()}
+        >
+          <DashboardMetrics />
+        </ErrorBoundary>
+        
+        <ErrorBoundary
+          FallbackComponent={ErrorFallback}
+          onReset={() => window.location.reload()}
+        >
+          <LeadPhases />
+        </ErrorBoundary>
       </div>
     </div>
   );

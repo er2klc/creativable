@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { processUserDataForEmbeddings, processTeamDataForEmbeddings } from "@/utils/embeddings";
 import { toast } from "sonner";
@@ -117,11 +118,21 @@ export const autoProcessEmbeddings = async (silent = true) => {
 
     console.log('Starte automatische Datenverarbeitung für Embeddings...');
     
-    // Benutzerdaten verarbeiten
-    await processUserDataForEmbeddings();
+    try {
+      // Benutzerdaten verarbeiten
+      await processUserDataForEmbeddings();
+    } catch (error) {
+      console.error('Fehler bei der Verarbeitung von Benutzerdaten:', error);
+      // Weiter machen mit dem nächsten Schritt trotz Fehler
+    }
     
-    // Teamdaten verarbeiten
-    await processTeamDataForEmbeddings();
+    try {
+      // Teamdaten verarbeiten
+      await processTeamDataForEmbeddings();
+    } catch (error) {
+      console.error('Fehler bei der Verarbeitung von Teamdaten:', error);
+      // Weiter machen mit dem nächsten Schritt trotz Fehler
+    }
     
     // Speichere Zeitpunkt der letzten Verarbeitung
     await saveLastProcessingTime();
@@ -186,4 +197,4 @@ declare global {
   interface Window {
     _embeddingsTimeout?: NodeJS.Timeout;
   }
-} 
+}

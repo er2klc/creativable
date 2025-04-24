@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,10 +28,10 @@ export const DashboardMetrics = () => {
   const { settings } = useSettings();
 
   // Get contacts by platform
-  const { data: contactsByPlatform = [] } = useQuery({
+  const { data: contactsByPlatform = { platforms: [], statuses: {} } } = useQuery({
     queryKey: ["contacts-by-platform"],
     queryFn: async () => {
-      if (!session?.user?.id) return [];
+      if (!session?.user?.id) return { platforms: [], statuses: {} };
 
       const { data, error } = await supabase
         .from("leads")
@@ -39,16 +40,24 @@ export const DashboardMetrics = () => {
 
       if (error) {
         console.error("Error fetching contacts:", error);
-        return [];
+        return { platforms: [], statuses: {} };
+      }
+
+      // Ensure data is an array before reducing
+      if (!Array.isArray(data)) {
+        console.error("Expected array for leads data but got:", data);
+        return { platforms: [], statuses: {} };
       }
 
       const platforms = data.reduce((acc, curr) => {
-        acc[curr.platform] = (acc[curr.platform] || 0) + 1;
+        const platform = curr.platform || 'Unknown';
+        acc[platform] = (acc[platform] || 0) + 1;
         return acc;
       }, {});
 
       const statuses = data.reduce((acc, curr) => {
-        acc[curr.status || 'lead'] = (acc[curr.status || 'lead'] || 0) + 1;
+        const status = curr.status || 'lead';
+        acc[status] = (acc[status] || 0) + 1;
         return acc;
       }, {});
 
@@ -81,18 +90,28 @@ export const DashboardMetrics = () => {
         return { total: 0, completed: 0, highPriorityTasks: [] };
       }
 
-      const highPriorityTasks = data
+      // Ensure data is an array
+      const tasksArray = Array.isArray(data) ? data : [];
+      
+      const highPriorityTasks = tasksArray
         .filter(task => task.priority === "High")
         .slice(0, 3);
 
-      const { data: completedData } = await supabase
+      const { data: completedData, error: completedError } = await supabase
         .from("tasks")
         .select("id")
         .eq("user_id", session.user.id)
         .eq("completed", true);
+        
+      if (completedError) {
+        console.error("Error fetching completed tasks:", completedError);
+      }
 
-      const total = (data?.length || 0) + (completedData?.length || 0);
-      const completed = completedData?.length || 0;
+      // Ensure completedData is an array
+      const completedArray = Array.isArray(completedData) ? completedData : [];
+      
+      const total = tasksArray.length + completedArray.length;
+      const completed = completedArray.length;
 
       return { total, completed, highPriorityTasks };
     },
@@ -117,7 +136,10 @@ export const DashboardMetrics = () => {
         return [];
       }
 
-      return data.filter(task => 
+      // Ensure data is an array
+      const tasksArray = Array.isArray(data) ? data : [];
+      
+      return tasksArray.filter(task => 
         isToday(new Date(task.due_date)) || 
         isTomorrow(new Date(task.due_date))
       );
@@ -128,6 +150,12 @@ export const DashboardMetrics = () => {
   const completionRate = taskStats.total > 0 
     ? Math.round((taskStats.completed / taskStats.total) * 100) 
     : 0;
+
+  // Helper function to safely calculate percentage
+  const safePercentage = (count, total) => {
+    const totalSum = Object.values(total || {}).reduce((a, b) => Number(a) + Number(b), 0);
+    return totalSum > 0 ? (count / totalSum) * 100 : 0;
+  };
 
   return (
     <div className="space-y-6 w-full mb-8">
@@ -142,7 +170,7 @@ export const DashboardMetrics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {contactsByPlatform.platforms?.map(({ platform, count }) => {
+              {contactsByPlatform.platforms && contactsByPlatform.platforms.map(({ platform, count }) => {
                 const Icon = platformIcons[platform] || Users;
                 return (
                   <div key={platform} className="flex justify-between items-center p-2 hover:bg-black/5 rounded-lg transition-colors">
@@ -154,6 +182,12 @@ export const DashboardMetrics = () => {
                   </div>
                 );
               })}
+              
+              {(!contactsByPlatform.platforms || contactsByPlatform.platforms.length === 0) && (
+                <div className="text-center py-4 text-sm text-muted-foreground">
+                  {settings?.language === "en" ? "No contacts found" : "Keine Kontakte gefunden"}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -179,7 +213,7 @@ export const DashboardMetrics = () => {
                 <h4 className="text-sm font-medium mb-2">
                   {settings?.language === "en" ? "High Priority Tasks" : "Wichtige Aufgaben"}
                 </h4>
-                {taskStats.highPriorityTasks.length > 0 ? (
+                {taskStats.highPriorityTasks && taskStats.highPriorityTasks.length > 0 ? (
                   <div className="space-y-2">
                     {taskStats.highPriorityTasks.map(task => (
                       <div key={task.id} className="flex items-center justify-between p-2 bg-red-50/50 dark:bg-red-900/20 rounded-lg">
@@ -210,17 +244,19 @@ export const DashboardMetrics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {upcomingAppointments.length > 0 ? (
+              {Array.isArray(upcomingAppointments) && upcomingAppointments.length > 0 ? (
                 upcomingAppointments.map(appointment => (
                   <div key={appointment.id} className="flex justify-between items-center p-2 hover:bg-black/5 rounded-lg">
                     <div className="flex flex-col">
-                      <span className="font-medium text-sm">{appointment.leads?.name}</span>
+                      <span className="font-medium text-sm">
+                        {appointment.leads?.name || "Nicht zugewiesen"}
+                      </span>
                       <span className="text-xs text-muted-foreground">
-                        {format(new Date(appointment.due_date), "HH:mm")}
+                        {appointment.due_date ? format(new Date(appointment.due_date), "HH:mm") : "--:--"}
                       </span>
                     </div>
                     <span className="text-xs px-2 py-1 rounded-full bg-primary/10 text-primary">
-                      {isToday(new Date(appointment.due_date)) 
+                      {appointment.due_date && isToday(new Date(appointment.due_date)) 
                         ? (settings?.language === "en" ? "Today" : "Heute")
                         : (settings?.language === "en" ? "Tomorrow" : "Morgen")}
                     </span>
@@ -254,10 +290,10 @@ export const DashboardMetrics = () => {
                   <span>{contactsByPlatform.statuses?.partner || 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.partner 
-                    ? (contactsByPlatform.statuses.partner / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
-                    : 0
-                  } 
+                  value={safePercentage(
+                    contactsByPlatform.statuses?.partner || 0,
+                    contactsByPlatform.statuses
+                  )}
                   className="h-2" 
                 />
               </div>
@@ -268,10 +304,10 @@ export const DashboardMetrics = () => {
                   <span>{contactsByPlatform.statuses?.customer || 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.customer 
-                    ? (contactsByPlatform.statuses.customer / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
-                    : 0
-                  } 
+                  value={safePercentage(
+                    contactsByPlatform.statuses?.customer || 0,
+                    contactsByPlatform.statuses
+                  )} 
                   className="h-2" 
                 />
               </div>
@@ -282,10 +318,10 @@ export const DashboardMetrics = () => {
                   <span>{contactsByPlatform.statuses?.not_for_now || 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.not_for_now 
-                    ? (contactsByPlatform.statuses.not_for_now / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
-                    : 0
-                  } 
+                  value={safePercentage(
+                    contactsByPlatform.statuses?.not_for_now || 0,
+                    contactsByPlatform.statuses
+                  )} 
                   className="h-2" 
                 />
               </div>
@@ -296,10 +332,10 @@ export const DashboardMetrics = () => {
                   <span>{contactsByPlatform.statuses?.no_interest || 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.no_interest 
-                    ? (contactsByPlatform.statuses.no_interest / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
-                    : 0
-                  } 
+                  value={safePercentage(
+                    contactsByPlatform.statuses?.no_interest || 0,
+                    contactsByPlatform.statuses
+                  )} 
                   className="h-2" 
                 />
               </div>
