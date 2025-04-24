@@ -127,6 +127,30 @@ export const processUserDataForEmbeddings = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
     
+    // Benutzerprofil verarbeiten
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+      
+    if (profile) {
+      const profileContent = `
+        Mein Profil:
+        Name: ${profile.display_name || 'Nicht angegeben'}
+        E-Mail: ${user.email}
+        Status: ${profile.status || 'Nicht angegeben'}
+        Bio: ${profile.bio || 'Nicht angegeben'}
+        Standort: ${profile.location || 'Nicht angegeben'}
+      `.trim();
+      
+      await processContentForEmbeddings(profileContent, 'personal', {
+        sourceType: 'profile',
+        sourceId: profile.id,
+        metadata: { type: 'user_profile' }
+      });
+    }
+    
     // Benutzereinstellungen abrufen
     const { data: settings } = await supabase
       .from('settings')
@@ -156,6 +180,21 @@ export const processUserDataForEmbeddings = async () => {
       .eq('user_id', user.id);
     
     if (tasks && tasks.length > 0) {
+      // Gesamtübersicht aller Aufgaben
+      const tasksOverview = `
+        Meine Aufgaben:
+        ${tasks.map(task => 
+          `- ${task.title} (${task.completed ? 'Abgeschlossen' : 'Ausstehend'}, Fällig: ${task.due_date || 'Kein Datum'})`
+        ).join('\n')}
+      `.trim();
+      
+      await processContentForEmbeddings(tasksOverview, 'personal', {
+        sourceType: 'tasks_overview',
+        sourceId: 'all_tasks',
+        metadata: { type: 'tasks_list' }
+      });
+      
+      // Einzelne Aufgaben verarbeiten
       for (const task of tasks) {
         const taskContent = `
           Aufgabe: ${task.title}
@@ -171,30 +210,155 @@ export const processUserDataForEmbeddings = async () => {
       }
     }
     
-    // Leads abrufen
+    // Leads/Kontakte abrufen
     const { data: leads } = await supabase
       .from('leads')
       .select('*')
       .eq('user_id', user.id);
     
     if (leads && leads.length > 0) {
+      // Gesamtübersicht aller Kontakte
+      const contactsOverview = `
+        Meine Kontakte:
+        ${leads.map(contact => 
+          `- ${contact.name} (${contact.company_name || 'Keine Firma'}, ${contact.platform || 'Keine Plattform'})`
+        ).join('\n')}
+      `.trim();
+      
+      await processContentForEmbeddings(contactsOverview, 'personal', {
+        sourceType: 'contacts_overview',
+        sourceId: 'all_contacts',
+        metadata: { type: 'contacts_list' }
+      });
+      
+      // Verarbeite jeden Kontakt einzeln
       for (const lead of leads) {
         let leadContent = `
-          Lead: ${lead.name}
+          Kontakt/Lead: ${lead.name}
           Unternehmen: ${lead.company_name || 'Nicht angegeben'}
           Branche: ${lead.industry || 'Nicht angegeben'}
           Status: ${lead.status || 'Nicht angegeben'}
+          E-Mail: ${lead.email || 'Nicht angegeben'}
+          Telefon: ${lead.phone_number || 'Nicht angegeben'}
+          Plattform: ${lead.platform || 'Nicht angegeben'}
+          Social Media: ${lead.social_media_username || 'Nicht angegeben'}
+          Letzter Kontakt: ${lead.last_interaction_date || 'Nicht bekannt'}
         `.trim();
         
         await processContentForEmbeddings(leadContent, 'personal', {
           sourceType: 'lead',
           sourceId: lead.id,
-          metadata: { type: 'user_lead' }
+          metadata: { type: 'contact_details' }
         });
       }
     }
     
-    // Weitere Benutzerdaten wie Emails, Notizen, etc. könnten hier verarbeitet werden
+    // E-Mails verarbeiten, falls vorhanden
+    const { data: emails } = await supabase
+      .from('emails')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('received_at', { ascending: false })
+      .limit(100); // Begrenzen auf die letzten 100 E-Mails
+    
+    if (emails && emails.length > 0) {
+      // Gesamtübersicht der neuesten E-Mails
+      const emailsOverview = `
+        Meine letzten E-Mails:
+        ${emails.slice(0, 20).map(email => 
+          `- Von: ${email.from_name || email.from_email}, Betreff: ${email.subject}, Datum: ${email.received_at}`
+        ).join('\n')}
+      `.trim();
+      
+      await processContentForEmbeddings(emailsOverview, 'personal', {
+        sourceType: 'emails_overview',
+        sourceId: 'recent_emails',
+        metadata: { type: 'emails_list' }
+      });
+      
+      // Verarbeite jede E-Mail einzeln
+      for (const email of emails) {
+        const emailContent = `
+          E-Mail:
+          Von: ${email.from_name || email.from_email}
+          An: ${email.to_email || ''}
+          Betreff: ${email.subject}
+          Datum: ${email.received_at}
+          
+          Inhalt:
+          ${email.body || 'Kein Inhalt verfügbar'}
+        `.trim();
+        
+        await processContentForEmbeddings(emailContent, 'personal', {
+          sourceType: 'email',
+          sourceId: email.id,
+          metadata: { 
+            type: 'email_content',
+            sender: email.from_name || email.from_email,
+            subject: email.subject,
+            date: email.received_at
+          }
+        });
+      }
+    }
+    
+    // Notizen verarbeiten, falls vorhanden
+    const { data: notes } = await supabase
+      .from('notes')
+      .select('*')
+      .eq('user_id', user.id);
+    
+    if (notes && notes.length > 0) {
+      // Gesamtübersicht aller Notizen
+      const notesOverview = `
+        Meine Notizen:
+        ${notes.map(note => 
+          `- Notiz vom ${note.created_at}`
+        ).join('\n')}
+      `.trim();
+      
+      await processContentForEmbeddings(notesOverview, 'personal', {
+        sourceType: 'notes_overview',
+        sourceId: 'all_notes',
+        metadata: { type: 'notes_list' }
+      });
+      
+      // Verarbeite jede Notiz einzeln
+      for (const note of notes) {
+        const noteContent = `
+          Notiz vom: ${note.created_at}
+          
+          ${note.content}
+        `.trim();
+        
+        await processContentForEmbeddings(noteContent, 'personal', {
+          sourceType: 'note',
+          sourceId: note.id,
+          metadata: { type: 'note_content' }
+        });
+      }
+    }
+    
+    // Pipeline-Phasen verarbeiten, falls vorhanden
+    const { data: phases } = await supabase
+      .from('pipeline_phases')
+      .select('*')
+      .eq('user_id', user.id);
+    
+    if (phases && phases.length > 0) {
+      const phasesContent = `
+        Meine Pipeline-Phasen:
+        ${phases.map(phase => 
+          `- ${phase.name} (Reihenfolge: ${phase.order_index || 'Nicht definiert'})`
+        ).join('\n')}
+      `.trim();
+      
+      await processContentForEmbeddings(phasesContent, 'personal', {
+        sourceType: 'phases',
+        sourceId: 'all_phases',
+        metadata: { type: 'pipeline_phases' }
+      });
+    }
     
     return { success: true, message: "Alle Benutzerdaten wurden erfolgreich für KI-Embeddings verarbeitet" };
   } catch (error) {
