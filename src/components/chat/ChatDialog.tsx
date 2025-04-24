@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRef } from "react";
 import { useChatContext } from "@/hooks/use-chat-context";
@@ -14,6 +13,7 @@ import { MessageTemplateSelector } from "./template-selection/MessageTemplateSel
 import { MessagePreview } from "./message-preview/MessagePreview";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
+import { MessageTemplateType } from "@/config/messageTemplates";
 
 interface ChatDialogProps {
   open: boolean;

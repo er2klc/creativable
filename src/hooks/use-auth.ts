@@ -53,6 +53,7 @@ export const useAuth = () => {
   return useMemo(() => ({ 
     user, 
     isLoading: isLoading || sessionLoading, 
-    error 
+    error,
+    isAuthenticated: !!user
   }), [user, isLoading, sessionLoading, error]);
 };

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Bell, User, CreditCard, Receipt, LogOut, MessageCircle } from "lucide-react";
@@ -107,16 +106,22 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
         }
         
         const sender = msg.sender;
-        if (!acc[team.id].unread_by_user[sender.id]) {
-          acc[team.id].unread_by_user[sender.id] = {
-            count: 0,
-            display_name: sender.display_name,
-            avatar_url: sender.avatar_url
-          };
-        }
-        
         acc[team.id].unread_count++;
-        acc[team.id].unread_by_user[sender.id].count++;
+        
+        if (sender && typeof sender === 'object' && 'id' in sender && sender.id) {
+          const senderId = sender.id;
+          const senderName = sender.display_name || 'Unbekannt';
+          
+          if (!acc[team.id].unread_by_user[senderId]) {
+            acc[team.id].unread_by_user[senderId] = {
+              count: 0,
+              display_name: senderName,
+              avatar_url: sender.avatar_url
+            };
+          }
+          
+          acc[team.id].unread_by_user[senderId].count++;
+        }
         
         return acc;
       }, {} as Record<string, TeamWithUnreadCount>);

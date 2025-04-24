@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { Tables } from "@/integrations/supabase/types";
@@ -89,6 +88,11 @@ export const LeadKanbanView = ({
       console.error("Error updating phase order:", error);
     }
   };
+  
+  // Wrapper-Funktion für updatePhaseName, um die Typkompatibilität zu gewährleisten
+  const handleUpdatePhaseName = (id: string, name: string) => {
+    updatePhaseName.mutate({ id, name });
+  };
 
   return (
     <>
@@ -100,7 +104,7 @@ export const LeadKanbanView = ({
         onLeadClick={handleLeadClick}
         onUpdatePhase={handleUpdatePhase}
         onDeletePhase={setPhaseToDelete}
-        onUpdatePhaseName={updatePhaseName.mutate}
+        onUpdatePhaseName={handleUpdatePhaseName}
         onMovePhase={handleMovePhase}
       />
 
