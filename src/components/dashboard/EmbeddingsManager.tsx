@@ -4,12 +4,14 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
-import { processUserDataForEmbeddings } from "@/utils/embeddings";
+import { processUserDataForEmbeddings, processTeamDataForEmbeddings } from "@/utils/embeddings";
 
 export function EmbeddingsManager() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isBackfilling, setIsBackfilling] = useState(false);
   const [isProcessingUserData, setIsProcessingUserData] = useState(false);
+  const [isProcessingTeamData, setIsProcessingTeamData] = useState(false);
+  const [isProcessingAllData, setIsProcessingAllData] = useState(false);
 
   const { data: settings } = useQuery({
     queryKey: ['chatbot-settings'],
@@ -62,6 +64,37 @@ export function EmbeddingsManager() {
       toast.error("Fehler bei der Verarbeitung von Benutzerdaten: " + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsProcessingUserData(false);
+    }
+  };
+
+  const handleProcessTeamData = async () => {
+    try {
+      setIsProcessingTeamData(true);
+      await processTeamDataForEmbeddings();
+      toast.success("Teamdaten wurden erfolgreich für AI-Embeddings verarbeitet");
+      refetchStats();
+    } catch (error) {
+      console.error("Fehler bei der Verarbeitung von Teamdaten:", error);
+      toast.error("Fehler bei der Verarbeitung von Teamdaten: " + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setIsProcessingTeamData(false);
+    }
+  };
+
+  const handleProcessAllData = async () => {
+    try {
+      setIsProcessingAllData(true);
+      // Zuerst Benutzerdaten verarbeiten
+      await processUserDataForEmbeddings();
+      // Dann Teamdaten verarbeiten
+      await processTeamDataForEmbeddings();
+      toast.success("Alle Daten wurden erfolgreich für AI-Embeddings verarbeitet");
+      refetchStats();
+    } catch (error) {
+      console.error("Fehler bei der Verarbeitung der Daten:", error);
+      toast.error("Fehler bei der Verarbeitung: " + (error instanceof Error ? error.message : String(error)));
+    } finally {
+      setIsProcessingAllData(false);
     }
   };
 
@@ -150,17 +183,45 @@ export function EmbeddingsManager() {
           
           <div className="flex flex-col gap-2">
             <h3 className="text-sm font-medium">Aktionen</h3>
-            <div className="flex flex-col gap-2">
-              <Button 
-                onClick={handleProcessUserData} 
-                disabled={isProcessingUserData}
-                variant="default"
-              >
-                {isProcessingUserData ? "Verarbeite Benutzerdaten..." : "Benutzerdaten verarbeiten"}
-              </Button>
-              <p className="text-xs text-muted-foreground">
-                Konvertiert alle Benutzerdaten (Einstellungen, Aufgaben, Leads usw.) in Embeddings für den KI-Zugriff.
-              </p>
+            <div className="grid gap-4">
+              <div className="flex flex-col gap-2">
+                <Button 
+                  onClick={handleProcessUserData} 
+                  disabled={isProcessingUserData || isProcessingAllData}
+                  variant="outline"
+                >
+                  {isProcessingUserData ? "Verarbeite Benutzerdaten..." : "Benutzerdaten verarbeiten"}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Konvertiert alle persönlichen Daten (Einstellungen, Aufgaben, Leads usw.) in Embeddings.
+                </p>
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                <Button 
+                  onClick={handleProcessTeamData} 
+                  disabled={isProcessingTeamData || isProcessingAllData}
+                  variant="outline"
+                >
+                  {isProcessingTeamData ? "Verarbeite Teamdaten..." : "Teamdaten verarbeiten"}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Konvertiert alle Teamdaten in Embeddings, die von allen Teammitgliedern genutzt werden können.
+                </p>
+              </div>
+              
+              <div className="flex flex-col gap-2">
+                <Button 
+                  onClick={handleProcessAllData} 
+                  disabled={isProcessingUserData || isProcessingTeamData || isProcessingAllData}
+                  variant="default"
+                >
+                  {isProcessingAllData ? "Verarbeite alle Daten..." : "Alle Daten verarbeiten"}
+                </Button>
+                <p className="text-xs text-muted-foreground">
+                  Konvertiert alle Benutzer- und Teamdaten in Embeddings für den KI-Zugriff.
+                </p>
+              </div>
             </div>
           </div>
         </div>

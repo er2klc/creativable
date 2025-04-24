@@ -6,6 +6,7 @@ export interface ProcessingOptions {
   sourceType?: string;
   sourceId?: string;
   metadata?: Record<string, any>;
+  teamId?: string;
 }
 
 export const processContentForEmbeddings = async (
@@ -198,6 +199,104 @@ export const processUserDataForEmbeddings = async () => {
     return { success: true, message: "Alle Benutzerdaten wurden erfolgreich für KI-Embeddings verarbeitet" };
   } catch (error) {
     console.error('Fehler bei der Verarbeitung von Benutzerdaten für Embeddings:', error);
+    throw error;
+  }
+};
+
+/**
+ * Verarbeitet alle Teamdaten und wandelt sie in Embeddings um.
+ * Diese werden einmal erstellt und von allen Teammitgliedern geteilt.
+ */
+export const processTeamDataForEmbeddings = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+    
+    // Zuerst alle Teams des Benutzers abrufen
+    const { data: userTeams } = await supabase
+      .from('team_members')
+      .select('team_id')
+      .eq('user_id', user.id);
+    
+    if (!userTeams || userTeams.length === 0) {
+      return { success: true, message: "Keine Teams gefunden" };
+    }
+    
+    const teamIds = userTeams.map(team => team.team_id);
+    
+    // Teamdaten für jedes Team abrufen und verarbeiten
+    for (const teamId of teamIds) {
+      // Teamdetails abrufen
+      const { data: teamData } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('id', teamId)
+        .single();
+      
+      if (teamData) {
+        // Team-Grundinformationen
+        const teamBasicContent = `
+          Team: ${teamData.name}
+          Beschreibung: ${teamData.description || 'Keine Beschreibung'}
+        `.trim();
+        
+        await processContentForEmbeddings(teamBasicContent, 'team', {
+          sourceType: 'team_info',
+          sourceId: teamData.id,
+          metadata: { type: 'team_basic' },
+          teamId: teamData.id
+        });
+        
+        // Team-Posts abrufen
+        const { data: teamPosts } = await supabase
+          .from('team_posts')
+          .select('*')
+          .eq('team_id', teamId);
+        
+        if (teamPosts && teamPosts.length > 0) {
+          for (const post of teamPosts) {
+            await processContentForEmbeddings(post.content, 'team', {
+              sourceType: 'team_post',
+              sourceId: post.id,
+              metadata: { 
+                type: 'team_post',
+                title: post.title,
+                created_at: post.created_at
+              },
+              teamId: teamData.id
+            });
+          }
+        }
+        
+        // Team-Mitglieder abrufen und verarbeiten
+        const { data: teamMembers } = await supabase
+          .from('team_members')
+          .select('*, profiles(id, display_name, avatar_url)')
+          .eq('team_id', teamId);
+          
+        if (teamMembers && teamMembers.length > 0) {
+          const teamMembersContent = `
+            Team Mitglieder in ${teamData.name}:
+            ${teamMembers.map(member => 
+              `- ${member.profiles?.display_name || 'Unbekannt'}`
+            ).join('\n')}
+          `.trim();
+          
+          await processContentForEmbeddings(teamMembersContent, 'team', {
+            sourceType: 'team_members',
+            sourceId: teamData.id,
+            metadata: { type: 'team_members' },
+            teamId: teamData.id
+          });
+        }
+        
+        // Weitere Team-bezogene Daten wie Ereignisse, Dokumente usw. könnten hier verarbeitet werden
+      }
+    }
+    
+    return { success: true, message: "Alle Teamdaten wurden erfolgreich für KI-Embeddings verarbeitet" };
+  } catch (error) {
+    console.error('Fehler bei der Verarbeitung von Teamdaten für Embeddings:', error);
     throw error;
   }
 };
