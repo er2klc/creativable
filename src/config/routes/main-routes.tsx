@@ -11,6 +11,16 @@ const Pool = lazy(() => import("@/pages/Pool"));
 const Admin = lazy(() => import("@/pages/Admin"));
 const Links = lazy(() => import("@/pages/Links"));
 
+// Temporäre Test-Komponente für Debugging
+const TestContacts = () => {
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>Kontakte Testseite</h1>
+      <p>Wenn Sie diese Seite sehen, funktioniert die Route, aber die eigentliche Leads-Komponente hat Probleme.</p>
+    </div>
+  );
+};
+
 export const mainRoutes = [
   {
     path: "/dashboard",
@@ -19,7 +29,8 @@ export const mainRoutes = [
   },
   {
     path: "/contacts",
-    element: <Leads />,
+    // Temporär die Test-Komponente anstelle von Leads verwenden
+    element: <TestContacts />,
     label: "Contacts",
   },
   {

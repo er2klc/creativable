@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LeadsHeader } from "@/components/leads/header/LeadsHeader";
 import { LeadKanbanView } from "@/components/leads/LeadKanbanView";
 import { LeadTableView } from "@/components/leads/LeadTableView";
@@ -10,6 +9,10 @@ import { usePipelineManagement } from "@/components/leads/pipeline/hooks/usePipe
 import { useIsMobile } from "@/hooks/use-mobile";
 
 const Leads = () => {
+  useEffect(() => {
+    console.log("Leads component mounted");
+  }, []);
+
   const isMobile = useIsMobile();
   const [viewMode, setViewMode] = useState<"kanban" | "list">(isMobile ? "list" : "kanban");
   const [searchQuery, setSearchQuery] = useState("");
