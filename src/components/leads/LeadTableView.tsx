@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LeadTableCell } from "./table/LeadTableCell";
 import { LeadTableActions } from "./table/LeadTableActions";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LeadTableViewProps {
@@ -73,12 +73,12 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
   };
 
   // Set up the subscription when the component mounts
-  useEffect(() => {
+  useState(() => {
     const unsubscribe = subscribeToLeadDeletions();
     return () => {
       unsubscribe.then(cleanup => cleanup());
     };
-  }, [selectedPipelineId, queryClient]);
+  }, [selectedPipelineId]);
 
   const handlePhaseChange = async (leadId: string, phaseId: string) => {
     try {

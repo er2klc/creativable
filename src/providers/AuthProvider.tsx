@@ -1,62 +1,107 @@
-
-import { ReactNode, useEffect, useState } from "react";
-import { AuthContext } from "./auth/AuthContext";
+import { useEffect, useState, useCallback, memo } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { AuthContext } from "./auth/AuthContext";
+import { useSessionRefresh } from "@/hooks/auth/use-session-refresh";
+import { useAuthState } from "@/hooks/auth/use-auth-state";
+import { isTokenExpired, handleSessionExpiration } from "@/utils/auth-utils";
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+// Konstanten außerhalb der Komponente definieren für bessere Performance
+const publicPaths = [
+  "/", 
+  "/auth", 
+  "/register", 
+  "/privacy-policy", 
+  "/auth/data-deletion/instagram",
+  "/impressum",
+  "/changelog",
+  "/unity",
+  "/elevate",
+  "/unity/team"
+];
+
+const protectedPaths = [
+  "/dashboard",
+  "/settings",
+  "/leads",
+  "/messages",
+  "/calendar"
+];
+
+export const AuthProvider = memo(({ children }: { children: React.ReactNode }) => {
   const navigate = useNavigate();
-  const isAuthenticated = !!user;
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  
+  useSessionRefresh(protectedPaths, setUser, setIsAuthenticated);
+  useAuthState(setUser, setIsAuthenticated);
+  
+  // Optimierter Setup mit useCallback
+  const setupAuth = useCallback(async () => {
+    try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        if (isTokenExpired(sessionError)) {
+          handleSessionExpiration(
+            location.pathname,
+            protectedPaths,
+            navigate,
+            setUser,
+            setIsAuthenticated
+          );
+        }
+        setIsLoading(false);
+        return;
+      }
+      
+      if (session?.user) {
+        setUser(session.user);
+        setIsAuthenticated(true);
+        
+        if (location.pathname === "/auth") {
+          navigate("/dashboard");
+        }
+      } else {
+        if (protectedPaths.includes(location.pathname)) {
+          navigate("/auth");
+        }
+      }
+    } catch (error: any) {
+      console.error("[Auth] Setup error:", error);
+      if (isTokenExpired(error)) {
+        handleSessionExpiration(
+          location.pathname,
+          protectedPaths,
+          navigate,
+          setUser,
+          setIsAuthenticated
+        );
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, [location.pathname, navigate]);
 
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        setIsLoading(true);
-        const { data: { user }, error } = await supabase.auth.getUser();
+    setupAuth();
+  }, [setupAuth]);
 
-        if (error) {
-          throw error;
-        }
-
-        setUser(user);
-      } catch (error) {
-        console.error("Error checking user session:", error);
-        setError(error as Error);
-        toast.error("There was a problem with your authentication. Please log in again.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkUser();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (event === "SIGNED_IN" && session?.user) {
-          setUser(session.user);
-          navigate('/dashboard');
-        } else if (event === "SIGNED_OUT") {
-          setUser(null);
-          navigate('/auth');
-        } else if (event === "USER_UPDATED" && session?.user) {
-          setUser(session.user);
-        }
-      }
+  // Optimierter Loading Spinner 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#0A0A0A]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+      </div>
     );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [navigate]);
+  }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, isAuthenticated, error: error as Error }}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user }}>
       {children}
     </AuthContext.Provider>
   );
-};
+});

@@ -1,54 +1,95 @@
-import { useState, useCallback, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Tables } from "@/integrations/supabase/types";
-import { MessageTemplateType } from "@/config/messageTemplates";
 
-type FlowState = 'inactive' | 'contact_selection' | 'template_selection' | 'message_preview';
+import { useState, useCallback } from 'react';
+import { Tables } from "@/integrations/supabase/types";
+import { MessageTemplateType } from '@/config/messageTemplates';
+import { useChatTemplates } from '@/hooks/use-chat-templates';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+
+type ChatFlowState = 'initial' | 'contact_selection' | 'template_selection' | 'message_preview';
 
 export const useChatFlow = (userId: string | null) => {
-  const [flowState, setFlowState] = useState<FlowState>('inactive');
+  const [flowState, setFlowState] = useState<ChatFlowState>('initial');
   const [selectedContact, setSelectedContact] = useState<Tables<"leads"> | null>(null);
-  const [selectedTemplateType, setSelectedTemplateType] = useState<MessageTemplateType | null>(null);
+  const [selectedTemplateType, setSelectedTemplateType] = useState<MessageTemplateType>('first_contact');
+  const { generateMessage } = useChatTemplates();
+  const [searchContext, setSearchContext] = useState<{
+    context: 'last' | 'phase' | 'posts';
+    phaseId?: string;
+    keyword?: string;
+  }>({ context: 'last' });
 
-  const { data: contacts = [] } = useQuery({
-    queryKey: ['chat-contacts', userId],
+  const { data: userProfile } = useQuery({
+    queryKey: ['profile', userId],
     queryFn: async () => {
-      if (!userId) return [];
-
+      if (!userId) return null;
       const { data, error } = await supabase
-        .from('leads')
+        .from('profiles')
         .select('*')
-        .eq('user_id', userId)
-        .order('name', { ascending: true });
-
-      if (error) {
-        console.error('Error loading contacts for chat:', error);
-        return [];
-      }
-
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
       return data;
     },
     enabled: !!userId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  const reset = useCallback(() => {
-    setFlowState('inactive');
-    setSelectedContact(null);
-    setSelectedTemplateType(null);
-  }, []);
+  const { data: contacts = [] } = useQuery({
+    queryKey: ['contextual-contacts', userId, searchContext],
+    queryFn: async () => {
+      if (!userId) return [];
+      
+      const { data, error } = await supabase
+        .rpc('get_contextual_contacts', {
+          p_user_id: userId,
+          p_context: searchContext.context,
+          p_phase_id: searchContext.phaseId,
+          p_keyword: searchContext.keyword,
+          p_limit: 10
+        });
+      
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!userId,
+  });
 
-  // Extract command intent from user message
-  const handleUserMessage = useCallback((message: string): boolean => {
+  const handleUserMessage = useCallback((message: string) => {
     const lowerMessage = message.toLowerCase();
     
-    // Message command detection
-    if (lowerMessage.includes('nachricht für') || 
-        lowerMessage.includes('nachricht an') ||
-        lowerMessage.includes('message to') ||
-        lowerMessage.includes('erstell eine nachricht')) {
-      
+    // Letzter Kontakt
+    if (lowerMessage.includes('letzter kontakt') || lowerMessage.includes('zuletzt')) {
+      setSearchContext({ context: 'last' });
+      setFlowState('contact_selection');
+      return true;
+    }
+    
+    // Phase-basierte Suche
+    const phaseMatch = lowerMessage.match(/phase\s*["']?([^"']+)["']?/i);
+    if (phaseMatch) {
+      setSearchContext({ 
+        context: 'phase',
+        phaseId: phaseMatch[1]
+      });
+      setFlowState('contact_selection');
+      return true;
+    }
+    
+    // Content-basierte Suche
+    const contentMatch = lowerMessage.match(/(?:über|about)\s+["']?([^"']+)["']?/i);
+    if (contentMatch) {
+      setSearchContext({
+        context: 'posts',
+        keyword: contentMatch[1]
+      });
+      setFlowState('contact_selection');
+      return true;
+    }
+    
+    // Allgemeine Nachrichtenerstellung
+    if (lowerMessage.includes('nachricht') || lowerMessage.includes('schreib')) {
+      setSearchContext({ context: 'last' });
       setFlowState('contact_selection');
       return true;
     }
@@ -56,55 +97,43 @@ export const useChatFlow = (userId: string | null) => {
     return false;
   }, []);
 
-  // Handle contact selection
+  const generateTemplateMessage = useCallback(() => {
+    if (!selectedContact || !userProfile) return null;
+
+    const context = {
+      contact: selectedContact,
+      userProfile: {
+        display_name: userProfile.display_name,
+        email: userProfile.email
+      },
+      lastInteraction: selectedContact.last_interaction_date ? {
+        type: selectedContact.last_action || 'Interaktion',
+        date: new Date(selectedContact.last_interaction_date).toLocaleDateString('de-DE')
+      } : undefined
+    };
+
+    return generateMessage(selectedTemplateType, context);
+  }, [selectedContact, selectedTemplateType, userProfile, generateMessage]);
+
   const handleContactSelection = useCallback((contact: Tables<"leads">) => {
     setSelectedContact(contact);
     setFlowState('template_selection');
   }, []);
 
-  // Handle template type selection
-  const handleTemplateSelection = useCallback((templateType: MessageTemplateType) => {
-    setSelectedTemplateType(templateType);
+  const handleTemplateSelection = useCallback((type: MessageTemplateType) => {
+    setSelectedTemplateType(type);
     setFlowState('message_preview');
   }, []);
 
-  // Generate template message based on selection
-  const generateTemplateMessage = useCallback((): string | null => {
-    if (!selectedContact || !selectedTemplateType) return null;
-
-    const { name, platform } = selectedContact;
-    
-    switch (selectedTemplateType) {
-      case 'first_contact':
-        return `Hallo ${name},\n\nIch bin auf dein Profil auf ${platform} gestoßen und finde deine Inhalte sehr interessant. Ich würde mich freuen, wenn wir uns austauschen könnten.\n\nViele Grüße`;
-      
-      case 'follow_up':
-        return `Hallo ${name},\n\nIch wollte mich nach unserem letzten Gespräch noch einmal bei dir melden. Wie sieht es bei dir aus mit einem weiteren Austausch?\n\nViele Grüße`;
-      
-      case 'collaboration':
-        return `Hallo ${name},\n\nIch habe ein Angebot, das für dich interessant sein könnte. Lass uns gerne darüber sprechen, wie wir zusammenarbeiten können.\n\nViele Grüße`;
-      
-      case 'event_invitation':
-        return `Hallo ${name},\n\nIch möchte dich zu einem Event einladen. [Event-Details hier]\n\nViele Grüße`;
-        
-      case 'feedback':
-        return `Hallo ${name},\n\nIch würde gerne dein Feedback zu [Thema] erhalten.\n\nViele Grüße`;
-      
-      default:
-        return null;
-    }
-  }, [selectedContact, selectedTemplateType]);
-
-  useEffect(() => {
-    // Reset on unmount
-    return () => {
-      reset();
-    };
-  }, [reset]);
+  const reset = useCallback(() => {
+    setFlowState('initial');
+    setSelectedContact(null);
+    setSelectedTemplateType('first_contact');
+    setSearchContext({ context: 'last' });
+  }, []);
 
   return {
     flowState,
-    setFlowState,
     selectedContact,
     selectedTemplateType,
     contacts,

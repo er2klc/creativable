@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useRef } from "react";
 import { useChatContext } from "@/hooks/use-chat-context";
@@ -12,8 +13,6 @@ import { useChatFlow } from "./hooks/useChatFlow";
 import { MessageTemplateSelector } from "./template-selection/MessageTemplateSelector";
 import { MessagePreview } from "./message-preview/MessagePreview";
 import { cn } from "@/lib/utils";
-import { Tables } from "@/integrations/supabase/types";
-import { MessageTemplateType } from "@/config/messageTemplates";
 
 interface ChatDialogProps {
   open: boolean;
@@ -42,7 +41,6 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
     handleContactSelection,
     handleTemplateSelection,
     generateTemplateMessage,
-    setFlowState,
     reset
   } = useChatFlow(userId);
 
@@ -100,7 +98,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         return (
           <div className="border-t bg-background">
             <ChatContactList
-              contacts={contacts as Tables<"leads">[]}
+              contacts={contacts}
               onSelect={handleContactSelection}
               selectedId={selectedContact?.id}
             />

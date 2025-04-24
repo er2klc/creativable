@@ -1,6 +1,5 @@
-
 import { VideoPlayer } from '../video/VideoPlayer';
-import { FC } from 'react';
+import React from 'react';
 
 interface VideoSectionProps {
   videoUrl: string;
@@ -9,7 +8,7 @@ interface VideoSectionProps {
   onDuration?: (duration: number) => void;
 }
 
-export const VideoSection: FC<VideoSectionProps> = ({ 
+export const VideoSection: React.FC<VideoSectionProps> = ({ 
   videoUrl, 
   onVideoProgress, 
   savedProgress,

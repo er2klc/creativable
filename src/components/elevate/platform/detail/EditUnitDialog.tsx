@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -14,7 +15,6 @@ interface EditUnitDialogProps {
   videoUrl: string;
   onUpdate: (data: { title: string; description: string; videoUrl: string }) => Promise<void>;
   id: string;
-  existingFiles?: any[];
 }
 
 export const EditUnitDialog = ({
@@ -25,7 +25,6 @@ export const EditUnitDialog = ({
   videoUrl: initialVideoUrl,
   onUpdate,
   id,
-  existingFiles = [],
 }: EditUnitDialogProps) => {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription || '');

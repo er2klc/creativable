@@ -42,5 +42,4 @@ export interface TeamEvent extends Appointment {
   recurring_day_of_week?: number;
   team_id: string;
   isRecurring?: boolean;
-  instanceDate?: string;
 }

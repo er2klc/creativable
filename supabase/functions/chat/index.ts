@@ -54,26 +54,13 @@ serve(async (req) => {
     // Get the last user message for context search
     const lastUserMessage = messages[messages.length - 1]?.content || "";
 
-    // First, generate an embedding for the query
-    console.log("🔄 Generating embedding for query text");
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: lastUserMessage,
-    });
-    
-    const queryEmbedding = embeddingResponse.data[0].embedding;
-    console.log("✅ Query embedding generated successfully");
-    
-    // Search for relevant context in both personal and team content
-    console.log("🔍 Searching for relevant context with combined query...");
+    // Search for relevant context in embeddings
+    console.log("🔍 Searching for relevant context...");
     const { data: relevantContext, error: searchError } = await supabase.rpc(
-      'match_combined_content',
+      'match_user_embeddings',
       {
-        query_embedding: queryEmbedding,
-        match_threshold: 0.7,
-        match_count: 5,
-        p_user_id: userId,
-        p_team_id: teamId
+        query_text: lastUserMessage,
+        match_count: 3
       }
     );
 
@@ -85,15 +72,7 @@ serve(async (req) => {
     let contextMessage = "";
     if (relevantContext && relevantContext.length > 0) {
       contextMessage = "Relevant context:\n" + relevantContext
-        .map((ctx: any) => {
-          let sourceName = ctx.source === 'personal' ? 'Personal Data' : `Team: ${ctx.team_id}`;
-          let metadataInfo = "";
-          if (ctx.metadata) {
-            if (ctx.metadata.type) metadataInfo += `Type: ${ctx.metadata.type}\n`;
-            if (ctx.metadata.source_type) metadataInfo += `Source: ${ctx.metadata.source_type}\n`;
-          }
-          return `--- ${sourceName} ---\n${metadataInfo}${ctx.content}`;
-        })
+        .map((ctx: any) => ctx.content)
         .join("\n---\n");
       
       console.log("📚 Found relevant context:", contextMessage);
@@ -103,8 +82,6 @@ serve(async (req) => {
         role: "system",
         content: contextMessage
       });
-    } else {
-      console.log("⚠️ No relevant context found for the query");
     }
 
     // Create chat completion

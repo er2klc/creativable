@@ -89,7 +89,7 @@ serve(async (req) => {
 
         // Store in nexus_context
         const { error: insertError } = await supabase
-          .from('nexus_embeddings')
+          .from('nexus_context')
           .insert({
             user_id: userId,
             context_type: contentType,

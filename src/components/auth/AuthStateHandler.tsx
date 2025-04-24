@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useSessionManagement } from "@/hooks/auth/use-session-management";
-import { AuthChangeEvent, Session } from "@supabase/supabase-js";
+import { AuthChangeEvent } from "@supabase/supabase-js";
 import { toast } from "sonner";
 
 const PUBLIC_ROUTES = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
@@ -17,7 +17,7 @@ export const AuthStateHandler = () => {
     let refreshInterval: NodeJS.Timeout;
     let retryCount = 0;
     const MAX_RETRIES = 3;
-    const RETRY_DELAY = 1000;
+    const RETRY_DELAY = 1000; // 1 second
     
     const setupAuth = async () => {
       try {
@@ -48,14 +48,12 @@ export const AuthStateHandler = () => {
         
         // Set up auth state listener
         const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
-          async (event: AuthChangeEvent, currentSession: Session | null) => {
+          async (event: AuthChangeEvent, currentSession) => {
             console.log("[Auth] State changed:", event, currentSession?.user?.id);
 
             if (event === "SIGNED_IN") {
-              // Behalte die aktuelle URL bei, wenn sie nicht /auth ist
               if (currentSession && location.pathname === "/auth") {
-                const returnTo = location.state?.from?.pathname || "/dashboard";
-                navigate(returnTo);
+                navigate("/dashboard");
               }
             } else if (event === "SIGNED_OUT") {
               if (!PUBLIC_ROUTES.includes(location.pathname)) {
