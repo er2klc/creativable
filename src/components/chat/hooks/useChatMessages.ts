@@ -50,6 +50,151 @@ const loadUserContextForChat = async () => {
   }
 };
 
+// Füge eine Funktion hinzu, um Kontakte direkt abzurufen
+const fetchAllContacts = async () => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("User not authenticated");
+    
+    // Kontakte (Leads) direkt aus der Datenbank abrufen
+    const { data: contacts, error } = await supabase
+      .from('leads')
+      .select('*')
+      .eq('user_id', user.id);
+    
+    if (error) throw error;
+    
+    if (contacts && contacts.length > 0) {
+      // Formatiere die Kontakte als lesbare Liste
+      return contacts.map(contact => ({
+        name: contact.name,
+        company: contact.company_name || 'Keine Firma',
+        email: contact.email || 'Keine E-Mail',
+        phone: contact.phone_number || 'Keine Telefonnummer',
+        platform: contact.platform || 'Keine Plattform',
+        status: contact.status || 'Kein Status'
+      }));
+    }
+    
+    return [];
+  } catch (error) {
+    console.error('Fehler beim Abrufen der Kontakte:', error);
+    return [];
+  }
+};
+
+// Füge diese Funktion zur Unterstützung spezieller Anfragen hinzu
+const handleSpecialQueries = async (query: string) => {
+  const lowerQuery = query.toLowerCase().trim();
+  
+  // Prüfe, ob der Benutzer nach seinen Profildaten fragt ("Wer bin ich?")
+  if (
+    lowerQuery.includes('wer bin ich') || 
+    lowerQuery === 'wer bist du' || 
+    lowerQuery === 'wie heiße ich'
+  ) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return "Du bist nicht angemeldet.";
+      
+      // Benutzerprofil abrufen
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      // Benutzereinstellungen abrufen
+      const { data: settings } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+      
+      return `Du bist ${profile?.display_name || user.email}.\n\n` +
+        `E-Mail: ${user.email}\n` +
+        `Unternehmen: ${settings?.company_name || 'Nicht angegeben'}\n` +
+        `Standort: ${profile?.location || 'Nicht angegeben'}\n` +
+        `Status: ${profile?.status || 'Nicht angegeben'}`;
+    } catch (error) {
+      console.error('Fehler beim Abrufen der Benutzerinformationen:', error);
+      return "Ich konnte deine Benutzerinformationen nicht abrufen.";
+    }
+  }
+  
+  // Prüfe, ob der Benutzer nach Kontakten fragt
+  if (
+    lowerQuery.includes('kontakte') || 
+    lowerQuery.includes('leads') || 
+    (lowerQuery.includes('gib mir') && lowerQuery.includes('alle')) ||
+    lowerQuery === 'alle' ||
+    lowerQuery === 'alle kontakte'
+  ) {
+    const contacts = await fetchAllContacts();
+    
+    if (contacts.length === 0) {
+      return "Ich konnte keine Kontakte in deiner Datenbank finden.";
+    }
+    
+    const contactsListText = contacts.map(contact => 
+      `- ${contact.name} (${contact.company}, ${contact.email}, ${contact.phone})`
+    ).join('\n');
+    
+    return `Hier sind alle deine Kontakte:\n\n${contactsListText}`;
+  }
+
+  // Prüfe, ob der Benutzer nach seinen Aufgaben fragt
+  if (
+    lowerQuery.includes('aufgaben') || 
+    lowerQuery.includes('tasks') || 
+    lowerQuery.includes('todos') ||
+    lowerQuery.includes('to-dos') ||
+    lowerQuery.includes('to do')
+  ) {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return "Du bist nicht angemeldet.";
+      
+      // Aufgaben abrufen
+      const { data: tasks } = await supabase
+        .from('tasks')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('due_date', { ascending: true });
+      
+      if (!tasks || tasks.length === 0) {
+        return "Du hast aktuell keine Aufgaben in deiner Liste.";
+      }
+      
+      const tasksListText = tasks.map(task => 
+        `- ${task.title} (${task.completed ? 'Abgeschlossen' : 'Ausstehend'}, Fällig: ${task.due_date || 'Kein Datum'})`
+      ).join('\n');
+      
+      return `Hier sind deine Aufgaben:\n\n${tasksListText}`;
+    } catch (error) {
+      console.error('Fehler beim Abrufen der Aufgaben:', error);
+      return "Ich konnte deine Aufgaben nicht abrufen.";
+    }
+  }
+  
+  // Prüfe, ob der Benutzer Hilfe zu den Funktionen des Assistenten benötigt
+  if (
+    lowerQuery === 'hilfe' || 
+    lowerQuery === 'help' || 
+    lowerQuery === 'was kannst du' ||
+    lowerQuery === 'funktionen'
+  ) {
+    return `Ich kann dir bei verschiedenen Aufgaben helfen. Hier sind einige Beispiele:\n\n` +
+      `- **Kontakte anzeigen**: "Zeige mir alle meine Kontakte"\n` +
+      `- **Aufgaben verwalten**: "Was sind meine Aufgaben?"\n` +
+      `- **Benutzerinformationen**: "Wer bin ich?"\n` +
+      `- **Allgemeine Hilfe**: "Hilfe" oder "Was kannst du?"\n\n` +
+      `Ich habe direkten Zugriff auf deine Daten in der Anwendung und kann spezifische Informationen abrufen oder Fragen beantworten.`;
+  }
+  
+  return null;
+};
+
 export const useChatMessages = ({
   sessionToken,
   apiKey,
@@ -195,6 +340,24 @@ export const useChatMessages = ({
     
     try {
       const userMessage = { id: Date.now().toString(), role: 'user' as const, content: currentInput };
+      
+      // Prüfe, ob es eine spezielle Anfrage ist, die direkt beantwortet werden kann
+      const specialResponse = await handleSpecialQueries(currentInput);
+      
+      if (specialResponse) {
+        // Wenn eine spezielle Anfrage erkannt wurde, zeige die Antwort sofort an
+        setMessages(prev => [
+          ...prev, 
+          userMessage,
+          { id: crypto.randomUUID(), role: 'assistant' as const, content: specialResponse }
+        ]);
+        if (!overrideMessage) {
+          setInput('');
+        }
+        setIsProcessing(false);
+        return;
+      }
+      
       const assistantMessage = { id: crypto.randomUUID(), role: 'assistant' as const, content: '' };
       
       setMessages(prev => [...prev, userMessage]);
