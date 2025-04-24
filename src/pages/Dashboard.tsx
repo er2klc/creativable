@@ -1,4 +1,3 @@
-
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
 import { QuickActions } from "@/components/dashboard/QuickActions";
@@ -6,10 +5,27 @@ import { LeadPhases } from "@/components/dashboard/LeadPhases";
 import { useAuth } from "@/hooks/use-auth";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { useNavigate } from "react-router-dom";
+import { autoProcessEmbeddings } from "@/lib/auto-embeddings";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  const handleManualProcessing = async () => {
+    try {
+      const result = await autoProcessEmbeddings(false);
+      if (result) {
+        toast.success("Daten wurden für den KI-Zugriff verarbeitet");
+      } else {
+        toast.info("Keine Verarbeitung erforderlich");
+      }
+    } catch (error) {
+      toast.error("Fehler bei der Datenverarbeitung");
+      console.error(error);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -31,6 +47,17 @@ const Dashboard = () => {
       </div>
       <DashboardHeader userEmail={user?.email} />
       <div className="pt-[132px] md:pt-[84px] space-y-8">
+        <div className="flex items-center justify-between mb-4">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleManualProcessing}
+            className="text-xs"
+          >
+            KI-Daten aktualisieren
+          </Button>
+        </div>
         <QuickActions />
         <DashboardMetrics />
         <LeadPhases />
