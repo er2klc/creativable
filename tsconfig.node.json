@@ -8,7 +8,6 @@
 
     /* 🔧 Fix: Module-Resolution */
     "moduleResolution": "NodeNext",
-    "allowImportingTsExtensions": true,
     "isolatedModules": true,
     "moduleDetection": "force",
 
