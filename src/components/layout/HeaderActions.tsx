@@ -75,7 +75,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
         .from('team_direct_messages')
         .select(`
           team_id,
-          sender:sender_id (
+          sender:profiles!sender_id (
             id,
             display_name,
             avatar_url
