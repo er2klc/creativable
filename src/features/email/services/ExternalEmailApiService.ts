@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { transformEmailForStorage, EmailData } from "../utils/emailTransform";
 import { toast } from "sonner";
 
 interface EmailConfig {
@@ -61,39 +62,45 @@ export class ExternalEmailApiService {
         throw new Error(result.error || 'Unknown error fetching emails');
       }
 
-      // Save the emails to Supabase
-      const { data: savedEmails, error: saveError } = await supabase
-        .from('emails')
-        .upsert(result.data.map((email: any) => ({
-          user_id: (await supabase.auth.getUser()).data.user?.id,
-          folder: config.folder || 'INBOX',
-          message_id: email.id,
-          subject: email.subject,
-          from_name: email.from?.value?.[0]?.name || '',
-          from_email: email.from?.value?.[0]?.address || '',
-          to_name: email.to?.value?.[0]?.name || '',
-          to_email: email.to?.value?.[0]?.address || '',
-          html_content: email.html || '',
-          text_content: email.text || '',
-          sent_at: email.date,
-          received_at: new Date().toISOString(),
-          read: email.seen || false,
-          starred: false,
-          has_attachments: (email.attachments?.length || 0) > 0,
-          flags: email.flags || [],
-          direction: 'incoming'
-        })), {
-          onConflict: 'user_id,message_id'
-        });
+      // Process and save emails in batches to avoid excessive payload size
+      const batchSize = 20;
+      const totalEmails = result.data.length;
+      let savedCount = 0;
+      const userId = (await supabase.auth.getUser()).data.user?.id;
 
-      if (saveError) {
-        console.error("Error saving emails:", saveError);
-        throw saveError;
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+
+      // Process emails in batches
+      for (let i = 0; i < totalEmails; i += batchSize) {
+        const batch = result.data.slice(i, i + batchSize);
+        const emailsToSave = batch.map((email: EmailData) => 
+          transformEmailForStorage(email, userId, config.folder || 'INBOX')
+        );
+
+        try {
+          const { error: saveError } = await supabase
+            .from('emails')
+            .upsert(emailsToSave, {
+              onConflict: 'user_id,message_id',
+              ignoreDuplicates: false
+            });
+
+          if (saveError) {
+            console.error("Error saving batch:", saveError);
+            // Continue with other batches even if one fails
+          } else {
+            savedCount += batch.length;
+          }
+        } catch (batchError) {
+          console.error("Error saving a batch:", batchError);
+        }
       }
 
       // Update the user settings with sync info
       await supabase.from('user_settings').upsert({
-        user_id: (await supabase.auth.getUser()).data.user?.id,
+        user_id: userId,
         email_configured: true,
         last_email_sync: new Date().toISOString()
       }, {
@@ -105,7 +112,7 @@ export class ExternalEmailApiService {
 
       return {
         success: true,
-        totalSaved: result.data.length
+        totalSaved: savedCount
       };
 
     } catch (error: any) {
@@ -119,15 +126,15 @@ export class ExternalEmailApiService {
 
   static async createSampleEmails(folder: string = 'INBOX'): Promise<boolean> {
     try {
-      const userId = (await supabase.auth.getUser()).data.user?.id;
-      if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
         console.error("No user found for creating sample emails");
         return false;
       }
 
       const sampleEmails = [
         {
-          user_id: userId,
+          user_id: user.id,
           folder: folder,
           message_id: `sample-${Date.now()}-1`,
           subject: 'Welcome to Your Email',
@@ -142,6 +149,26 @@ export class ExternalEmailApiService {
           read: false,
           starred: false,
           has_attachments: false,
+          flags: [],
+          direction: 'incoming'
+        },
+        {
+          user_id: user.id,
+          folder: folder,
+          message_id: `sample-${Date.now()}-2`,
+          subject: 'Getting Started with Email Features',
+          from_name: 'Support Team',
+          from_email: 'support@example.com',
+          to_name: user.email?.split('@')[0] || '',
+          to_email: user.email || '',
+          html_content: '<h3>Email Features</h3><p>Here are some features you can use:</p><ul><li>Compose new emails</li><li>Reply to messages</li><li>Forward emails</li><li>Organize with folders</li></ul>',
+          text_content: 'Email Features\n\nHere are some features you can use:\n- Compose new emails\n- Reply to messages\n- Forward emails\n- Organize with folders',
+          sent_at: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
+          received_at: new Date(Date.now() - 3540000).toISOString(), // 59 minutes ago
+          read: false,
+          starred: true,
+          has_attachments: false,
+          flags: [],
           direction: 'incoming'
         }
       ];
