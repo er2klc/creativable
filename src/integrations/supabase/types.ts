@@ -1809,6 +1809,7 @@ export type Database = {
       }
       nexus_context: {
         Row: {
+          chunk_index: number | null
           content: string
           context_type: string
           created_at: string | null
@@ -1819,10 +1820,12 @@ export type Database = {
           relevance_score: number | null
           source_id: string | null
           source_type: string | null
+          total_chunks: number | null
           updated_at: string | null
           user_id: string
         }
         Insert: {
+          chunk_index?: number | null
           content: string
           context_type: string
           created_at?: string | null
@@ -1833,10 +1836,12 @@ export type Database = {
           relevance_score?: number | null
           source_id?: string | null
           source_type?: string | null
+          total_chunks?: number | null
           updated_at?: string | null
           user_id: string
         }
         Update: {
+          chunk_index?: number | null
           content?: string
           context_type?: string
           created_at?: string | null
@@ -1847,6 +1852,7 @@ export type Database = {
           relevance_score?: number | null
           source_id?: string | null
           source_type?: string | null
+          total_chunks?: number | null
           updated_at?: string | null
           user_id?: string
         }

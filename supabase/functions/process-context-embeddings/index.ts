@@ -1,7 +1,6 @@
 
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.3.0";
 
 const corsHeaders = {
@@ -19,7 +18,7 @@ interface ProcessingRequest {
 }
 
 serve(async (req) => {
-  // Handle CORS
+  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -37,20 +36,6 @@ serve(async (req) => {
     const { userId, contentType, content, metadata, sourceType, sourceId }: ProcessingRequest = await req.json();
 
     console.log(`Processing embedding request for user ${userId}, type ${contentType}`);
-
-    // Create processing status entry
-    const { data: statusData, error: statusError } = await supabase
-      .from('embedding_processing_status')
-      .insert({
-        user_id: userId,
-        content_type: contentType,
-        status: 'processing',
-        metadata
-      })
-      .select()
-      .single();
-
-    if (statusError) throw statusError;
 
     // Function to split content into chunks
     const chunkContent = (text: string, maxLength = 1000): string[] => {
@@ -112,20 +97,10 @@ serve(async (req) => {
       }
     }
 
-    // Update processing status
-    await supabase
-      .from('embedding_processing_status')
-      .update({
-        status: 'completed',
-        processed_at: new Date().toISOString()
-      })
-      .eq('id', statusData.id);
-
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: `Successfully processed ${totalChunks} chunks`,
-        statusId: statusData.id 
+        message: `Successfully processed ${totalChunks} chunks` 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
