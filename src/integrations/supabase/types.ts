@@ -4692,6 +4692,7 @@ export type Database = {
           email_configured: boolean | null
           id: string
           last_email_sync: string | null
+          last_embedding_processing: string | null
           time_discrepancy_detected: boolean | null
           time_discrepancy_minutes: number | null
           updated_at: string | null
@@ -4702,6 +4703,7 @@ export type Database = {
           email_configured?: boolean | null
           id?: string
           last_email_sync?: string | null
+          last_embedding_processing?: string | null
           time_discrepancy_detected?: boolean | null
           time_discrepancy_minutes?: number | null
           updated_at?: string | null
@@ -4712,6 +4714,7 @@ export type Database = {
           email_configured?: boolean | null
           id?: string
           last_email_sync?: string | null
+          last_embedding_processing?: string | null
           time_discrepancy_detected?: boolean | null
           time_discrepancy_minutes?: number | null
           updated_at?: string | null
