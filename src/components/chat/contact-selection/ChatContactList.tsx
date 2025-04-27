@@ -1,5 +1,4 @@
 
-// Update the ScrollArea props to remove 'orientation'
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Input } from "@/components/ui/input";
 import { useState, useMemo } from "react";

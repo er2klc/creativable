@@ -99,15 +99,11 @@ export const LearningUnitContent = ({
         videoUrl={videoUrl}
         onUpdate={handleUpdate}
         existingFiles={[]}
-        onFileRemove={async (index) => {
-          const newFiles = [...files];
-          newFiles.splice(index, 1);
-          setFiles(newFiles);
-        }}
+        onFileRemove={async () => {}}
         onFilesSelected={setFiles}
         files={files}
         id={id}
       />
     </div>
   );
-};
+}

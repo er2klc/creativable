@@ -239,17 +239,21 @@ export const QuickActions = () => {
         onOpenChange={setShowAddLeadDialog}
       />
 
-      <CreateInstagramContactDialog
-        open={showInstagramDialog}
-        onOpenChange={setShowInstagramDialog}
-        pipelineId={defaultPipeline || ""}
-      />
+      {defaultPipeline && (
+        <>
+          <CreateInstagramContactDialog
+            open={showInstagramDialog}
+            onOpenChange={setShowInstagramDialog}
+            pipelineId={defaultPipeline}
+          />
 
-      <CreateLinkedInContactDialog
-        open={showLinkedInDialog}
-        onOpenChange={setShowLinkedDialog}
-        pipelineId={defaultPipeline || ""}
-      />
+          <CreateLinkedInContactDialog
+            open={showLinkedInDialog}
+            onOpenChange={setShowLinkedDialog}
+            pipelineId={defaultPipeline}
+          />
+        </>
+      )}
 
       <NewAppointmentDialog 
         open={showNewAppointmentDialog}

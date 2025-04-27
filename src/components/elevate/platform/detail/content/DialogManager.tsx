@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +66,7 @@ export const DialogManager = ({
             }
           }}
           existingFiles={[]}
-          onFileRemove={() => {}}
+          onFileRemove={async () => {}}
           onFilesSelected={setFiles}
           files={files}
           id={activeUnit.id}
