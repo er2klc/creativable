@@ -32,7 +32,7 @@ export const QuickActions = () => {
   const [showMainDialog, setShowMainDialog] = useState(false);
   const [showAddLeadDialog, setShowAddLeadDialog] = useState(false);
   const [showInstagramDialog, setShowInstagramDialog] = useState(false);
-  const [showLinkedInDialog, setShowLinkedInDialog] = useState(false);
+  const [showLinkedInDialog, setShowLinkedDialog] = useState(false);
   const [showNewAppointmentDialog, setShowNewAppointmentDialog] = useState(false);
   const [showAddTaskDialog, setShowAddTaskDialog] = useState(false);
   const [showTeamDialog, setShowTeamDialog] = useState(false);
@@ -63,6 +63,38 @@ export const QuickActions = () => {
       return teamMembers
         .map(tm => tm.teams)
         .filter((team): team is Team => team !== null);
+    }
+  });
+
+  // Get default pipeline for the lead dialogs
+  const { data: defaultPipeline } = useQuery({
+    queryKey: ['default-pipeline'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return null;
+      
+      const { data, error } = await supabase
+        .from('pipelines')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_default', true)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching default pipeline:', error);
+        
+        // Fallback: get any pipeline
+        const { data: anyPipeline } = await supabase
+          .from('pipelines')
+          .select('id')
+          .eq('user_id', user.id)
+          .limit(1)
+          .single();
+          
+        return anyPipeline?.id || null;
+      }
+      
+      return data?.id || null;
     }
   });
 
@@ -184,7 +216,7 @@ export const QuickActions = () => {
               className="flex flex-col items-center gap-2 h-auto py-4"
               onClick={() => {
                 setShowMainDialog(false);
-                setShowLinkedInDialog(true);
+                setShowLinkedDialog(true);
               }}
             >
               <div className="relative text-[#0A66C2]">
@@ -210,11 +242,13 @@ export const QuickActions = () => {
       <CreateInstagramContactDialog
         open={showInstagramDialog}
         onOpenChange={setShowInstagramDialog}
+        pipelineId={defaultPipeline || ""}
       />
 
       <CreateLinkedInContactDialog
         open={showLinkedInDialog}
-        onOpenChange={setShowLinkedInDialog}
+        onOpenChange={setShowLinkedDialog}
+        pipelineId={defaultPipeline || ""}
       />
 
       <NewAppointmentDialog 

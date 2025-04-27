@@ -1,4 +1,3 @@
-
 import { format, isSameDay, isWithinInterval, addDays, addWeeks, addMonths, startOfMonth, endOfMonth } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,8 +40,8 @@ const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] 
           start_time: format(instanceDate, "yyyy-MM-dd'T'HH:mm:ssxxx"),
           end_time: event.end_time 
             ? format(new Date(event.end_time), "yyyy-MM-dd'T'HH:mm:ssxxx") 
-            : format(instanceDate, "yyyy-MM-dd'T'HH:mm:ssxxx"),
-          instanceDate: instanceDate.toISOString() // Add reference to the instance date
+            : format(instanceDate, "yyyy-MM-dd'T'HH:mm:ssxxx")
+          // Removed instanceDate property that was causing the type error
         });
       }
 

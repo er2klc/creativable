@@ -53,13 +53,13 @@ export const DashboardMetrics = () => {
         const platform = curr.platform || 'Unknown';
         acc[platform] = (acc[platform] || 0) + 1;
         return acc;
-      }, {});
+      }, {} as Record<string, number>);
 
       const statuses = data.reduce((acc, curr) => {
         const status = curr.status || 'lead';
         acc[status] = (acc[status] || 0) + 1;
         return acc;
-      }, {});
+      }, {} as Record<string, number>);
 
       return {
         platforms: Object.entries(platforms).map(([platform, count]) => ({
@@ -152,10 +152,12 @@ export const DashboardMetrics = () => {
     : 0;
 
   // Helper function to safely calculate percentage
-  const safePercentage = (count, total) => {
+  const safePercentage = (count: number, total: Record<string, number>) => {
     const totalSum = Object.values(total || {}).reduce((a, b) => Number(a) + Number(b), 0);
     return totalSum > 0 ? (count / totalSum) * 100 : 0;
   };
+
+  const statusData = contactsByPlatform.statuses as Record<string, number>;
 
   return (
     <div className="space-y-6 w-full mb-8">
@@ -171,7 +173,7 @@ export const DashboardMetrics = () => {
           <CardContent>
             <div className="space-y-2">
               {contactsByPlatform.platforms && contactsByPlatform.platforms.map(({ platform, count }) => {
-                const Icon = platformIcons[platform] || Users;
+                const Icon = platformIcons[platform as keyof typeof platformIcons] || Users;
                 return (
                   <div key={platform} className="flex justify-between items-center p-2 hover:bg-black/5 rounded-lg transition-colors">
                     <div className="flex items-center gap-2">
@@ -215,10 +217,10 @@ export const DashboardMetrics = () => {
                 </h4>
                 {taskStats.highPriorityTasks && taskStats.highPriorityTasks.length > 0 ? (
                   <div className="space-y-2">
-                    {taskStats.highPriorityTasks.map(task => (
+                    {taskStats.highPriorityTasks.map((task: any) => (
                       <div key={task.id} className="flex items-center justify-between p-2 bg-red-50/50 dark:bg-red-900/20 rounded-lg">
                         <span className="text-sm truncate flex-1">{task.title}</span>
-                        {priorityIcons[task.priority]}
+                        {priorityIcons[task.priority as keyof typeof priorityIcons] || null}
                       </div>
                     ))}
                   </div>
@@ -245,7 +247,7 @@ export const DashboardMetrics = () => {
           <CardContent>
             <div className="space-y-2">
               {Array.isArray(upcomingAppointments) && upcomingAppointments.length > 0 ? (
-                upcomingAppointments.map(appointment => (
+                upcomingAppointments.map((appointment: any) => (
                   <div key={appointment.id} className="flex justify-between items-center p-2 hover:bg-black/5 rounded-lg">
                     <div className="flex flex-col">
                       <span className="font-medium text-sm">
@@ -287,12 +289,12 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Partner</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactsByPlatform.statuses?.partner || 0}</span>
+                  <span>{statusData?.partner || 0}</span>
                 </div>
                 <Progress 
                   value={safePercentage(
-                    contactsByPlatform.statuses?.partner || 0,
-                    contactsByPlatform.statuses
+                    statusData?.partner || 0,
+                    statusData
                   )}
                   className="h-2" 
                 />
@@ -301,12 +303,12 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Kunde</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactsByPlatform.statuses?.customer || 0}</span>
+                  <span>{statusData?.customer || 0}</span>
                 </div>
                 <Progress 
                   value={safePercentage(
-                    contactsByPlatform.statuses?.customer || 0,
-                    contactsByPlatform.statuses
+                    statusData?.customer || 0,
+                    statusData
                   )} 
                   className="h-2" 
                 />
@@ -315,12 +317,12 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Not for now</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactsByPlatform.statuses?.not_for_now || 0}</span>
+                  <span>{statusData?.not_for_now || 0}</span>
                 </div>
                 <Progress 
                   value={safePercentage(
-                    contactsByPlatform.statuses?.not_for_now || 0,
-                    contactsByPlatform.statuses
+                    statusData?.not_for_now || 0,
+                    statusData
                   )} 
                   className="h-2" 
                 />
@@ -329,12 +331,12 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Kein Interesse</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactsByPlatform.statuses?.no_interest || 0}</span>
+                  <span>{statusData?.no_interest || 0}</span>
                 </div>
                 <Progress 
                   value={safePercentage(
-                    contactsByPlatform.statuses?.no_interest || 0,
-                    contactsByPlatform.statuses
+                    statusData?.no_interest || 0,
+                    statusData
                   )} 
                   className="h-2" 
                 />
