@@ -921,7 +921,7 @@ export type Database = {
         Row: {
           archived: boolean | null
           bcc: string[] | null
-          body: string
+          body: string | null
           cc: string[] | null
           created_at: string | null
           direction: string
@@ -953,10 +953,10 @@ export type Database = {
         Insert: {
           archived?: boolean | null
           bcc?: string[] | null
-          body: string
+          body?: string | null
           cc?: string[] | null
           created_at?: string | null
-          direction: string
+          direction?: string
           error_message?: string | null
           flags?: Json | null
           folder?: string
@@ -985,7 +985,7 @@ export type Database = {
         Update: {
           archived?: boolean | null
           bcc?: string[] | null
-          body?: string
+          body?: string | null
           cc?: string[] | null
           created_at?: string | null
           direction?: string
@@ -4676,6 +4676,39 @@ export type Database = {
           title?: string
           updated_at?: string | null
           url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string | null
+          email_configured: boolean | null
+          id: string
+          last_email_sync: string | null
+          time_discrepancy_detected: boolean | null
+          time_discrepancy_minutes: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_configured?: boolean | null
+          id?: string
+          last_email_sync?: string | null
+          time_discrepancy_detected?: boolean | null
+          time_discrepancy_minutes?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_configured?: boolean | null
+          id?: string
+          last_email_sync?: string | null
+          time_discrepancy_detected?: boolean | null
+          time_discrepancy_minutes?: number | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
