@@ -9,6 +9,154 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      changelog_entries: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          status: string | null
+          title: string
+          type: string | null
+          version: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          title: string
+          type?: string | null
+          version: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          status?: string | null
+          title?: string
+          type?: string | null
+          version?: string
+        }
+        Relationships: []
+      }
+      documents: {
+        Row: {
+          created_at: string | null
+          file_path: string
+          file_type: string
+          filename: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_path: string
+          file_type: string
+          filename: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_path?: string
+          file_type?: string
+          filename?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_folders: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          parent_id: string | null
+          path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          parent_id?: string | null
+          path: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          parent_id?: string | null
+          path?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_folders_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "email_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      emails: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          flagged: boolean | null
+          folder_id: string | null
+          html_content: string | null
+          id: string
+          message_id: string
+          read: boolean | null
+          received_at: string | null
+          recipient: string | null
+          sender: string | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          flagged?: boolean | null
+          folder_id?: string | null
+          html_content?: string | null
+          id?: string
+          message_id: string
+          read?: boolean | null
+          received_at?: string | null
+          recipient?: string | null
+          sender?: string | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          flagged?: boolean | null
+          folder_id?: string | null
+          html_content?: string | null
+          id?: string
+          message_id?: string
+          read?: boolean | null
+          received_at?: string | null
+          recipient?: string | null
+          sender?: string | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "emails_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "email_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_files: {
         Row: {
           created_at: string | null
@@ -382,6 +530,82 @@ export type Database = {
         }
         Relationships: []
       }
+      presentation_pages: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          lead_id: string | null
+          title: string
+          user_id: string
+          view_count: number | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_id?: string | null
+          title: string
+          user_id: string
+          view_count?: number | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          lead_id?: string | null
+          title?: string
+          user_id?: string
+          view_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_pages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      presentation_views: {
+        Row: {
+          id: string
+          ip_address: string | null
+          page_id: string
+          user_agent: string | null
+          viewed_at: string | null
+        }
+        Insert: {
+          id?: string
+          ip_address?: string | null
+          page_id: string
+          user_agent?: string | null
+          viewed_at?: string | null
+        }
+        Update: {
+          id?: string
+          ip_address?: string | null
+          page_id?: string
+          user_agent?: string | null
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presentation_views_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "presentation_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -450,6 +674,86 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      shortcuts: {
+        Row: {
+          created_at: string | null
+          icon: string | null
+          id: string
+          shortcut_key: string | null
+          title: string
+          url: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          shortcut_key?: string | null
+          title: string
+          url: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          shortcut_key?: string | null
+          title?: string
+          url?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_media_posts: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          id: string
+          lead_id: string
+          media_type: string | null
+          media_urls: string[] | null
+          platform: string
+          post_type: string
+          posted_at: string | null
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          media_type?: string | null
+          media_urls?: string[] | null
+          platform: string
+          post_type: string
+          posted_at?: string | null
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          media_type?: string | null
+          media_urls?: string[] | null
+          platform?: string
+          post_type?: string
+          posted_at?: string | null
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_media_posts_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tasks: {
         Row: {
@@ -551,6 +855,59 @@ export type Database = {
           },
         ]
       }
+      team_events: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          end_time: string
+          id: string
+          is_90_day_run: boolean | null
+          is_admin_only: boolean | null
+          recurring_day_of_week: number | null
+          recurring_pattern: string | null
+          start_time: string
+          team_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          end_time: string
+          id?: string
+          is_90_day_run?: boolean | null
+          is_admin_only?: boolean | null
+          recurring_day_of_week?: number | null
+          recurring_pattern?: string | null
+          start_time: string
+          team_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          end_time?: string
+          id?: string
+          is_90_day_run?: boolean | null
+          is_admin_only?: boolean | null
+          recurring_day_of_week?: number | null
+          recurring_pattern?: string | null
+          start_time?: string
+          team_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string
@@ -625,6 +982,39 @@ export type Database = {
           slug?: string
           updated_at?: string | null
           video_url?: string | null
+        }
+        Relationships: []
+      }
+      vision_board_images: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          image_url: string
+          position_x: number | null
+          position_y: number | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url: string
+          position_x?: number | null
+          position_y?: number | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string
+          position_x?: number | null
+          position_y?: number | null
+          title?: string | null
+          user_id?: string
         }
         Relationships: []
       }
