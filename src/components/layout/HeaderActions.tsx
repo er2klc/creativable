@@ -76,7 +76,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
         .from('team_direct_messages')
         .select(`
           team_id,
-          sender:sender_id (
+          sender:profiles!team_direct_messages_sender_id_fkey (
             id,
             display_name,
             avatar_url
@@ -91,10 +91,15 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
         .eq('receiver_id', user.id)
         .eq('read', false);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching unread messages:', error);
+        return [];
+      }
 
-      const teamMessages = messages.reduce((acc, msg) => {
+      const teamMessages = messages?.reduce((acc: Record<string, TeamWithUnreadCount>, msg: any) => {
         const team = msg.teams;
+        const sender = msg.sender;
+        
         if (!acc[team.id]) {
           acc[team.id] = {
             id: team.id,
@@ -106,7 +111,6 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
           };
         }
         
-        const sender = msg.sender;
         if (!acc[team.id].unread_by_user[sender.id]) {
           acc[team.id].unread_by_user[sender.id] = {
             count: 0,
@@ -119,7 +123,7 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
         acc[team.id].unread_by_user[sender.id].count++;
         
         return acc;
-      }, {} as Record<string, TeamWithUnreadCount>);
+      }, {}) || {};
 
       return Object.values(teamMessages).sort((a, b) => b.unread_count - a.unread_count);
     },

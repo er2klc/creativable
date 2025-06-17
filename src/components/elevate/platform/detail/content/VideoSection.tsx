@@ -1,6 +1,5 @@
 
 import { useEffect, useRef } from 'react';
-import ReactPlayer from 'react-player/lazy';
 
 interface VideoSectionProps {
   videoUrl: string;
@@ -15,86 +14,60 @@ export const VideoSection = ({
   savedProgress = 0,
   onDuration = () => {}
 }: VideoSectionProps) => {
-  const playerRef = useRef<ReactPlayer>(null);
-  const progressInterval = useRef<NodeJS.Timeout | null>(null);
-  const progressTracking = useRef<boolean>(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    return () => {
-      if (progressInterval.current) {
-        clearInterval(progressInterval.current);
+    const video = videoRef.current;
+    if (!video) return;
+
+    const handleLoadedMetadata = () => {
+      if (onDuration) {
+        onDuration(video.duration);
+      }
+      if (savedProgress > 0) {
+        video.currentTime = (savedProgress / 100) * video.duration;
       }
     };
-  }, []);
 
-  const handleStart = () => {
-    progressTracking.current = true;
-    
-    // Start tracking progress
-    if (!progressInterval.current) {
-      progressInterval.current = setInterval(() => {
-        if (progressTracking.current && playerRef.current) {
-          const player = playerRef.current;
-          const duration = player.getDuration();
-          const currentTime = player.getCurrentTime();
-          if (duration > 0) {
-            const progressPercent = (currentTime / duration) * 100;
-            onVideoProgress(progressPercent);
-            localStorage.setItem(`video-progress-${videoUrl}`, progressPercent.toString());
-          }
-        }
-      }, 5000); // Update progress every 5 seconds
-    }
-  };
+    const handleTimeUpdate = () => {
+      if (video.duration > 0) {
+        const progress = (video.currentTime / video.duration) * 100;
+        onVideoProgress(progress);
+      }
+    };
 
-  const handlePause = () => {
-    progressTracking.current = false;
-  };
+    video.addEventListener('loadedmetadata', handleLoadedMetadata);
+    video.addEventListener('timeupdate', handleTimeUpdate);
 
-  const handleEnded = () => {
-    progressTracking.current = false;
-    onVideoProgress(100);
-    localStorage.setItem(`video-progress-${videoUrl}`, '100');
-  };
+    return () => {
+      video.removeEventListener('loadedmetadata', handleLoadedMetadata);
+      video.removeEventListener('timeupdate', handleTimeUpdate);
+    };
+  }, [videoUrl, onVideoProgress, savedProgress, onDuration]);
 
-  const handleDuration = (duration: number) => {
-    onDuration(duration);
-  };
-
-  const handleReady = () => {
-    if (savedProgress && savedProgress > 0 && playerRef.current) {
-      const duration = playerRef.current.getDuration();
-      const seekTime = (savedProgress / 100) * duration;
-      playerRef.current.seekTo(seekTime, 'seconds');
-    }
-  };
+  const isYouTubeUrl = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
 
   return (
     <div className="col-span-12 lg:col-span-8">
       <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
         {videoUrl ? (
-          <ReactPlayer
-            ref={playerRef}
-            url={videoUrl}
-            width="100%"
-            height="100%"
-            controls
-            playing={false}
-            onStart={handleStart}
-            onPlay={handleStart}
-            onPause={handlePause}
-            onEnded={handleEnded}
-            onDuration={handleDuration}
-            onReady={handleReady}
-            config={{
-              youtube: {
-                playerVars: {
-                  modestbranding: 1,
-                  rel: 0
-                }
-              }
-            }}
-          />
+          isYouTubeUrl ? (
+            <iframe
+              src={videoUrl.replace('watch?v=', 'embed/')}
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              allowFullScreen
+              title="Video Player"
+            />
+          ) : (
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              controls
+              className="w-full h-full"
+            />
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center text-gray-400">
             Kein Video verfügbar
