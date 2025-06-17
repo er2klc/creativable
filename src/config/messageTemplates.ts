@@ -6,6 +6,16 @@ export type MessageTemplateType =
   | "collaboration"
   | "feedback";
 
+export interface MessageTemplate {
+  structure: {
+    greeting: string;
+    introduction: string;
+    main_content: string;
+    call_to_action: string;
+    closing: string;
+  };
+}
+
 export const messageTemplates: Record<MessageTemplateType, (contactName: string) => string> = {
   first_contact: (name) => 
     `Hallo ${name},\n\nIch bin auf dein Profil gestoßen und finde deine Arbeit sehr inspirierend. Ich würde mich freuen, wenn wir uns vernetzen könnten.\n\nViele Grüße`,
@@ -21,4 +31,21 @@ export const messageTemplates: Record<MessageTemplateType, (contactName: string)
   
   feedback: (name) => 
     `Hallo ${name},\n\nIch würde mich über dein Feedback zu meinem neuesten Projekt freuen. Deine Meinung ist mir sehr wichtig.\n\nViele Grüße`,
+};
+
+// Template structures for different platforms
+const defaultTemplateStructure: MessageTemplate = {
+  structure: {
+    greeting: "{{name}}",
+    introduction: "{{personalization}}",
+    main_content: "{{business_value}}",
+    call_to_action: "{{next_steps}}",
+    closing: "Viele Grüße"
+  }
+};
+
+export const getMessageTemplate = (type: MessageTemplateType, platform: string): MessageTemplate | null => {
+  // For now, return the default structure for all types and platforms
+  // This can be expanded later with platform-specific templates
+  return defaultTemplateStructure;
 };
