@@ -1,8 +1,8 @@
+
 import { useChat } from "ai/react";
 import { toast } from "sonner";
 import { useCallback, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { searchUserContent, searchSimilarContent } from "@/utils/embeddings";
 
 interface UseChatMessagesProps {
   sessionToken: string | null;
@@ -39,8 +39,7 @@ const loadUserContextForChat = async () => {
       Benutzerinformationen:
       Name: ${profile?.display_name || 'Unbekannt'}
       Email: ${user.email}
-      Unternehmen: ${settings?.company_name || 'Nicht angegeben'}
-      Position: ${profile?.status || 'Nicht angegeben'}
+      Sprache: ${settings?.language || 'de'}
     `.trim();
     
     return initialContext;
@@ -68,11 +67,10 @@ const fetchAllContacts = async () => {
       // Formatiere die Kontakte als lesbare Liste
       return contacts.map(contact => ({
         name: contact.name,
-        company: contact.company_name || 'Keine Firma',
         email: contact.email || 'Keine E-Mail',
         phone: contact.phone_number || 'Keine Telefonnummer',
         platform: contact.platform || 'Keine Plattform',
-        status: contact.status || 'Kein Status'
+        industry: contact.industry || 'Keine Branche'
       }));
     }
     
@@ -113,9 +111,8 @@ const handleSpecialQueries = async (query: string) => {
       
       return `Du bist ${profile?.display_name || user.email}.\n\n` +
         `E-Mail: ${user.email}\n` +
-        `Unternehmen: ${settings?.company_name || 'Nicht angegeben'}\n` +
-        `Standort: ${profile?.location || 'Nicht angegeben'}\n` +
-        `Status: ${profile?.status || 'Nicht angegeben'}`;
+        `Sprache: ${settings?.language || 'Deutsch'}\n` +
+        `Theme: ${settings?.theme || 'Light'}`;
     } catch (error) {
       console.error('Fehler beim Abrufen der Benutzerinformationen:', error);
       return "Ich konnte deine Benutzerinformationen nicht abrufen.";
@@ -137,7 +134,7 @@ const handleSpecialQueries = async (query: string) => {
     }
     
     const contactsListText = contacts.map(contact => 
-      `- ${contact.name} (${contact.company}, ${contact.email}, ${contact.phone})`
+      `- ${contact.name} (${contact.email}, ${contact.phone})`
     ).join('\n');
     
     return `Hier sind alle deine Kontakte:\n\n${contactsListText}`;
@@ -233,7 +230,7 @@ export const useChatMessages = ({
     setInput,
     isLoading 
   } = useChat({
-    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
+    api: `https://nqahuocznyiqphgoktid.supabase.co/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
@@ -271,56 +268,6 @@ export const useChatMessages = ({
       }
     ]);
   }, [setMessages, enhancedSystemMessage]);
-
-  // Funktion zum Finden von relevanten Kontextinformationen basierend auf der Benutzereingabe
-  const findRelevantContext = async (query: string) => {
-    try {
-      // Suche in persönlichen Daten
-      const personalContext = await searchUserContent(query);
-      
-      // Suche in Teamdaten, falls ein Team ausgewählt ist
-      let teamContext = [];
-      if (currentTeamId) {
-        const teamResults = await searchSimilarContent(query, 'team', currentTeamId);
-        if (teamResults && teamResults.length > 0) {
-          teamContext = teamResults;
-        }
-      } else if (userId) {
-        // Falls kein Team ausgewählt ist, hole alle Teams des Benutzers
-        const { data: userTeams } = await supabase
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', userId);
-        
-        if (userTeams && userTeams.length > 0) {
-          for (const team of userTeams) {
-            const teamResults = await searchSimilarContent(query, 'team', team.team_id);
-            if (teamResults && teamResults.length > 0) {
-              teamContext.push(...teamResults);
-            }
-          }
-        }
-      }
-      
-      // Kombiniere persönlichen Kontext und Teamkontext
-      const combinedContext = [...(personalContext || []), ...(teamContext || [])];
-      
-      // Filtere die relevantesten Ergebnisse
-      const topResults = combinedContext
-        .sort((a, b) => b.similarity - a.similarity)
-        .slice(0, 5);
-      
-      if (topResults.length > 0) {
-        return "Relevante Informationen:\n" + 
-          topResults.map(item => `${item.content}`).join("\n---\n");
-      }
-      
-      return "";
-    } catch (error) {
-      console.error('Fehler beim Suchen relevanter Kontextinformationen:', error);
-      return "";
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent, overrideMessage?: string) => {
     if (e.preventDefault) {
@@ -369,9 +316,6 @@ export const useChatMessages = ({
       await new Promise(resolve => requestAnimationFrame(resolve));
       setMessages(prev => [...prev, assistantMessage]);
 
-      // Suche nach relevantem Kontext für die aktuelle Anfrage
-      const relevantContext = await findRelevantContext(currentInput);
-      
       const recentMessages = messages.length > 10 
         ? [...messages.slice(0, 1), ...messages.slice(-9)]
         : messages;
@@ -386,14 +330,6 @@ export const useChatMessages = ({
         userId: userId,
         currentRoute: window.location.pathname
       };
-
-      // Füge relevanten Kontext als Systemnachricht hinzu, wenn vorhanden
-      if (relevantContext) {
-        requestData.messages.push({ 
-          role: 'system', 
-          content: relevantContext 
-        });
-      }
 
       const { data: response, error } = await supabase.functions.invoke('chat', {
         body: requestData,
