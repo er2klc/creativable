@@ -1,3 +1,4 @@
+
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,8 +22,8 @@ export const useLeadsSubscription = (selectedPipelineId: string | null) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Create unique channel name
-        const channelName = `lead-changes-${selectedPipelineId}-${user.id}-${Date.now()}`;
+        // Create unique channel name with random suffix
+        const channelName = `lead-changes-${selectedPipelineId}-${user.id}-${Math.random().toString(36).substr(2, 9)}`;
         
         channelRef.current = supabase
           .channel(channelName)

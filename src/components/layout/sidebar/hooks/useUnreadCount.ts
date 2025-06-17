@@ -1,12 +1,8 @@
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect, useRef } from "react";
 
 export const useUnreadCount = () => {
-  const queryClient = useQueryClient();
-  const channelRef = useRef<any>(null);
-
   const { data: unreadCount = 0, error } = useQuery({
     queryKey: ['unread-messages-count'],
     queryFn: async () => {
@@ -35,61 +31,6 @@ export const useUnreadCount = () => {
     retry: 1,
     retryDelay: 1000,
   });
-
-  // Subscribe to real-time updates for unread messages count
-  useEffect(() => {
-    // Clean up existing channel first
-    if (channelRef.current) {
-      supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-    
-    const setupChannel = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        // Create a unique channel name to avoid conflicts
-        const channelName = `unread-messages-${user.id}-${Date.now()}`;
-        
-        channelRef.current = supabase
-          .channel(channelName)
-          .on(
-            'postgres_changes',
-            {
-              event: '*',
-              schema: 'public',
-              table: 'messages',
-              filter: `user_id=eq.${user.id}`
-            },
-            (payload) => {
-              console.log('Received message update:', payload);
-              queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
-            }
-          );
-
-        // Subscribe to the channel
-        channelRef.current.subscribe((status: string) => {
-          if (status === 'SUBSCRIBED') {
-            console.log('Successfully subscribed to unread messages updates');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('Failed to subscribe to unread messages updates');
-          }
-        });
-      } catch (error) {
-        console.error('Error setting up real-time subscription:', error);
-      }
-    };
-
-    setupChannel();
-
-    return () => {
-      if (channelRef.current) {
-        supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
-    };
-  }, [queryClient]);
 
   if (error) {
     console.error('Error in useUnreadCount:', error);

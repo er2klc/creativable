@@ -35,8 +35,8 @@ export const useLeadSubscription = (leadId: string | null) => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Create unique channel name
-        const channelName = `lead-details-${leadId}-${user.id}-${Date.now()}`;
+        // Create unique channel name with random suffix to prevent conflicts
+        const channelName = `lead-details-${leadId}-${user.id}-${Math.random().toString(36).substr(2, 9)}`;
         
         channelRef.current = supabase
           .channel(channelName)
