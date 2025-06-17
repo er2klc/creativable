@@ -9,6 +9,47 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      lead_files: {
+        Row: {
+          created_at: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          lead_id: string
+          mime_type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          lead_id: string
+          mime_type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          lead_id?: string
+          mime_type?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_files_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leads: {
         Row: {
           created_at: string | null
@@ -166,6 +207,36 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          title: string
+          type: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          title: string
+          type?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          title?: string
+          type?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       pipeline_phases: {
         Row: {
           created_at: string | null
@@ -228,6 +299,89 @@ export type Database = {
         }
         Relationships: []
       }
+      platform_modules: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          module_order: number | null
+          order_index: number | null
+          platform_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          module_order?: number | null
+          order_index?: number | null
+          platform_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          module_order?: number | null
+          order_index?: number | null
+          platform_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "platform_modules_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      platforms: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          image_url: string | null
+          invite_code: string | null
+          linked_modules: string[] | null
+          logo_url: string | null
+          name: string
+          slug: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          invite_code?: string | null
+          linked_modules?: string[] | null
+          logo_url?: string | null
+          name: string
+          slug: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          invite_code?: string | null
+          linked_modules?: string[] | null
+          logo_url?: string | null
+          name?: string
+          slug?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -258,6 +412,42 @@ export type Database = {
           is_admin?: boolean | null
           is_super_admin?: boolean | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      settings: {
+        Row: {
+          created_at: string | null
+          email_notifications: boolean | null
+          id: string
+          language: string | null
+          network_marketing_id: string | null
+          openai_api_key: string | null
+          theme: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          language?: string | null
+          network_marketing_id?: string | null
+          openai_api_key?: string | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_notifications?: boolean | null
+          id?: string
+          language?: string | null
+          network_marketing_id?: string | null
+          openai_api_key?: string | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -322,6 +512,121 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_direct_messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          read: boolean | null
+          receiver_id: string
+          sender_id: string
+          team_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          read?: boolean | null
+          receiver_id: string
+          sender_id: string
+          team_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          read?: boolean | null
+          receiver_id?: string
+          sender_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_direct_messages_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_members: {
+        Row: {
+          id: string
+          joined_at: string | null
+          role: string | null
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          joined_at?: string | null
+          role?: string | null
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teams: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          join_code: string | null
+          logo_url: string | null
+          max_members: number | null
+          name: string
+          order_index: number | null
+          slug: string
+          updated_at: string | null
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          join_code?: string | null
+          logo_url?: string | null
+          max_members?: number | null
+          name: string
+          order_index?: number | null
+          slug: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          join_code?: string | null
+          logo_url?: string | null
+          max_members?: number | null
+          name?: string
+          order_index?: number | null
+          slug?: string
+          updated_at?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
