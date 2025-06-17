@@ -9,6 +9,163 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      leads: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          id: string
+          industry: string
+          name: string
+          phase_id: string | null
+          phone_number: string | null
+          pipeline_id: string | null
+          platform: string
+          social_media_engagement_rate: number | null
+          social_media_followers: number | null
+          social_media_following: number | null
+          social_media_profile_image_url: string | null
+          social_media_username: string | null
+          status: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          industry: string
+          name: string
+          phase_id?: string | null
+          phone_number?: string | null
+          pipeline_id?: string | null
+          platform: string
+          social_media_engagement_rate?: number | null
+          social_media_followers?: number | null
+          social_media_following?: number | null
+          social_media_profile_image_url?: string | null
+          social_media_username?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          industry?: string
+          name?: string
+          phase_id?: string | null
+          phone_number?: string | null
+          pipeline_id?: string | null
+          platform?: string
+          social_media_engagement_rate?: number | null
+          social_media_followers?: number | null
+          social_media_following?: number | null
+          social_media_profile_image_url?: string | null
+          social_media_username?: string | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_phase_id_fkey"
+            columns: ["phase_id"]
+            isOneToOne: false
+            referencedRelation: "pipeline_phases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_pipeline_id_fkey"
+            columns: ["pipeline_id"]
+            isOneToOne: false
+            referencedRelation: "pipelines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      messages: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          lead_id: string | null
+          platform: string
+          read: boolean | null
+          sent_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          platform: string
+          read?: boolean | null
+          sent_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          lead_id?: string | null
+          platform?: string
+          read?: boolean | null
+          sent_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          color: string | null
+          content: string
+          created_at: string | null
+          id: string
+          lead_id: string
+          metadata: Json | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          content: string
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          content?: string
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pipeline_phases: {
         Row: {
           created_at: string | null
@@ -103,6 +260,68 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      tasks: {
+        Row: {
+          cancelled: boolean | null
+          color: string | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          lead_id: string | null
+          meeting_type: string | null
+          order_index: number | null
+          priority: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancelled?: boolean | null
+          color?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          meeting_type?: string | null
+          order_index?: number | null
+          priority?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancelled?: boolean | null
+          color?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          lead_id?: string | null
+          meeting_type?: string | null
+          order_index?: number | null
+          priority?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
