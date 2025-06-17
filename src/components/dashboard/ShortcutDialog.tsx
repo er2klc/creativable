@@ -1,161 +1,121 @@
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { useForm } from "react-hook-form";
-import { ShortcutType } from "@/hooks/use-shortcuts";
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 
-interface ShortcutFormData {
-  type: ShortcutType;
-  title: string;
-  target_id?: string;
-  target_slug?: string;
-}
+import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface ShortcutDialogProps {
-  trigger: React.ReactNode;
-  onSubmit: (data: ShortcutFormData) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onShortcutCreated: () => void;
 }
 
-export const ShortcutDialog = ({ trigger, onSubmit }: ShortcutDialogProps) => {
-  const [open, setOpen] = useState(false);
-  const form = useForm<ShortcutFormData>();
-  const selectedType = form.watch("type");
+export function ShortcutDialog({ open, onOpenChange, onShortcutCreated }: ShortcutDialogProps) {
+  const [title, setTitle] = useState("");
+  const [url, setUrl] = useState("");
+  const [shortcutKey, setShortcutKey] = useState("");
+  const [icon, setIcon] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { data: teams = [] } = useQuery({
-    queryKey: ["user-teams"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-
-      const { data: userTeams } = await supabase.rpc("get_user_teams", {
-        uid: user.id,
-      });
-
-      return userTeams || [];
-    },
-  });
-
-  const handleSubmit = (data: ShortcutFormData) => {
-    if (data.target_id && (data.type === "team" || data.type === "team_calendar")) {
-      const selectedTeam = teams.find(team => team.id === data.target_id);
-      if (selectedTeam) {
-        data.target_slug = selectedTeam.slug;
-      }
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!title || !url) {
+      toast.error("Bitte füllen Sie alle Pflichtfelder aus");
+      return;
     }
-    onSubmit(data);
-    setOpen(false);
-    form.reset();
+
+    setIsLoading(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
+      const { error } = await supabase
+        .from("shortcuts" as any)
+        .insert({
+          user_id: user.id,
+          title,
+          url,
+          shortcut_key: shortcutKey || null,
+          icon: icon || null,
+        });
+
+      if (error) throw error;
+
+      toast.success("Shortcut erfolgreich erstellt");
+      onShortcutCreated();
+      onOpenChange(false);
+      setTitle("");
+      setUrl("");
+      setShortcutKey("");
+      setIcon("");
+    } catch (error: any) {
+      toast.error("Fehler beim Erstellen des Shortcuts: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const needsTeamSelection = selectedType === "team" || selectedType === "team_calendar";
-
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Shortcut</DialogTitle>
+          <DialogTitle>Neuen Shortcut erstellen</DialogTitle>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select shortcut type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="team">Team</SelectItem>
-                      <SelectItem value="team_calendar">Team Calendar</SelectItem>
-                      <SelectItem value="personal_calendar">Personal Calendar</SelectItem>
-                      <SelectItem value="create_contact">Create Contact</SelectItem>
-                      <SelectItem value="learning_platform">Learning Platform</SelectItem>
-                      <SelectItem value="todo_list">To Do List</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="title"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Title</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter shortcut title" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {needsTeamSelection && (
-              <FormField
-                control={form.control}
-                name="target_id"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Select Team</FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      defaultValue={field.value}
-                    >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a team" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {teams.map((team) => (
-                          <SelectItem key={team.id} value={team.id}>
-                            {team.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+        <form onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="title">Titel *</Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="z.B. Google Drive"
+                required
               />
-            )}
-            <Button type="submit">Add Shortcut</Button>
-          </form>
-        </Form>
+            </div>
+            <div>
+              <Label htmlFor="url">URL *</Label>
+              <Input
+                id="url"
+                type="url"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://..."
+                required
+              />
+            </div>
+            <div>
+              <Label htmlFor="shortcutKey">Tastenkürzel (optional)</Label>
+              <Input
+                id="shortcutKey"
+                value={shortcutKey}
+                onChange={(e) => setShortcutKey(e.target.value)}
+                placeholder="z.B. Ctrl+Shift+G"
+              />
+            </div>
+            <div>
+              <Label htmlFor="icon">Icon (optional)</Label>
+              <Input
+                id="icon"
+                value={icon}
+                onChange={(e) => setIcon(e.target.value)}
+                placeholder="z.B. link, folder, etc."
+              />
+            </div>
+          </div>
+          <DialogFooter className="mt-6">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Abbrechen
+            </Button>
+            <Button type="submit" disabled={isLoading}>
+              {isLoading ? "Erstellen..." : "Erstellen"}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   );
-};
+}

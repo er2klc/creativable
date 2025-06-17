@@ -39,6 +39,72 @@ export type Database = {
         }
         Relationships: []
       }
+      chatbot_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          max_tokens: number | null
+          model: string | null
+          openai_api_key: string | null
+          temperature: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          max_tokens?: number | null
+          model?: string | null
+          openai_api_key?: string | null
+          temperature?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          max_tokens?: number | null
+          model?: string | null
+          openai_api_key?: string | null
+          temperature?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      content_embeddings: {
+        Row: {
+          content: string
+          created_at: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          source_id: string | null
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_id?: string | null
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_id?: string | null
+          source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           created_at: string | null
@@ -65,6 +131,227 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      elevate_lerninhalte: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          module_id: string
+          submodule_order: number | null
+          title: string
+          video_url: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          module_id: string
+          submodule_order?: number | null
+          title: string
+          video_url?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          module_id?: string
+          submodule_order?: number | null
+          title?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_lerninhalte_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elevate_lerninhalte_documents: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          file_name: string
+          file_path: string
+          file_type: string
+          id: string
+          lerninhalte_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          file_name: string
+          file_path: string
+          file_type: string
+          id?: string
+          lerninhalte_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          file_name?: string
+          file_path?: string
+          file_type?: string
+          id?: string
+          lerninhalte_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_lerninhalte_documents_lerninhalte_id_fkey"
+            columns: ["lerninhalte_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_lerninhalte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elevate_modules: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          order_index: number | null
+          platform_id: string
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          platform_id: string
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          order_index?: number | null
+          platform_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_modules_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elevate_platforms: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          logo_url: string | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          id?: string
+          logo_url?: string | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      elevate_team_access: {
+        Row: {
+          created_at: string | null
+          granted_by: string
+          id: string
+          platform_id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          granted_by: string
+          id?: string
+          platform_id: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string | null
+          granted_by?: string
+          id?: string
+          platform_id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_team_access_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_platforms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "elevate_team_access_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elevate_user_access: {
+        Row: {
+          access_type: string | null
+          created_at: string | null
+          granted_by: string
+          id: string
+          platform_id: string
+          user_id: string
+        }
+        Insert: {
+          access_type?: string | null
+          created_at?: string | null
+          granted_by: string
+          id?: string
+          platform_id: string
+          user_id: string
+        }
+        Update: {
+          access_type?: string | null
+          created_at?: string | null
+          granted_by?: string
+          id?: string
+          platform_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_user_access_platform_id_fkey"
+            columns: ["platform_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_platforms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       email_folders: {
         Row: {
@@ -314,6 +601,50 @@ export type Database = {
           },
         ]
       }
+      nexus_embeddings: {
+        Row: {
+          content: string
+          created_at: string | null
+          embedding: string | null
+          id: string
+          metadata: Json | null
+          source_id: string | null
+          source_type: string
+          team_id: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_id?: string | null
+          source_type: string
+          team_id?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          embedding?: string | null
+          id?: string
+          metadata?: Json | null
+          source_id?: string | null
+          source_type?: string
+          team_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nexus_embeddings_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notes: {
         Row: {
           color: string | null
@@ -442,6 +773,45 @@ export type Database = {
           id?: string
           name?: string
           order_index?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      platform_auth_status: {
+        Row: {
+          access_token: string | null
+          auth_token: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          is_connected: boolean | null
+          platform: string
+          refresh_token: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          auth_token?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_connected?: boolean | null
+          platform: string
+          refresh_token?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          auth_token?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          is_connected?: boolean | null
+          platform?: string
+          refresh_token?: string | null
           updated_at?: string | null
           user_id?: string
         }
@@ -755,6 +1125,36 @@ export type Database = {
           },
         ]
       }
+      social_media_scan_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          leads_found: number | null
+          platform: string
+          scan_status: string | null
+          search_query: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          leads_found?: number | null
+          platform: string
+          scan_status?: string | null
+          search_query?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          leads_found?: number | null
+          platform?: string
+          scan_status?: string | null
+          search_query?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           cancelled: boolean | null
@@ -1023,7 +1423,98 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never
