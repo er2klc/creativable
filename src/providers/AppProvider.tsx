@@ -7,7 +7,6 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider } from "./AuthProvider";
-import { useEffect } from "react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,21 +21,6 @@ const queryClient = new QueryClient({
 });
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
-  // Handle global errors
-  useEffect(() => {
-    const handleError = (event: ErrorEvent) => {
-      // Suppress the subscription error that's coming from React
-      if (event.message?.includes('subscribe multiple times')) {
-        event.preventDefault();
-        return;
-      }
-      console.error('Global error:', event);
-    };
-
-    window.addEventListener('error', handleError);
-    return () => window.removeEventListener('error', handleError);
-  }, []);
-
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>

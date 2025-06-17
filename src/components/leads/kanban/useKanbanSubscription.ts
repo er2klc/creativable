@@ -20,8 +20,9 @@ export const useKanbanSubscription = () => {
         if (!user) return;
 
         // Create unique channel names
-        const leadsChannelName = `leads-changes-${user.id}-${Date.now()}`;
-        const phasesChannelName = `phases-changes-${user.id}-${Date.now()}`;
+        const timestamp = Date.now();
+        const leadsChannelName = `leads-changes-${user.id}-${timestamp}`;
+        const phasesChannelName = `phases-changes-${user.id}-${timestamp}`;
 
         const leadsChannel = supabase
           .channel(leadsChannelName)

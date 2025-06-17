@@ -2,10 +2,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay } from "date-fns";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export const useAppointmentCount = () => {
   const queryClient = useQueryClient();
+  const channelRef = useRef<any>(null);
 
   const { data: appointmentCount = 0 } = useQuery({
     queryKey: ['todays-appointments'],
@@ -33,23 +34,46 @@ export const useAppointmentCount = () => {
 
   // Subscribe to real-time updates for appointments
   useEffect(() => {
-    const channel = supabase
-      .channel('appointment-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ['todays-appointments'] });
-        }
-      )
-      .subscribe();
+    // Clean up existing channel first
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
+    const setupChannel = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const channelName = `appointment-updates-${user.id}-${Date.now()}`;
+        
+        channelRef.current = supabase
+          .channel(channelName)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'tasks'
+            },
+            () => {
+              queryClient.invalidateQueries({ queryKey: ['todays-appointments'] });
+            }
+          );
+
+        channelRef.current.subscribe();
+      } catch (error) {
+        console.error('Error setting up appointment subscription:', error);
+      }
+    };
+
+    setupChannel();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
   }, [queryClient]);
 

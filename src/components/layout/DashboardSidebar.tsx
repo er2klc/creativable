@@ -7,7 +7,7 @@ import { SidebarFooter } from "./sidebar/SidebarFooter";
 import { SidebarMenuSection } from "./sidebar/SidebarMenuSection";
 import { usePersonalItems, teamItems, analysisItems, legalItems } from "./sidebar/SidebarItems";
 import { useSidebarState } from "./sidebar/SidebarState";
-import { useUnreadCount } from "./sidebar/SidebarUnreadCount";
+import { useUnreadCount } from "./sidebar/hooks/useUnreadCount";
 import { AdminSection } from "./sidebar/AdminSection";
 import { useQuery } from "@tanstack/react-query";
 
