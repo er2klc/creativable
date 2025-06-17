@@ -1,44 +1,73 @@
-import { useEffect } from "react";
+
+import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const useKanbanSubscription = () => {
   const queryClient = useQueryClient();
+  const channelsRef = useRef<any[]>([]);
 
   useEffect(() => {
-    const leadsChannel = supabase
-      .channel('leads-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'leads'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["leads"] });
-        }
-      )
-      .subscribe();
+    // Clean up existing channels first
+    channelsRef.current.forEach(channel => {
+      supabase.removeChannel(channel);
+    });
+    channelsRef.current = [];
 
-    const phasesChannel = supabase
-      .channel('phases-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'lead_phases'
-        },
-        () => {
-          queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
-        }
-      )
-      .subscribe();
+    const setupChannels = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Create unique channel names
+        const leadsChannelName = `leads-changes-${user.id}-${Date.now()}`;
+        const phasesChannelName = `phases-changes-${user.id}-${Date.now()}`;
+
+        const leadsChannel = supabase
+          .channel(leadsChannelName)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'leads'
+            },
+            () => {
+              queryClient.invalidateQueries({ queryKey: ["leads"] });
+            }
+          );
+
+        const phasesChannel = supabase
+          .channel(phasesChannelName)
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'lead_phases'
+            },
+            () => {
+              queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+            }
+          );
+
+        // Subscribe to channels
+        leadsChannel.subscribe();
+        phasesChannel.subscribe();
+
+        channelsRef.current = [leadsChannel, phasesChannel];
+      } catch (error) {
+        console.error('Error setting up kanban subscriptions:', error);
+      }
+    };
+
+    setupChannels();
 
     return () => {
-      supabase.removeChannel(leadsChannel);
-      supabase.removeChannel(phasesChannel);
+      channelsRef.current.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+      channelsRef.current = [];
     };
   }, [queryClient]);
 };

@@ -1,10 +1,11 @@
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 export const useUnreadCount = () => {
   const queryClient = useQueryClient();
+  const channelRef = useRef<any>(null);
 
   const { data: unreadCount = 0, error } = useQuery({
     queryKey: ['unread-messages-count'],
@@ -37,25 +38,44 @@ export const useUnreadCount = () => {
 
   // Subscribe to real-time updates for unread messages count
   useEffect(() => {
-    let channel;
+    // Clean up existing channel first
+    if (channelRef.current) {
+      supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
     
-    const setupChannel = () => {
+    const setupChannel = async () => {
       try {
-        channel = supabase
-          .channel('sidebar-updates')
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        // Create a unique channel name to avoid conflicts
+        const channelName = `sidebar-messages-${user.id}-${Date.now()}`;
+        
+        channelRef.current = supabase
+          .channel(channelName)
           .on(
             'postgres_changes',
             {
               event: '*',
               schema: 'public',
-              table: 'messages'
+              table: 'messages',
+              filter: `user_id=eq.${user.id}`
             },
             (payload) => {
-              console.log('Received real-time update:', payload);
+              console.log('Received message update:', payload);
               queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
             }
-          )
-          .subscribe();
+          );
+
+        // Subscribe to the channel
+        channelRef.current.subscribe((status: string) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Successfully subscribed to sidebar messages updates');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Failed to subscribe to sidebar messages updates');
+          }
+        });
       } catch (error) {
         console.error('Error setting up real-time subscription:', error);
       }
@@ -64,8 +84,9 @@ export const useUnreadCount = () => {
     setupChannel();
 
     return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
+      if (channelRef.current) {
+        supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
       }
     };
   }, [queryClient]);

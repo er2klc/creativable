@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const useUnreadCount = () => {
   const { data: unreadCount = 0 } = useQuery({
-    queryKey: ['unread-count'],
+    queryKey: ['sidebar-unread-count'],
     queryFn: async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -27,7 +27,7 @@ export const useUnreadCount = () => {
         return 0;
       }
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 30000,
   });
 
   return unreadCount;
