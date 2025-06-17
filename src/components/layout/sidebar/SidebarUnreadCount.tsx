@@ -1,7 +1,7 @@
+
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
-import { toast } from "sonner";
 
 export const useUnreadCount = () => {
   const queryClient = useQueryClient();
@@ -30,42 +30,49 @@ export const useUnreadCount = () => {
         return 0;
       }
     },
-    refetchInterval: 30000, // Refetch every 30 seconds as backup
-    retry: 3, // Retry failed requests 3 times
-    retryDelay: 1000, // Wait 1 second between retries
+    refetchInterval: 30000,
+    retry: 1,
+    retryDelay: 1000,
   });
 
   // Subscribe to real-time updates for unread messages count
   useEffect(() => {
-    const channel = supabase
-      .channel('sidebar-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'messages'
-        },
-        (payload) => {
-          console.log('Received real-time update:', payload);
-          // Invalidate the query to trigger a refetch when messages change
-          queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
-        }
-      )
-      .subscribe();
+    let channel;
+    
+    const setupChannel = () => {
+      try {
+        channel = supabase
+          .channel('sidebar-updates')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'messages'
+            },
+            (payload) => {
+              console.log('Received real-time update:', payload);
+              queryClient.invalidateQueries({ queryKey: ['unread-messages-count'] });
+            }
+          )
+          .subscribe();
+      } catch (error) {
+        console.error('Error setting up real-time subscription:', error);
+      }
+    };
+
+    setupChannel();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [queryClient]);
 
-  // Show error toast only if there's a persistent error after retries
-  useEffect(() => {
-    if (error) {
-      console.error('Persistent error in useUnreadCount:', error);
-      toast.error('Fehler beim Laden der ungelesenen Nachrichten');
-    }
-  }, [error]);
+  if (error) {
+    console.error('Error in useUnreadCount:', error);
+  }
 
   return unreadCount;
 };

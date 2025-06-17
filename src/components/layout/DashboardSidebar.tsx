@@ -26,15 +26,20 @@ export const DashboardSidebar = () => {
           .select('version')
           .order('version', { ascending: false })
           .limit(1)
-          .single();
+          .maybeSingle();
 
-        if (error) throw error;
-        return data?.version || '0.1';
+        if (error) {
+          console.error('Error fetching version:', error);
+          return '1.0.0';
+        }
+        
+        return data?.version || '1.0.0';
       } catch (error) {
         console.error('Error fetching version:', error);
-        return '0.1';
+        return '1.0.0';
       }
-    }
+    },
+    retry: 1,
   });
 
   useEffect(() => {
@@ -50,7 +55,7 @@ export const DashboardSidebar = () => {
           .from('profiles')
           .select('is_super_admin')
           .eq('id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error('Error fetching super admin status:', error);
@@ -114,7 +119,7 @@ export const DashboardSidebar = () => {
 
         <SidebarFooter 
           isExpanded={isExpanded} 
-          currentVersion={versionData || '0.1'}
+          currentVersion={versionData || '1.0.0'}
         />
       </SidebarContent>
     </Sidebar>

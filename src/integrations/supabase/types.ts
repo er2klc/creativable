@@ -688,28 +688,40 @@ export type Database = {
       }
       notifications: {
         Row: {
+          content: string | null
           created_at: string | null
+          deleted_at: string | null
           id: string
           message: string
+          metadata: Json | null
           read: boolean | null
+          target_page: string | null
           title: string
           type: string | null
           user_id: string
         }
         Insert: {
+          content?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           message: string
+          metadata?: Json | null
           read?: boolean | null
+          target_page?: string | null
           title: string
           type?: string | null
           user_id: string
         }
         Update: {
+          content?: string | null
           created_at?: string | null
+          deleted_at?: string | null
           id?: string
           message?: string
+          metadata?: Json | null
           read?: boolean | null
+          target_page?: string | null
           title?: string
           type?: string | null
           user_id?: string
@@ -1017,9 +1029,12 @@ export type Database = {
           language: string | null
           network_marketing_id: string | null
           openai_api_key: string | null
+          registration_completed: boolean | null
+          registration_step: number | null
           theme: string | null
           updated_at: string | null
           user_id: string
+          whatsapp_number: string | null
         }
         Insert: {
           created_at?: string | null
@@ -1028,9 +1043,12 @@ export type Database = {
           language?: string | null
           network_marketing_id?: string | null
           openai_api_key?: string | null
+          registration_completed?: boolean | null
+          registration_step?: number | null
           theme?: string | null
           updated_at?: string | null
           user_id: string
+          whatsapp_number?: string | null
         }
         Update: {
           created_at?: string | null
@@ -1039,9 +1057,12 @@ export type Database = {
           language?: string | null
           network_marketing_id?: string | null
           openai_api_key?: string | null
+          registration_completed?: boolean | null
+          registration_step?: number | null
           theme?: string | null
           updated_at?: string | null
           user_id?: string
+          whatsapp_number?: string | null
         }
         Relationships: []
       }
@@ -1426,6 +1447,23 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      get_user_teams: {
+        Args: { uid: string }
+        Returns: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          id: string
+          join_code: string | null
+          logo_url: string | null
+          max_members: number | null
+          name: string
+          order_index: number | null
+          slug: string
+          updated_at: string | null
+          video_url: string | null
+        }[]
       }
       halfvec_avg: {
         Args: { "": number[] }

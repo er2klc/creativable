@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -6,15 +7,14 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider } from "./AuthProvider";
-import { autoProcessEmbeddings, setupEmbeddingsChangeListeners } from "@/lib/auto-embeddings";
 import { useEffect } from "react";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 30, // 30 minutes
-      gcTime: 1000 * 60 * 60, // 1 hour (früher cacheTime genannt)
-      retry: 3,
+      gcTime: 1000 * 60 * 60, // 1 hour
+      retry: 2,
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
       refetchOnWindowFocus: false
     },
@@ -22,26 +22,19 @@ const queryClient = new QueryClient({
 });
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
-  // Automatische Verarbeitung von Embeddings beim App-Start
+  // Handle global errors
   useEffect(() => {
-    // Überprüfe, ob der Benutzer angemeldet ist
-    const checkAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          console.log("Benutzer ist angemeldet, starte automatische Verarbeitung von Embeddings");
-          // Wenn angemeldet, starte die automatische Verarbeitung
-          autoProcessEmbeddings();
-          
-          // Richte Listener für Datenänderungen ein
-          setupEmbeddingsChangeListeners();
-        }
-      } catch (error) {
-        console.error("Fehler beim Überprüfen der Authentifizierung:", error);
+    const handleError = (event: ErrorEvent) => {
+      // Suppress the subscription error that's coming from React
+      if (event.message?.includes('subscribe multiple times')) {
+        event.preventDefault();
+        return;
       }
+      console.error('Global error:', event);
     };
-    
-    checkAuth();
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
   }, []);
 
   return (
