@@ -1,10 +1,11 @@
+
 import { useState } from "react";
 import { format, parseISO, setHours, setMinutes } from "date-fns";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DragEndEvent, DragOverEvent } from "@dnd-kit/core";
-import { Appointment, AppointmentWithEndDate } from "../types/calendar";
+import { AppointmentWithEndDate } from "../types/calendar";
 
 export const usePersonalCalendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -41,7 +42,8 @@ export const usePersonalCalendar = () => {
           is_multi_day: start < end,
           start_time: appointment.due_date,
           end_time: appointment.end_date || appointment.due_date,
-          isTeamEvent: false
+          isTeamEvent: false,
+          end_date: appointment.end_date
         } as AppointmentWithEndDate;
       });
     },

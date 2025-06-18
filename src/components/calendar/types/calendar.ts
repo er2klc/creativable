@@ -28,6 +28,21 @@ export interface TeamEvent extends BaseEvent {
   recurring_day_of_week: number | null;
   team_id: string;
   created_by: string;
+  end_date?: string;
 }
 
 export type CalendarEvent = Appointment | TeamEvent;
+
+export interface AppointmentToEdit {
+  id: string;
+  leadId: string;
+  time: string;
+  title: string;
+  color: string;
+  meeting_type: string;
+}
+
+export interface AppointmentWithEndDate extends Appointment {
+  end_date?: string;
+  is_multi_day: boolean;
+}

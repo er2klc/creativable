@@ -1,150 +1,111 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { toast } from "sonner";
-import { TeamAccessManager } from "./TeamAccessManager";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { NameField } from "./edit-dialog/NameField";
 import { DescriptionField } from "./edit-dialog/DescriptionField";
 import { LogoField } from "./edit-dialog/LogoField";
 import { DialogFooter } from "./edit-dialog/DialogFooter";
 
+const platformSchema = z.object({
+  name: z.string().min(1, "Name ist erforderlich"),
+  description: z.string().optional(),
+  imageUrl: z.string().optional(),
+});
+
+type PlatformFormData = z.infer<typeof platformSchema>;
+
 interface EditPlatformDialogProps {
-  platformId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  platform: any;
+  onPlatformUpdated: () => void;
 }
 
-export const EditPlatformDialog = ({ platformId, open, onOpenChange }: EditPlatformDialogProps) => {
-  const queryClient = useQueryClient();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
+export const EditPlatformDialog = ({ 
+  open, 
+  onOpenChange, 
+  platform, 
+  onPlatformUpdated 
+}: EditPlatformDialogProps) => {
+  const [isLoading, setIsLoading] = useState(false);
 
-  const { data: platform } = useQuery({
-    queryKey: ['platform', platformId],
-    queryFn: async () => {
-      const { data: platform, error } = await supabase
-        .from('elevate_platforms')
-        .select('*')
-        .eq('id', platformId)
-        .maybeSingle();
-      
-      if (error) throw error;
-      return platform;
-    },
-    enabled: open && !!platformId,
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
+    reset
+  } = useForm<PlatformFormData>({
+    resolver: zodResolver(platformSchema),
+    defaultValues: {
+      name: platform?.name || "",
+      description: platform?.description || "",
+      imageUrl: platform?.image_url || platform?.logo_url || "",
+    }
   });
 
-  useEffect(() => {
-    if (platform) {
-      setName(platform.name || "");
-      setDescription(platform.description || "");
-      setImageUrl(platform.image_url);
-    }
-  }, [platform]);
-
-  useEffect(() => {
-    if (!open) {
-      setName("");
-      setDescription("");
-      setSelectedTeams([]);
-      setImageUrl(null);
-    }
-  }, [open]);
-
-  useQuery({
-    queryKey: ['platform-teams', platformId],
-    queryFn: async () => {
-      const { data: teamAccess } = await supabase
-        .from('elevate_team_access')
-        .select('team_id')
-        .eq('platform_id', platformId);
-      
-      if (teamAccess) {
-        setSelectedTeams(teamAccess.map(access => access.team_id));
-      }
-      return teamAccess;
-    },
-    enabled: open && !!platformId,
-  });
-
-  const handleSave = async () => {
+  const onSubmit = async (data: PlatformFormData) => {
+    setIsLoading(true);
     try {
-      const { error: platformError } = await supabase
-        .from('elevate_platforms')
-        .update({ 
-          name, 
-          description,
-          image_url: imageUrl
+      const { error } = await supabase
+        .from("elevate_platforms")
+        .update({
+          name: data.name,
+          description: data.description,
+          image_url: data.imageUrl,
+          slug: data.name.toLowerCase().replace(/\s+/g, '-'),
+          updated_at: new Date().toISOString()
         })
-        .eq('id', platformId);
+        .eq("id", platform.id);
 
-      if (platformError) throw platformError;
+      if (error) throw error;
 
-      const { data: currentAccess } = await supabase
-        .from('elevate_team_access')
-        .select('team_id')
-        .eq('platform_id', platformId);
-
-      const currentTeamIds = currentAccess?.map(access => access.team_id) || [];
-
-      const teamsToRemove = currentTeamIds.filter(id => !selectedTeams.includes(id));
-      if (teamsToRemove.length > 0) {
-        const { error: removeError } = await supabase
-          .from('elevate_team_access')
-          .delete()
-          .eq('platform_id', platformId)
-          .in('team_id', teamsToRemove);
-
-        if (removeError) throw removeError;
-      }
-
-      const teamsToAdd = selectedTeams.filter(id => !currentTeamIds.includes(id));
-      if (teamsToAdd.length > 0) {
-        const { error: addError } = await supabase
-          .from('elevate_team_access')
-          .insert(
-            teamsToAdd.map(teamId => ({
-              platform_id: platformId,
-              team_id: teamId,
-              granted_by: platform?.created_by
-            }))
-          );
-
-        if (addError) throw addError;
-      }
-
-      toast.success("Änderungen gespeichert");
-      queryClient.invalidateQueries({ queryKey: ['platforms'] });
+      toast.success("Plattform erfolgreich aktualisiert");
+      onPlatformUpdated();
       onOpenChange(false);
+      reset();
     } catch (error) {
-      console.error('Error updating platform:', error);
-      toast.error("Fehler beim Speichern der Änderungen");
+      console.error("Error updating platform:", error);
+      toast.error("Fehler beim Aktualisieren der Plattform");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[725px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Plattform bearbeiten</DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <NameField name={name} setName={setName} />
-          <DescriptionField description={description} setDescription={setDescription} />
-          <LogoField imageUrl={imageUrl} setImageUrl={setImageUrl} />
-          <TeamAccessManager
-            selectedTeams={selectedTeams}
-            setSelectedTeams={setSelectedTeams}
+        
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <NameField 
+            register={register}
+            error={errors.name}
           />
-        </div>
-        <DialogFooter 
-          onSave={handleSave}
-          onCancel={() => onOpenChange(false)}
-        />
+          
+          <DescriptionField 
+            register={register}
+            error={errors.description}
+          />
+          
+          <LogoField 
+            currentImageUrl={watch('imageUrl')}
+            onImageUpload={(url) => setValue('imageUrl', url)}
+          />
+          
+          <DialogFooter 
+            isLoading={isLoading}
+            onCancel={() => onOpenChange(false)}
+          />
+        </form>
       </DialogContent>
     </Dialog>
   );

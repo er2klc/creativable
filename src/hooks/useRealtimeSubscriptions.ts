@@ -2,6 +2,7 @@
 import { useEffect, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const useRealtimeSubscriptions = () => {
   const queryClient = useQueryClient();
@@ -69,8 +70,16 @@ export const useRealtimeSubscriptions = () => {
               table: 'notifications',
               filter: `user_id=eq.${user.id}`
             },
-            () => {
+            (payload) => {
+              queryClient.invalidateQueries({ queryKey: ['notifications'] });
               queryClient.invalidateQueries({ queryKey: ['unread-notifications'] });
+              
+              // Show toast for new notifications
+              if (payload.eventType === 'INSERT' && !payload.new?.read) {
+                toast(payload.new?.title, {
+                  description: payload.new?.content,
+                });
+              }
             }
           );
 

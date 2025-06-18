@@ -211,6 +211,41 @@ export type Database = {
           },
         ]
       }
+      elevate_lerninhalte_notes: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          lerninhalte_id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          lerninhalte_id: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          lerninhalte_id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_lerninhalte_notes_lerninhalte_id_fkey"
+            columns: ["lerninhalte_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_lerninhalte"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       elevate_modules: {
         Row: {
           created_at: string | null
@@ -255,8 +290,10 @@ export type Database = {
           created_by: string
           description: string | null
           id: string
+          image_url: string | null
           logo_url: string | null
           name: string
+          slug: string
           updated_at: string | null
         }
         Insert: {
@@ -264,8 +301,10 @@ export type Database = {
           created_by: string
           description?: string | null
           id?: string
+          image_url?: string | null
           logo_url?: string | null
           name: string
+          slug: string
           updated_at?: string | null
         }
         Update: {
@@ -273,8 +312,10 @@ export type Database = {
           created_by?: string
           description?: string | null
           id?: string
+          image_url?: string | null
           logo_url?: string | null
           name?: string
+          slug?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -349,6 +390,44 @@ export type Database = {
             columns: ["platform_id"]
             isOneToOne: false
             referencedRelation: "elevate_platforms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      elevate_user_progress: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          lerninhalte_id: string
+          progress_percentage: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          lerninhalte_id: string
+          progress_percentage?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          lerninhalte_id?: string
+          progress_percentage?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "elevate_user_progress_lerninhalte_id_fkey"
+            columns: ["lerninhalte_id"]
+            isOneToOne: false
+            referencedRelation: "elevate_lerninhalte"
             referencedColumns: ["id"]
           },
         ]
@@ -1516,6 +1595,10 @@ export type Database = {
       l2_normalize: {
         Args: { "": string } | { "": unknown } | { "": unknown }
         Returns: unknown
+      }
+      mark_all_notifications_as_read: {
+        Args: { user_id_input: string }
+        Returns: undefined
       }
       sparsevec_out: {
         Args: { "": unknown }

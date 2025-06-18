@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { format, addMonths, subMonths } from "date-fns";
 import { DndContext, DragEndEvent, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
-import { toast } from "sonner";
 import { usePersonalCalendar } from "./hooks/usePersonalCalendar";
 import { useCalendarEvents } from "./hooks/useCalendarEvents";
 import { CalendarHeader } from "./CalendarHeader";
@@ -11,7 +10,7 @@ import { NewAppointmentDialog } from "./NewAppointmentDialog";
 import { TeamEventDetailsDialog } from "./TeamEventDetailsDialog";
 import { Switch } from "@/components/ui/switch";
 import { ICalButton } from "./ICalButton";
-import { Appointment, AppointmentToEdit, TeamEvent } from "./types/calendar";
+import { CalendarEvent, AppointmentToEdit, TeamEvent } from "./types/calendar";
 import { useUser } from "@supabase/auth-helpers-react";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
@@ -53,11 +52,7 @@ export const CalendarView = () => {
     })
   );
 
-  const handleMonthChange = (direction: 'prev' | 'next') => {
-    setCurrentDate(direction === 'prev' ? subMonths(currentDate, 1) : addMonths(currentDate, 1));
-  };
-
-  const handleAppointmentClick = (e: React.MouseEvent, appointment: Appointment) => {
+  const handleAppointmentClick = (e: React.MouseEvent, appointment: CalendarEvent) => {
     e.stopPropagation();
     
     if (appointment.isTeamEvent) {
@@ -113,7 +108,7 @@ export const CalendarView = () => {
                     <ICalButton />
                   </div>
                 </div>
-                <HeaderActions profile={null} userEmail={user?.email} />
+                <HeaderActions userEmail={user?.email} />
               </div>
             </div>
           </div>
@@ -137,7 +132,7 @@ export const CalendarView = () => {
             activeId={activeId}
             overDate={overDate}
             draggedAppointment={draggedAppointment}
-            isAdmin={user?.id === draggedAppointment?.created_by}
+            isAdmin={user?.id === (draggedAppointment as any)?.created_by}
           />
 
           <NewAppointmentDialog

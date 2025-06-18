@@ -1,163 +1,136 @@
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-
-interface ChatbotSettings {
-  id: string;
-  user_id: string;
-  openai_api_key: string | null;
-  model: string;
-  temperature: number;
-  max_tokens: number;
-  created_at: string;
-  updated_at: string;
-}
+import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { Brain, Database, Trash2 } from "lucide-react";
 
 export const EmbeddingsManager = () => {
-  const [apiKey, setApiKey] = useState("");
-  const queryClient = useQueryClient();
+  const [isCreating, setIsCreating] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const { data: settings } = useQuery({
-    queryKey: ["chatbot-settings"],
+    queryKey: ['chatbot-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("chatbot_settings" as any)
-        .select("*")
-        .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-      return data as ChatbotSettings;
-    },
-  });
-
-  const { data: contentEmbeddings } = useQuery({
-    queryKey: ["content-embeddings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_embeddings" as any)
-        .select("*");
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: nexusEmbeddings } = useQuery({
-    queryKey: ["nexus-embeddings"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("nexus_embeddings" as any)
-        .select("*");
-
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const updateSettings = useMutation({
-    mutationFn: async (newApiKey: string) => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not authenticated");
+      if (!user) return null;
 
       const { data, error } = await supabase
-        .from("chatbot_settings" as any)
-        .upsert({
-          user_id: user.id,
-          openai_api_key: newApiKey,
-          model: 'gpt-3.5-turbo',
-          temperature: 0.7,
-          max_tokens: 1000
-        });
+        .from('chatbot_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching chatbot settings:', error);
+        return null;
+      }
+
       return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["chatbot-settings"] });
-      toast.success("API-Schlüssel erfolgreich gespeichert");
-    },
-    onError: (error) => {
-      toast.error("Fehler beim Speichern: " + error.message);
     }
   });
 
-  const handleSaveApiKey = () => {
-    if (!apiKey.trim()) {
-      toast.error("Bitte geben Sie einen API-Schlüssel ein");
+  const { data: embeddingsCount = 0 } = useQuery({
+    queryKey: ['embeddings-count'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return 0;
+
+      const { count, error } = await supabase
+        .from('content_embeddings')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching embeddings count:', error);
+        return 0;
+      }
+
+      return count || 0;
+    }
+  });
+
+  const handleCreateEmbeddings = async () => {
+    if (!settings?.openai_api_key) {
+      toast.error("Bitte konfigurieren Sie zuerst Ihren OpenAI API Key in den Einstellungen");
       return;
     }
-    updateSettings.mutate(apiKey);
+
+    setIsCreating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-embeddings');
+      
+      if (error) throw error;
+      
+      toast.success(`${data.count} Embeddings erfolgreich erstellt`);
+    } catch (error) {
+      console.error('Error creating embeddings:', error);
+      toast.error("Fehler beim Erstellen der Embeddings");
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  const handleDeleteEmbeddings = async () => {
+    setIsDeleting(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { error } = await supabase
+        .from('content_embeddings')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      toast.success("Alle Embeddings wurden gelöscht");
+    } catch (error) {
+      console.error('Error deleting embeddings:', error);
+      toast.error("Fehler beim Löschen der Embeddings");
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>OpenAI API Einstellungen</CardTitle>
-          <CardDescription>
-            Konfigurieren Sie Ihren OpenAI API-Schlüssel für KI-Features
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div>
-            <Label htmlFor="apiKey">OpenAI API-Schlüssel</Label>
-            <Input
-              id="apiKey"
-              type="password"
-              value={apiKey}
-              onChange={(e) => setApiKey(e.target.value)}
-              placeholder="sk-..."
-            />
+    <div className="space-y-4">
+      <div className="flex items-center gap-2">
+        <Brain className="h-5 w-5" />
+        <h3 className="text-lg font-semibold">KI-Embeddings</h3>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="p-4 border rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <Database className="h-4 w-4" />
+            <span className="font-medium">Gespeicherte Embeddings</span>
           </div>
-          <Button onClick={handleSaveApiKey} disabled={updateSettings.isPending}>
-            {updateSettings.isPending ? "Speichern..." : "Speichern"}
+          <p className="text-2xl font-bold">{embeddingsCount}</p>
+          <p className="text-sm text-muted-foreground">Verarbeitete Inhalte</p>
+        </div>
+        
+        <div className="space-y-2">
+          <Button 
+            onClick={handleCreateEmbeddings}
+            disabled={isCreating || !settings?.openai_api_key}
+            className="w-full"
+          >
+            {isCreating ? "Erstelle Embeddings..." : "Embeddings erstellen"}
           </Button>
-          {settings?.openai_api_key && (
-            <p className="text-sm text-green-600">
-              API-Schlüssel ist konfiguriert ✓
-            </p>
-          )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Embeddings Übersicht</CardTitle>
-          <CardDescription>
-            Überblick über Ihre gespeicherten Embeddings
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 border rounded-lg">
-              <h3 className="font-medium">Content Embeddings</h3>
-              <p className="text-2xl font-bold text-blue-600">
-                {contentEmbeddings?.length || 0}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Gespeicherte Inhalte
-              </p>
-            </div>
-            <div className="p-4 border rounded-lg">
-              <h3 className="font-medium">Nexus Embeddings</h3>
-              <p className="text-2xl font-bold text-purple-600">
-                {nexusEmbeddings?.length || 0}
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Team-geteilte Inhalte
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          
+          <Button 
+            onClick={handleDeleteEmbeddings}
+            disabled={isDeleting || embeddingsCount === 0}
+            variant="destructive"
+            className="w-full"
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            {isDeleting ? "Lösche..." : "Alle Embeddings löschen"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

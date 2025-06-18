@@ -1,5 +1,4 @@
 
-import { useEffect } from 'react';
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -61,48 +60,6 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
       return (data || []) as Notification[];
     }
   });
-
-  useEffect(() => {
-    const handleRealtimeNotification = (payload: any) => {
-      // Nur die benötigten Daten aus dem Payload extrahieren
-      const sanitizedPayload = {
-        id: payload.new?.id,
-        title: payload.new?.title,
-        content: payload.new?.content,
-        created_at: payload.new?.created_at,
-        read: payload.new?.read,
-        type: payload.new?.type,
-        metadata: payload.new?.metadata,
-        target_page: payload.new?.target_page,
-        deleted_at: payload.new?.deleted_at
-      };
-
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
-      
-      if (payload.eventType === 'INSERT' && !payload.new?.read) {
-        toast(sanitizedPayload.title, {
-          description: sanitizedPayload.content,
-        });
-      }
-    };
-
-    const channel = supabase
-      .channel('notifications-channel')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications'
-        },
-        handleRealtimeNotification
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient]);
 
   const handleDeleteNotification = async (id: string) => {
     try {
