@@ -1,100 +1,135 @@
 
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { FileUpload } from "./FileUpload";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Upload } from "lucide-react";
-import { useUser } from "@supabase/auth-helpers-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface DocumentUploadDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   lerninhalteId: string;
-  onUploadComplete: () => void;
+  onSuccess: () => void;
 }
 
-export const DocumentUploadDialog = ({ lerninhalteId, onUploadComplete }: DocumentUploadDialogProps) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
-  const { register, handleSubmit, reset } = useForm();
-  const user = useUser();
+interface CustomFileName {
+  [key: number]: string;
+}
 
-  const onSubmit = async (data: any) => {
-    if (!data.files?.[0] || !user) return;
+export const DocumentUploadDialog = ({
+  open,
+  onOpenChange,
+  lerninhalteId,
+  onSuccess
+}: DocumentUploadDialogProps) => {
+  const [files, setFiles] = useState<File[]>([]);
+  const [customFileNames, setCustomFileNames] = useState<CustomFileName>({});
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleUpload = async () => {
+    if (files.length === 0) {
+      toast.error("Bitte wählen Sie mindestens eine Datei aus");
+      return;
+    }
 
     setIsUploading(true);
     try {
-      const file = data.files[0];
-      const filePath = `${lerninhalteId}/${file.name}`;
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const timestamp = new Date().getTime();
+        const customFileName = customFileNames[i] || file.name;
+        const sanitizedFileName = customFileName.replace(/[^\x00-\x7F]/g, '');
+        const fileExt = sanitizedFileName.split('.').pop();
+        const filePath = `${lerninhalteId}/${timestamp}-${sanitizedFileName}`;
 
-      // Upload file to storage
-      const { error: uploadError } = await supabase.storage
-        .from('elevate-documents')
-        .upload(filePath, file);
+        const { error: uploadError } = await supabase.storage
+          .from('elevate-documents')
+          .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+        if (uploadError) throw uploadError;
 
-      // Create database record
-      const { error: dbError } = await supabase
-        .from('elevate_lerninhalte_documents')
-        .insert({
-          lerninhalte_id: lerninhalteId,
-          file_name: file.name,
-          file_path: filePath,
-          file_type: file.type,
-          created_by: user.id
-        });
+        const { error: dbError } = await supabase
+          .from('elevate_lerninhalte_documents')
+          .insert({
+            lerninhalte_id: lerninhalteId,
+            file_name: sanitizedFileName,
+            file_path: filePath,
+            file_type: file.type
+          });
 
-      if (dbError) throw dbError;
+        if (dbError) throw dbError;
+      }
 
-      toast.success('Dokument erfolgreich hochgeladen');
-      onUploadComplete();
-      setIsOpen(false);
-      reset();
+      toast.success("Dokumente erfolgreich hochgeladen");
+      onSuccess();
+      onOpenChange(false);
+      setFiles([]);
+      setCustomFileNames({});
     } catch (error) {
-      console.error('Error uploading document:', error);
-      toast.error('Fehler beim Hochladen des Dokuments');
+      console.error('Error uploading documents:', error);
+      toast.error("Fehler beim Hochladen der Dokumente");
     } finally {
       setIsUploading(false);
     }
   };
 
+  const handleFileNameChange = (index: number, newName: string) => {
+    setCustomFileNames(prev => ({
+      ...prev,
+      [index]: newName
+    }));
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Upload className="h-4 w-4 mr-2" />
-          Dokument hochladen
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Dokument hochladen</DialogTitle>
-          <DialogDescription>
-            Wählen Sie eine Datei zum Hochladen aus
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <Label htmlFor="files">Datei</Label>
-            <Input
-              id="files"
-              type="file"
-              {...register('files', { required: true })}
-              accept=".pdf,.doc,.docx,.txt,.md"
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl">
+        <DialogTitle className="mb-4">
+          Dokumente hochladen
+        </DialogTitle>
+        <div className="space-y-4">
+          <FileUpload
+            onFilesSelected={(newFiles) => setFiles([...files, ...newFiles])}
+            files={files}
+            customFileNames={customFileNames}
+            onFileNameChange={handleFileNameChange}
+            onFileRemove={(index) => {
+              const newFiles = [...files];
+              newFiles.splice(index, 1);
+              setFiles(newFiles);
+              
+              // Bereinige auch die benutzerdefinierten Dateinamen
+              const newCustomFileNames = { ...customFileNames };
+              delete newCustomFileNames[index];
+              // Indizes neu zuordnen
+              const updatedCustomFileNames: CustomFileName = {};
+              Object.keys(newCustomFileNames).forEach((key) => {
+                const numKey = parseInt(key);
+                if (numKey > index) {
+                  updatedCustomFileNames[numKey - 1] = newCustomFileNames[numKey];
+                } else {
+                  updatedCustomFileNames[numKey] = newCustomFileNames[numKey];
+                }
+              });
+              setCustomFileNames(updatedCustomFileNames);
+            }}
+          />
+          <div className="flex justify-end space-x-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isUploading}
+            >
               Abbrechen
             </Button>
-            <Button type="submit" disabled={isUploading}>
-              {isUploading ? 'Lade hoch...' : 'Hochladen'}
+            <Button
+              onClick={handleUpload}
+              disabled={isUploading || files.length === 0}
+            >
+              {isUploading ? "Wird hochgeladen..." : "Hochladen"}
             </Button>
           </div>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );

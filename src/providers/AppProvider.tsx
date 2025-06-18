@@ -7,39 +7,32 @@ import { SessionContextProvider } from "@supabase/auth-helpers-react";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { supabase } from "@/integrations/supabase/client";
 import { AuthProvider } from "./AuthProvider";
-import { useRealtimeSubscriptions } from "@/hooks/useRealtimeSubscriptions";
 
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 1000 * 60 * 30, // 30 minutes
-      gcTime: 1000 * 60 * 60, // 1 hour
-      retry: 2,
+      cacheTime: 1000 * 60 * 60, // 1 hour
+      retry: 3,
       retryDelay: attemptIndex => Math.min(1000 * 2 ** attemptIndex, 30000),
-      refetchOnWindowFocus: false
+      refetchOnWindowFocus: false,
+      keepPreviousData: true
     },
   },
 });
-
-const RealtimeProvider = ({ children }: { children: React.ReactNode }) => {
-  useRealtimeSubscriptions();
-  return <>{children}</>;
-};
 
 export const AppProvider = ({ children }: { children: React.ReactNode }) => {
   return (
     <QueryClientProvider client={queryClient}>
       <SessionContextProvider supabaseClient={supabase}>
         <AuthProvider>
-          <RealtimeProvider>
-            <TooltipProvider>
-              <SidebarProvider>
-                <Toaster />
-                <Sonner />
-                {children}
-              </SidebarProvider>
-            </TooltipProvider>
-          </RealtimeProvider>
+          <TooltipProvider>
+            <SidebarProvider>
+              <Toaster />
+              <Sonner />
+              {children}
+            </SidebarProvider>
+          </TooltipProvider>
         </AuthProvider>
       </SessionContextProvider>
     </QueryClientProvider>

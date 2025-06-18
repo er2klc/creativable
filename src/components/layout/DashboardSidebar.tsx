@@ -7,7 +7,7 @@ import { SidebarFooter } from "./sidebar/SidebarFooter";
 import { SidebarMenuSection } from "./sidebar/SidebarMenuSection";
 import { usePersonalItems, teamItems, analysisItems, legalItems } from "./sidebar/SidebarItems";
 import { useSidebarState } from "./sidebar/SidebarState";
-import { useUnreadCount } from "./sidebar/hooks/useUnreadCount";
+import { useUnreadCount } from "./sidebar/SidebarUnreadCount";
 import { AdminSection } from "./sidebar/AdminSection";
 import { useQuery } from "@tanstack/react-query";
 
@@ -26,20 +26,15 @@ export const DashboardSidebar = () => {
           .select('version')
           .order('version', { ascending: false })
           .limit(1)
-          .maybeSingle();
+          .single();
 
-        if (error) {
-          console.error('Error fetching version:', error);
-          return '1.0.0';
-        }
-        
-        return data?.version || '1.0.0';
+        if (error) throw error;
+        return data?.version || '0.1';
       } catch (error) {
         console.error('Error fetching version:', error);
-        return '1.0.0';
+        return '0.1';
       }
-    },
-    retry: 1,
+    }
   });
 
   useEffect(() => {
@@ -55,7 +50,7 @@ export const DashboardSidebar = () => {
           .from('profiles')
           .select('is_super_admin')
           .eq('id', user.id)
-          .maybeSingle();
+          .single();
 
         if (error) {
           console.error('Error fetching super admin status:', error);
@@ -119,7 +114,7 @@ export const DashboardSidebar = () => {
 
         <SidebarFooter 
           isExpanded={isExpanded} 
-          currentVersion={versionData || '1.0.0'}
+          currentVersion={versionData || '0.1'}
         />
       </SidebarContent>
     </Sidebar>

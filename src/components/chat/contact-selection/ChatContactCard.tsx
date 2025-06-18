@@ -44,10 +44,10 @@ export const ChatContactCard = ({ contact, onClick, selected }: ChatContactCardP
         </div>
 
         <div className="space-y-0.5">
-          {contact.industry && (
+          {contact.position && (
             <div className="flex items-center gap-1 text-[9px] text-muted-foreground">
               <Briefcase className="h-2.5 w-2.5 flex-shrink-0" />
-              <span className="truncate">{contact.industry}</span>
+              <span className="truncate">{contact.position}</span>
             </div>
           )}
 

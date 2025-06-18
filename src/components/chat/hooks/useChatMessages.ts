@@ -1,7 +1,6 @@
-
 import { useChat } from "ai/react";
 import { toast } from "sonner";
-import { useCallback, useState, useEffect } from "react";
+import { useCallback, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface UseChatMessagesProps {
@@ -12,186 +11,6 @@ interface UseChatMessagesProps {
   systemMessage: string;
 }
 
-/**
- * Lädt den Benutzerkontext für den Chatbot beim Start der Konversation
- */
-const loadUserContextForChat = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    
-    // 1. Benutzerprofil laden
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-    
-    // 2. Benutzereinstellungen laden
-    const { data: settings } = await supabase
-      .from('settings')
-      .select('*')
-      .eq('user_id', user.id)
-      .single();
-    
-    // 3. Erstelle einen Initialkontext für den Chatbot
-    const initialContext = `
-      Benutzerinformationen:
-      Name: ${profile?.display_name || 'Unbekannt'}
-      Email: ${user.email}
-      Sprache: ${settings?.language || 'de'}
-    `.trim();
-    
-    return initialContext;
-  } catch (error) {
-    console.error('Fehler beim Laden des Benutzerkontexts:', error);
-    return "";
-  }
-};
-
-// Füge eine Funktion hinzu, um Kontakte direkt abzurufen
-const fetchAllContacts = async () => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error("User not authenticated");
-    
-    // Kontakte (Leads) direkt aus der Datenbank abrufen
-    const { data: contacts, error } = await supabase
-      .from('leads')
-      .select('*')
-      .eq('user_id', user.id);
-    
-    if (error) throw error;
-    
-    if (contacts && contacts.length > 0) {
-      // Formatiere die Kontakte als lesbare Liste
-      return contacts.map(contact => ({
-        name: contact.name,
-        email: contact.email || 'Keine E-Mail',
-        phone: contact.phone_number || 'Keine Telefonnummer',
-        platform: contact.platform || 'Keine Plattform',
-        industry: contact.industry || 'Keine Branche'
-      }));
-    }
-    
-    return [];
-  } catch (error) {
-    console.error('Fehler beim Abrufen der Kontakte:', error);
-    return [];
-  }
-};
-
-// Füge diese Funktion zur Unterstützung spezieller Anfragen hinzu
-const handleSpecialQueries = async (query: string) => {
-  const lowerQuery = query.toLowerCase().trim();
-  
-  // Prüfe, ob der Benutzer nach seinen Profildaten fragt ("Wer bin ich?")
-  if (
-    lowerQuery.includes('wer bin ich') || 
-    lowerQuery === 'wer bist du' || 
-    lowerQuery === 'wie heiße ich'
-  ) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return "Du bist nicht angemeldet.";
-      
-      // Benutzerprofil abrufen
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      
-      // Benutzereinstellungen abrufen
-      const { data: settings } = await supabase
-        .from('settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-      
-      return `Du bist ${profile?.display_name || user.email}.\n\n` +
-        `E-Mail: ${user.email}\n` +
-        `Sprache: ${settings?.language || 'Deutsch'}\n` +
-        `Theme: ${settings?.theme || 'Light'}`;
-    } catch (error) {
-      console.error('Fehler beim Abrufen der Benutzerinformationen:', error);
-      return "Ich konnte deine Benutzerinformationen nicht abrufen.";
-    }
-  }
-  
-  // Prüfe, ob der Benutzer nach Kontakten fragt
-  if (
-    lowerQuery.includes('kontakte') || 
-    lowerQuery.includes('leads') || 
-    (lowerQuery.includes('gib mir') && lowerQuery.includes('alle')) ||
-    lowerQuery === 'alle' ||
-    lowerQuery === 'alle kontakte'
-  ) {
-    const contacts = await fetchAllContacts();
-    
-    if (contacts.length === 0) {
-      return "Ich konnte keine Kontakte in deiner Datenbank finden.";
-    }
-    
-    const contactsListText = contacts.map(contact => 
-      `- ${contact.name} (${contact.email}, ${contact.phone})`
-    ).join('\n');
-    
-    return `Hier sind alle deine Kontakte:\n\n${contactsListText}`;
-  }
-
-  // Prüfe, ob der Benutzer nach seinen Aufgaben fragt
-  if (
-    lowerQuery.includes('aufgaben') || 
-    lowerQuery.includes('tasks') || 
-    lowerQuery.includes('todos') ||
-    lowerQuery.includes('to-dos') ||
-    lowerQuery.includes('to do')
-  ) {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return "Du bist nicht angemeldet.";
-      
-      // Aufgaben abrufen
-      const { data: tasks } = await supabase
-        .from('tasks')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('due_date', { ascending: true });
-      
-      if (!tasks || tasks.length === 0) {
-        return "Du hast aktuell keine Aufgaben in deiner Liste.";
-      }
-      
-      const tasksListText = tasks.map(task => 
-        `- ${task.title} (${task.completed ? 'Abgeschlossen' : 'Ausstehend'}, Fällig: ${task.due_date || 'Kein Datum'})`
-      ).join('\n');
-      
-      return `Hier sind deine Aufgaben:\n\n${tasksListText}`;
-    } catch (error) {
-      console.error('Fehler beim Abrufen der Aufgaben:', error);
-      return "Ich konnte deine Aufgaben nicht abrufen.";
-    }
-  }
-  
-  // Prüfe, ob der Benutzer Hilfe zu den Funktionen des Assistenten benötigt
-  if (
-    lowerQuery === 'hilfe' || 
-    lowerQuery === 'help' || 
-    lowerQuery === 'was kannst du' ||
-    lowerQuery === 'funktionen'
-  ) {
-    return `Ich kann dir bei verschiedenen Aufgaben helfen. Hier sind einige Beispiele:\n\n` +
-      `- **Kontakte anzeigen**: "Zeige mir alle meine Kontakte"\n` +
-      `- **Aufgaben verwalten**: "Was sind meine Aufgaben?"\n` +
-      `- **Benutzerinformationen**: "Wer bin ich?"\n` +
-      `- **Allgemeine Hilfe**: "Hilfe" oder "Was kannst du?"\n\n` +
-      `Ich habe direkten Zugriff auf deine Daten in der Anwendung und kann spezifische Informationen abrufen oder Fragen beantworten.`;
-  }
-  
-  return null;
-};
-
 export const useChatMessages = ({
   sessionToken,
   apiKey,
@@ -201,25 +20,7 @@ export const useChatMessages = ({
 }: UseChatMessagesProps) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [retryCount, setRetryCount] = useState(0);
-  const [userContext, setUserContext] = useState("");
   const MAX_RETRIES = 2;
-  
-  // Lade den Benutzerkontext beim ersten Rendern
-  useEffect(() => {
-    const fetchUserContext = async () => {
-      const context = await loadUserContextForChat();
-      setUserContext(context);
-    };
-    
-    if (userId) {
-      fetchUserContext();
-    }
-  }, [userId]);
-  
-  // Erweitere den System-Prompt mit dem Benutzerkontext
-  const enhancedSystemMessage = userContext 
-    ? `${systemMessage}\n\n${userContext}` 
-    : systemMessage;
   
   const { 
     messages, 
@@ -230,7 +31,7 @@ export const useChatMessages = ({
     setInput,
     isLoading 
   } = useChat({
-    api: `https://nqahuocznyiqphgoktid.supabase.co/functions/v1/chat`,
+    api: `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`,
     headers: {
       Authorization: `Bearer ${sessionToken}`,
       'X-OpenAI-Key': apiKey || '',
@@ -244,30 +45,20 @@ export const useChatMessages = ({
       {
         id: "system",
         role: "system",
-        content: enhancedSystemMessage,
+        content: systemMessage,
       }
     ]
   });
-
-  // Aktualisiere die Systemnachricht, wenn sich der Benutzerkontext ändert
-  useEffect(() => {
-    if (messages.length > 0 && messages[0].role === 'system') {
-      setMessages(prev => [
-        { ...prev[0], content: enhancedSystemMessage },
-        ...prev.slice(1)
-      ]);
-    }
-  }, [enhancedSystemMessage, setMessages]);
 
   const resetMessages = useCallback(() => {
     setMessages([
       {
         id: "system",
         role: "system",
-        content: enhancedSystemMessage,
+        content: systemMessage,
       }
     ]);
-  }, [setMessages, enhancedSystemMessage]);
+  }, [setMessages, systemMessage]);
 
   const handleSubmit = async (e: React.FormEvent, overrideMessage?: string) => {
     if (e.preventDefault) {
@@ -287,24 +78,6 @@ export const useChatMessages = ({
     
     try {
       const userMessage = { id: Date.now().toString(), role: 'user' as const, content: currentInput };
-      
-      // Prüfe, ob es eine spezielle Anfrage ist, die direkt beantwortet werden kann
-      const specialResponse = await handleSpecialQueries(currentInput);
-      
-      if (specialResponse) {
-        // Wenn eine spezielle Anfrage erkannt wurde, zeige die Antwort sofort an
-        setMessages(prev => [
-          ...prev, 
-          userMessage,
-          { id: crypto.randomUUID(), role: 'assistant' as const, content: specialResponse }
-        ]);
-        if (!overrideMessage) {
-          setInput('');
-        }
-        setIsProcessing(false);
-        return;
-      }
-      
       const assistantMessage = { id: crypto.randomUUID(), role: 'assistant' as const, content: '' };
       
       setMessages(prev => [...prev, userMessage]);
@@ -322,7 +95,7 @@ export const useChatMessages = ({
 
       const requestData = {
         messages: [
-          { role: 'system', content: enhancedSystemMessage },
+          { role: 'system', content: systemMessage },
           ...recentMessages.filter(m => m.role !== 'system'),
           { role: 'user', content: currentInput }
         ],

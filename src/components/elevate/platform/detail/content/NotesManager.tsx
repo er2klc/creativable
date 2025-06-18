@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { NotesSection } from "../NotesSection";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +14,7 @@ export const NotesManager = ({ lerninhalteId }: NotesManagerProps) => {
   const user = useUser();
 
   const { data: savedNotes, refetch: refetchNotes } = useQuery({
-    queryKey: ['elevate-notes', lerninhalteId],
+    queryKey: ['notes', lerninhalteId],
     queryFn: async () => {
       if (!user) return '';
       
@@ -26,10 +25,7 @@ export const NotesManager = ({ lerninhalteId }: NotesManagerProps) => {
         .eq('user_id', user.id)
         .maybeSingle();
 
-      if (error) {
-        console.error('Error fetching notes:', error);
-        return '';
-      }
+      if (error) throw error;
       return data?.content || '';
     },
     enabled: !!user
@@ -56,10 +52,7 @@ export const NotesManager = ({ lerninhalteId }: NotesManagerProps) => {
       if (existingNote) {
         await supabase
           .from('elevate_lerninhalte_notes')
-          .update({ 
-            content: notes,
-            updated_at: new Date().toISOString()
-          })
+          .update({ content: notes })
           .eq('lerninhalte_id', lerninhalteId)
           .eq('user_id', user.id);
       } else {

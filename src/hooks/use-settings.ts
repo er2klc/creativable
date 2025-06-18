@@ -3,10 +3,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Settings } from "@/integrations/supabase/types/settings";
 import { toast } from "sonner";
+import { useDebounce } from "@/hooks/use-debounce";
 import { useCallback, useState } from "react";
 
 export const useSettings = () => {
   const queryClient = useQueryClient();
+  // Tracking ob der Fehler bereits angezeigt wurde
   const [hasShownError, setHasShownError] = useState(false);
 
   const { data: settings, isLoading, error, refetch: refetchSettings } = useQuery({
@@ -45,15 +47,13 @@ export const useSettings = () => {
           const { data: userMetadata } = await supabase.auth.getUser();
           const phoneNumber = userMetadata.user?.phone || userMetadata.user?.user_metadata?.phoneNumber || null;
           
-          // Initial settings with new columns
+          // Initial settings
           const newSettings = {
             user_id: user.id,
-            language: "de",
+            language: "Deutsch",
             registration_step: 1,
             registration_completed: false,
             whatsapp_number: phoneNumber,
-            theme: "light",
-            email_notifications: true,
           };
 
           const { data: createdSettings, error: createError } = await supabase
@@ -72,6 +72,7 @@ export const useSettings = () => {
 
         return data;
       } catch (error) {
+        // Nur einmal einen Toast anzeigen
         if (!hasShownError) {
           setHasShownError(true);
           toast.error("Fehler beim Laden der Einstellungen. Bitte aktualisieren Sie die Seite.");
@@ -87,12 +88,14 @@ export const useSettings = () => {
         throw error;
       }
     },
-    retry: 1,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000),
-    staleTime: 60000,
+    retry: 1, // Nur einmal wiederholen statt 3 mal
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 5000), // Kürzere max Verzögerung
+    staleTime: 60000, // 1 Minute statt 30 Sekunden
+    // Don't refetch automatically on window focus
     refetchOnWindowFocus: false,
   });
 
+  // Safely handle column existence checks without repeated API calls
   const safeSettingsUpdate = useCallback(async (newSettings: Partial<Settings>) => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
@@ -101,9 +104,40 @@ export const useSettings = () => {
         throw new Error("No user found");
       }
 
+      // Create a safe copy of the settings to update
+      const safeSettings = { ...newSettings };
+      
+      // Handle email columns specifically
+      const emailColumns = ['email_configured', 'last_email_sync', 'email_sync_enabled'];
+      
+      for (const column of emailColumns) {
+        if (column in safeSettings) {
+          try {
+            // Try to update just this column in a separate query to test if it exists
+            const { error } = await supabase
+              .from("settings")
+              .update({ [column]: safeSettings[column] })
+              .eq("user_id", user.id);
+              
+            if (error && error.message.includes("column")) {
+              console.warn(`${column} column doesn't exist in settings table`);
+              delete safeSettings[column];
+            }
+          } catch (error) {
+            console.warn(`Error checking ${column} column:`, error);
+            delete safeSettings[column];
+          }
+        }
+      }
+      
+      // Only proceed with update if there are properties to update
+      if (Object.keys(safeSettings).length === 0) {
+        return settings;
+      }
+
       const { data, error } = await supabase
         .from("settings")
-        .update(newSettings)
+        .update(safeSettings)
         .eq("user_id", user.id)
         .select()
         .single();
@@ -112,7 +146,7 @@ export const useSettings = () => {
         throw error;
       }
 
-      if (newSettings.openai_api_key) {
+      if (safeSettings.openai_api_key) {
         console.info("✅ OpenAI API Key updated successfully");
       }
 
@@ -122,18 +156,22 @@ export const useSettings = () => {
       toast.error("Fehler beim Aktualisieren der Einstellungen");
       throw error;
     }
-  }, []);
+  }, [settings]);
 
   const updateSettings = useMutation({
     mutationFn: safeSettingsUpdate,
     onSuccess: (data, variables) => {
+      // Only show toast for non-automatic updates (user-initiated)
+      // We'll determine this by checking if it's an email setting - those are automated
       const isEmailSetting = 
         'email_configured' in variables ||
         'last_email_sync' in variables ||
         'email_sync_enabled' in variables;
         
+      // Update cache with the new data without triggering a refetch
       queryClient.setQueryData(["settings"], data);
       
+      // Only show toast for non-email settings updates
       if (!isEmailSetting) {
         toast.success("Einstellungen wurden gespeichert");
       }

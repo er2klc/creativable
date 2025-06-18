@@ -1,51 +1,31 @@
 
+import { Tables } from "@/integrations/supabase/types";
+import { ChatContactCard } from "./ChatContactCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Input } from "@/components/ui/input";
-import { useState, useMemo } from "react";
-import { ContactItem } from "./ContactItem";
-import { useIsMobile } from "@/hooks/use-mobile";
 
 interface ChatContactListProps {
-  contacts: any[];
-  onSelect: (contact: any) => void;
+  contacts: Tables<"leads">[];
+  onSelect: (contact: Tables<"leads">) => void;
   selectedId?: string;
 }
 
-export function ChatContactList({ contacts, onSelect, selectedId }: ChatContactListProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const isMobile = useIsMobile();
-  
-  const filteredContacts = useMemo(() => {
-    if (!searchQuery.trim()) return contacts;
-    return contacts.filter(contact => 
-      contact.name.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [contacts, searchQuery]);
+export const ChatContactList = ({ contacts, onSelect, selectedId }: ChatContactListProps) => {
+  if (!contacts.length) return null;
 
   return (
-    <div className="p-4 space-y-4">
-      <Input
-        placeholder="Kontakt suchen..."
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-      />
-      <ScrollArea className="h-[300px]">
-        <div className="space-y-2">
-          {filteredContacts.map(contact => (
-            <ContactItem 
+    <div className="w-full h-[90px] border-t overflow-hidden">
+      <ScrollArea className="w-full h-full" orientation="horizontal">
+        <div className="flex gap-2 px-4 py-2 snap-x snap-mandatory h-full">
+          {contacts.map((contact) => (
+            <ChatContactCard
               key={contact.id}
               contact={contact}
-              isSelected={contact.id === selectedId}
-              onSelect={() => onSelect(contact)}
+              onClick={() => onSelect(contact)}
+              selected={contact.id === selectedId}
             />
           ))}
-          {filteredContacts.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
-              Keine Kontakte gefunden
-            </div>
-          )}
         </div>
       </ScrollArea>
     </div>
   );
-}
+};

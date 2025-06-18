@@ -1,8 +1,11 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
 
 export const useTaskCount = () => {
+  const queryClient = useQueryClient();
+
   const { data: taskCount = 0 } = useQuery({
     queryKey: ['task-count'],
     queryFn: async () => {
@@ -19,6 +22,28 @@ export const useTaskCount = () => {
     },
     refetchInterval: 30000,
   });
+
+  // Subscribe to real-time updates for tasks
+  useEffect(() => {
+    const channel = supabase
+      .channel('task-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['task-count'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   return taskCount;
 };

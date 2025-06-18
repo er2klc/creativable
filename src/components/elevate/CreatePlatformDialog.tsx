@@ -1,147 +1,215 @@
-
 import { useState } from "react";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
+import { CreatePlatformForm } from "./platform/CreatePlatformForm";
+import { TeamAccessManager } from "./platform/TeamAccessManager";
 
 interface CreatePlatformDialogProps {
-  onPlatformCreated?: () => void;
+  onPlatformCreated?: () => Promise<void>;
 }
 
-export function CreatePlatformDialog({ onPlatformCreated }: CreatePlatformDialogProps) {
-  const [open, setOpen] = useState(false);
+export const CreatePlatformDialog = ({ onPlatformCreated }: CreatePlatformDialogProps) => {
+  const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
+  const [selectedModules, setSelectedModules] = useState<string[]>([]);
   const [logoFile, setLogoFile] = useState<File | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const user = useUser();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!user || !name.trim()) return;
+  const resetState = () => {
+    setName("");
+    setDescription("");
+    setSelectedTeams([]);
+    setSelectedModules([]);
+    setLogoFile(null);
+    setLogoPreview(null);
+    setIsLoading(false);
+  };
 
-    setIsSubmitting(true);
+  const handleCreate = async () => {
+    if (!user) {
+      toast.error("Sie müssen eingeloggt sein, um ein Modul zu erstellen");
+      return;
+    }
+
+    if (!name.trim()) {
+      toast.error("Bitte geben Sie einen Namen ein");
+      return;
+    }
+
+    setIsLoading(true);
+
     try {
       let logoUrl = null;
 
-      // Upload logo if provided
       if (logoFile) {
         const fileExt = logoFile.name.split('.').pop();
         const fileName = `${crypto.randomUUID()}.${fileExt}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('platform-logos')
+        const { error: uploadError, data: uploadData } = await supabase.storage
+          .from('team-logos')
           .upload(fileName, logoFile);
 
         if (uploadError) {
-          console.error('Upload error:', uploadError);
-        } else {
-          const { data } = supabase.storage
-            .from('platform-logos')
-            .getPublicUrl(fileName);
-          logoUrl = data.publicUrl;
+          console.error('Logo upload error:', uploadError);
+          throw new Error('Fehler beim Hochladen des Logos');
         }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('team-logos')
+          .getPublicUrl(fileName);
+
+        logoUrl = publicUrl;
       }
 
-      // Create platform
-      const { data: platform, error } = await supabase
-        .from("elevate_platforms" as any)
+      // First create the platform
+      const { data: platformData, error: platformError } = await supabase
+        .from('elevate_platforms')
         .insert([{
           name: name.trim(),
           description: description.trim() || null,
           created_by: user.id,
-          logo_url: logoUrl,
+          logo_url: logoUrl
         }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (platformError) {
+        console.error('Platform creation error:', platformError);
+        throw new Error('Fehler beim Erstellen der Plattform');
+      }
 
-      // Grant creator access
-      await supabase
-        .from("elevate_user_access" as any)
-        .insert({
-          platform_id: platform.id,
+      console.log('Created platform:', platformData);
+
+      // Create user access entry for the creator
+      const { error: userAccessError } = await supabase
+        .from('elevate_user_access')
+        .insert([{
+          platform_id: platformData.id,
           user_id: user.id,
-          access_type: 'admin',
-          granted_by: user.id,
-        });
+          access_type: 'owner',
+          granted_by: user.id
+        }]);
 
-      toast.success("Plattform erfolgreich erstellt!");
-      setOpen(false);
-      setName("");
-      setDescription("");
-      setLogoFile(null);
-      onPlatformCreated?.();
+      if (userAccessError) {
+        console.error('User access error:', userAccessError);
+        throw new Error('Fehler beim Erstellen des Benutzer-Zugriffs');
+      }
+
+      // Then create the module with the new platform ID
+      const { data: moduleData, error: moduleError } = await supabase
+        .from('elevate_modules')
+        .insert([{
+          title: name.trim(),
+          description: description.trim() || null,
+          created_by: user.id,
+          platform_id: platformData.id,
+          order_index: 0
+        }])
+        .select()
+        .single();
+
+      if (moduleError) {
+        console.error('Module creation error:', moduleError);
+        throw new Error('Fehler beim Erstellen des Moduls');
+      }
+
+      console.log('Created module:', moduleData);
+
+      // Create team access entries sequentially
+      if (selectedTeams.length > 0) {
+        console.log('Creating team access entries for teams:', selectedTeams);
+        
+        for (const teamId of selectedTeams) {
+          const { error: teamAccessError } = await supabase
+            .from('elevate_team_access')
+            .insert({
+              platform_id: platformData.id,
+              team_id: teamId,
+              granted_by: user.id
+            });
+
+          if (teamAccessError) {
+            console.error('Team access error for team', teamId, ':', teamAccessError);
+            // We'll continue with other teams even if one fails
+            toast.error(`Fehler beim Gewähren des Zugriffs für Team ${teamId}`);
+          } else {
+            console.log('Successfully created team access for team:', teamId);
+          }
+        }
+      }
+
+      toast.success("Modul erfolgreich erstellt");
+      setIsOpen(false);
+      resetState();
+
+      // Ensure we refresh the platform list
+      if (onPlatformCreated) {
+        await onPlatformCreated();
+      }
     } catch (error: any) {
-      console.error('Error creating platform:', error);
-      toast.error("Fehler beim Erstellen der Plattform: " + error.message);
+      console.error('Fehler beim Erstellen des Moduls:', error);
+      toast.error(error.message || 'Unbekannter Fehler beim Erstellen des Moduls');
     } finally {
-      setIsSubmitting(false);
+      setIsLoading(false);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    setIsOpen(open);
+    if (!open) {
+      resetState();
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
-        <Button className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Neue Plattform
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Modul erstellen
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Neue Elevate-Plattform erstellen</DialogTitle>
+          <DialogTitle>Neues Ausbildungsmodul erstellen</DialogTitle>
           <DialogDescription>
-            Erstellen Sie eine neue Lernplattform für Ihr Team oder Ihre Organisation.
+            Erstellen Sie ein neues Ausbildungsmodul und wählen Sie die Teams aus, die darauf Zugriff haben sollen.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="name">Name der Plattform *</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="z.B. Marketing Masterclass"
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="description">Beschreibung</Label>
-            <Textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Beschreiben Sie Ihre Lernplattform..."
-              rows={3}
-            />
-          </div>
-          <div>
-            <Label htmlFor="logo">Logo (optional)</Label>
-            <Input
-              id="logo"
-              type="file"
-              accept="image/*"
-              onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-            />
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-              Abbrechen
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Erstellen..." : "Erstellen"}
-            </Button>
-          </DialogFooter>
-        </form>
+        <div className="space-y-6">
+          <CreatePlatformForm
+            name={name}
+            setName={setName}
+            description={description}
+            setDescription={setDescription}
+            logoFile={logoFile}
+            setLogoFile={setLogoFile}
+            logoPreview={logoPreview}
+            setLogoPreview={setLogoPreview}
+            selectedModules={selectedModules}
+            setSelectedModules={setSelectedModules}
+          />
+          <TeamAccessManager
+            selectedTeams={selectedTeams}
+            setSelectedTeams={setSelectedTeams}
+          />
+        </div>
+        <DialogFooter>
+          <Button
+            onClick={handleCreate}
+            disabled={!name.trim() || isLoading}
+          >
+            {isLoading ? "Erstelle..." : "Modul erstellen"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
-}
+};

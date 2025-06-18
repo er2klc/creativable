@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -20,7 +19,7 @@ import { UseFormReturn } from "react-hook-form";
 interface Lead {
   id: string;
   name: string;
-  platform?: string | null;
+  contact_type?: string | null;
 }
 
 interface ContactFieldProps {
@@ -37,7 +36,7 @@ export const ContactField = ({ form }: ContactFieldProps) => {
 
         const { data, error } = await supabase
           .from("leads")
-          .select("id, name, platform")
+          .select("id, name, contact_type")
           .eq("user_id", user.id)
           .order("name");
 
@@ -77,9 +76,9 @@ export const ContactField = ({ form }: ContactFieldProps) => {
                 {leads.map((lead) => (
                   <SelectItem key={lead.id} value={lead.id}>
                     {lead.name}
-                    {lead.platform && (
+                    {lead.contact_type && (
                       <span className="ml-2 text-sm text-muted-foreground">
-                        ({lead.platform})
+                        ({lead.contact_type})
                       </span>
                     )}
                   </SelectItem>

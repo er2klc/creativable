@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -103,13 +102,10 @@ export function EmailViewer({ emailId, userEmail }: EmailViewerProps) {
   useEffect(() => {
     if (email?.html_content) {
       // Sanitize HTML to prevent XSS
-      // Explicitly type the sanitize options for DOMPurify
-      const sanitizeOptions: DOMPurify.SanitizeOptions = {
+      const sanitizedHtml = DOMPurify.sanitize(email.html_content, {
         ADD_ATTR: ['target'],
         FORBID_TAGS: ['script', 'style', 'iframe', 'frame', 'object', 'embed']
-      };
-      
-      const sanitizedHtml = DOMPurify.sanitize(email.html_content, sanitizeOptions);
+      });
       setHtmlContent(sanitizedHtml);
     } else {
       setHtmlContent('');

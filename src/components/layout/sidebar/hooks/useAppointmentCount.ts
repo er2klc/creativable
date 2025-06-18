@@ -1,9 +1,12 @@
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { startOfDay, endOfDay } from "date-fns";
+import { useEffect } from "react";
 
 export const useAppointmentCount = () => {
+  const queryClient = useQueryClient();
+
   const { data: appointmentCount = 0 } = useQuery({
     queryKey: ['todays-appointments'],
     queryFn: async () => {
@@ -27,6 +30,28 @@ export const useAppointmentCount = () => {
     },
     refetchInterval: 30000,
   });
+
+  // Subscribe to real-time updates for appointments
+  useEffect(() => {
+    const channel = supabase
+      .channel('appointment-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['todays-appointments'] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   return appointmentCount;
 };

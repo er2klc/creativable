@@ -1,105 +1,92 @@
-
 import { Button } from "@/components/ui/button";
-import { CheckCircle, UserCheck, XCircle, Archive } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
-import * as confetti from "canvas-confetti";
+import { Star, XCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Tables } from "@/integrations/supabase/types";
+import confetti from 'canvas-confetti';
 
 interface StatusButtonsProps {
   status: string;
   onStatusChange: (newStatus: string) => void;
 }
 
-export function StatusButtons({ status = 'lead', onStatusChange }: StatusButtonsProps) {
+export function StatusButtons({ status, onStatusChange }: StatusButtonsProps) {
+  const triggerPartnerAnimation = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#4CAF50', '#8BC34A', '#CDDC39']
+    });
+  };
+
+  const triggerCustomerAnimation = () => {
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ['#2196F3', '#03A9F4', '#00BCD4']
+    });
+  };
+
   const handleStatusChange = (newStatus: string) => {
+    if (newStatus === 'partner' && status !== 'partner') {
+      triggerPartnerAnimation();
+    } else if (newStatus === 'customer' && status !== 'customer') {
+      triggerCustomerAnimation();
+    }
     onStatusChange(newStatus);
-    
-    if (newStatus === 'partner' || newStatus === 'customer') {
-      confetti.default({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-      
-      toast.success(
-        newStatus === 'partner' ? 'Glückwunsch! Neuer Partner gewonnen!' : 'Glückwunsch! Neuer Kunde gewonnen!'
-      );
-    }
   };
-
-  const getStatusConfig = (statusType: string) => {
-    switch(statusType) {
-      case 'partner':
-        return { icon: UserCheck, color: 'bg-purple-500 hover:bg-purple-600', label: 'Partner' };
-      case 'customer':
-        return { icon: CheckCircle, color: 'bg-green-500 hover:bg-green-600', label: 'Kunde' };
-      case 'not_for_now':
-        return { icon: Archive, color: 'bg-orange-500 hover:bg-orange-600', label: 'Nicht jetzt' };
-      case 'no_interest':
-        return { icon: XCircle, color: 'bg-red-500 hover:bg-red-600', label: 'Kein Interesse' };
-      default:
-        return null;
-    }
-  };
-
-  const currentConfig = getStatusConfig(status);
 
   return (
-    <div className="flex gap-2 flex-wrap">
-      {status === 'lead' ? (
-        <>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-purple-600 border-purple-600 hover:bg-purple-50"
-            onClick={() => handleStatusChange('partner')}
-          >
-            <UserCheck className="h-4 w-4 mr-2" />
-            Partner
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-green-600 border-green-600 hover:bg-green-50"
-            onClick={() => handleStatusChange('customer')}
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Kunde
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-orange-600 border-orange-600 hover:bg-orange-50"
-            onClick={() => handleStatusChange('not_for_now')}
-          >
-            <Archive className="h-4 w-4 mr-2" />
-            Nicht jetzt
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-red-600 border-red-600 hover:bg-red-50"
-            onClick={() => handleStatusChange('no_interest')}
-          >
-            <XCircle className="h-4 w-4 mr-2" />
-            Kein Interesse
-          </Button>
-        </>
-      ) : currentConfig && (
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className={`${currentConfig.color} text-white`}>
-            <currentConfig.icon className="h-3 w-3 mr-1" />
-            {currentConfig.label}
-          </Badge>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleStatusChange('lead')}
-          >
-            Zurück zu Lead
-          </Button>
-        </div>
-      )}
+    <div className="flex gap-2">
+      <Button
+        variant="outline"
+        size="sm"
+        className={cn(
+          "transition-colors border-b-2",
+          status === 'partner' ? 'border-b-green-500 text-green-700 hover:bg-green-50' : 'border-b-transparent'
+        )}
+        onClick={() => handleStatusChange('partner')}
+      >
+        <Star className="h-4 w-4 mr-2" />
+        Partner
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className={cn(
+          "transition-colors border-b-2",
+          status === 'customer' ? 'border-b-blue-500 text-blue-700 hover:bg-blue-50' : 'border-b-transparent'
+        )}
+        onClick={() => handleStatusChange('customer')}
+      >
+        <Star className="h-4 w-4 mr-2" />
+        Kunde
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className={cn(
+          "transition-colors border-b-2",
+          status === 'not_for_now' ? 'border-b-yellow-500 text-yellow-700 hover:bg-yellow-50' : 'border-b-transparent'
+        )}
+        onClick={() => handleStatusChange('not_for_now')}
+      >
+        <XCircle className="h-4 w-4 mr-2" />
+        Not For Now
+      </Button>
+      <Button 
+        variant="outline"
+        size="sm"
+        className={cn(
+          "transition-colors border-b-2",
+          status === 'no_interest' ? 'border-b-red-500 text-red-700 hover:bg-red-50' : 'border-b-transparent'
+        )}
+        onClick={() => handleStatusChange('no_interest')}
+      >
+        <XCircle className="h-4 w-4 mr-2" />
+        Kein Interesse
+      </Button>
     </div>
   );
 }

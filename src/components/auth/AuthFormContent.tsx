@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { LoginForm } from "./LoginForm";
 import { RegistrationForm } from "./RegistrationForm";
@@ -17,7 +16,7 @@ import { useState } from "react";
 export const AuthFormContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   
   const {
@@ -38,10 +37,10 @@ export const AuthFormContent = () => {
   } = useAuthForm();
 
   useEffect(() => {
-    if (user) {
+    if (isAuthenticated) {
       navigate("/dashboard");
     }
-  }, [user, navigate]);
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     const state = location.state as { isSignUp?: boolean; initialEmail?: string } | null;

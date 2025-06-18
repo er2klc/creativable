@@ -1,7 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Skeleton } from "@/components/ui/skeleton";
 
 export const LeadPhases = () => {
   const { data: phases = [], isLoading, error } = useQuery({
@@ -67,11 +66,8 @@ export const LeadPhases = () => {
           return [];
         }
 
-        // Ensure phasesData is an array
-        const phasesArray = Array.isArray(phasesData) ? phasesData : [];
-        
         // Generate colors for phases based on index
-        return phasesArray.map((phase, index) => {
+        return phasesData.map((phase, index) => {
           // Generate a color from a predefined palette
           const colors = [
             '#3b82f6', // blue-500
@@ -88,15 +84,12 @@ export const LeadPhases = () => {
             '#14b8a6', // teal-500
           ];
           
-          // Ensure leads is always an array
-          const leads = Array.isArray(phase.leads) ? phase.leads : [];
-          
           return {
             id: phase.id,
             name: phase.name,
             order_index: phase.order_index,
             color: colors[index % colors.length],
-            leads: leads
+            leads: phase.leads || []
           };
         });
       } catch (error) {
@@ -107,19 +100,7 @@ export const LeadPhases = () => {
   });
 
   if (isLoading) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {[1, 2, 3].map(i => (
-          <div key={i} className="bg-white rounded-lg shadow-md p-4">
-            <Skeleton className="h-6 w-24 mb-4" />
-            <div className="space-y-2">
-              <Skeleton className="h-12 w-full" />
-              <Skeleton className="h-12 w-full" />
-            </div>
-          </div>
-        ))}
-      </div>
-    );
+    return <div className="text-center py-4">Loading phases...</div>;
   }
 
   if (error) {
@@ -127,23 +108,20 @@ export const LeadPhases = () => {
     return <div className="text-center text-red-500 py-4">Error loading phases</div>;
   }
 
-  // Ensure phases is always an array
-  const phasesArray = Array.isArray(phases) ? phases : [];
-  
-  if (phasesArray.length === 0) {
+  if (phases.length === 0) {
     return <div className="text-center text-gray-500 py-4">No phases found. Please set up your pipeline.</div>;
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {phasesArray.map((phase) => (
+      {phases.map((phase) => (
         <div 
           key={phase.id} 
           className="bg-white rounded-lg shadow-md p-4"
           style={{ borderTop: `3px solid ${phase.color}` }}
         >
           <h3 className="text-lg font-semibold mb-2">{phase.name}</h3>
-          {!phase.leads || phase.leads.length === 0 ? (
+          {phase.leads.length === 0 ? (
             <p className="text-gray-400 text-sm">No leads in this phase</p>
           ) : (
             <ul>

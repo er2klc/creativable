@@ -1,9 +1,9 @@
-
-export interface BaseEvent {
+export interface Appointment {
   id: string;
   title: string;
   start_time: string;
   end_time: string;
+  end_date?: string;
   color: string;
   meeting_type: string;
   completed: boolean;
@@ -12,26 +12,12 @@ export interface BaseEvent {
   lead_id: string;
   leads: { name: string };
   isTeamEvent: boolean;
-  due_date: string;
-  description: string;
+  is_multi_day?: boolean;
+  due_date?: string;
+  current_day?: string;
+  description?: string;
+  created_by?: string;
 }
-
-export interface Appointment extends BaseEvent {
-  isTeamEvent: false;
-}
-
-export interface TeamEvent extends BaseEvent {
-  isTeamEvent: true;
-  is_admin_only: boolean;
-  is_90_day_run: boolean;
-  recurring_pattern: string;
-  recurring_day_of_week: number | null;
-  team_id: string;
-  created_by: string;
-  end_date?: string;
-}
-
-export type CalendarEvent = Appointment | TeamEvent;
 
 export interface AppointmentToEdit {
   id: string;
@@ -40,9 +26,20 @@ export interface AppointmentToEdit {
   title: string;
   color: string;
   meeting_type: string;
+  completed?: boolean;
+  cancelled?: boolean;
 }
 
 export interface AppointmentWithEndDate extends Appointment {
   end_date?: string;
-  is_multi_day: boolean;
+}
+
+export interface TeamEvent extends Appointment {
+  description?: string;
+  is_admin_only: boolean;
+  is_90_day_run: boolean;
+  recurring_pattern: string;
+  recurring_day_of_week?: number;
+  team_id: string;
+  isRecurring?: boolean;
 }

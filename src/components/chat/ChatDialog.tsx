@@ -13,7 +13,6 @@ import { useChatFlow } from "./hooks/useChatFlow";
 import { MessageTemplateSelector } from "./template-selection/MessageTemplateSelector";
 import { MessagePreview } from "./message-preview/MessagePreview";
 import { cn } from "@/lib/utils";
-import { MessageTemplateType } from "@/config/messageTemplates";
 
 interface ChatDialogProps {
   open: boolean;
@@ -99,7 +98,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         return (
           <div className="border-t bg-background">
             <ChatContactList
-              contacts={contacts || []}
+              contacts={contacts}
               onSelect={handleContactSelection}
               selectedId={selectedContact?.id}
             />
@@ -110,7 +109,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
           <div className="border-t bg-background">
             <MessageTemplateSelector
               onSelect={handleTemplateSelection}
-              selectedType={selectedTemplateType || "first_contact"}
+              selectedType={selectedTemplateType}
             />
           </div>
         );
@@ -121,7 +120,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
             <div className="border-t bg-background">
               <MessagePreview
                 message={templateMessage}
-                onEdit={() => handleTemplateSelection(selectedTemplateType || "first_contact")}
+                onEdit={() => setFlowState('template_selection')}
                 onSend={async () => {
                   await originalHandleSubmit({
                     preventDefault: () => {},

@@ -7,7 +7,7 @@ import { DialogHeader } from "./dialog/DialogHeader";
 import { UnitForm } from "./dialog/UnitForm";
 import { DialogFooter } from "./dialog/DialogFooter";
 
-export interface EditUnitDialogProps {
+interface EditUnitDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   title: string;
@@ -15,10 +15,6 @@ export interface EditUnitDialogProps {
   videoUrl: string;
   onUpdate: (data: { title: string; description: string; videoUrl: string }) => Promise<void>;
   id: string;
-  existingFiles: any[];
-  onFileRemove: (index: number) => Promise<void>;
-  onFilesSelected: (files: File[]) => void;
-  files: File[];
 }
 
 export const EditUnitDialog = ({
@@ -29,10 +25,6 @@ export const EditUnitDialog = ({
   videoUrl: initialVideoUrl,
   onUpdate,
   id,
-  existingFiles = [],
-  onFileRemove = async () => {},
-  onFilesSelected = () => {},
-  files = []
 }: EditUnitDialogProps) => {
   const [title, setTitle] = useState(initialTitle);
   const [description, setDescription] = useState(initialDescription || '');
