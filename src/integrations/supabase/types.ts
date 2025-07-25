@@ -1595,6 +1595,10 @@ export type Database = {
         Args: { "": unknown }
         Returns: unknown
       }
+      is_team_member: {
+        Args: { team_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
       ivfflat_bit_support: {
         Args: { "": unknown }
         Returns: unknown
