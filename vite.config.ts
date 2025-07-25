@@ -27,23 +27,11 @@ export default defineConfig(({ mode }) => ({
     // Optimize chunk size and memory usage
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Split vendor libraries into separate chunks
-          if (id.includes('node_modules')) {
-            if (id.includes('@tiptap')) {
-              return 'tiptap-vendor';
-            }
-            if (id.includes('@radix-ui')) {
-              return 'radix-vendor';
-            }
-            if (id.includes('@supabase')) {
-              return 'supabase-vendor';
-            }
-            if (id.includes('react') || id.includes('react-dom')) {
-              return 'react-vendor';
-            }
-            return 'vendor';
-          }
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'tiptap-vendor': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-mention', '@tiptap/suggestion'],
+          'radix-vendor': ['@radix-ui/react-slot', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
+          'supabase-vendor': ['@supabase/supabase-js', '@supabase/auth-helpers-react'],
         },
       },
     },
@@ -75,10 +63,12 @@ export default defineConfig(({ mode }) => ({
     include: [
       'react',
       'react-dom',
+      'react/jsx-runtime',
       '@tiptap/react',
       '@tiptap/starter-kit',
       '@tiptap/extension-mention',
       '@tiptap/suggestion',
     ],
+    force: true,
   },
 }))
