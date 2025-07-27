@@ -129,12 +129,12 @@ export const LeadPhases = () => {
                 <li key={lead.id} className="py-2 border-b last:border-b-0">
                   <div className="flex items-center">
                     <img
-                      src={lead.avatar_url || "/placeholder-profile.png"}
+                      src={lead.avatar_url || "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=32&h=32&fit=crop&crop=face"}
                       alt={lead.name}
                       className="w-8 h-8 rounded-full mr-2 object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = "/placeholder-profile.png";
+                        target.src = "https://images.unsplash.com/photo-1535268647677-300dbf3d78d1?w=32&h=32&fit=crop&crop=face";
                       }}
                     />
                     <span className="truncate">{lead.name}</span>
