@@ -571,6 +571,7 @@ export type Database = {
       }
       leads: {
         Row: {
+          company_name: string | null
           created_at: string | null
           email: string | null
           id: string
@@ -590,6 +591,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          company_name?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
@@ -609,6 +611,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          company_name?: string | null
           created_at?: string | null
           email?: string | null
           id?: string
