@@ -5,7 +5,7 @@ export interface LeadWithRelations extends Tables<"leads"> {
   tasks: Tables<"tasks">[];
   notes: Tables<"notes">[];
   lead_files: Tables<"lead_files">[];
-  linkedin_posts?: any[];
+  // linkedin_posts moved to social_media_posts
   social_media_posts?: SocialMediaPost[];
 }
 

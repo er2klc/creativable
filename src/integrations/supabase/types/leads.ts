@@ -33,7 +33,7 @@ export interface LeadWithRelations {
     file_name: string;
     file_path: string;
   }>;
-  linkedin_posts?: any[];
+  // linkedin_posts moved to social_media_posts
   social_media_posts?: Array<{
     id: string;
     content: string;

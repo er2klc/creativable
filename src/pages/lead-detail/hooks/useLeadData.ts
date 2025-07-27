@@ -30,7 +30,7 @@ export const useLeadData = (leadId: string | null) => {
           tasks (id, title, lead_id, user_id, priority, completed, created_at, updated_at, due_date, order_index, cancelled, color, meeting_type),
           notes (*),
           lead_files (*),
-          linkedin_posts (*)
+          social_media_posts (*)
         `)
         .eq("id", leadId)
         .maybeSingle();

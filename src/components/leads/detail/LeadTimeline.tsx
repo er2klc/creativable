@@ -59,7 +59,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
     };
   }, [lead.id, queryClient]);
   
-  const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
+  const hasLinkedInPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.some(post => post.platform === 'LinkedIn');
   const hasSocialPosts = Array.isArray(socialMediaPosts) && socialMediaPosts.length > 0;
   const hasInstagramData = lead.apify_instagram_data && 
     (typeof lead.apify_instagram_data === 'object' || 
@@ -150,7 +150,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         <SocialTimeline 
           platform={lead.platform}
           hasLinkedInPosts={hasLinkedInPosts}
-          linkedInPosts={lead.linkedin_posts || []}
+          linkedInPosts={lead.social_media_posts?.filter(post => post.platform === 'LinkedIn') || []}
           socialMediaPosts={socialMediaPosts || []}
           leadId={lead.id}
         />

@@ -44,7 +44,7 @@ export const LeadDetailView = ({ leadId, onClose }: LeadDetailViewProps) => {
           tasks (*),
           notes (*),
           lead_files (*),
-          linkedin_posts (*)
+          social_media_posts (*)
         `)
         .eq("id", leadId)
         .maybeSingle();

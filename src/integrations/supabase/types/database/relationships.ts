@@ -11,7 +11,7 @@ export interface LeadWithRelations extends Omit<Lead, 'social_media_posts'> {
   tasks: any[];
   notes: any[];
   lead_files: any[];
-  linkedin_posts?: any[];
+  // linkedin_posts moved to social_media_posts
   social_media_posts?: SocialMediaPost[];
 }
 

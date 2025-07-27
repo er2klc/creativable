@@ -19,7 +19,7 @@ export const useRelatedDataHandler = (
         tasks(*),
         notes(*),
         lead_files(*),
-        linkedin_posts(*)
+        social_media_posts(*)
       `)
       .eq("id", leadId)
       .maybeSingle();
@@ -37,7 +37,7 @@ export const useRelatedDataHandler = (
             messages: data.messages || [],
             tasks: data.tasks || [],
             lead_files: data.lead_files || [],
-            linkedin_posts: data.linkedin_posts || []
+            social_media_posts: data.social_media_posts || []
           };
         }
       );
@@ -54,7 +54,7 @@ export const useRelatedDataHandler = (
             messages: data.messages || [],
             tasks: data.tasks || [],
             lead_files: data.lead_files || [],
-            linkedin_posts: data.linkedin_posts || []
+            social_media_posts: data.social_media_posts || []
           };
         }
       );
@@ -73,7 +73,7 @@ export const useRelatedDataHandler = (
         tasks(*),
         notes(*),
         lead_files(*),
-        linkedin_posts(*)
+        social_media_posts(*)
       `)
       .eq("id", leadId)
       .maybeSingle();
@@ -117,7 +117,7 @@ export const useRelatedDataHandler = (
         tasks(*),
         notes(*),
         lead_files(*),
-        linkedin_posts(*)
+        social_media_posts(*)
       `)
       .eq("id", leadId)
       .maybeSingle();
@@ -161,7 +161,7 @@ export const useRelatedDataHandler = (
         tasks(*),
         notes(*),
         lead_files(*),
-        linkedin_posts(*)
+        social_media_posts(*)
       `)
       .eq("id", leadId)
       .maybeSingle();
