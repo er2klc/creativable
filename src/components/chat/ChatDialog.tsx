@@ -98,7 +98,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         return (
           <div className="border-t bg-background">
             <ChatContactList
-              contacts={contacts}
+              contacts={contacts || []}
               onSelect={handleContactSelection}
               selectedId={selectedContact?.id}
             />
@@ -120,7 +120,10 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
             <div className="border-t bg-background">
               <MessagePreview
                 message={templateMessage}
-                onEdit={() => setFlowState('template_selection')}
+                onEdit={() => {
+                  // Navigate back to template selection
+                  handleTemplateSelection(selectedTemplateType);
+                }}
                 onSend={async () => {
                   await originalHandleSubmit({
                     preventDefault: () => {},

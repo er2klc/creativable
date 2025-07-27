@@ -41,13 +41,10 @@ export const useChatFlow = (userId: string | null) => {
       if (!userId) return [];
       
       const { data, error } = await supabase
-        .rpc('get_contextual_contacts', {
-          p_user_id: userId,
-          p_context: searchContext.context,
-          p_phase_id: searchContext.phaseId,
-          p_keyword: searchContext.keyword,
-          p_limit: 10
-        });
+        .from('leads')
+        .select('*')
+        .eq('user_id', userId)
+        .limit(10);
       
       if (error) throw error;
       return data;
@@ -106,9 +103,9 @@ export const useChatFlow = (userId: string | null) => {
         display_name: userProfile.display_name,
         email: userProfile.email
       },
-      lastInteraction: selectedContact.last_interaction_date ? {
-        type: selectedContact.last_action || 'Interaktion',
-        date: new Date(selectedContact.last_interaction_date).toLocaleDateString('de-DE')
+      lastInteraction: selectedContact.updated_at ? {
+        type: 'Letztes Update',
+        date: new Date(selectedContact.updated_at).toLocaleDateString('de-DE')
       } : undefined
     };
 

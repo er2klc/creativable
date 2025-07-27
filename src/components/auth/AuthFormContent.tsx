@@ -16,7 +16,8 @@ import { useState } from "react";
 export const AuthFormContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
+  const isAuthenticated = !!user;
   const [showLoginDialog, setShowLoginDialog] = useState(false);
   
   const {

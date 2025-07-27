@@ -42,7 +42,7 @@ const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] 
           end_time: event.end_time 
             ? format(new Date(event.end_time), "yyyy-MM-dd'T'HH:mm:ssxxx") 
             : format(instanceDate, "yyyy-MM-dd'T'HH:mm:ssxxx"),
-          instanceDate: instanceDate.toISOString() // Add reference to the instance date
+          // instanceDate reference removed as it doesn't exist in TeamEvent type
         });
       }
 
@@ -140,7 +140,7 @@ export const useCalendarEvents = (
 
         // Fetch team events without date filtering
         const { data: events = [], error: eventsError } = await supabase
-          .from("team_calendar_events")
+          .from("team_events")
           .select(`
             *,
             teams:team_id (name)
