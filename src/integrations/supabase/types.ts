@@ -818,6 +818,33 @@ export type Database = {
         }
         Relationships: []
       }
+      phase_based_analyses: {
+        Row: {
+          analysis: Json | null
+          created_at: string | null
+          created_by: string | null
+          id: string
+          lead_id: string
+          phase_id: string
+        }
+        Insert: {
+          analysis?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id: string
+          phase_id: string
+        }
+        Update: {
+          analysis?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          lead_id?: string
+          phase_id?: string
+        }
+        Relationships: []
+      }
       pipeline_phases: {
         Row: {
           created_at: string | null
@@ -1328,6 +1355,85 @@ export type Database = {
           },
         ]
       }
+      team_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          order_index: number | null
+          team_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          order_index?: number | null
+          team_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          order_index?: number | null
+          team_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_team_categories_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_category_settings: {
+        Row: {
+          category_id: string
+          created_at: string | null
+          id: string
+          size: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category_id: string
+          created_at?: string | null
+          id?: string
+          size?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string
+          created_at?: string | null
+          id?: string
+          size?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_team_category_settings_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "team_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_direct_messages: {
         Row: {
           content: string
@@ -1458,6 +1564,95 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          created_by: string
+          id: string
+          post_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          created_by: string
+          id?: string
+          post_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          id?: string
+          post_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_team_post_comments_post"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_posts: {
+        Row: {
+          category_id: string
+          content: string
+          created_at: string | null
+          created_by: string
+          file_urls: string[] | null
+          id: string
+          pinned: boolean | null
+          team_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          category_id: string
+          content: string
+          created_at?: string | null
+          created_by: string
+          file_urls?: string[] | null
+          id?: string
+          pinned?: boolean | null
+          team_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          category_id?: string
+          content?: string
+          created_at?: string | null
+          created_by?: string
+          file_urls?: string[] | null
+          id?: string
+          pinned?: boolean | null
+          team_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_team_posts_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "team_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_team_posts_team"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
@@ -1603,6 +1798,10 @@ export type Database = {
       }
       is_team_member: {
         Args: { team_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
+      is_team_member_of_post: {
+        Args: { post_uuid: string; user_uuid: string }
         Returns: boolean
       }
       ivfflat_bit_support: {
