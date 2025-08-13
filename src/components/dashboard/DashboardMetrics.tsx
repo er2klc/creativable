@@ -255,7 +255,7 @@ export const DashboardMetrics = () => {
                 </div>
                 <Progress 
                   value={!Array.isArray(contactsByPlatform) && (contactsByPlatform?.statuses as any)?.partner 
-                    ? (Number((contactsByPlatform.statuses as any).partner) / Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0)) * 100 
+                    ? (Number((contactsByPlatform.statuses as any).partner) / (Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0) as number)) * 100
                     : 0
                   } 
                   className="h-2" 
@@ -269,7 +269,7 @@ export const DashboardMetrics = () => {
                 </div>
                 <Progress 
                   value={!Array.isArray(contactsByPlatform) && (contactsByPlatform?.statuses as any)?.customer 
-                    ? (Number((contactsByPlatform.statuses as any).customer) / Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0)) * 100 
+                    ? (Number((contactsByPlatform.statuses as any).customer) / (Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0) as number)) * 100
                     : 0
                   } 
                   className="h-2" 
@@ -283,7 +283,7 @@ export const DashboardMetrics = () => {
                 </div>
                 <Progress 
                   value={!Array.isArray(contactsByPlatform) && (contactsByPlatform?.statuses as any)?.not_for_now 
-                    ? (Number((contactsByPlatform.statuses as any).not_for_now) / Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0)) * 100 
+                    ? (Number((contactsByPlatform.statuses as any).not_for_now) / (Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0) as number)) * 100
                     : 0
                   } 
                   className="h-2" 
@@ -297,7 +297,7 @@ export const DashboardMetrics = () => {
                 </div>
                 <Progress 
                   value={!Array.isArray(contactsByPlatform) && (contactsByPlatform?.statuses as any)?.no_interest 
-                    ? (Number((contactsByPlatform.statuses as any).no_interest) / Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0)) * 100 
+                    ? (Number((contactsByPlatform.statuses as any).no_interest) / (Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0) as number)) * 100
                     : 0
                   } 
                   className="h-2" 

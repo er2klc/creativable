@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { LeadTableCell } from "./table/LeadTableCell";
 import { LeadTableActions } from "./table/LeadTableActions";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface LeadTableViewProps {
@@ -73,7 +73,7 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
   };
 
   // Set up the subscription when the component mounts
-  useState(() => {
+  useEffect(() => {
     const unsubscribe = subscribeToLeadDeletions();
     return () => {
       unsubscribe.then(cleanup => cleanup());
@@ -85,9 +85,7 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
       const { error } = await supabase
         .from("leads")
         .update({
-          phase_id: phaseId,
-          last_action: settings?.language === "en" ? "Phase changed" : "Phase geändert",
-          last_action_date: new Date().toISOString(),
+          phase_id: phaseId
         })
         .eq("id", leadId);
 
@@ -113,12 +111,8 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
     }
   };
 
-  // Sort leads with favorites first
-  const sortedLeads = [...leads].sort((a, b) => {
-    if (a.is_favorite && !b.is_favorite) return -1;
-    if (!a.is_favorite && b.is_favorite) return 1;
-    return 0;
-  });
+  // Sort leads (no favorites logic since is_favorite doesn't exist in current schema)
+  const sortedLeads = [...leads];
 
   return (
     <div className="h-full overflow-y-auto">
@@ -168,7 +162,7 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
                   <>
                     <LeadTableCell type="platform" value={lead.platform} />
                     <LeadTableCell type="phase" value={lead.phase_id} />
-                    <LeadTableCell type="lastAction" value={lead.last_action_date} />
+                    <LeadTableCell type="lastAction" value={lead.updated_at} />
                     <LeadTableCell type="status" value={lead.status} lead={lead} />
                   </>
                 )}

@@ -1,5 +1,5 @@
+import * as React from 'react';
 import { VideoPlayer } from '../video/VideoPlayer';
-import React from 'react';
 
 interface VideoSectionProps {
   videoUrl: string;
