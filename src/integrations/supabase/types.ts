@@ -296,6 +296,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          invite_code: string | null
           logo_url: string | null
           name: string
           slug: string
@@ -307,6 +308,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          invite_code?: string | null
           logo_url?: string | null
           name: string
           slug: string
@@ -318,6 +320,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          invite_code?: string | null
           logo_url?: string | null
           name?: string
           slug?: string
@@ -528,6 +531,44 @@ export type Database = {
           },
         ]
       }
+      lead_business_match: {
+        Row: {
+          analysis_result: Json | null
+          created_at: string | null
+          id: string
+          lead_id: string
+          match_score: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          analysis_result?: Json | null
+          created_at?: string | null
+          id?: string
+          lead_id: string
+          match_score?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          analysis_result?: Json | null
+          created_at?: string | null
+          id?: string
+          lead_id?: string
+          match_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_business_match_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_files: {
         Row: {
           created_at: string | null
@@ -571,20 +612,30 @@ export type Database = {
       }
       leads: {
         Row: {
+          apify_instagram_data: Json | null
+          city: string | null
           company_name: string | null
           contact_type: string | null
           created_at: string | null
+          current_company_name: string | null
           email: string | null
+          experience: string | null
           id: string
           industry: string
+          is_favorite: boolean | null
+          last_action: string | null
+          last_action_date: string | null
           name: string
           phase_id: string | null
           phone_number: string | null
           pipeline_id: string | null
           platform: string
+          position: string | null
+          social_media_bio: string | null
           social_media_engagement_rate: number | null
           social_media_followers: number | null
           social_media_following: number | null
+          social_media_interests: string[] | null
           social_media_profile_image_url: string | null
           social_media_username: string | null
           status: string | null
@@ -592,20 +643,30 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          apify_instagram_data?: Json | null
+          city?: string | null
           company_name?: string | null
           contact_type?: string | null
           created_at?: string | null
+          current_company_name?: string | null
           email?: string | null
+          experience?: string | null
           id?: string
           industry: string
+          is_favorite?: boolean | null
+          last_action?: string | null
+          last_action_date?: string | null
           name: string
           phase_id?: string | null
           phone_number?: string | null
           pipeline_id?: string | null
           platform: string
+          position?: string | null
+          social_media_bio?: string | null
           social_media_engagement_rate?: number | null
           social_media_followers?: number | null
           social_media_following?: number | null
+          social_media_interests?: string[] | null
           social_media_profile_image_url?: string | null
           social_media_username?: string | null
           status?: string | null
@@ -613,20 +674,30 @@ export type Database = {
           user_id: string
         }
         Update: {
+          apify_instagram_data?: Json | null
+          city?: string | null
           company_name?: string | null
           contact_type?: string | null
           created_at?: string | null
+          current_company_name?: string | null
           email?: string | null
+          experience?: string | null
           id?: string
           industry?: string
+          is_favorite?: boolean | null
+          last_action?: string | null
+          last_action_date?: string | null
           name?: string
           phase_id?: string | null
           phone_number?: string | null
           pipeline_id?: string | null
           platform?: string
+          position?: string | null
+          social_media_bio?: string | null
           social_media_engagement_rate?: number | null
           social_media_followers?: number | null
           social_media_following?: number | null
+          social_media_interests?: string[] | null
           social_media_profile_image_url?: string | null
           social_media_username?: string | null
           status?: string | null
@@ -849,6 +920,7 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
+          is_default: boolean | null
           name: string
           order_index: number | null
           pipeline_id: string
@@ -857,6 +929,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           id?: string
+          is_default?: boolean | null
           name: string
           order_index?: number | null
           pipeline_id: string
@@ -865,6 +938,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           id?: string
+          is_default?: boolean | null
           name?: string
           order_index?: number | null
           pipeline_id?: string
@@ -1746,6 +1820,10 @@ export type Database = {
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
+      }
+      generate_invite_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       get_user_teams: {
         Args: { uid: string }
