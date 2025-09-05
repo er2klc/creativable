@@ -94,7 +94,7 @@ export function CreateLinkedInContactDialog({
         return null;
       }
 
-      return contact as LeadWithRelations | null;
+      return contact as any;
     } catch (error) {
       console.error("Error in checkExistingContact:", error);
       return null;
@@ -153,16 +153,19 @@ export function CreateLinkedInContactDialog({
 
       scanState.setIsLoading(true);
 
-      scanState.pollProgress(lead.id);
+      if (lead && lead.length > 0) {
+        const newLead = lead[0];
+        scanState.pollProgress(newLead.id);
 
-      const { error } = await supabase.functions.invoke('scan-linkedin-profile', {
-        body: {
-          username: normalizedUsername,
-          leadId: lead.id
-        }
-      });
-
-      if (error) throw error;
+        const { error: scanError } = await supabase.functions.invoke('scan-linkedin-profile', {
+          body: {
+            username: normalizedUsername,
+            leadId: newLead.id
+          }
+        });
+        
+        if (scanError) throw scanError;
+      }
 
     } catch (error) {
       console.error("Error adding LinkedIn contact:", error);

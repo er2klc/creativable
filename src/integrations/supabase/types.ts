@@ -1555,6 +1555,8 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string | null
+          current_file: string | null
+          error_message: string | null
           id: string
           lead_id: string
           media_type: string | null
@@ -1562,12 +1564,15 @@ export type Database = {
           platform: string
           post_type: string
           posted_at: string | null
+          processing_progress: number | null
           url: string | null
           user_id: string
         }
         Insert: {
           content?: string | null
           created_at?: string | null
+          current_file?: string | null
+          error_message?: string | null
           id?: string
           lead_id: string
           media_type?: string | null
@@ -1575,12 +1580,15 @@ export type Database = {
           platform: string
           post_type: string
           posted_at?: string | null
+          processing_progress?: number | null
           url?: string | null
           user_id: string
         }
         Update: {
           content?: string | null
           created_at?: string | null
+          current_file?: string | null
+          error_message?: string | null
           id?: string
           lead_id?: string
           media_type?: string | null
@@ -1588,6 +1596,7 @@ export type Database = {
           platform?: string
           post_type?: string
           posted_at?: string | null
+          processing_progress?: number | null
           url?: string | null
           user_id?: string
         }

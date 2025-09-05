@@ -51,6 +51,7 @@ export const useAppointmentNotification = ({ id, leadId, dueDate, content }: Use
           .insert({
             user_id: user.id,
             title: 'Termin in 4 Stunden',
+            message: `Dein Termin "${content}" mit ${lead.name} ist in 4 Stunden.`,
             content: `Dein Termin "${content}" mit ${lead.name} ist in 4 Stunden.`,
             type: 'appointment_reminder',
             metadata: {
