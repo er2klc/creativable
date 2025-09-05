@@ -10,7 +10,9 @@ import { cn } from "@/lib/utils";
 import { type Tables } from "@/integrations/supabase/types";
 import { useTeamPresence } from "../context/TeamPresenceContext";
 import { useNavigate, useParams } from "react-router-dom";
+import { useTeamChatStore } from "@/store/useTeamChatStore";
 import { useUser } from "@supabase/auth-helpers-react";
+import { useChatParticipants } from "@/components/team-chat/hooks/useChatParticipants";
 import { toast } from "sonner";
 
 interface MemberCardProps {
@@ -32,22 +34,43 @@ export const MemberCard = ({
   className
 }: MemberCardProps) => {
   const { isOnline } = useTeamPresence();
+  const openTeamChat = useTeamChatStore((state) => state.openTeamChat);
   const { teamSlug } = useParams();
   const navigate = useNavigate();
   const user = useUser();
   const isCurrentUser = user?.id === member.user_id;
-  const canChat = false; // Temporarily disabled
+  const canChat = !isCurrentUser && currentUserLevel >= 3 && member.points?.level >= 3;
   const memberIsOnline = isOnline(member.user_id);
+  const lastSeen = member.profile?.last_seen;
+  const { addParticipant } = useChatParticipants(member.team_id);
 
   const handleCardClick = () => {
-    // Profile navigation temporarily disabled
+    if (member.profile?.slug) {
+      navigate(`/unity/${teamSlug}/members/${member.profile.slug}`);
+    }
   };
 
   const handleChatClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    // Chat functionality temporarily disabled
-    toast.error("Chat ist temporär deaktiviert");
+    
+    const teamId = member.team_id;
+    
+    if (!teamId) {
+      console.error("Team ID fehlt:", { member, teamSlug });
+      toast.error("Chat konnte nicht geöffnet werden");
+      return;
+    }
+    
+    try {
+      await addParticipant.mutateAsync({
+        teamId,
+        participantId: member.user_id
+      });
+    } catch (error) {
+      console.error("Fehler beim Öffnen des Chats:", error);
+      toast.error("Chat konnte nicht geöffnet werden");
+    }
   };
 
   const getRoleBadgeStyle = (role: string) => {
@@ -99,8 +122,8 @@ export const MemberCard = ({
           <Badge className={cn("px-4 py-1 shadow-lg", getRoleBadgeStyle(member.role))}>
             {member.role}
           </Badge>
-          {member.profile?.display_name && <p className="text-sm text-white/80 mt-1">
-              @{member.profile.display_name}
+          {member.profile?.slug && <p className="text-sm text-white/80 mt-1">
+              @{member.profile.slug}
             </p>}
         </div>
       </div>
@@ -113,11 +136,18 @@ export const MemberCard = ({
             </h3>
           </div>
 
+          {!isCurrentUser && member.profile?.bio && <p className="text-sm text-white/60 line-clamp-2">
+              {member.profile.bio}
+            </p>}
+
           <div className="flex items-center gap-2 text-xs text-white/60 mt-2">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              Online Status
-            </span>
+            {lastSeen && !memberIsOnline && <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatDistanceToNow(new Date(lastSeen), {
+              addSuffix: true,
+              locale: de
+            })}
+              </span>}
           </div>
 
           {canChat && (
@@ -127,10 +157,10 @@ export const MemberCard = ({
                 variant="glassy" 
                 size="sm" 
                 onClick={handleChatClick}
-                disabled={true}
+                disabled={addParticipant.isPending}
               >
                 <MessageSquare className="h-4 w-4 mr-2" />
-                Nachricht senden
+                {addParticipant.isPending ? "Wird geöffnet..." : "Nachricht senden"}
               </Button>
             </div>
           )}

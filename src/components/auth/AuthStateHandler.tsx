@@ -21,6 +21,8 @@ export const AuthStateHandler = () => {
     
     const setupAuth = async () => {
       try {
+        console.log("[Auth] Setting up auth state handler...");
+        
         // First check if we have a valid session
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
         
@@ -28,6 +30,7 @@ export const AuthStateHandler = () => {
           console.error("[Auth] Initial session error:", sessionError);
           if (retryCount < MAX_RETRIES) {
             retryCount++;
+            console.log(`[Auth] Retrying setup (${retryCount}/${MAX_RETRIES})`);
             setTimeout(setupAuth, RETRY_DELAY * retryCount);
             return;
           }
@@ -46,6 +49,8 @@ export const AuthStateHandler = () => {
         // Set up auth state listener
         const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
           async (event: AuthChangeEvent, currentSession) => {
+            console.log("[Auth] State changed:", event, currentSession?.user?.id);
+
             if (event === "SIGNED_IN") {
               if (currentSession && location.pathname === "/auth") {
                 navigate("/dashboard");
@@ -55,7 +60,7 @@ export const AuthStateHandler = () => {
                 navigate("/auth");
               }
             } else if (event === "TOKEN_REFRESHED") {
-              // Token refreshed successfully
+              console.log("[Auth] Token refreshed successfully");
             }
           }
         );
@@ -70,6 +75,7 @@ export const AuthStateHandler = () => {
               console.error("[Auth] Session refresh error:", refreshError);
               if (attempt < MAX_RETRIES) {
                 const delay = Math.min(1000 * Math.pow(2, attempt), 10000);
+                console.log(`[Auth] Retrying refresh in ${delay}ms`);
                 setTimeout(() => refreshWithRetry(attempt + 1), delay);
               } else if (!PUBLIC_ROUTES.includes(location.pathname)) {
                 toast.error("Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.");
@@ -94,6 +100,7 @@ export const AuthStateHandler = () => {
     setupAuth();
 
     return () => {
+      console.log("[Auth] Cleaning up auth listener");
       subscription?.unsubscribe();
       clearInterval(refreshInterval);
     };

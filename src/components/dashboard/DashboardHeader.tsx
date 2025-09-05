@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { SearchBar } from "./SearchBarPlaceholder";
+import { SearchBar } from "./SearchBar";
 import { supabase } from "@/integrations/supabase/client";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { Home } from "lucide-react";
@@ -30,9 +30,9 @@ export const DashboardHeader = ({ userEmail }: DashboardHeaderProps) => {
   const displayName = profile?.display_name || userEmail?.split('@')[0] || "Benutzer";
 
   return (
-    <div className="fixed top-[64px] md:top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300" style={{ height: 'var(--header-height)' }}>
-      <div className="w-full h-full">
-        <div className="h-full px-4 flex items-center">
+    <div className="fixed top-[64px] md:top-0 left-0 right-0 z-[40] bg-white border-b border-sidebar-border md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+      <div className="w-full">
+        <div className="h-16 px-4 flex items-center">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 w-full mt-8 md:mt-0">
             <div className="flex items-center gap-2">
               <Home className="h-5 w-5" />

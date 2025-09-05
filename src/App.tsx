@@ -1,32 +1,13 @@
 import { AppProvider } from "@/providers/AppProvider";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
-import { ChatButton } from "@/components/dashboard/ChatButtonPlaceholder";
+import { ChatButton } from "@/components/dashboard/ChatButton";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
+import { publicRoutes } from "@/config/public-routes";
+import { protectedRoutes } from "@/config/protected-routes";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Suspense, lazy, useEffect, useState } from "react";
-
-// Lazy loaded components
-const Index = lazy(() => import("@/pages/Index"));
-const Auth = lazy(() => import("@/pages/Auth"));
-const Register = lazy(() => import("@/pages/Register"));
-const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
-const InstagramDataDeletion = lazy(() => import("@/pages/legal/InstagramDataDeletion"));
-const PresentationPage = lazy(() => import("@/pages/presentation/[pageId]"));
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const Calendar = lazy(() => import("@/pages/Calendar"));
-const Settings = lazy(() => import("@/pages/Settings"));
-// const Pool = lazy(() => import("@/pages/Pool"));
-const Admin = lazy(() => import("@/pages/Admin"));
-const Tools = lazy(() => import("@/pages/Tools"));
-const SignatureGenerator = lazy(() => import("@/pages/SignatureGenerator"));
-const TreeGenerator = lazy(() => import("@/pages/TreeGenerator"));
-const TodoList = lazy(() => import("@/pages/TodoList"));
-const VisionBoard = lazy(() => import("@/pages/VisionBoard"));
-const Unity = lazy(() => import("@/pages/Unity"));
-const Elevate = lazy(() => import("@/pages/Elevate"));
-const TeamDetail = lazy(() => import("@/pages/TeamDetail"));
 
 // Einfacher LoadingSpinner ohne memo
 const LoadingSpinner = () => (
@@ -73,7 +54,7 @@ const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => {
   const { user, isLoading } = useAuth();
   const isAuthenticated = !!user;
-  const publicPaths = ["/", "/auth", "/register", "/privacy-policy", "/auth/data-deletion/instagram"];
+  const publicPaths = publicRoutes.map((route) => route.path);
   const showChat = useChatVisibility(publicPaths);
 
   if (isLoading) {
@@ -86,43 +67,32 @@ const AppRoutes = () => {
         <Suspense fallback={<LoadingSpinner />}>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-            <Route path="/auth/data-deletion/instagram" element={<InstagramDataDeletion />} />
-            <Route path="/presentation/:leadId/:pageId" element={<PresentationPage />} />
+            {publicRoutes.map((route) => (
+              <Route
+                key={route.path}
+                path={route.path}
+                element={route.element}
+              />
+            ))}
 
             {/* Protected Routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
-            {/* Removed broken routes that reference non-existent components */}
-            {/* <Route path="/contacts" element={<ProtectedRoute><AppLayout><Leads /></AppLayout></ProtectedRoute>} />
-            <Route path="/contacts/:leadId" element={<ProtectedRoute><AppLayout><LeadDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/pool" element={<ProtectedRoute><AppLayout><Pool /></AppLayout></ProtectedRoute>} />
-            <Route path="/pool/:status" element={<ProtectedRoute><AppLayout><Pool /></AppLayout></ProtectedRoute>} />
-            <Route path="/messages" element={<ProtectedRoute><AppLayout><Messages /></AppLayout></ProtectedRoute>} />
-            <Route path="/links" element={<ProtectedRoute><AppLayout><Links /></AppLayout></ProtectedRoute>} />
-            <Route path="/calendar" element={<ProtectedRoute><AppLayout><Calendar /></AppLayout></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
-            <Route path="/admin" element={<ProtectedRoute><AppLayout><Admin /></AppLayout></ProtectedRoute>} />
-            
-            {/* Tool Routes */}
-            <Route path="/tools" element={<ProtectedRoute><AppLayout><Tools /></AppLayout></ProtectedRoute>} />
-            <Route path="/signature-generator" element={<ProtectedRoute><AppLayout><SignatureGenerator /></AppLayout></ProtectedRoute>} />
-            <Route path="/tree-generator" element={<ProtectedRoute><AppLayout><TreeGenerator /></AppLayout></ProtectedRoute>} />
-            <Route path="/todo" element={<ProtectedRoute><AppLayout><TodoList /></AppLayout></ProtectedRoute>} />
-            <Route path="/vision-board" element={<ProtectedRoute><AppLayout><VisionBoard /></AppLayout></ProtectedRoute>} />
-            
-            {/* Platform Routes */}
-            <Route path="/unity" element={<ProtectedRoute><AppLayout><Unity /></AppLayout></ProtectedRoute>} />
-            <Route path="/elevate" element={<ProtectedRoute><AppLayout><Elevate /></AppLayout></ProtectedRoute>} />
-            <Route path="/unity/:teamSlug" element={<ProtectedRoute><AppLayout><TeamDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/unity/:teamSlug/members" element={<ProtectedRoute><AppLayout><TeamDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/unity/:teamSlug/posts" element={<ProtectedRoute><AppLayout><TeamDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/unity/:teamSlug/calendar" element={<ProtectedRoute><AppLayout><TeamDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/unity/:teamSlug/leaderboard" element={<ProtectedRoute><AppLayout><TeamDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/unity/:teamSlug/pulse" element={<ProtectedRoute><AppLayout><TeamDetail /></AppLayout></ProtectedRoute>} />
-            <Route path="/unity/:teamSlug/manage" element={<ProtectedRoute><AppLayout><TeamDetail /></AppLayout></ProtectedRoute>} />
+            <Route
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Outlet />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            >
+              {protectedRoutes.map((route) => (
+                <Route
+                  key={route.path}
+                  path={route.path}
+                  element={route.element}
+                />
+              ))}
+            </Route>
 
             {/* Catch-all Route */}
             <Route

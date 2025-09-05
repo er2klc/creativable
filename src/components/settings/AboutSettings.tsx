@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,7 +46,7 @@ export function AboutSettings() {
   });
 
   // Update form when settings are loaded
-  useEffect(() => {
+  React.useEffect(() => {
     if (settings?.about_me) {
       form.reset({
         about_me: settings.about_me,

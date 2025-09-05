@@ -16,8 +16,7 @@ import {
   Smile,
   Calendar
 } from 'lucide-react';
-// Placeholder for event selector component
-const EventSelectorPlaceholder = ({ open, onOpenChange }: any) => null;
+import { EventSelector } from '../../teams/posts/dialog/EventSelector';
 import { cn } from '@/lib/utils';
 
 interface EditorToolbarProps {
@@ -254,7 +253,7 @@ export function EditorToolbar({
             <ToolbarButton onClick={() => setIsEventSelectorOpen(true)}>
               <Calendar className="h-4 w-4" />
             </ToolbarButton>
-            <EventSelectorPlaceholder
+            <EventSelector
               teamId={teamId}
               open={isEventSelectorOpen}
               onOpenChange={setIsEventSelectorOpen}

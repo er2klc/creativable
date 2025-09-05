@@ -10,6 +10,9 @@ export const useProfile = () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user?.id) return null;
+
+        console.log("Fetching profile for user:", user.id);
+        
         const { data: profile, error } = await supabase
           .from('profiles')
           .select(`

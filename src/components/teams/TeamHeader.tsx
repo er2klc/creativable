@@ -5,6 +5,7 @@ import { TeamHeaderTitle } from "./header/TeamHeaderTitle";
 import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
+import { NextTeamEvent } from "./events/NextTeamEvent";
 
 interface TeamHeaderProps {
   team: {
@@ -54,15 +55,14 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
   return (
     <div className={cn(
       "bg-background border-b transition-all duration-300",
-      isCollapsed ? "h-0 overflow-hidden" : ""
-    )} 
-    style={{ height: isCollapsed ? '0' : 'var(--header-height)' }}>
+      isCollapsed ? "h-0 overflow-hidden" : "h-auto"
+    )}>
       <div className={cn(
-        "container h-full flex items-center relative",
+        "container py-4 relative",
         isCollapsed ? "pointer-events-none" : ""
       )}>
         <div className={cn(
-          "flex items-center justify-between w-full transition-all duration-300",
+          "flex items-center justify-between transition-all duration-300",
           isCollapsed ? "opacity-0" : "opacity-100"
         )}>
           <TeamHeaderTitle 
@@ -82,6 +82,18 @@ export function TeamHeader({ team, isInSnapView = false }: TeamHeaderProps) {
             isOwner={isOwner}
             members={team.members}
           />
+        </div>
+        
+        <Separator className={cn(
+          "my-4 transition-opacity duration-300",
+          isCollapsed ? "opacity-0" : "opacity-100"
+        )} />
+
+        <div className={cn(
+          "transition-all duration-300 flex justify-center",
+          isCollapsed ? "opacity-0" : "opacity-100"
+        )}>
+          <NextTeamEvent teamId={team.id} teamSlug={team.slug} />
         </div>
       </div>
     </div>

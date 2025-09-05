@@ -63,14 +63,13 @@ export function PartnerOnboardingPipeline() {
     const newPhaseId = over.id as string;
 
     try {
-      // Skip problematic upsert for now
-      // await supabase
-      //   .from("partner_onboarding_progress")
-      //   .upsert({
-      //     lead_id: partnerId,
-      //     phase_id: newPhaseId,
-      //     status: "in_progress",
-      //   });
+      await supabase
+        .from("partner_onboarding_progress")
+        .upsert({
+          lead_id: partnerId,
+          phase_id: newPhaseId,
+          status: "in_progress",
+        });
     } catch (error) {
       console.error("Error updating partner phase:", error);
     }
@@ -79,9 +78,9 @@ export function PartnerOnboardingPipeline() {
   // Find maximum number of partners in any phase for consistent height
   const maxPartners = Math.max(...phases.map(phase => 
     partners.filter(partner => 
-      partner.onboarding_progress && 
-      typeof partner.onboarding_progress === 'object' &&
-      (partner.onboarding_progress as any)[phase.id]
+      partner.partner_onboarding_progress?.some(progress => 
+        progress.phase_id === phase.id
+      )
     ).length
   ));
 
@@ -89,14 +88,16 @@ export function PartnerOnboardingPipeline() {
   const getPartnersForPhase = (phase: any) => {
     if (phase.order_index === 0) {
       return partners.filter(partner => 
-        !partner.onboarding_progress || 
-        (typeof partner.onboarding_progress === 'object' && (partner.onboarding_progress as any)[phase.id])
+        !partner.partner_onboarding_progress?.length || 
+        partner.partner_onboarding_progress.some(progress => 
+          progress.phase_id === phase.id
+        )
       );
     }
     return partners.filter(partner => 
-      partner.onboarding_progress && 
-      typeof partner.onboarding_progress === 'object' &&
-      (partner.onboarding_progress as any)[phase.id]
+      partner.partner_onboarding_progress?.some(progress => 
+        progress.phase_id === phase.id
+      )
     );
   };
 

@@ -4,7 +4,6 @@ export interface PresentationPageData {
   title: string;
   video_url: string;
   lead_id: string;
-  presentationUrl?: string;
   user: {
     profiles: {
       display_name: string;

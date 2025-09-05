@@ -151,9 +151,11 @@ export const AddPartnerDialog = ({ open, onOpenChange, position, availablePartne
                       </Avatar>
                       <div className="flex flex-col">
                         <span className="font-medium">{partner.name}</span>
-                        <span className="text-sm text-muted-foreground">
-                          {partner.platform} Contact
-                        </span>
+                        {partner.network_marketing_id && (
+                          <span className="text-sm text-muted-foreground">
+                            ID: {partner.network_marketing_id}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </Card>

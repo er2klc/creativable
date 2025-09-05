@@ -8,7 +8,7 @@ import Underline from '@tiptap/extension-underline';
 import Link from '@tiptap/extension-link';
 import { InputDialog } from './input-dialog';
 import { EditorToolbar } from './tiptap/editor-toolbar';
-import { MentionListPlaceholder } from "./MentionListPlaceholder";
+import { MentionList } from "@/components/teams/posts/components/comments/MentionList";
 import tippy from 'tippy.js';
 import { useNavigate } from 'react-router-dom';
 
@@ -97,7 +97,7 @@ export function TiptapEditor({
 
             return {
               onStart: (props: any) => {
-                component = new ReactRenderer(MentionListPlaceholder, {
+                component = new ReactRenderer(MentionList, {
                   props,
                   editor: props.editor,
                 });

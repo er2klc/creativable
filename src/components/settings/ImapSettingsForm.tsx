@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
@@ -124,9 +124,13 @@ export function ImapSettingsForm({ existingSettings, onSettingsSaved }: ImapSett
         throw new Error("Benutzer nicht angemeldet");
       }
       
-      // Comment out RPC call as function doesn't exist
-      // const { error } = await supabase.rpc('check_time_discrepancy');
-      console.log("DB connection test skipped - function not available");
+      // Check if connection_type exists in the database table
+      try {
+        const { error } = await supabase.rpc('check_time_discrepancy');
+        console.log("DB connection test succeeded");
+      } catch (e) {
+        console.error("DB connection test error:", e);
+      }
       
       // Save to database - omit connection_type as it's not in the schema
       const { error } = await supabase

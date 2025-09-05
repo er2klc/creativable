@@ -30,7 +30,7 @@ export const usePresentationData = (pageId: string | undefined) => {
             name,
             social_media_profile_image_url
           ),
-          profiles!inner (
+          creator:user_id (
             display_name,
             avatar_url
           )
@@ -74,8 +74,8 @@ export const usePresentationData = (pageId: string | undefined) => {
         },
         user: {
           profiles: {
-            display_name: (pageData as any).profiles?.display_name || '',
-            avatar_url: (pageData as any).profiles?.avatar_url || ''
+            display_name: pageData.creator?.display_name || '',
+            avatar_url: pageData.creator?.avatar_url || ''
           }
         }
       };
