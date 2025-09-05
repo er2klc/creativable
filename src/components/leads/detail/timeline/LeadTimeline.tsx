@@ -62,15 +62,11 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   return (
     <div className="space-y-4">
       <TimelineHeader 
-        title={activeTimeline === 'activities' ? 
-          (settings?.language === "en" ? "Activities" : "Aktivitäten") :
-          (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
-        }
-        showSocialTimeline={showSocialTimeline}
         activeTimeline={activeTimeline}
         onTimelineChange={setActiveTimeline}
-        platform={lead.platform}
-        hasLinkedInPosts={hasLinkedInPosts}
+        showSocialTimeline={showSocialTimeline}
+        activitiesTitle={settings?.language === "en" ? "Activities" : "Aktivitäten"}
+        socialTitle={settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten"}
       />
 
       {activeTimeline === 'activities' ? (

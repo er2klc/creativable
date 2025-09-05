@@ -1,4 +1,4 @@
-import { formatDate } from "../TimelineUtils";
+import { formatDateTime } from "../utils/dateUtils";
 
 interface TimelineItemDateProps {
   dueDate?: string;
@@ -11,7 +11,7 @@ export const TimelineItemDate = ({ dueDate, oldDate, newDate, isOutdated }: Time
   if (!isOutdated && dueDate) {
     return (
       <div className="text-sm text-gray-500">
-        Fällig am: {formatDate(dueDate)}
+        Fällig am: {formatDateTime(dueDate)}
       </div>
     );
   }
@@ -20,10 +20,10 @@ export const TimelineItemDate = ({ dueDate, oldDate, newDate, isOutdated }: Time
     return (
       <div className="text-sm">
         <div className="text-gray-400">
-          Alter Termin: {formatDate(oldDate)}
+          Alter Termin: {formatDateTime(oldDate)}
         </div>
         <div className="text-blue-600">
-          Neuer Termin: {formatDate(newDate)}
+          Neuer Termin: {formatDateTime(newDate)}
         </div>
       </div>
     );
