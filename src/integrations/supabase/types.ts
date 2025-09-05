@@ -2121,6 +2121,19 @@ export type Database = {
         Args: { "": string } | { "": unknown }
         Returns: unknown
       }
+      create_unique_lead: {
+        Args: {
+          p_name: string
+          p_phase_id: string
+          p_pipeline_id: string
+          p_platform: string
+          p_user_id: string
+          p_username: string
+        }
+        Returns: {
+          id: string
+        }[]
+      }
       generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string

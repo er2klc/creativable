@@ -1,4 +1,4 @@
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from "@/components/ui/dialog";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -101,7 +101,7 @@ export function CreateInstagramContactDialog({
         return null;
       }
 
-      return contact as LeadWithRelations | null;
+      return contact as any;
     } catch (error) {
       console.error("Error in checkExistingContact:", error);
       return null;
@@ -174,21 +174,24 @@ export function CreateInstagramContactDialog({
         scanState.setScanProgress(progress);
       }, 200);
 
-      scanState.pollProgress(lead.id);
+      if (lead && lead.length > 0) {
+        const newLead = lead[0];
+        scanState.pollProgress(newLead.id);
 
-      const { error: scanError } = await supabase.functions.invoke('scan-social-profile', {
-        body: {
-          platform: 'instagram',
-          username: username,
-          leadId: lead.id
-        }
-      });
+        const { error: scanError } = await supabase.functions.invoke('scan-social-profile', {
+          body: {
+            platform: 'instagram',
+            username: username,
+            leadId: newLead.id
+          }
+        });
 
-      if (scanError) throw scanError;
+        if (scanError) throw scanError;
 
-      supabase.functions.invoke('process-social-media', {
-        body: { leadId: lead.id }
-      });
+        supabase.functions.invoke('process-social-media', {
+          body: { leadId: newLead.id }
+        });
+      }
 
       clearInterval(progressInterval);
       scanState.setScanProgress(100);
@@ -213,6 +216,14 @@ export function CreateInstagramContactDialog({
           e.preventDefault();
         }}
       >
+        <DialogHeader>
+          <DialogTitle>
+            {existingContact ? "Kontakt bereits vorhanden" : 
+             scanState.isLoading ? "Instagram Scan läuft..." : 
+             "Instagram Kontakt hinzufügen"}
+          </DialogTitle>
+        </DialogHeader>
+        
         {existingContact ? (
           <ExistingContactAlert
             contact={existingContact}
