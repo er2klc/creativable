@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { ArrowRight } from "lucide-react";
-import { VideoPlayer } from "@/components/elevate/platform/detail/video/VideoPlayer";
+import { VideoPlayer } from "@/components/presentation/VideoPlayerPlaceholder";
 import { PresentationPageData } from "./types";
 
 interface PresentationContentProps {
@@ -61,8 +61,6 @@ export const PresentationContent = ({ pageData, onProgress, initialProgress = 0 
         <div className="w-full aspect-video rounded-lg overflow-hidden bg-black">
           <VideoPlayer
             videoUrl={pageData.video_url}
-            onProgress={onProgress}
-            autoplay={false}
           />
         </div>
       </div>

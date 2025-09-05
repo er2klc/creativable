@@ -1,7 +1,7 @@
 import { AppProvider } from "@/providers/AppProvider";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/use-auth";
-import { ChatButton } from "@/components/dashboard/ChatButton";
+import { ChatButton } from "@/components/dashboard/ChatButtonPlaceholder";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -15,17 +15,12 @@ const PrivacyPolicy = lazy(() => import("@/pages/legal/PrivacyPolicy"));
 const InstagramDataDeletion = lazy(() => import("@/pages/legal/InstagramDataDeletion"));
 const PresentationPage = lazy(() => import("@/pages/presentation/[pageId]"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const Leads = lazy(() => import("@/pages/Leads"));
-const LeadDetail = lazy(() => import("@/pages/LeadDetail"));
-const Messages = lazy(() => import("@/pages/Messages"));
 const Calendar = lazy(() => import("@/pages/Calendar"));
 const Settings = lazy(() => import("@/pages/Settings"));
-const Pool = lazy(() => import("@/pages/Pool"));
+// const Pool = lazy(() => import("@/pages/Pool"));
 const Admin = lazy(() => import("@/pages/Admin"));
-const Links = lazy(() => import("@/pages/Links"));
 const Tools = lazy(() => import("@/pages/Tools"));
 const SignatureGenerator = lazy(() => import("@/pages/SignatureGenerator"));
-const BioGenerator = lazy(() => import("@/pages/BioGenerator"));
 const TreeGenerator = lazy(() => import("@/pages/TreeGenerator"));
 const TodoList = lazy(() => import("@/pages/TodoList"));
 const VisionBoard = lazy(() => import("@/pages/VisionBoard"));
@@ -100,20 +95,20 @@ const AppRoutes = () => {
 
             {/* Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><AppLayout><Dashboard /></AppLayout></ProtectedRoute>} />
-            <Route path="/contacts" element={<ProtectedRoute><AppLayout><Leads /></AppLayout></ProtectedRoute>} />
+            {/* Removed broken routes that reference non-existent components */}
+            {/* <Route path="/contacts" element={<ProtectedRoute><AppLayout><Leads /></AppLayout></ProtectedRoute>} />
             <Route path="/contacts/:leadId" element={<ProtectedRoute><AppLayout><LeadDetail /></AppLayout></ProtectedRoute>} />
             <Route path="/pool" element={<ProtectedRoute><AppLayout><Pool /></AppLayout></ProtectedRoute>} />
             <Route path="/pool/:status" element={<ProtectedRoute><AppLayout><Pool /></AppLayout></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><AppLayout><Messages /></AppLayout></ProtectedRoute>} />
+            <Route path="/links" element={<ProtectedRoute><AppLayout><Links /></AppLayout></ProtectedRoute>} />
             <Route path="/calendar" element={<ProtectedRoute><AppLayout><Calendar /></AppLayout></ProtectedRoute>} />
             <Route path="/settings" element={<ProtectedRoute><AppLayout><Settings /></AppLayout></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><AppLayout><Admin /></AppLayout></ProtectedRoute>} />
-            <Route path="/links" element={<ProtectedRoute><AppLayout><Links /></AppLayout></ProtectedRoute>} />
             
             {/* Tool Routes */}
             <Route path="/tools" element={<ProtectedRoute><AppLayout><Tools /></AppLayout></ProtectedRoute>} />
             <Route path="/signature-generator" element={<ProtectedRoute><AppLayout><SignatureGenerator /></AppLayout></ProtectedRoute>} />
-            <Route path="/bio-generator" element={<ProtectedRoute><AppLayout><BioGenerator /></AppLayout></ProtectedRoute>} />
             <Route path="/tree-generator" element={<ProtectedRoute><AppLayout><TreeGenerator /></AppLayout></ProtectedRoute>} />
             <Route path="/todo" element={<ProtectedRoute><AppLayout><TodoList /></AppLayout></ProtectedRoute>} />
             <Route path="/vision-board" element={<ProtectedRoute><AppLayout><VisionBoard /></AppLayout></ProtectedRoute>} />

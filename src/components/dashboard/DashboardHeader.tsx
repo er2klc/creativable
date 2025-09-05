@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { SearchBar } from "./SearchBar";
+import { SearchBar } from "./SearchBarPlaceholder";
 import { supabase } from "@/integrations/supabase/client";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { Home } from "lucide-react";

@@ -3,7 +3,7 @@ import { CreateTeamDialog } from "./CreateTeamDialog";
 import { JoinTeamDialog } from "./JoinTeamDialog";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Infinity } from "lucide-react";
-import { SearchBar } from "@/components/dashboard/SearchBar";
+import { SearchBar } from "@/components/dashboard/SearchBarPlaceholder";
 import { HeaderActions } from "@/components/layout/HeaderActions";
 import { useUser } from "@supabase/auth-helpers-react";
 import { useNavigate } from "react-router-dom";

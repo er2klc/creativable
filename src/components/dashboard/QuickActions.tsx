@@ -11,15 +11,15 @@ import {
   Plus
 } from "lucide-react";
 import { useSettings } from "@/hooks/use-settings";
-import { AddLeadDialog } from "@/components/leads/AddLeadDialog";
+import { AddLeadDialog } from "@/components/dashboard/AddLeadDialogPlaceholder";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
+import { NewAppointmentDialog } from "@/components/dashboard/NewAppointmentDialogPlaceholder";
 // Placeholder for add task functionality
 const AddTaskDialogPlaceholder = ({ children }: any) => children;
-import { CreateInstagramContactDialog } from "@/components/leads/instagram/CreateInstagramContactDialog";
-import { CreateLinkedInContactDialog } from "@/components/leads/linkedin/CreateLinkedInContactDialog";
+import { CreateInstagramContactDialog } from "@/components/dashboard/CreateInstagramContactDialogPlaceholder";
+import { CreateLinkedInContactDialog } from "@/components/dashboard/CreateLinkedInContactDialogPlaceholder";
 
 interface Team {
   id: string;
@@ -226,10 +226,7 @@ export const QuickActions = () => {
         initialSelectedDate={new Date()}
       />
 
-      <AddTaskDialog
-        open={showAddTaskDialog}
-        onOpenChange={setShowAddTaskDialog}
-      />
+      {/* AddTaskDialog placeholder - commented out */}
 
       <Dialog open={showTeamDialog} onOpenChange={setShowTeamDialog}>
         <DialogContent className="sm:max-w-[425px]">
