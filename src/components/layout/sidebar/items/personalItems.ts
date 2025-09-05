@@ -1,5 +1,5 @@
 
-import { LayoutGrid, Users, Calendar, CheckSquare, Mail, Waves, Link2 } from "lucide-react";
+import { LayoutGrid, Users, Calendar, CheckSquare, Mail, GitBranch, Link2 } from "lucide-react";
 import { useTaskCount } from "../hooks/useTaskCount";
 import { useAppointmentCount } from "../hooks/useAppointmentCount";
 import { useElevateProgress } from "../hooks/useElevateProgress";
@@ -13,8 +13,8 @@ export const usePersonalItems = () => {
 
   return [
     { title: "Dashboard", icon: LayoutGrid, url: "/dashboard" },
-    { title: "Kontakte", icon: Users, url: "/contacts" },
-    { title: "Pool", icon: Waves, url: "/pool" },
+    { title: "Pipeline", icon: GitBranch, url: "/contacts" },
+    { title: "Kontakte", icon: Users, url: "/pool" },
     { 
       title: "Kalender", 
       icon: Calendar, 
