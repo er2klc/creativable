@@ -18,6 +18,9 @@ interface EditUnitDialogProps {
   existingDocs?: any[];
   onDocUpdate?: () => void;
   existingFiles?: any[];
+  onFileRemove?: (fileId: string) => void;
+  onFilesSelected?: (files: File[]) => void;
+  files?: File[];
 }
 
 export const EditUnitDialog = ({

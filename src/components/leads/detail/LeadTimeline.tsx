@@ -5,7 +5,7 @@ import { LeadWithRelations } from "@/types/leads";
 import { useSocialMediaPosts } from "./hooks/useSocialMediaPosts";
 import { ActivityTimeline } from "./timeline/components/ActivityTimeline";
 import { SocialTimeline } from "./timeline/components/SocialTimeline";
-import { TimelineHeader } from "./timeline/TimelineHeader";
+import { TimelineHeader } from "./timeline/timeline/TimelineHeader";
 import { 
   mapNoteToTimelineItem, 
   mapTaskToTimelineItem, 
@@ -14,7 +14,7 @@ import {
   mapBusinessMatchToTimelineItem,
   createContactCreationItem,
   createStatusChangeItem 
-} from "./timeline/utils/timelineMappers";
+} from "./timeline/timeline/utils/timelineMappers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -127,17 +127,16 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
 
   return (
     <div className="space-y-4">
-      <TimelineHeader 
-        title={activeTimeline === 'activities' ? 
-          (settings?.language === "en" ? "Activities" : "Aktivitäten") :
-          (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
-        }
-        showSocialTimeline={showSocialTimeline}
-        activeTimeline={activeTimeline}
-        onTimelineChange={setActiveTimeline}
-        platform={lead.platform}
-        hasLinkedInPosts={hasLinkedInPosts}
-      />
+        <TimelineHeader
+          activeTimeline={activeTimeline}
+          onTimelineChange={setActiveTimeline}
+          showSocialTimeline={showSocialTimeline}
+          activitiesTitle={activeTimeline === 'activities' ? 
+            (settings?.language === "en" ? "Activities" : "Aktivitäten") :
+            (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
+          }
+          socialTitle={settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten"}
+        />
 
       {activeTimeline === 'activities' ? (
         <ActivityTimeline 

@@ -1427,8 +1427,10 @@ export type Database = {
       }
       settings: {
         Row: {
+          apify_api_key: string | null
           created_at: string | null
           email_notifications: boolean | null
+          facebook_app_id: string | null
           id: string
           language: string | null
           network_marketing_id: string | null
@@ -1441,8 +1443,10 @@ export type Database = {
           whatsapp_number: string | null
         }
         Insert: {
+          apify_api_key?: string | null
           created_at?: string | null
           email_notifications?: boolean | null
+          facebook_app_id?: string | null
           id?: string
           language?: string | null
           network_marketing_id?: string | null
@@ -1455,8 +1459,10 @@ export type Database = {
           whatsapp_number?: string | null
         }
         Update: {
+          apify_api_key?: string | null
           created_at?: string | null
           email_notifications?: boolean | null
+          facebook_app_id?: string | null
           id?: string
           language?: string | null
           network_marketing_id?: string | null

@@ -1,4 +1,4 @@
-import { TimelineItem } from "../TimelineUtils";
+import { TimelineItem } from "../../TimelineUtils";
 
 export const mapNoteToTimelineItem = (note: any): TimelineItem => {
   return {
