@@ -29,9 +29,9 @@ export function NewEmailSettings() {
       setError(null);
       
       try {
-        // Load API email settings
+        // Load IMAP settings instead of API email settings
         const { data: apiData, error: apiError } = await supabase
-          .from('api_email_settings')
+          .from('imap_settings')
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle();
@@ -41,7 +41,7 @@ export function NewEmailSettings() {
         }
         
         setApiSettings(apiData || null);
-        setEmailConfigured(!!(apiData && apiData.host));
+        setEmailConfigured(!!(apiData && apiData.server));
         
       } catch (error: any) {
         console.error('Error loading email settings:', error);
@@ -61,16 +61,13 @@ export function NewEmailSettings() {
       setIsLoading(true);
       
       supabase
-        .from('api_email_settings')
+        .from('imap_settings')
         .select('*')
         .eq('user_id', user.id)
         .maybeSingle()
-        .then(({ data }) => {
-          if (data) setApiSettings(data);
-          setEmailConfigured(!!(data && data.host));
-        })
-        .catch(error => {
-          console.error('Error reloading settings after save:', error);
+        .then(({ data, error }) => {
+          if (!error && data) setApiSettings(data);
+          setEmailConfigured(!!(data && data.server));
         })
         .finally(() => {
           setIsLoading(false);
@@ -170,7 +167,7 @@ export function NewEmailSettings() {
               <CardTitle>E-Mail-Einstellungen</CardTitle>
             </div>
             {emailConfigured && (
-              <Badge variant="success" className="bg-green-100 text-green-800 hover:bg-green-200">
+              <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">
                 Konfiguriert
               </Badge>
             )}

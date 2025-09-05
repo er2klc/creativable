@@ -96,12 +96,12 @@ export function ExternalApiEmailForm({ existingSettings, onSettingsSaved }: Exte
         throw new Error("Benutzer nicht angemeldet");
       }
       
-      // Save to database
+      // Save to imap_settings table instead  
       const { error } = await supabase
-        .from('api_email_settings')
+        .from('imap_settings')
         .upsert({
           user_id: user.id,
-          host: formData.host,
+          server: formData.host,
           port: formData.port,
           user: formData.user,
           password: formData.password,

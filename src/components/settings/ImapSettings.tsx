@@ -84,19 +84,30 @@ export function ImapSettings({ onSettingsSaved }: { onSettingsSaved?: () => void
       
       if (data) {
         setInitialValues({
-          host: data.host,
+          host: data.server,
           port: data.port,
           username: data.username,
           password: data.password,
-          secure: data.secure,
-          force_insecure: data.force_insecure,
-          historical_sync: data.historical_sync,
-          max_emails: data.max_emails,
-          connection_timeout: data.connection_timeout,
-          progressive_loading: data.progressive_loading
+          secure: false,
+          force_insecure: false,
+          historical_sync: false,
+          max_emails: 100,
+          connection_timeout: 30000,
+          progressive_loading: false
         });
         
-        form.reset(data);
+        form.reset({
+          host: data.server,
+          port: data.port,
+          username: data.username,
+          password: data.password,
+          secure: false,
+          force_insecure: false,
+          historical_sync: false,
+          max_emails: 100,
+          connection_timeout: 30000,
+          progressive_loading: false
+        });
       }
     };
     

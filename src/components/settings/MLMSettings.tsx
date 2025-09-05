@@ -1,5 +1,5 @@
 
-import React from "react";
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompanyNameField } from "./mlm/CompanyNameField";
 import { ProductsServicesField } from "./mlm/ProductsServicesField";
@@ -18,10 +18,10 @@ import { Label } from "@/components/ui/label";
 
 export function MLMSettings() {
   const { settings, updateSettings } = useSettings();
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [networkMarketingId, setNetworkMarketingId] = React.useState(settings?.network_marketing_id || "");
+  const [isLoading, setIsLoading] = useState(false);
+  const [networkMarketingId, setNetworkMarketingId] = useState(settings?.network_marketing_id || "");
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (settings?.network_marketing_id) {
       setNetworkMarketingId(settings.network_marketing_id);
     }
