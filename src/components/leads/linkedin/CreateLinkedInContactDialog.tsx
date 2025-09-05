@@ -155,7 +155,7 @@ export function CreateLinkedInContactDialog({
 
       if (lead && lead.length > 0) {
         const newLead = lead[0];
-        scanState.pollProgress(newLead.id);
+        await scanState.pollProgress();
 
         const { error: scanError } = await supabase.functions.invoke('scan-linkedin-profile', {
           body: {

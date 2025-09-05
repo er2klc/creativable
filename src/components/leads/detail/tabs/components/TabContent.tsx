@@ -8,7 +8,7 @@ import { MessageTab } from "../MessageTab";
 import { LeadFileUpload } from "../../files/LeadFileUpload";
 import { CallScriptGenerator } from "../../components/CallScriptGenerator";
 import { MessageGenerator } from "../../components/MessageGenerator";
-import { PresentationTab } from "../PresentationTab";
+import PresentationTab from "../PresentationTab";
 import { tabColors } from "../config/tabsConfig";
 import { useSettings } from "@/hooks/use-settings";
 
