@@ -1,59 +1,42 @@
-import { Activity, MessageCircle } from "lucide-react";
-import { useSettings } from "@/hooks/use-settings";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface TimelineHeaderProps {
-  title: string;
-  showSocialTimeline?: boolean;
   activeTimeline: 'activities' | 'social';
   onTimelineChange: (timeline: 'activities' | 'social') => void;
-  platform?: string;
-  hasLinkedInPosts?: boolean;
+  showSocialTimeline: boolean;
+  activitiesTitle: string;
+  socialTitle: string;
 }
 
 export const TimelineHeader = ({ 
-  showSocialTimeline, 
-  activeTimeline,
-  onTimelineChange,
-  platform,
-  hasLinkedInPosts
+  activeTimeline, 
+  onTimelineChange, 
+  showSocialTimeline,
+  activitiesTitle,
+  socialTitle 
 }: TimelineHeaderProps) => {
-  const { settings } = useSettings();
-  const displayPlatform = hasLinkedInPosts ? 'LinkedIn' : platform;
-
-  const handleClick = (timeline: 'activities' | 'social') => {
-    if (showSocialTimeline) {
-      onTimelineChange(timeline);
-    }
-  };
-
   return (
     <div className="flex items-center justify-between mb-4">
-      <div 
-        className={cn(
-          "flex items-center gap-2 cursor-pointer hover:text-primary transition-colors",
-          activeTimeline === 'activities' && "text-lg font-semibold"
-        )}
-        onClick={() => handleClick('activities')}
-      >
-        <Activity className="h-5 w-5" />
-        <span>
-          {settings?.language === "en" ? "Activities" : "Aktivitäten"}
-        </span>
-      </div>
+      <h3 className="text-lg font-semibold">
+        {activeTimeline === 'activities' ? activitiesTitle : socialTitle}
+      </h3>
       
       {showSocialTimeline && (
-        <div 
-          className={cn(
-            "flex items-center gap-2 cursor-pointer hover:text-primary transition-colors",
-            activeTimeline === 'social' && "text-lg font-semibold"
-          )}
-          onClick={() => handleClick('social')}
-        >
-          <MessageCircle className="h-5 w-5" />
-          <span>
-            {settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten"}
-          </span>
+        <div className="flex gap-2">
+          <Button
+            variant={activeTimeline === 'activities' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onTimelineChange('activities')}
+          >
+            Aktivitäten
+          </Button>
+          <Button
+            variant={activeTimeline === 'social' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => onTimelineChange('social')}
+          >
+            Social Media
+          </Button>
         </div>
       )}
     </div>

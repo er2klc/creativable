@@ -1093,6 +1093,7 @@ export type Database = {
       phase_based_analyses: {
         Row: {
           analysis: Json | null
+          content: string | null
           created_at: string | null
           created_by: string | null
           id: string
@@ -1101,6 +1102,7 @@ export type Database = {
         }
         Insert: {
           analysis?: Json | null
+          content?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string
@@ -1109,6 +1111,7 @@ export type Database = {
         }
         Update: {
           analysis?: Json | null
+          content?: string | null
           created_at?: string | null
           created_by?: string | null
           id?: string

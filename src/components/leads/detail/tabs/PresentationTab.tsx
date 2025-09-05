@@ -120,17 +120,15 @@ export const PresentationTab = ({
         
         const { data: pageData, error: pageError } = await supabase
           .from('presentation_pages')
-          .insert([
-            {
-              lead_id: leadId,
-              user_id: user?.id,
-              title: title || url,
-              video_url: url,
-              slug: slug,
-              expires_at: expiryDate,
-              is_url_active: true
-            }
-          ])
+          .insert({
+            lead_id: leadId,
+            user_id: user?.id,
+            title: title || url,
+            video_url: url,
+            slug: slug,
+            expires_at: expiryDate.toISOString(),
+            is_url_active: true
+          })
           .select()
           .single();
 

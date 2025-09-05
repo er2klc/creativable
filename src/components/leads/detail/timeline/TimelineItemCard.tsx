@@ -178,14 +178,13 @@ export const TimelineItemCard = ({
     }
 
     if (type === "note" && id) {
-      return (
-        <NoteCard
-          id={id}
-          content={content}
-          metadata={metadata}
-          onDelete={onDelete}
-        />
-      );
+        return (
+          <NoteCard 
+            id={id}
+            content={content}
+            metadata={metadata}
+          />
+        );
     }
 
     if (type === "status_change") {

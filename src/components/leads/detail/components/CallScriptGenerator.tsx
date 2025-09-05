@@ -73,18 +73,20 @@ export function CallScriptGenerator({
         settings
       };
 
-      const { data, error } = await supabase.functions.invoke('generate-call-script', {
+      const result = await supabase.functions.invoke('generate-call-script', {
         body: requestData
       }).catch(err => {
         console.error("Error calling function:", err);
-        
-        // Fallback to direct OpenAI call if Edge function fails
         return generateScriptFallback(requestData);
       });
 
-      if (error) throw error;
+      if ('error' in result && result.error) {
+        console.error('Error generating call script:', result.error);
+        toast.error('Fehler beim Generieren des Call Scripts');
+        return;
+      }
 
-      const scriptContent = data?.script || "Could not generate script";
+      const scriptContent = result.data?.script || "Could not generate script";
       setGeneratedScript(scriptContent);
 
       // Save the script to the database as a note

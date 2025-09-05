@@ -82,8 +82,7 @@ export const createStatusChangeItem = (
     timestamp,
     metadata: {
       oldStatus: 'lead',
-      newStatus: status,
-      timestamp
+      newStatus: status
     }
   };
 };

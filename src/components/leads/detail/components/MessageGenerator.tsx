@@ -147,7 +147,7 @@ export function MessageGenerator({
 
       if (error) throw error;
 
-      const messageContent = data?.message || "Could not generate message";
+      const messageContent = result.data?.message || "Could not generate message";
       setGeneratedMessage(messageContent);
 
       // Save the message to the database
