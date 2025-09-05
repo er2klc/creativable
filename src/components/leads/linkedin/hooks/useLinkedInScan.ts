@@ -75,9 +75,9 @@ export function useLinkedInScan() {
             clearInterval(interval);
           }
 
-          // If there's an error message, show it and stop polling
-          if (scanHistory.error_message) {
-            toast.error(scanHistory.error_message);
+          // If there's an error, show it and stop polling
+          if (!scanHistory.success) {
+            toast.error("Scan failed");
             pollingState.isActive = false;
             clearInterval(interval);
             updateState({ isLoading: false });
