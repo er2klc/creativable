@@ -5,7 +5,6 @@ import { TeamHeaderTitle } from "./header/TeamHeaderTitle";
 import { TeamActions } from "./header/TeamActions";
 import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { NextTeamEvent } from "./events/NextTeamEvent";
 
 interface TeamHeaderProps {
   team: {

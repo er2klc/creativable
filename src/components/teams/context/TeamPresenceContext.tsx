@@ -34,8 +34,7 @@ export const TeamPresenceProvider = ({
         const { error } = await supabase
           .from('profiles')
           .update({ 
-            status: isOnline ? 'online' : 'offline',
-            last_seen: new Date().toISOString()
+            updated_at: new Date().toISOString()
           })
           .eq('id', userId);
         

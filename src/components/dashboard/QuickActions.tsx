@@ -16,7 +16,8 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { NewAppointmentDialog } from "@/components/calendar/NewAppointmentDialog";
-import { AddTaskDialog } from "@/components/todo/AddTaskDialog";
+// Placeholder for add task functionality
+const AddTaskDialogPlaceholder = ({ children }: any) => children;
 import { CreateInstagramContactDialog } from "@/components/leads/instagram/CreateInstagramContactDialog";
 import { CreateLinkedInContactDialog } from "@/components/leads/linkedin/CreateLinkedInContactDialog";
 

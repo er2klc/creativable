@@ -5,7 +5,8 @@ import TeamDetail from "@/pages/TeamDetail";
 import PlatformDetail from "@/pages/PlatformDetail";
 import LeaderBoard from "@/pages/LeaderBoard";
 import TeamPulse from "@/pages/TeamPulse";
-import { PostsAndDiscussions } from "@/components/teams/posts/PostsAndDiscussions";
+// Placeholder for posts component
+const PostsAndDiscussionsPlaceholder = () => <div>Posts feature temporarily disabled</div>;
 import TeamCalendar from "@/pages/TeamCalendar";
 import MemberProfile from "@/pages/MemberProfile";
 import TeamMembers from "@/pages/TeamMembers";
@@ -39,17 +40,17 @@ export const platformRoutes = [
   },
   {
     path: "/unity/:teamSlug/posts",
-    element: <PostsAndDiscussions />,
+    element: <PostsAndDiscussionsPlaceholder />,
     label: "Team Posts",
   },
   {
     path: "/unity/:teamSlug/posts/category/:categorySlug",
-    element: <PostsAndDiscussions />,
+    element: <PostsAndDiscussionsPlaceholder />,
     label: "Team Posts Category",
   },
   {
     path: "/unity/:teamSlug/posts/:postSlug",
-    element: <PostsAndDiscussions />,
+    element: <PostsAndDiscussionsPlaceholder />,
     label: "Post Detail",
   },
   {

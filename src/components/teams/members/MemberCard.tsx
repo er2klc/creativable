@@ -38,12 +38,9 @@ export const MemberCard = ({
   const isCurrentUser = user?.id === member.user_id;
   const canChat = false; // Temporarily disabled
   const memberIsOnline = isOnline(member.user_id);
-  const lastSeen = member.profile?.last_seen;
 
   const handleCardClick = () => {
-    if (member.profile?.slug) {
-      navigate(`/unity/${teamSlug}/members/${member.profile.slug}`);
-    }
+    // Profile navigation temporarily disabled
   };
 
   const handleChatClick = async (e: React.MouseEvent) => {
@@ -102,8 +99,8 @@ export const MemberCard = ({
           <Badge className={cn("px-4 py-1 shadow-lg", getRoleBadgeStyle(member.role))}>
             {member.role}
           </Badge>
-          {member.profile?.slug && <p className="text-sm text-white/80 mt-1">
-              @{member.profile.slug}
+          {member.profile?.display_name && <p className="text-sm text-white/80 mt-1">
+              @{member.profile.display_name}
             </p>}
         </div>
       </div>
@@ -116,18 +113,11 @@ export const MemberCard = ({
             </h3>
           </div>
 
-          {!isCurrentUser && member.profile?.bio && <p className="text-sm text-white/60 line-clamp-2">
-              {member.profile.bio}
-            </p>}
-
           <div className="flex items-center gap-2 text-xs text-white/60 mt-2">
-            {lastSeen && !memberIsOnline && <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {formatDistanceToNow(new Date(lastSeen), {
-              addSuffix: true,
-              locale: de
-            })}
-              </span>}
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              Online Status
+            </span>
           </div>
 
           {canChat && (
