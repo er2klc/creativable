@@ -745,6 +745,7 @@ export type Database = {
           languages: string[] | null
           last_action: string | null
           last_action_date: string | null
+          last_social_media_scan: string | null
           name: string
           onboarding_progress: Json | null
           phase_id: string | null
@@ -755,12 +756,14 @@ export type Database = {
           position: string | null
           region: string | null
           social_media_bio: string | null
+          social_media_categories: string[] | null
           social_media_engagement_rate: number | null
           social_media_followers: number | null
           social_media_following: number | null
           social_media_interests: string[] | null
           social_media_profile_image_url: string | null
           social_media_username: string | null
+          social_media_verified: boolean | null
           status: string | null
           updated_at: string | null
           user_id: string
@@ -783,6 +786,7 @@ export type Database = {
           languages?: string[] | null
           last_action?: string | null
           last_action_date?: string | null
+          last_social_media_scan?: string | null
           name: string
           onboarding_progress?: Json | null
           phase_id?: string | null
@@ -793,12 +797,14 @@ export type Database = {
           position?: string | null
           region?: string | null
           social_media_bio?: string | null
+          social_media_categories?: string[] | null
           social_media_engagement_rate?: number | null
           social_media_followers?: number | null
           social_media_following?: number | null
           social_media_interests?: string[] | null
           social_media_profile_image_url?: string | null
           social_media_username?: string | null
+          social_media_verified?: boolean | null
           status?: string | null
           updated_at?: string | null
           user_id: string
@@ -821,6 +827,7 @@ export type Database = {
           languages?: string[] | null
           last_action?: string | null
           last_action_date?: string | null
+          last_social_media_scan?: string | null
           name?: string
           onboarding_progress?: Json | null
           phase_id?: string | null
@@ -831,12 +838,14 @@ export type Database = {
           position?: string | null
           region?: string | null
           social_media_bio?: string | null
+          social_media_categories?: string[] | null
           social_media_engagement_rate?: number | null
           social_media_followers?: number | null
           social_media_following?: number | null
           social_media_interests?: string[] | null
           social_media_profile_image_url?: string | null
           social_media_username?: string | null
+          social_media_verified?: boolean | null
           status?: string | null
           updated_at?: string | null
           user_id?: string
