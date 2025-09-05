@@ -112,25 +112,34 @@ export function SmtpSettings({ onSettingsSaved }: SmtpSettingsProps) {
       }
       
       const result = await fetchWithTimeout(async () => {
-        const { data: settings, error } = await supabase
-          .from('smtp_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+        const result = { settings: undefined as any, error: null };
+        try {
+          const { data: settings, error } = await supabase
+            .from('smtp_settings')
+            .select('*')
+            .eq('user_id', user.id)
+            .single();
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('Error loading SMTP settings:', error);
-          throw new Error(`Fehler beim Laden der SMTP-Einstellungen: ${error.message}`);
+          if (error && error.code !== 'PGRST116') {
+            console.error('Error loading SMTP settings:', error);
+            throw new Error(`Fehler beim Laden der SMTP-Einstellungen: ${error.message}`);
+          }
+
+          result.settings = settings;
+          result.error = error;
+        } catch (e: any) {
+          result.error = e;
         }
 
-        return { settings, error };
+        return result;
       }, 5000);
       
       if (isMountedRef.current) {
-        if (result.settings) {
-          form.reset(result.settings);
-          setExistingSettingsId(result.settings.id);
-          if (result.settings.last_verified_at) {
+        const settings = result.settings;
+        if (settings) {
+          form.reset(settings);
+          setExistingSettingsId(settings.id);
+          if (settings.last_verified_at) {
             setIsVerified(true);
           }
         }

@@ -1,7 +1,7 @@
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
 import { QuickActions } from "@/components/dashboard/QuickActions";
-import { LeadPhases } from "@/components/dashboard/LeadPhases";
+import { LeadPhasesSimple } from "@/components/dashboard/LeadPhasesSimple";
 import { useAuth } from "@/hooks/use-auth";
 import { MobileMenu } from "@/components/layout/MobileMenu";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +24,7 @@ const Dashboard = () => {
       <div className="space-y-8">
         <QuickActions />
         <DashboardMetrics />
-        <LeadPhases />
+        <LeadPhasesSimple />
       </div>
     </div>;
 };

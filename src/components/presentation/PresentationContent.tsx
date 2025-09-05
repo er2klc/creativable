@@ -63,7 +63,6 @@ export const PresentationContent = ({ pageData, onProgress, initialProgress = 0 
             videoUrl={pageData.video_url}
             onProgress={onProgress}
             autoplay={false}
-            initialProgress={initialProgress}
           />
         </div>
       </div>

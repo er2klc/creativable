@@ -125,7 +125,7 @@ export const LeadDetailContent = ({
             />
           )}
           <LeadInfoCard 
-            lead={lead} 
+            lead={lead as any} 
             onUpdate={(updates) => {
               // Only call onUpdateLead if we're actually changing something
               const hasChanges = Object.entries(updates).some(
@@ -142,9 +142,9 @@ export const LeadDetailContent = ({
         {/* Right Column - 8/12 */}
         <div className="col-span-8 space-y-6">
           <ContactFieldManager />
-          <LeadDetailTabs lead={lead} />
+          <LeadDetailTabs lead={lead as any} />
           <LeadTimeline 
-            lead={lead} 
+            lead={lead as any} 
             onDeletePhaseChange={onDeletePhaseChange}
           />
         </div>

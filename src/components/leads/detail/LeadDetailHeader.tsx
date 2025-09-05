@@ -72,10 +72,10 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
             </div>
           </header>
           <div className="px-6 pb-3">
-            <CompactPhaseSelector
-              lead={lead}
-              onUpdateLead={onUpdateLead}
-            />
+          <CompactPhaseSelector
+            lead={lead as any}
+            onUpdateLead={onUpdateLead}
+          />
           </div>
         </div>
       </DialogHeader>

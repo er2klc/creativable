@@ -124,13 +124,9 @@ export function ImapSettingsForm({ existingSettings, onSettingsSaved }: ImapSett
         throw new Error("Benutzer nicht angemeldet");
       }
       
-      // Check if connection_type exists in the database table
-      try {
-        const { error } = await supabase.rpc('check_time_discrepancy');
-        console.log("DB connection test succeeded");
-      } catch (e) {
-        console.error("DB connection test error:", e);
-      }
+      // Comment out RPC call as function doesn't exist
+      // const { error } = await supabase.rpc('check_time_discrepancy');
+      console.log("DB connection test skipped - function not available");
       
       // Save to database - omit connection_type as it's not in the schema
       const { error } = await supabase

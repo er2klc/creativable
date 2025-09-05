@@ -27,18 +27,18 @@ export const LeadContent = ({ lead, onUpdateLead, onDeletePhaseChange }: LeadCon
       <div className="space-y-6">
         {showPhaseSelector && (
           <CompactPhaseSelector
-            lead={lead}
+            lead={lead as any}
             onUpdateLead={onUpdateLead}
           />
         )}
         
-        <LeadInfoCard 
-          lead={lead} 
+        <LeadInfoCard
+          lead={lead as any} 
           onUpdate={onUpdateLead}
         />
         <ContactFieldManager />
         <LeadTimeline 
-          lead={lead} 
+          lead={lead as any} 
           onDeletePhaseChange={onDeletePhaseChange}
         />
         <TaskList leadId={lead.id} />

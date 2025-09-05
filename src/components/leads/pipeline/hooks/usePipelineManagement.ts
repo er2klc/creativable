@@ -60,11 +60,10 @@ export function usePipelineManagement(initialPipelineId: string | null) {
         return;
       }
 
-      // Find default pipeline
-      const defaultPipeline = pipelines.find(p => p.is_default);
-      if (defaultPipeline) {
-        console.log("Using default pipeline:", defaultPipeline.id);
-        setSelectedPipelineId(defaultPipeline.id);
+      // Find first pipeline as default since is_default doesn't exist in current schema
+      if (pipelines.length > 0) {
+        console.log("Using first pipeline as default:", pipelines[0].id);
+        setSelectedPipelineId(pipelines[0].id);
         return;
       }
 

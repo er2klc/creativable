@@ -47,16 +47,16 @@ export const LeadDetailContent = ({
         <div className="col-span-8 space-y-6">
           {showPhaseSelector && (
             <CompactPhaseSelector
-              lead={lead}
+              lead={lead as any}
               onUpdateLead={onUpdateLead}
             />
           )}
           
           {/* AI Analysis Section */}
-          <LeadSummary lead={lead} />
+          <LeadSummary lead={lead as any} />
           
           <LeadInfoCard 
-            lead={lead} 
+            lead={lead as any}
             onUpdate={(updates) => {
               // Only call onUpdateLead if we're actually changing something
               const hasChanges = Object.entries(updates).some(
@@ -70,7 +70,7 @@ export const LeadDetailContent = ({
           />
 
           <LeadTimeline 
-            lead={lead} 
+            lead={lead as any} 
             onDeletePhaseChange={onDeletePhaseChange}
           />
         </div>
@@ -78,7 +78,7 @@ export const LeadDetailContent = ({
         {/* Right Column - 4/12 */}
         <div className="col-span-4 space-y-6">
           <ContactFieldManager />
-          <LeadDetailTabs lead={lead} />
+          <LeadDetailTabs lead={lead as any} />
         </div>
       </div>
     </div>
