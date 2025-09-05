@@ -1685,29 +1685,38 @@ export type Database = {
       social_media_scan_history: {
         Row: {
           created_at: string | null
+          current_file: string | null
           id: string
           leads_found: number | null
           platform: string
+          processing_progress: number | null
           scan_status: string | null
           search_query: string | null
+          success: boolean | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          current_file?: string | null
           id?: string
           leads_found?: number | null
           platform: string
+          processing_progress?: number | null
           scan_status?: string | null
           search_query?: string | null
+          success?: boolean | null
           user_id: string
         }
         Update: {
           created_at?: string | null
+          current_file?: string | null
           id?: string
           leads_found?: number | null
           platform?: string
+          processing_progress?: number | null
           scan_status?: string | null
           search_query?: string | null
+          success?: boolean | null
           user_id?: string
         }
         Relationships: []
