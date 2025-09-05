@@ -21,7 +21,7 @@ const Dashboard = () => {
         </div>
       </div>
       <DashboardHeader userEmail={user?.email} />
-      <div className="md:pt-[84px] space-y-8">
+      <div className="space-y-8">
         <QuickActions />
         <DashboardMetrics />
         <LeadPhases />
