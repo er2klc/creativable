@@ -69,6 +69,9 @@ export function NewEmailSettings() {
           if (!error && data) setApiSettings(data);
           setEmailConfigured(!!(data && data.server));
         })
+        .catch((error) => {
+          console.error('Settings fetch error:', error);
+        })
         .finally(() => {
           setIsLoading(false);
         });

@@ -95,8 +95,10 @@ export function EmailDiagnosticsPanel() {
       // Use EmailSyncService directly instead of edge function
       const result = await EmailSyncService.resetEmailSync();
       
+      // Fix error handling for different result types
       if (!result.success) {
-        throw new Error(result.error?.message || "Unbekannter Fehler beim Zurücksetzen");
+        const errorMessage = (result as any).error?.message || "Unbekannter Fehler beim Zurücksetzen";
+        throw new Error(errorMessage);
       }
       
       toast.success("E-Mail-Daten zurückgesetzt");

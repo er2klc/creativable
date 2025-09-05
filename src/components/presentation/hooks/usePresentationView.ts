@@ -124,8 +124,11 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
         return;
       }
 
-      // Append the new history entry to the existing array
-      const updatedHistory = [...(currentView?.view_history || []), historyEntry];
+      // Fix array type handling for view_history
+      const currentHistory = Array.isArray(currentView?.view_history) 
+        ? currentView.view_history 
+        : [];
+      const updatedHistory = [...currentHistory, historyEntry];
 
       const updates = {
         video_progress: progress,
