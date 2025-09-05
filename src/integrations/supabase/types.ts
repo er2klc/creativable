@@ -767,6 +767,7 @@ export type Database = {
           status: string | null
           updated_at: string | null
           user_id: string
+          usp: string | null
           website: string | null
         }
         Insert: {
@@ -808,6 +809,7 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           user_id: string
+          usp?: string | null
           website?: string | null
         }
         Update: {
@@ -849,6 +851,7 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           user_id?: string
+          usp?: string | null
           website?: string | null
         }
         Relationships: [
@@ -1369,6 +1372,42 @@ export type Database = {
           },
         ]
       }
+      presentation_view_sessions: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          last_activity: string | null
+          page_id: string
+          progress: number | null
+          started_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          page_id: string
+          progress?: number | null
+          started_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          page_id?: string
+          progress?: number | null
+          started_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       presentation_views: {
         Row: {
           id: string
@@ -1437,50 +1476,74 @@ export type Database = {
       settings: {
         Row: {
           apify_api_key: string | null
+          business_description: string | null
+          company_name: string | null
           created_at: string | null
+          default_message_template: string | null
           email_notifications: boolean | null
           facebook_app_id: string | null
           id: string
           language: string | null
+          last_selected_pipeline_id: string | null
           network_marketing_id: string | null
           openai_api_key: string | null
+          products_services: string | null
           registration_completed: boolean | null
           registration_step: number | null
+          superchat_api_key: string | null
+          target_audience: string | null
           theme: string | null
           updated_at: string | null
           user_id: string
+          usp: string | null
           whatsapp_number: string | null
         }
         Insert: {
           apify_api_key?: string | null
+          business_description?: string | null
+          company_name?: string | null
           created_at?: string | null
+          default_message_template?: string | null
           email_notifications?: boolean | null
           facebook_app_id?: string | null
           id?: string
           language?: string | null
+          last_selected_pipeline_id?: string | null
           network_marketing_id?: string | null
           openai_api_key?: string | null
+          products_services?: string | null
           registration_completed?: boolean | null
           registration_step?: number | null
+          superchat_api_key?: string | null
+          target_audience?: string | null
           theme?: string | null
           updated_at?: string | null
           user_id: string
+          usp?: string | null
           whatsapp_number?: string | null
         }
         Update: {
           apify_api_key?: string | null
+          business_description?: string | null
+          company_name?: string | null
           created_at?: string | null
+          default_message_template?: string | null
           email_notifications?: boolean | null
           facebook_app_id?: string | null
           id?: string
           language?: string | null
+          last_selected_pipeline_id?: string | null
           network_marketing_id?: string | null
           openai_api_key?: string | null
+          products_services?: string | null
           registration_completed?: boolean | null
           registration_step?: number | null
+          superchat_api_key?: string | null
+          target_audience?: string | null
           theme?: string | null
           updated_at?: string | null
           user_id?: string
+          usp?: string | null
           whatsapp_number?: string | null
         }
         Relationships: []

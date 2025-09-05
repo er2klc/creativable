@@ -20,8 +20,8 @@ export const SessionProgress = ({ viewId, language }: SessionProgressProps) => {
       const { data, error } = await supabase
         .from('presentation_view_sessions')
         .select('*')
-        .eq('view_id', viewId)
-        .order('start_time', { ascending: false });
+        .eq('page_id', viewId)
+        .order('started_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching sessions:', error);
@@ -60,14 +60,14 @@ export const SessionProgress = ({ viewId, language }: SessionProgressProps) => {
         <div key={index} className="space-y-2 bg-gray-50 p-3 rounded-lg">
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600 font-medium">
-              {formatDate(session.start_time)}
+              {formatDate(session.started_at)}
             </span>
             <span className="text-xs font-medium text-green-600">
-              {Math.round(session.max_progress)}%
+              {Math.round(session.progress)}%
             </span>
           </div>
           <Progress 
-            value={session.max_progress} 
+            value={session.progress} 
             className="h-2.5 bg-gray-200" 
           />
         </div>

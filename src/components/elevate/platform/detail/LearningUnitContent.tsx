@@ -99,9 +99,9 @@ export const LearningUnitContent = ({
         videoUrl={videoUrl}
         onUpdate={handleUpdate}
         existingFiles={[]}
-        onFileRemove={async (index) => {
+        onFileRemove={async (fileIndex) => {
           const newFiles = [...files];
-          newFiles.splice(index, 1);
+          newFiles.splice(Number(fileIndex), 1);
           setFiles(newFiles);
         }}
         onFilesSelected={setFiles}
