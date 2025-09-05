@@ -561,6 +561,42 @@ export type Database = {
           },
         ]
       }
+      imap_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_sync_date: string | null
+          password: string | null
+          port: number | null
+          server: string | null
+          updated_at: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_sync_date?: string | null
+          password?: string | null
+          port?: number | null
+          server?: string | null
+          updated_at?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_sync_date?: string | null
+          password?: string | null
+          port?: number | null
+          server?: string | null
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       lead_business_match: {
         Row: {
           analysis_result: Json | null
@@ -1328,6 +1364,7 @@ export type Database = {
           is_active: boolean | null
           is_url_active: boolean | null
           lead_id: string | null
+          presentation_url: string | null
           slug: string | null
           title: string
           user_id: string
@@ -1342,6 +1379,7 @@ export type Database = {
           is_active?: boolean | null
           is_url_active?: boolean | null
           lead_id?: string | null
+          presentation_url?: string | null
           slug?: string | null
           title: string
           user_id: string
@@ -1356,6 +1394,7 @@ export type Database = {
           is_active?: boolean | null
           is_url_active?: boolean | null
           lead_id?: string | null
+          presentation_url?: string | null
           slug?: string | null
           title?: string
           user_id?: string
@@ -1410,24 +1449,30 @@ export type Database = {
       }
       presentation_views: {
         Row: {
+          completed: boolean | null
           id: string
           ip_address: string | null
           page_id: string
           user_agent: string | null
+          view_history: Json | null
           viewed_at: string | null
         }
         Insert: {
+          completed?: boolean | null
           id?: string
           ip_address?: string | null
           page_id: string
           user_agent?: string | null
+          view_history?: Json | null
           viewed_at?: string | null
         }
         Update: {
+          completed?: boolean | null
           id?: string
           ip_address?: string | null
           page_id?: string
           user_agent?: string | null
+          view_history?: Json | null
           viewed_at?: string | null
         }
         Relationships: [
