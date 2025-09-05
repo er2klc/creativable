@@ -2366,6 +2366,19 @@ export type Database = {
         Args: { "": unknown[] }
         Returns: number
       }
+      user_can_manage_platform_access: {
+        Args: {
+          granted_by_uuid: string
+          platform_uuid: string
+          target_user_uuid: string
+          user_uuid: string
+        }
+        Returns: boolean
+      }
+      user_has_platform_access: {
+        Args: { platform_uuid: string; user_uuid: string }
+        Returns: boolean
+      }
       vector_avg: {
         Args: { "": number[] }
         Returns: string
