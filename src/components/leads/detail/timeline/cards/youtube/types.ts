@@ -23,6 +23,7 @@ export interface YoutubeCardMetadata {
   title?: string;
   url?: string;
   id?: string;
+  expires_at?: string;
   view_id?: string;
   completed?: boolean;
   view_history?: Array<{

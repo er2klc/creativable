@@ -78,7 +78,7 @@ export function PartnerOnboardingPipeline() {
   // Find maximum number of partners in any phase for consistent height
   const maxPartners = Math.max(...phases.map(phase => 
     partners.filter(partner => 
-      partner.partner_onboarding_progress?.some(progress => 
+      (partner as any).partner_onboarding_progress?.some((progress: any) => 
         progress.phase_id === phase.id
       )
     ).length
@@ -88,14 +88,14 @@ export function PartnerOnboardingPipeline() {
   const getPartnersForPhase = (phase: any) => {
     if (phase.order_index === 0) {
       return partners.filter(partner => 
-        !partner.partner_onboarding_progress?.length || 
-        partner.partner_onboarding_progress.some(progress => 
+        !(partner as any).partner_onboarding_progress?.length || 
+        (partner as any).partner_onboarding_progress.some((progress: any) => 
           progress.phase_id === phase.id
         )
       );
     }
     return partners.filter(partner => 
-      partner.partner_onboarding_progress?.some(progress => 
+      (partner as any).partner_onboarding_progress?.some((progress: any) => 
         progress.phase_id === phase.id
       )
     );

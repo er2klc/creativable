@@ -1,6 +1,9 @@
 import { Button } from "@/components/ui/button";
 
 interface TimelineHeaderProps {
+  title?: string;
+  platform?: any;
+  hasLinkedInPosts?: boolean;
   activeTimeline: 'activities' | 'social';
   onTimelineChange: (timeline: 'activities' | 'social') => void;
   showSocialTimeline: boolean;

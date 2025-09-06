@@ -76,8 +76,8 @@ export function useLinkedInScan() {
           }
 
           // If there's an error message, show it and stop polling
-          if (scanHistory.error_message) {
-            toast.error(scanHistory.error_message);
+          if ((scanHistory as any).error_message) {
+            toast.error((scanHistory as any).error_message);
             pollingState.isActive = false;
             clearInterval(interval);
             updateState({ isLoading: false });

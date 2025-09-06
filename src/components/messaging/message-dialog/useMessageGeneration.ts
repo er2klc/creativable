@@ -33,7 +33,7 @@ export function useMessageGeneration() {
           leadPlatform: lead.platform,
           leadIndustry: lead.industry,
           companyName: lead.company_name,
-          usp: lead.usp,
+          usp: (lead as any).usp,
           phaseName: phase?.name,
           phaseId: lead.phase_id,
           phaseAnalysis: latestAnalysis, // Include phase analysis in context
