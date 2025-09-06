@@ -66,7 +66,7 @@ export const PostSnapsList = ({ teamId, isAdmin }: PostSnapsListProps) => {
                 </span>
               )}
             </div>
-            {isAdmin && <CreatePostDialog teamId={teamId} categoryId={category.id} />}
+            {isAdmin && <CreatePostDialog teamId={teamId} categoryId={category.id} canPost={true} />}
           </div>
           <PostList teamId={teamId} categoryId={category.id} />
         </div>

@@ -11,7 +11,7 @@ import { NotificationList } from './NotificationList';
 interface Notification {
   id: string;
   title: string;
-  content: string;
+  message: string;
   created_at: string;
   read: boolean;
   type: string;
@@ -45,7 +45,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
         .select(`
           id,
           title,
-          content,
+          message,
           created_at,
           read,
           type,
@@ -68,7 +68,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
       const sanitizedPayload = {
         id: payload.new?.id,
         title: payload.new?.title,
-        content: payload.new?.content,
+        message: payload.new?.message,
         created_at: payload.new?.created_at,
         read: payload.new?.read,
         type: payload.new?.type,
@@ -81,7 +81,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
       
       if (payload.eventType === 'INSERT' && !payload.new?.read) {
         toast(sanitizedPayload.title, {
-          description: sanitizedPayload.content,
+          description: sanitizedPayload.message,
         });
       }
     };

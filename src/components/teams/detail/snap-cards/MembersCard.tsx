@@ -77,7 +77,7 @@ export const MembersCard = ({ teamId, teamSlug }: MembersCardProps) => {
     queryKey: MEMBERS_SNAP_QUERY_KEY(teamId),
     queryFn: () => fetchTeamMembers(teamId, 6),
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
   });
 
   // Prefetch function for full members list

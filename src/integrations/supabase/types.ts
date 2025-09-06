@@ -985,7 +985,6 @@ export type Database = {
       }
       notifications: {
         Row: {
-          content: string | null
           created_at: string | null
           deleted_at: string | null
           id: string
@@ -998,7 +997,6 @@ export type Database = {
           user_id: string
         }
         Insert: {
-          content?: string | null
           created_at?: string | null
           deleted_at?: string | null
           id?: string
@@ -1011,7 +1009,6 @@ export type Database = {
           user_id: string
         }
         Update: {
-          content?: string | null
           created_at?: string | null
           deleted_at?: string | null
           id?: string
@@ -2056,6 +2053,7 @@ export type Database = {
       team_hidden_snaps: {
         Row: {
           hidden_at: string
+          hidden_by: string | null
           id: string
           snap_id: string
           team_id: string
@@ -2063,6 +2061,7 @@ export type Database = {
         }
         Insert: {
           hidden_at?: string
+          hidden_by?: string | null
           id?: string
           snap_id: string
           team_id: string
@@ -2070,6 +2069,7 @@ export type Database = {
         }
         Update: {
           hidden_at?: string
+          hidden_by?: string | null
           id?: string
           snap_id?: string
           team_id?: string
@@ -2408,12 +2408,20 @@ export type Database = {
     }
     Functions: {
       award_team_points: {
-        Args: {
-          p_points: number
-          p_reason: string
-          p_team_id: string
-          p_user_id: string
-        }
+        Args:
+          | {
+              p_event_type?: string
+              p_points: number
+              p_reason: string
+              p_team_id: string
+              p_user_id: string
+            }
+          | {
+              p_points: number
+              p_reason: string
+              p_team_id: string
+              p_user_id: string
+            }
         Returns: Json
       }
       binary_quantize: {
