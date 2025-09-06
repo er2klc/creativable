@@ -1552,6 +1552,30 @@ export type Database = {
         }
         Relationships: []
       }
+      secrets: {
+        Row: {
+          created_at: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       settings: {
         Row: {
           about_me: string | null
@@ -3061,6 +3085,18 @@ export type Database = {
       mark_all_notifications_as_read: {
         Args: { user_id_input: string }
         Returns: undefined
+      }
+      match_similar_content: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          id: string
+          similarity: number
+        }[]
       }
       sparsevec_out: {
         Args: { "": unknown }
