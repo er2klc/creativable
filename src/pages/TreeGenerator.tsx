@@ -36,7 +36,7 @@ const TreeGenerator = () => {
 
   const loadProfile = async () => {
     try {
-      const { data: profile } = await supabase
+      const { data: profile } = await (supabase as any)
         .from("tree_profiles")
         .select("*")
         .eq("user_id", user?.id)
@@ -49,7 +49,7 @@ const TreeGenerator = () => {
         setAvatarUrl(profile.avatar_url);
         setLogoPreview(profile.avatar_url);
 
-        const { data: links } = await supabase
+        const { data: links } = await (supabase as any)
           .from("tree_links")
           .select("*")
           .eq("profile_id", profile.id)
@@ -95,7 +95,7 @@ const TreeGenerator = () => {
       const avatarUrl = urlData.publicUrl;
 
       if (profile) {
-        const { error: updateError } = await supabase
+        const { error: updateError } = await (supabase as any)
           .from("tree_profiles")
           .update({ avatar_url: avatarUrl })
           .eq("id", profile.id);

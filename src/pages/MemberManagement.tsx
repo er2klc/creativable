@@ -82,21 +82,14 @@ const MemberManagement = () => {
         .from('team_members')
         .select(`
           id,
-          role,
-          team_id,
-          joined_at,
           user_id,
-          profile:profiles!user_id(
+          role,
+          joined_at,
+          profiles!inner(
             id,
-            avatar_url,
             display_name,
-            email,
-            bio,
-            slug
-          ),
-          team_member_points!inner(
-            level,
-            points
+            avatar_url,
+            email
           )
         `)
         .eq('team_id', team.id);
@@ -112,7 +105,24 @@ const MemberManagement = () => {
         throw error;
       }
 
-      return data || [];
+      if (!data) return [];
+
+      // Get team member points separately
+      const { data: pointsData } = await supabase
+        .from('team_member_points')
+        .select('user_id, points, level')
+        .eq('team_id', team.id);
+
+      return data.map(member => ({
+        ...member,
+        profile: member.profiles || {
+          id: member.user_id,
+          display_name: 'Unknown User',
+          avatar_url: null,
+          email: null
+        },
+        points: pointsData?.find(p => p.user_id === member.user_id) || { points: 0, level: 0 }
+      }));
     },
     enabled: !!team?.id
   });
@@ -233,13 +243,13 @@ const MemberManagement = () => {
                   <TableRow key={member.id}>
                     <TableCell className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.profile?.avatar_url} />
+                        <AvatarImage src={member.profile?.avatar_url || undefined} />
                         <AvatarFallback>
-                          {member.profile?.display_name?.substring(0, 2).toUpperCase()}
+                          {member.profile?.display_name?.charAt(0) || 'U'}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{member.profile?.display_name}</div>
+                        <div className="font-medium">{member.profile?.display_name || 'Unknown User'}</div>
                         <div className="text-sm text-muted-foreground">{member.profile?.email}</div>
                       </div>
                     </TableCell>
@@ -252,10 +262,10 @@ const MemberManagement = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {member.team_member_points?.level || 0}
+                      {member.points?.level || 0}
                     </TableCell>
                     <TableCell className="text-right">
-                      {member.team_member_points?.points || 0}
+                      {member.points?.points || 0}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
@@ -264,7 +274,7 @@ const MemberManagement = () => {
                         onClick={() => setSelectedMember({
                           id: member.user_id,
                           name: member.profile?.display_name || "Unbekannt",
-                          teamId: member.team_id
+                          teamId: member.team_id || team.id
                         })}
                       >
                         <Award className="h-4 w-4 mr-2" />

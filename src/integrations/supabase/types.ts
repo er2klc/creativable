@@ -77,6 +77,39 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_field_settings: {
+        Row: {
+          created_at: string
+          field_group: string
+          field_name: string
+          field_type: string
+          icon: string | null
+          id: string
+          order_index: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          field_group: string
+          field_name: string
+          field_type: string
+          icon?: string | null
+          id?: string
+          order_index?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          field_group?: string
+          field_name?: string
+          field_type?: string
+          icon?: string | null
+          id?: string
+          order_index?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       contact_group_states: {
         Row: {
           created_at: string | null
@@ -136,6 +169,39 @@ export type Database = {
           metadata?: Json | null
           source_id?: string | null
           source_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      dashboard_shortcuts: {
+        Row: {
+          created_at: string
+          id: string
+          order_index: number
+          target_id: string | null
+          target_slug: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          target_id?: string | null
+          target_slug?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          order_index?: number
+          target_id?: string | null
+          target_slug?: string | null
+          title?: string
+          type?: string
           user_id?: string
         }
         Relationships: []
@@ -1449,6 +1515,7 @@ export type Database = {
           is_admin: boolean | null
           is_super_admin: boolean | null
           last_seen: string | null
+          personality_type: string | null
           slug: string | null
           status: string | null
           updated_at: string | null
@@ -1463,6 +1530,7 @@ export type Database = {
           is_admin?: boolean | null
           is_super_admin?: boolean | null
           last_seen?: string | null
+          personality_type?: string | null
           slug?: string | null
           status?: string | null
           updated_at?: string | null
@@ -1477,6 +1545,7 @@ export type Database = {
           is_admin?: boolean | null
           is_super_admin?: boolean | null
           last_seen?: string | null
+          personality_type?: string | null
           slug?: string | null
           status?: string | null
           updated_at?: string | null
@@ -1949,6 +2018,13 @@ export type Database = {
             referencedRelation: "team_categories"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_team_category_settings_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "team_category_post_counts"
+            referencedColumns: ["category_id"]
+          },
         ]
       }
       team_direct_messages: {
@@ -2090,6 +2166,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_level_rewards: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          level: number
+          reward_type: string
+          reward_value: string | null
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level: number
+          reward_type: string
+          reward_value?: string | null
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          level?: number
+          reward_type?: string
+          reward_value?: string | null
+          team_id?: string
+        }
+        Relationships: []
+      }
+      team_member_activity_log: {
+        Row: {
+          activity_type: string
+          created_at: string
+          description: string | null
+          id: string
+          metadata: Json | null
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          metadata?: Json | null
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       team_member_follows: {
         Row: {
@@ -2448,6 +2584,7 @@ export type Database = {
           file_urls: string[] | null
           id: string
           pinned: boolean | null
+          slug: string | null
           team_id: string
           title: string
           updated_at: string | null
@@ -2460,6 +2597,7 @@ export type Database = {
           file_urls?: string[] | null
           id?: string
           pinned?: boolean | null
+          slug?: string | null
           team_id: string
           title: string
           updated_at?: string | null
@@ -2472,6 +2610,7 @@ export type Database = {
           file_urls?: string[] | null
           id?: string
           pinned?: boolean | null
+          slug?: string | null
           team_id?: string
           title?: string
           updated_at?: string | null
@@ -2483,6 +2622,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "team_categories"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_team_posts_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "team_category_post_counts"
+            referencedColumns: ["category_id"]
           },
           {
             foreignKeyName: "fk_team_posts_team"
@@ -2538,6 +2684,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_bios: {
+        Row: {
+          bio_text: string
+          bio_type: string | null
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bio_text: string
+          bio_type?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bio_text?: string
+          bio_type?: string | null
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_links: {
         Row: {
           created_at: string | null
@@ -2580,6 +2753,33 @@ export type Database = {
         }
         Relationships: []
       }
+      user_signatures: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean | null
+          signature_html: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          signature_html: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean | null
+          signature_html?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       vision_board_images: {
         Row: {
           created_at: string | null
@@ -2615,7 +2815,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      team_category_post_counts: {
+        Row: {
+          category_id: string | null
+          post_count: number | null
+          team_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_team_categories_team"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_points_30_days: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          level: number | null
+          points: number | null
+          team_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_points_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_points_7_days: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          level: number | null
+          points: number | null
+          team_id: string | null
+          user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_points_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       award_team_points: {

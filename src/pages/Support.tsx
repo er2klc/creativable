@@ -9,7 +9,9 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
 const Support = () => {
-  const { isAuthenticated } = useAuth();
+  const auth = useAuth();
+
+  if (auth.user) {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
 

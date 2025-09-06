@@ -32,7 +32,7 @@ const TeamCalendar = () => {
     },
     enabled: !!teamSlug && !!user?.id,
     staleTime: 0,
-    cacheTime: 0
+    gcTime: 0
   });
 
   const { data: teamMember } = useQuery({

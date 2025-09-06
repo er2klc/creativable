@@ -58,7 +58,7 @@ const TeamMembers = () => {
     },
     enabled: !!teamSlug,
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
   });
 
   const { data: memberPoints } = useQuery({
@@ -89,7 +89,7 @@ const TeamMembers = () => {
     queryFn: () => fetchTeamMembers(teamData?.id || ''),
     enabled: !!teamData?.id,
     staleTime: 1000 * 60 * 5,
-    cacheTime: 1000 * 60 * 30,
+    gcTime: 1000 * 60 * 30,
     retry: 3,
     refetchOnMount: true,
     keepPreviousData: true

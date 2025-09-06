@@ -42,154 +42,76 @@ const MemberProfile = () => {
     queryFn: async () => {
       if (!teamData?.id || !memberSlug) return null;
 
-      const { data: profileData, error: profileError } = await supabase
+      const { data: profile } = await supabase
         .from('profiles')
         .select(`
-          id, 
-          display_name, 
-          email, 
-          avatar_url, 
-          slug, 
-          status, 
-          last_seen,
+          id,
+          display_name,
+          avatar_url,
           bio,
-          personality_type,
-          location,
-          social_links
+          status,
+          personality_type
         `)
-        .eq('slug', memberSlug)
+        .eq('display_name', memberSlug)
         .maybeSingle();
 
-      if (profileError || !profileData) {
-        console.error('Error fetching profile:', profileError);
-        return null;
-      }
+      if (!profile?.id) return { profile: null, memberPoints: null, activityLog: [], posts: [] };
 
-      const { data: membershipData, error: membershipError } = await supabase
-        .from('team_members')
+      // Get member points
+      const { data: memberPoints } = await supabase
+        .from('team_member_points')
+        .select('*')
+        .eq('user_id', profile.id)
+        .eq('team_id', teamData.id)
+        .maybeSingle();
+
+      // Get activity log
+      const { data: activityLog } = await (supabase as any)
+        .from('team_member_activity_log')
+        .select('*')
+        .eq('user_id', profile.id)
+        .eq('team_id', teamData.id)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      // Get member posts
+      const { data: posts } = await supabase
+        .from('team_posts')
         .select(`
-          role,
-          joined_at,
-          team_member_points (
-            points,
-            level
+          id,
+          title,
+          content,
+          created_at,
+          slug,
+          team_categories!inner (
+            name
           )
         `)
+        .eq('created_by', profile.id)
         .eq('team_id', teamData.id)
-        .eq('user_id', profileData.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(5);
 
-      if (membershipError || !membershipData) {
-        console.error('Error fetching team membership:', membershipError);
-        return null;
-      }
-
-      const [
-        { count: membersCount },
-        { data: settingsData },
-        { data: activityData },
-        { data: postsData },
-        { data: commentsData }
-      ] = await Promise.all([
-        supabase
-          .from('team_members')
-          .select('id', { count: 'exact' })
-          .eq('team_id', teamData.id),
-        supabase
-          .from('settings')
-          .select('about_me')
-          .eq('user_id', profileData.id)
-          .maybeSingle(),
-        (supabase as any)
-          .from('team_member_activity_log')
-          .select('activity_date, activity_type, points_earned')
-          .eq('team_id', teamData.id)
-          .eq('user_id', profileData.id)
-          .order('activity_date', { ascending: false })
-          .limit(50),
-        supabase
-          .from('team_posts')
-          .select(`
-            id,
-            title,
-            content,
-            created_at,
-            team_categories (name, color),
-            team_post_comments (id),
-            team_post_reactions (id),
-            slug
-          `)
-          .eq('team_id', teamData.id)
-          .eq('created_by', profileData.id)
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('team_post_comments')
-          .select(`
-            id,
-            content,
-            created_at,
-            team_posts!inner (
-              title,
-              slug,
-              team_id,
-              team_categories (name, color)
-            )
-          `)
-          .eq('created_by', profileData.id)
-          .eq('team_posts.team_id', teamData.id)
-          .order('created_at', { ascending: false })
-      ]);
-
-      const activities = [
-        ...(postsData?.map(post => ({
-          id: post.id,
-          type: 'post' as const,
-          title: post.title,
-          content: post.content,
-          created_at: post.created_at,
-          category: {
-            name: post.team_categories.name,
-            color: post.team_categories.color,
-          },
-          reactions_count: post.team_post_reactions.length,
-          comments_count: post.team_post_comments.length,
-          slug: post.slug,
-        })) || []),
-        ...(commentsData?.map(comment => ({
-          id: comment.id,
-          type: 'comment' as const,
-          content: comment.content,
-          created_at: comment.created_at,
-          post: {
-            title: comment.team_posts.title,
-            slug: comment.team_posts.slug,
-            category: {
-              name: comment.team_posts.team_categories.name,
-              color: comment.team_posts.team_categories.color,
-            },
-          },
-        })) || []),
-      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-      // Safely extract points and level with fallbacks
-      const points = membershipData.team_member_points?.[0]?.points ?? 0;
-      const level = membershipData.team_member_points?.[0]?.level ?? 0;
+      const processedPosts = posts?.map(post => ({
+        id: post.id,
+        title: post.title,
+        content: post.content,
+        created_at: post.created_at,
+        category: post.team_categories?.name || 'Uncategorized',
+        reactions: 0,
+        comments: 0,
+        slug: post.slug || ''
+      })) || [];
 
       return {
-        ...profileData,
-        teamMember: membershipData,
-        joined_at: membershipData.joined_at,
-        points,
-        level,
-        stats: {
-          posts_count: postsData?.length ?? 0,
-          followers_count: 0,
-          following_count: 0
+        profile: {
+          ...profile,
+          points: memberPoints?.points || 0,
+          level: memberPoints?.level || 0
         },
-        activity: activityData ?? [],
-        activities,
-        membersCount: membersCount ?? 0,
-        aboutMe: settingsData?.about_me
+        memberPoints,
+        activityLog: activityLog || [],
+        posts: processedPosts
       };
     },
     enabled: !!teamData?.id && !!teamSlug && !!memberSlug
