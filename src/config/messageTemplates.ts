@@ -405,6 +405,38 @@ export const messageTemplates: Record<MessageTemplateType, Record<Platform, Mess
         tone: 'casual',
         required_elements: ['feedback_context', 'feedback_request']
       }
+    },
+    TikTok: {
+      type: 'feedback',
+      platform: 'TikTok',
+      structure: {
+        greeting: 'Hey {{name}} ✨',
+        introduction: '{{feedback_context}}',
+        main_content: '{{feedback_request}}',
+        call_to_action: 'Drop your thoughts! 💭',
+        closing: 'Thanks! 🙏\n{{user_name}}'
+      },
+      rules: {
+        max_length: 200,
+        tone: 'casual',
+        required_elements: ['feedback_context', 'feedback_request']
+      }
+    },
+    Offline: {
+      type: 'feedback',
+      platform: 'Offline',
+      structure: {
+        greeting: 'Hallo {{name}}',
+        introduction: '{{feedback_context}}',
+        main_content: '{{feedback_request}}',
+        call_to_action: 'Ich würde mich über Ihr Feedback freuen.',
+        closing: 'Mit freundlichen Grüßen\n{{user_name}}'
+      },
+      rules: {
+        max_length: 400,
+        tone: 'professional',
+        required_elements: ['feedback_context', 'feedback_request']
+      }
     }
   }
 };

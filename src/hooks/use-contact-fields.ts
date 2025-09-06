@@ -31,14 +31,14 @@ export const useContactFields = () => {
     queryFn: async () => {
       if (!user?.id) return [];
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("contact_field_settings")
         .select("*")
         .eq('user_id', user.id)
         .order("order_index");
 
       if (error) throw error;
-      return data as ContactFieldSetting[];
+      return (data as any[]) || [];
     },
     enabled: !!user?.id,
   });
@@ -49,7 +49,7 @@ export const useContactFields = () => {
       return;
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("contact_field_settings")
       .insert({
         ...params,
@@ -91,7 +91,7 @@ export const useContactFields = () => {
         icon: field.icon
       }));
 
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from("contact_field_settings")
         .upsert(updates);
 

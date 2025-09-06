@@ -8,7 +8,7 @@ export const useLevelRewards = (teamId: string) => {
     queryFn: async () => {
       if (!teamId) return [];
       
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("team_level_rewards")
         .select("*")
         .eq("team_id", teamId)

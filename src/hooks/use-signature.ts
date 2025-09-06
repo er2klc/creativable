@@ -12,7 +12,7 @@ export const useSignature = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('user_signatures')
         .select('*')
         .eq('user_id', user.id)
