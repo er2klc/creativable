@@ -145,7 +145,7 @@ export function MessageGenerator({
         return generateMessageFallback(platform, leadName, userName);
       });
 
-      if (error) throw error;
+      if (data && 'error' in data && data.error) throw data.error;
 
       const messageContent = data?.message || "Could not generate message";
       setGeneratedMessage(messageContent);

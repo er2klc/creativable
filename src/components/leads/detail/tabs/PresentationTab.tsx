@@ -70,7 +70,7 @@ export const PresentationTab = ({
       const { data, error } = await supabase
         .from('user_links')
         .select('*')
-        .eq('group_type', type)
+        .eq('group_type', type as 'zoom' | 'youtube' | 'documents' | 'custom' | 'other')
         .order('is_favorite', { ascending: false });
 
       if (error) throw error;
@@ -127,7 +127,7 @@ export const PresentationTab = ({
               title: title || url,
               video_url: url,
               slug: slug,
-              expires_at: expiryDate,
+              expires_at: expiryDate ? expiryDate.toISOString() : null,
               is_url_active: true
             }
           ])

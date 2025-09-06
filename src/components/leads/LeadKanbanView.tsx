@@ -100,7 +100,7 @@ export const LeadKanbanView = ({
         onLeadClick={handleLeadClick}
         onUpdatePhase={handleUpdatePhase}
         onDeletePhase={setPhaseToDelete}
-        onUpdatePhaseName={updatePhaseName.mutate}
+        onUpdatePhaseName={(id: string, name: string) => updatePhaseName.mutate({ id, name })}
         onMovePhase={handleMovePhase}
       />
 

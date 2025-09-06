@@ -106,12 +106,12 @@ export const HeaderActions = ({ userEmail }: HeaderActionsProps) => {
           };
         }
         
-        const sender = msg.sender;
+        const sender = msg.sender as any;
         if (!acc[team.id].unread_by_user[sender.id]) {
           acc[team.id].unread_by_user[sender.id] = {
             count: 0,
-            display_name: sender.display_name,
-            avatar_url: sender.avatar_url
+            display_name: sender.display_name || 'Unknown',
+            avatar_url: sender.avatar_url || null
           };
         }
         

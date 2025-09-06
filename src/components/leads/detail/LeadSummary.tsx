@@ -67,7 +67,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
               type: 'phase_analysis',
               phase: {
                 id: lead.phase_id,
-                name: lead.phase_name || "Current Phase"
+                name: "Current Phase"
               },
               timestamp: existingAnalysis.created_at,
               metadata: existingAnalysis.metadata
@@ -120,7 +120,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
     }
     
     loadAnalysisData();
-  }, [lead.id, lead.phase_id, lead.phase_name, settings?.language, user?.id]);
+  }, [lead.id, lead.phase_id, settings?.language, user?.id]);
 
   const generateBusinessMatch = async () => {
     if (!user) {
@@ -236,7 +236,7 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
         type: 'phase_analysis',
         phase: {
           id: lead.phase_id,
-          name: lead.phase_name || "Current Phase"
+          name: "Current Phase"
         },
         timestamp: new Date().toISOString(),
         metadata: data.analysis?.metadata || {}

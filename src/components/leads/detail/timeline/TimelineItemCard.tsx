@@ -57,6 +57,7 @@ interface TimelineItemCardProps {
   created_at?: string;
   isCompleted?: boolean;
   onToggleComplete?: (id: string, completed: boolean) => void;
+  leadName?: string;
 }
 
 export const TimelineItemCard = ({
@@ -77,7 +78,10 @@ export const TimelineItemCard = ({
     return (
       <NexusTimelineCard
         content={content}
-        metadata={metadata}
+        metadata={{
+          ...metadata,
+          type: metadata?.type || 'phase_analysis'
+        }}
         onDelete={onDelete}
       />
     );

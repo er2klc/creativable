@@ -82,7 +82,7 @@ export function CallScriptGenerator({
         return generateScriptFallback(requestData);
       });
 
-      if (error) throw error;
+      if (data && 'error' in data && data.error) throw data.error;
 
       const scriptContent = data?.script || "Could not generate script";
       setGeneratedScript(scriptContent);

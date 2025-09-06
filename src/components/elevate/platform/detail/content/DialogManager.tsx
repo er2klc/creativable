@@ -65,7 +65,7 @@ export const DialogManager = ({
             }
           }}
           existingFiles={[]}
-          onFileRemove={() => {}}
+          onFileRemove={async (index: number) => {}}
           onFilesSelected={setFiles}
           files={files}
           id={activeUnit.id}
