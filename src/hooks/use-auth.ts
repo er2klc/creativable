@@ -56,6 +56,7 @@ export const useAuth = () => {
 
   return { 
     user, 
+    isAuthenticated: !!user,
     isLoading: isLoading || sessionLoading, 
     error 
   };
