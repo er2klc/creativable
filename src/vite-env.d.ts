@@ -1,19 +1,21 @@
 /// <reference types="vite/client" />
 
 declare global {
-  interface Window {
-    location: Location;
-    addEventListener: (type: string, listener: EventListenerOrEventListenerObject) => void;
-    removeEventListener: (type: string, listener: EventListenerOrEventListenerObject) => void;
-  }
-  
-  interface ErrorEvent {
-    message: string;
-    filename?: string;
-    lineno?: number;
-    colno?: number;
-    error?: Error;
-  }
-  
-  function requestAnimationFrame(callback: FrameRequestCallback): number;
+  interface Window extends globalThis.Window {}
+  interface ErrorEvent extends globalThis.ErrorEvent {}
+}
+
+declare module "*.svg" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.png" {
+  const content: string;
+  export default content;
+}
+
+declare module "*.jpg" {
+  const content: string;
+  export default content;
 }

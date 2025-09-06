@@ -82,7 +82,7 @@ export const useLeadMutations = (leadId: string | null, onClose: () => void) => 
         const { error } = await supabase
           .from(table)
           .delete()
-          .eq('lead_id', leadId);
+          .eq('lead_id', leadId) as any;
         
         if (error) {
           console.error(`Error deleting from ${table}:`, error);
