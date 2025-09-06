@@ -185,22 +185,24 @@ const MemberProfile = () => {
           <div className="space-y-6">
             <ProfileCard
               memberData={{
-                ...memberData,
                 id: memberData?.id || '',
+                avatar_url: memberData?.profile?.avatar_url,
+                display_name: memberData?.profile?.display_name,
+                bio: memberData?.profile?.bio,
                 last_seen: new Date().toISOString(),
                 joined_at: new Date().toISOString(),
                 stats: { 
-                  posts_count: 0, 
+                  posts_count: memberData?.posts?.length || 0, 
                   followers_count: 0, 
                   following_count: 0 
                 },
-                aboutMe: ''
+                email: memberData?.profile?.email
               }}
               memberSlug={memberSlug!}
               currentLevel={currentLevel}
               currentPoints={currentPoints}
               pointsToNextLevel={pointsToNextLevel}
-              aboutMe={memberData?.aboutMe || ''}
+              aboutMe={memberData?.profile?.bio || ''}
             />
           </div>
         </div>

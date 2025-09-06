@@ -78,7 +78,7 @@ const MemberManagement = () => {
     queryFn: async () => {
       if (!team?.id) return [];
 
-      let query = supabase
+      const { data: teamMembers, error } = await supabase
         .from('team_members')
         .select(`
           id,
@@ -92,20 +92,15 @@ const MemberManagement = () => {
             email
           )
         `)
-        .eq('team_id', team.id);
-
-      if (debouncedSearch) {
-        query = query.or(`profiles.display_name.ilike.%${debouncedSearch}%,profiles.email.ilike.%${debouncedSearch}%`);
-      }
-
-      const { data, error } = await query.order('joined_at', { ascending: false });
+        .eq('team_id', team.id)
+        .order('joined_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching members:', error);
         throw error;
       }
 
-      if (!data) return [];
+      if (!teamMembers) return [];
 
       // Get team member points separately
       const { data: pointsData } = await supabase
@@ -113,9 +108,29 @@ const MemberManagement = () => {
         .select('user_id, points, level')
         .eq('team_id', team.id);
 
-      return data.map(member => ({
+      // Filter by search if provided
+      let filteredMembers = teamMembers;
+      if (debouncedSearch) {
+        filteredMembers = teamMembers.filter(member => {
+          const profile = member.profiles;
+          if (!profile || typeof profile === 'string') return false;
+          
+          const displayName = profile.display_name?.toLowerCase() || '';
+          const email = profile.email?.toLowerCase() || '';
+          const search = debouncedSearch.toLowerCase();
+          
+          return displayName.includes(search) || email.includes(search);
+        });
+      }
+
+      return filteredMembers.map(member => ({
         ...member,
-        profile: member.profiles || {
+        profile: (typeof member.profiles === 'object' && member.profiles !== null) ? {
+          id: member.profiles.id,
+          display_name: member.profiles.display_name,
+          avatar_url: member.profiles.avatar_url,
+          email: member.profiles.email
+        } : {
           id: member.user_id,
           display_name: 'Unknown User',
           avatar_url: null,

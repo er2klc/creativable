@@ -97,9 +97,9 @@ const TeamDetail = () => {
         onlineCount: 0, // This will be updated by the presence channel
         memberProgress: Math.min((members.length / 100) * 100, 100),
         levelStats: {
-          averageLevel: members.reduce((acc, m) => acc + (m.points?.[0]?.level || 0), 0) / members.length || 0,
-          highestLevel: Math.max(...members.map(m => m.points?.[0]?.level || 0)),
-          totalPoints: members.reduce((acc, m) => acc + (m.points?.[0]?.points || 0), 0)
+          averageLevel: members.reduce((acc, m) => acc + (m.points?.level || 0), 0) / members.length || 0,
+          highestLevel: Math.max(...members.map(m => m.points?.level || 0)),
+          totalPoints: members.reduce((acc, m) => acc + (m.points?.points || 0), 0)
         },
         roles: {
           owners: members.filter(m => m.role === 'owner').length,
