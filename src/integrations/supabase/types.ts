@@ -561,6 +561,42 @@ export type Database = {
           },
         ]
       }
+      imap_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_sync_date: string | null
+          password: string | null
+          port: number | null
+          server: string | null
+          updated_at: string | null
+          user_id: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_sync_date?: string | null
+          password?: string | null
+          port?: number | null
+          server?: string | null
+          updated_at?: string | null
+          user_id: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_sync_date?: string | null
+          password?: string | null
+          port?: number | null
+          server?: string | null
+          updated_at?: string | null
+          user_id?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       lead_business_match: {
         Row: {
           analysis_result: Json | null
@@ -747,6 +783,7 @@ export type Database = {
           last_action_date: string | null
           last_social_media_scan: string | null
           name: string
+          network_marketing_id: string | null
           onboarding_progress: Json | null
           phase_id: string | null
           phase_name: string | null
@@ -767,6 +804,7 @@ export type Database = {
           status: string | null
           updated_at: string | null
           user_id: string
+          usp: string | null
           website: string | null
         }
         Insert: {
@@ -788,6 +826,7 @@ export type Database = {
           last_action_date?: string | null
           last_social_media_scan?: string | null
           name: string
+          network_marketing_id?: string | null
           onboarding_progress?: Json | null
           phase_id?: string | null
           phase_name?: string | null
@@ -808,6 +847,7 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           user_id: string
+          usp?: string | null
           website?: string | null
         }
         Update: {
@@ -829,6 +869,7 @@ export type Database = {
           last_action_date?: string | null
           last_social_media_scan?: string | null
           name?: string
+          network_marketing_id?: string | null
           onboarding_progress?: Json | null
           phase_id?: string | null
           phase_name?: string | null
@@ -849,6 +890,7 @@ export type Database = {
           status?: string | null
           updated_at?: string | null
           user_id?: string
+          usp?: string | null
           website?: string | null
         }
         Relationships: [
@@ -867,6 +909,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      linkedin_scans: {
+        Row: {
+          created_at: string | null
+          current_file: string | null
+          error_message: string | null
+          id: string
+          leads_found: number | null
+          platform: string
+          processing_progress: number | null
+          scan_status: string
+          search_query: string
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_file?: string | null
+          error_message?: string | null
+          id?: string
+          leads_found?: number | null
+          platform?: string
+          processing_progress?: number | null
+          scan_status?: string
+          search_query: string
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_file?: string | null
+          error_message?: string | null
+          id?: string
+          leads_found?: number | null
+          platform?: string
+          processing_progress?: number | null
+          scan_status?: string
+          search_query?: string
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
       }
       messages: {
         Row: {
@@ -1325,6 +1409,7 @@ export type Database = {
           is_active: boolean | null
           is_url_active: boolean | null
           lead_id: string | null
+          presentation_url: string | null
           slug: string | null
           title: string
           user_id: string
@@ -1339,6 +1424,7 @@ export type Database = {
           is_active?: boolean | null
           is_url_active?: boolean | null
           lead_id?: string | null
+          presentation_url?: string | null
           slug?: string | null
           title: string
           user_id: string
@@ -1353,6 +1439,7 @@ export type Database = {
           is_active?: boolean | null
           is_url_active?: boolean | null
           lead_id?: string | null
+          presentation_url?: string | null
           slug?: string | null
           title?: string
           user_id?: string
@@ -1369,26 +1456,68 @@ export type Database = {
           },
         ]
       }
+      presentation_view_sessions: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          last_activity: string | null
+          page_id: string
+          progress: number | null
+          started_at: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          page_id: string
+          progress?: number | null
+          started_at?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          last_activity?: string | null
+          page_id?: string
+          progress?: number | null
+          started_at?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       presentation_views: {
         Row: {
+          completed: boolean | null
           id: string
           ip_address: string | null
           page_id: string
           user_agent: string | null
+          view_history: Json | null
           viewed_at: string | null
         }
         Insert: {
+          completed?: boolean | null
           id?: string
           ip_address?: string | null
           page_id: string
           user_agent?: string | null
+          view_history?: Json | null
           viewed_at?: string | null
         }
         Update: {
+          completed?: boolean | null
           id?: string
           ip_address?: string | null
           page_id?: string
           user_agent?: string | null
+          view_history?: Json | null
           viewed_at?: string | null
         }
         Relationships: [
@@ -1437,50 +1566,74 @@ export type Database = {
       settings: {
         Row: {
           apify_api_key: string | null
+          business_description: string | null
+          company_name: string | null
           created_at: string | null
+          default_message_template: string | null
           email_notifications: boolean | null
           facebook_app_id: string | null
           id: string
           language: string | null
+          last_selected_pipeline_id: string | null
           network_marketing_id: string | null
           openai_api_key: string | null
+          products_services: string | null
           registration_completed: boolean | null
           registration_step: number | null
+          superchat_api_key: string | null
+          target_audience: string | null
           theme: string | null
           updated_at: string | null
           user_id: string
+          usp: string | null
           whatsapp_number: string | null
         }
         Insert: {
           apify_api_key?: string | null
+          business_description?: string | null
+          company_name?: string | null
           created_at?: string | null
+          default_message_template?: string | null
           email_notifications?: boolean | null
           facebook_app_id?: string | null
           id?: string
           language?: string | null
+          last_selected_pipeline_id?: string | null
           network_marketing_id?: string | null
           openai_api_key?: string | null
+          products_services?: string | null
           registration_completed?: boolean | null
           registration_step?: number | null
+          superchat_api_key?: string | null
+          target_audience?: string | null
           theme?: string | null
           updated_at?: string | null
           user_id: string
+          usp?: string | null
           whatsapp_number?: string | null
         }
         Update: {
           apify_api_key?: string | null
+          business_description?: string | null
+          company_name?: string | null
           created_at?: string | null
+          default_message_template?: string | null
           email_notifications?: boolean | null
           facebook_app_id?: string | null
           id?: string
           language?: string | null
+          last_selected_pipeline_id?: string | null
           network_marketing_id?: string | null
           openai_api_key?: string | null
+          products_services?: string | null
           registration_completed?: boolean | null
           registration_step?: number | null
+          superchat_api_key?: string | null
+          target_audience?: string | null
           theme?: string | null
           updated_at?: string | null
           user_id?: string
+          usp?: string | null
           whatsapp_number?: string | null
         }
         Relationships: []
@@ -1622,29 +1775,38 @@ export type Database = {
       social_media_scan_history: {
         Row: {
           created_at: string | null
+          current_file: string | null
           id: string
           leads_found: number | null
           platform: string
+          processing_progress: number | null
           scan_status: string | null
           search_query: string | null
+          success: boolean | null
           user_id: string
         }
         Insert: {
           created_at?: string | null
+          current_file?: string | null
           id?: string
           leads_found?: number | null
           platform: string
+          processing_progress?: number | null
           scan_status?: string | null
           search_query?: string | null
+          success?: boolean | null
           user_id: string
         }
         Update: {
           created_at?: string | null
+          current_file?: string | null
           id?: string
           leads_found?: number | null
           platform?: string
+          processing_progress?: number | null
           scan_status?: string | null
           search_query?: string | null
+          success?: boolean | null
           user_id?: string
         }
         Relationships: []
@@ -2248,6 +2410,19 @@ export type Database = {
       sparsevec_typmod_in: {
         Args: { "": unknown[] }
         Returns: number
+      }
+      user_can_manage_platform_access: {
+        Args: {
+          granted_by_uuid: string
+          platform_uuid: string
+          target_user_uuid: string
+          user_uuid: string
+        }
+        Returns: boolean
+      }
+      user_has_platform_access: {
+        Args: { platform_uuid: string; user_uuid: string }
+        Returns: boolean
       }
       vector_avg: {
         Args: { "": number[] }
