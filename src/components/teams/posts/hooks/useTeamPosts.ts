@@ -10,7 +10,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string, page: number =
       console.log("Starting to fetch posts for teamId:", teamId, "categoryId:", categoryId);
       
       try {
-        let query = supabase
+        let query = (supabase as any)
           .from('team_posts')
           .select(`
             *,
@@ -23,7 +23,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string, page: number =
                 size
               )
             ),
-            author:profiles!team_posts_created_by_fkey (
+            profiles!team_posts_created_by_fkey (
               id,
               display_name,
               avatar_url,
@@ -35,8 +35,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string, page: number =
           `, { count: 'exact' })
           .eq('team_id', teamId)
           .order('pinned', { ascending: false })
-          .order('activity_score', { ascending: false }) // Neue Sortierung nach Activity Score
-          .order('last_activity_at', { ascending: false }); // Fallback auf letzter Aktivität
+          .order('created_at', { ascending: false });
 
         if (categoryId) {
           query = query.eq('category_id', categoryId);
@@ -57,19 +56,19 @@ export const useTeamPosts = (teamId: string, categoryId?: string, page: number =
           return { posts: [], totalCount: 0 };
         }
 
-        const transformedData = data.map(post => ({
+        const transformedData = data.map((post: any) => ({
           ...post,
-          team_categories: {
+          team_categories: post.team_categories ? {
             ...post.team_categories,
             settings: {
               size: post.team_categories?.team_category_settings?.[0]?.size || 'medium'
             }
-          },
+          } : null,
           team_post_comments: post.team_post_comments?.length || 0,
-          author: {
-            ...post.author,
-            avatar_url: post.author?.avatar_url || null
-          }
+          author: post.profiles ? {
+            ...post.profiles,
+            avatar_url: post.profiles.avatar_url || null
+          } : null
         }));
         
         return { posts: transformedData, totalCount: count || 0 };

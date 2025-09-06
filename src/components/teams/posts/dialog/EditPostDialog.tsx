@@ -31,6 +31,7 @@ export const EditPostDialog = ({ post, teamId, isAdmin = false }: EditPostDialog
         </DialogHeader>
         <CreatePostForm
           teamId={teamId}
+          teamSlug={teamId}
           categoryId={post.category_id}
           initialValues={{
             title: post.title,

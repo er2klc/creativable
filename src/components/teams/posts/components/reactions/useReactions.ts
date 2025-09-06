@@ -38,11 +38,12 @@ export const useReactions = (postId: string) => {
       }
 
       const reactionCounts = reactionsData.reduce((acc, r) => {
-        const count = (acc[r.reaction_type] || 0) + 1;
+        const existing = acc[r.reaction_type];
+        const count = existing ? existing.count + 1 : 1;
         const hasReacted = r.created_by === user?.id;
         return {
           ...acc,
-          [r.reaction_type]: { count, hasReacted: acc[r.reaction_type]?.hasReacted || hasReacted }
+          [r.reaction_type]: { count, hasReacted: existing?.hasReacted || hasReacted }
         };
       }, {} as Record<string, { count: number; hasReacted: boolean }>);
 

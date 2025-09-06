@@ -22,11 +22,11 @@ export const useTeamMembers = (teamId: string) => {
   return useQuery({
     queryKey: ['team-members', team?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('team_members')
         .select(`
           user_id,
-          profiles:user_id (
+          profiles!inner (
             id,
             display_name,
             avatar_url
@@ -37,11 +37,11 @@ export const useTeamMembers = (teamId: string) => {
       if (error) throw error;
 
       // Transform the data structure to match what TipTap expects
-      return data.map(member => ({
-        id: member.profiles.id,
-        display_name: member.profiles.display_name,
-        avatar_url: member.profiles.avatar_url
-      }));
+      return data?.map((member: any) => ({
+        id: member.profiles?.id,
+        display_name: member.profiles?.display_name,
+        avatar_url: member.profiles?.avatar_url
+      })) || [];
     },
     enabled: !!team?.id, // Only run this query once we have the team ID
   });

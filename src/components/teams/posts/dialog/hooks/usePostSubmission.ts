@@ -81,19 +81,20 @@ export const usePostSubmission = (
 
         if (postError) throw postError;
 
-        if (mentionedUserIds.length > 0) {
-          const { error: mentionsError } = await supabase
-            .from('team_post_mentions')
-            .insert(
-              mentionedUserIds.map(userId => ({
-                post_id: post.id,
-                mentioned_user_id: userId,
-                created_by: user.id
-              }))
-            );
+        // Skip mentions for now as table doesn't exist
+        // if (mentionedUserIds.length > 0) {
+        //   const { error: mentionsError } = await (supabase as any)
+        //     .from('team_post_mentions')
+        //     .insert(
+        //       mentionedUserIds.map(userId => ({
+        //         post_id: post.id,
+        //         mentioned_user_id: userId,
+        //         created_by: user.id
+        //       }))
+        //     );
 
-          if (mentionsError) throw mentionsError;
-        }
+        //   if (mentionsError) throw mentionsError;
+        // }
         toast.success("Beitrag erfolgreich erstellt");
       }
 
