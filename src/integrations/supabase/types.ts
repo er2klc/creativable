@@ -783,6 +783,38 @@ export type Database = {
           },
         ]
       }
+      linkedin_scan_jobs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          lead_id: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lead_id: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          lead_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "linkedin_scan_jobs_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       linkedin_scans: {
         Row: {
           created_at: string | null
@@ -1336,8 +1368,10 @@ export type Database = {
           id: string
           ip_address: string | null
           last_activity: string | null
+          max_progress: number | null
           page_id: string
           progress: number | null
+          start_time: string | null
           started_at: string | null
           user_agent: string | null
         }
@@ -1347,8 +1381,10 @@ export type Database = {
           id?: string
           ip_address?: string | null
           last_activity?: string | null
+          max_progress?: number | null
           page_id: string
           progress?: number | null
+          start_time?: string | null
           started_at?: string | null
           user_agent?: string | null
         }
@@ -1358,8 +1394,10 @@ export type Database = {
           id?: string
           ip_address?: string | null
           last_activity?: string | null
+          max_progress?: number | null
           page_id?: string
           progress?: number | null
+          start_time?: string | null
           started_at?: string | null
           user_agent?: string | null
         }
@@ -1412,6 +1450,8 @@ export type Database = {
           id: string
           is_admin: boolean | null
           is_super_admin: boolean | null
+          last_seen: string | null
+          status: string | null
           updated_at: string | null
         }
         Insert: {
@@ -1422,6 +1462,8 @@ export type Database = {
           id: string
           is_admin?: boolean | null
           is_super_admin?: boolean | null
+          last_seen?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -1432,6 +1474,8 @@ export type Database = {
           id?: string
           is_admin?: boolean | null
           is_super_admin?: boolean | null
+          last_seen?: string | null
+          status?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -1725,6 +1769,100 @@ export type Database = {
           },
         ]
       }
+      team_calendar_disabled_events: {
+        Row: {
+          created_at: string
+          disabled_by: string
+          disabled_date: string
+          event_id: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          disabled_by: string
+          disabled_date: string
+          event_id: string
+          id?: string
+        }
+        Update: {
+          created_at?: string
+          disabled_by?: string
+          disabled_date?: string
+          event_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_calendar_disabled_events_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "team_calendar_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_calendar_events: {
+        Row: {
+          color: string | null
+          created_at: string
+          created_by: string
+          description: string | null
+          end_date: string | null
+          end_time: string | null
+          id: string
+          is_admin_only: boolean | null
+          is_multi_day: boolean | null
+          is_team_event: boolean | null
+          recurring_day_of_week: number | null
+          recurring_pattern: string | null
+          start_time: string
+          team_id: string
+          title: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          created_by: string
+          description?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          is_admin_only?: boolean | null
+          is_multi_day?: boolean | null
+          is_team_event?: boolean | null
+          recurring_day_of_week?: number | null
+          recurring_pattern?: string | null
+          start_time: string
+          team_id: string
+          title: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          end_date?: string | null
+          end_time?: string | null
+          id?: string
+          is_admin_only?: boolean | null
+          is_multi_day?: boolean | null
+          is_team_event?: boolean | null
+          recurring_day_of_week?: number | null
+          recurring_pattern?: string | null
+          start_time?: string
+          team_id?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_calendar_events_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_categories: {
         Row: {
           color: string | null
@@ -1909,6 +2047,76 @@ export type Database = {
           },
         ]
       }
+      team_hidden_snaps: {
+        Row: {
+          hidden_at: string
+          id: string
+          snap_id: string
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          hidden_at?: string
+          id?: string
+          snap_id: string
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          hidden_at?: string
+          id?: string
+          snap_id?: string
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_hidden_snaps_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_member_points: {
+        Row: {
+          created_at: string
+          id: string
+          level: number
+          points: number
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level?: number
+          points?: number
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: number
+          points?: number
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_points_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_members: {
         Row: {
           id: string
@@ -1934,6 +2142,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_members_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_point_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          points_change: number
+          team_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          points_change: number
+          team_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          points_change?: number
+          team_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_point_events_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"
@@ -2081,6 +2327,7 @@ export type Database = {
           description: string | null
           id: string
           is_active: boolean | null
+          is_favorite: boolean | null
           order_index: number | null
           title: string
           updated_at: string | null
@@ -2092,6 +2339,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean | null
+          is_favorite?: boolean | null
           order_index?: number | null
           title: string
           updated_at?: string | null
@@ -2103,6 +2351,7 @@ export type Database = {
           description?: string | null
           id?: string
           is_active?: boolean | null
+          is_favorite?: boolean | null
           order_index?: number | null
           title?: string
           updated_at?: string | null

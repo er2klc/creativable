@@ -135,7 +135,7 @@ export const TeamEventForm = ({
 
       if (eventToEdit) {
         const { error } = await supabase
-          .from("team_calendar_events" as any)
+          .from("team_calendar_events")
           .update(eventData)
           .eq("id", eventToEdit.id);
         
@@ -145,7 +145,7 @@ export const TeamEventForm = ({
         }
       } else {
         const { error } = await supabase
-          .from("team_calendar_events" as any)
+          .from("team_calendar_events")
           .insert({
             ...eventData,
             created_by: user.id,

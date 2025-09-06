@@ -12,7 +12,7 @@ export const useUserLevel = (teamId?: string, userId?: string) => {
       if (!teamId || !userId) return 0;
 
       const { data, error } = await supabase
-        .from("team_member_points" as any)
+        .from("team_member_points")
         .select("user_id,team_id,level,points")
         .eq("team_id", teamId!)
         .eq("user_id", userId!)

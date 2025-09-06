@@ -33,7 +33,7 @@ export function useLinkedInScan() {
   const scanMutation = useMutation<Res, Error, Vars>({
     mutationFn: async ({ leadId }) => {
       const { data, error } = await supabase
-        .from("linkedin_scan_jobs" as any)
+        .from("linkedin_scan_jobs")
         .insert({ lead_id: leadId })
         .select("id")
         .single();

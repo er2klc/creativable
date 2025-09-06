@@ -20,11 +20,11 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
     queryFn: async () => {
       const [eventsResult, disabledResult] = await Promise.all([
         supabase
-          .from("team_calendar_events" as any)
+          .from("team_calendar_events")
           .select("*")
           .eq("team_id", teamId),
         supabase
-          .from("team_calendar_disabled_events" as any)
+          .from("team_calendar_disabled_events")
           .select("event_id, disabled_date")
       ]);
 
@@ -133,7 +133,7 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
 
     try {
       const { error } = await supabase
-        .from("team_calendar_events" as any)
+        .from("team_calendar_events")
         .update({
           start_time: updatedDate.toISOString()
         })
@@ -155,7 +155,7 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
       if (!user) throw new Error("No user found");
 
       const { error } = await supabase
-        .from("team_calendar_disabled_events" as any)
+        .from("team_calendar_disabled_events")
         .insert({
           event_id: eventId,
           disabled_date: format(date, 'yyyy-MM-dd'),

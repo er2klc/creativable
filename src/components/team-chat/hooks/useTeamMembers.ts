@@ -49,7 +49,7 @@ export function useTeamMembers(teamId: string | null, currentUserId?: string) {
       let ptsMap = new Map<string, number>();
       try {
         const { data: pts } = await supabase
-          .from("team_member_points" as any)
+          .from("team_member_points")
           .select("user_id,team_id,points")
           .eq("team_id", teamId!);
         ptsMap = new Map<string, number>(
