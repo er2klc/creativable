@@ -34,6 +34,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
 
   const {
     flowState,
+    setFlowState,
     selectedContact,
     selectedTemplateType,
     contacts,

@@ -134,6 +134,7 @@ export const useChatFlow = (userId: string | null) => {
 
   return {
     flowState,
+    setFlowState,
     selectedContact,
     selectedTemplateType,
     contacts,

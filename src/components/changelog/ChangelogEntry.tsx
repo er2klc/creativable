@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import * as React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatusBadge } from "./StatusBadge";
 import { ChangelogItem } from "./types";
@@ -20,7 +20,7 @@ interface ChangelogEntryProps {
 }
 
 export function ChangelogEntry({ entry, isAdmin, onStatusChange, onDelete, onEdit }: ChangelogEntryProps) {
-  const [editingItem, setEditingItem] = useState<{
+  const [editingItem, setEditingItem] = React.useState<{
     title: string;
     description: string;
     originalTitle: string;

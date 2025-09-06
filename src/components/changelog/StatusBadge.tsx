@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import * as React from "react";
 import {
   Select,
   SelectContent,
@@ -16,8 +16,8 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status, version, title, isAdmin, onStatusChange }: StatusBadgeProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [currentStatus, setCurrentStatus] = useState(status);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [currentStatus, setCurrentStatus] = React.useState(status);
 
   const handleStatusChange = async (newStatus: string) => {
     try {

@@ -73,12 +73,12 @@ export const LeadTableView = ({ leads, onLeadClick, selectedPipelineId }: LeadTa
   };
 
   // Set up the subscription when the component mounts
-  useState(() => {
+  React.useEffect(() => {
     const unsubscribe = subscribeToLeadDeletions();
     return () => {
       unsubscribe.then(cleanup => cleanup());
     };
-  }, [selectedPipelineId]);
+  }, [selectedPipelineId, subscribeToLeadDeletions]);
 
   const handlePhaseChange = async (leadId: string, phaseId: string) => {
     try {
