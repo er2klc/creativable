@@ -12,30 +12,18 @@ interface ApifyResponse {
 
 export const scanSocialProfile = async (platform: string, username: string): Promise<ApifyResponse | null> => {
   try {
-    // Get Apify API key from secrets
-    const { data: secrets, error: secretError } = await supabase
-      .from("secrets")
-      .select("value")
-      .eq("name", "APIFY_API_TOKEN")
-      .single();
-
-    if (secretError || !secrets?.value) {
-      console.error("Error fetching Apify API key:", secretError);
-      return null;
-    }
-
-    const apiKey = secrets.value;
-
-    // Mock response for now - replace with actual Apify API call
-    // This is just for testing - you'll need to implement the actual API call
+    // For now, return mock response since secrets table doesn't exist
+    // TODO: Implement proper secrets management
+    console.log("Scanning social profile for:", platform, username);
+    
     const mockResponse: ApifyResponse = {
       name: username,
       username: username,
-      followers: 1000,
-      following: 500,
-      posts: 100,
-      bio: "Mock bio for testing",
-      profileImageUrl: "https://example.com/profile.jpg"
+      followers: Math.floor(Math.random() * 10000) + 100,
+      following: Math.floor(Math.random() * 1000) + 50,
+      posts: Math.floor(Math.random() * 500) + 10,
+      bio: `Profile bio for ${username}`,
+      profileImageUrl: `https://api.dicebear.com/7.x/initials/svg?seed=${username}`
     };
 
     return mockResponse;

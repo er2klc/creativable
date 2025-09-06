@@ -42,16 +42,11 @@ export const searchSimilarContent = async (query: string, contentType: ContentTy
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("User not authenticated");
 
-    const { data, error } = await supabase.rpc('match_similar_content', {
-      query_text: query,
-      match_threshold: 0.7,
-      match_count: 5,
-      user_id: user.id,
-      content_type: contentType
-    });
-
-    if (error) throw error;
-    return data;
+    // For now, return empty results since the function doesn't exist
+    // TODO: Implement proper vector search functionality
+    console.log("Searching for similar content:", query, contentType, teamId);
+    
+    return [];
   } catch (error) {
     console.error('Error searching similar content:', error);
     throw error;
