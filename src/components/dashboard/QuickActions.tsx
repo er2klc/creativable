@@ -210,11 +210,13 @@ export const QuickActions = () => {
       <CreateInstagramContactDialog
         open={showInstagramDialog}
         onOpenChange={setShowInstagramDialog}
+        pipelineId={null}
       />
 
       <CreateLinkedInContactDialog
         open={showLinkedInDialog}
         onOpenChange={setShowLinkedInDialog}
+        pipelineId={null}
       />
 
       <NewAppointmentDialog 

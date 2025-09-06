@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { TaskForm } from "./tasks/TaskForm";
 import { TaskItem } from "./tasks/TaskItem";
 import { ClipboardList } from "lucide-react";
-import confetti from "canvas-confetti";
+import * as confetti from "canvas-confetti";
 import { Tables } from "@/integrations/supabase/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect } from "react";

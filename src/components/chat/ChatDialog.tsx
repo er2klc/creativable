@@ -99,7 +99,7 @@ export function ChatDialog({ open, onOpenChange }: ChatDialogProps) {
         return (
           <div className="border-t bg-background">
             <ChatContactList
-              contacts={contacts}
+              contacts={contacts as any}
               onSelect={handleContactSelection}
               selectedId={selectedContact?.id}
             />

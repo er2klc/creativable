@@ -3,7 +3,7 @@ import {
   CalendarIcon, Video, Youtube, FileText, Phone, 
   MessageSquare, Pencil, ListTodo, Upload, Mail 
 } from "lucide-react";
-import React from "react";
+import { ReactNode } from "react";
 
 // Definiere Farbschema für Tabs
 export const tabColors = {

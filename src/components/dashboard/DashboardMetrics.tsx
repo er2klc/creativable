@@ -157,7 +157,7 @@ export const DashboardMetrics = () => {
                       <Icon className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{platform}</span>
                     </div>
-                    <span className="font-bold">{count}</span>
+                    <span className="font-bold">{String(count)}</span>
                   </div>
                 );
               })}
