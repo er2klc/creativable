@@ -1444,6 +1444,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          bio: string | null
           created_at: string | null
           display_name: string | null
           email: string | null
@@ -1451,11 +1452,13 @@ export type Database = {
           is_admin: boolean | null
           is_super_admin: boolean | null
           last_seen: string | null
+          slug: string | null
           status: string | null
           updated_at: string | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           display_name?: string | null
           email?: string | null
@@ -1463,11 +1466,13 @@ export type Database = {
           is_admin?: boolean | null
           is_super_admin?: boolean | null
           last_seen?: string | null
+          slug?: string | null
           status?: string | null
           updated_at?: string | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
           created_at?: string | null
           display_name?: string | null
           email?: string | null
@@ -1475,6 +1480,7 @@ export type Database = {
           is_admin?: boolean | null
           is_super_admin?: boolean | null
           last_seen?: string | null
+          slug?: string | null
           status?: string | null
           updated_at?: string | null
         }
@@ -2325,6 +2331,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          group_type: string | null
           id: string
           is_active: boolean | null
           is_favorite: boolean | null
@@ -2337,6 +2344,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          group_type?: string | null
           id?: string
           is_active?: boolean | null
           is_favorite?: boolean | null
@@ -2349,6 +2357,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          group_type?: string | null
           id?: string
           is_active?: boolean | null
           is_favorite?: boolean | null
@@ -2398,6 +2407,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      award_team_points: {
+        Args: {
+          p_points: number
+          p_reason: string
+          p_team_id: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       binary_quantize: {
         Args: { "": string } | { "": unknown }
         Returns: unknown
