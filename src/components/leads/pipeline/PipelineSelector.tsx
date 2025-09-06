@@ -39,15 +39,15 @@ export const PipelineSelector = ({
   // Initialize pipeline selection
   useEffect(() => {
     if (pipelines.length > 0 && !selectedPipelineId) {
-      const pipelineToSelect = settings?.last_selected_pipeline_id && 
-                              pipelines.some(p => p.id === settings.last_selected_pipeline_id)
-        ? settings.last_selected_pipeline_id 
+      const pipelineToSelect = (settings as any)?.last_selected_pipeline_id && 
+                              pipelines.some(p => p.id === (settings as any).last_selected_pipeline_id)
+        ? (settings as any).last_selected_pipeline_id 
         : pipelines[0].id;
         
       console.log("Initializing pipeline selection to:", pipelineToSelect);
       onPipelineSelect(pipelineToSelect);
     }
-  }, [pipelines, settings?.last_selected_pipeline_id, selectedPipelineId, onPipelineSelect]);
+  }, [pipelines, (settings as any)?.last_selected_pipeline_id, selectedPipelineId, onPipelineSelect]);
 
   const selectedPipeline = pipelines.find((p) => p.id === selectedPipelineId);
 

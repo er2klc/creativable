@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";

@@ -77,7 +77,10 @@ export const TimelineItemCard = ({
     return (
       <NexusTimelineCard
         content={content}
-        metadata={metadata}
+        metadata={{
+          type: metadata?.type || 'phase_analysis',
+          ...metadata
+        }}
         onDelete={onDelete}
       />
     );
@@ -193,7 +196,7 @@ export const TimelineItemCard = ({
           content={content}
           timestamp={metadata?.timestamp || new Date().toISOString()}
           metadata={metadata}
-          onDelete={onDelete ? () => onDelete(id!) : undefined}
+          onDelete={onDelete ? () => onDelete() : undefined}
         />
       );
     }
