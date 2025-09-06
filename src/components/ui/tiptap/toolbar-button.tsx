@@ -1,6 +1,6 @@
 
 import { Button } from "../button";
-import React from "react";
+import * as React from "react";
 
 interface ToolbarButtonProps {
   onClick: (e: React.MouseEvent) => void;
