@@ -149,7 +149,7 @@ export const DashboardMetrics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {contactsByPlatform.platforms?.map(({ platform, count }) => {
+              {!Array.isArray(contactsByPlatform) && contactsByPlatform.platforms?.map(({ platform, count }) => {
                 const Icon = platformIcons[platform] || Users;
                 return (
                   <div key={platform} className="flex justify-between items-center p-2 hover:bg-black/5 rounded-lg transition-colors">
@@ -258,10 +258,10 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Partner</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactsByPlatform.statuses?.partner || 0}</span>
+                  <span>{!Array.isArray(contactsByPlatform) ? contactsByPlatform.statuses?.partner || 0 : 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.partner 
+                  value={!Array.isArray(contactsByPlatform) && contactsByPlatform.statuses?.partner 
                     ? (contactsByPlatform.statuses.partner / Object.values(contactsByPlatform.statuses || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)) * 100 
                     : 0
                   }
@@ -272,10 +272,10 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Kunde</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactsByPlatform.statuses?.customer || 0}</span>
+                  <span>{!Array.isArray(contactsByPlatform) ? contactsByPlatform.statuses?.customer || 0 : 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.customer 
+                  value={!Array.isArray(contactsByPlatform) && contactsByPlatform.statuses?.customer 
                     ? (contactsByPlatform.statuses.customer / Object.values(contactsByPlatform.statuses || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)) * 100 
                     : 0
                   }
@@ -286,10 +286,10 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Not for now</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactsByPlatform.statuses?.not_for_now || 0}</span>
+                  <span>{!Array.isArray(contactsByPlatform) ? contactsByPlatform.statuses?.not_for_now || 0 : 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.not_for_now 
+                  value={!Array.isArray(contactsByPlatform) && contactsByPlatform.statuses?.not_for_now 
                     ? (contactsByPlatform.statuses.not_for_now / Object.values(contactsByPlatform.statuses || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)) * 100 
                     : 0
                   }
@@ -300,15 +300,13 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Kein Interesse</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{contactsByPlatform.statuses?.no_interest || 0}</span>
+                  <span>{!Array.isArray(contactsByPlatform) ? contactsByPlatform.statuses?.no_interest || 0 : 0}</span>
                 </div>
                 <Progress 
-                  value={contactsByPlatform.statuses?.no_interest 
+                  value={!Array.isArray(contactsByPlatform) && contactsByPlatform.statuses?.no_interest 
                     ? (contactsByPlatform.statuses.no_interest / Object.values(contactsByPlatform.statuses || {}).reduce((a: number, b: any) => a + (Number(b) || 0), 0)) * 100
                     : 0
                   }
-                    : 0
-                  } 
                   className="h-2" 
                 />
               </div>
