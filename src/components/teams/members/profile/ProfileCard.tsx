@@ -75,7 +75,7 @@ export const ProfileCard = ({
     enabled: !!teamData?.id,
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('team_member_stats')
+        .from('team_member_stats' as any)
         .select('*')
         .eq('user_id', memberData.id)
         .eq('team_id', teamData.id)

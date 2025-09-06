@@ -2085,6 +2085,38 @@ export type Database = {
           },
         ]
       }
+      team_member_follows: {
+        Row: {
+          created_at: string
+          follower_id: string
+          following_id: string
+          id: string
+          team_id: string
+        }
+        Insert: {
+          created_at?: string
+          follower_id: string
+          following_id: string
+          id?: string
+          team_id: string
+        }
+        Update: {
+          created_at?: string
+          follower_id?: string
+          following_id?: string
+          id?: string
+          team_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_follows_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       team_member_points: {
         Row: {
           created_at: string
@@ -2116,6 +2148,53 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "team_member_points_team_id_fkey"
+            columns: ["team_id"]
+            isOneToOne: false
+            referencedRelation: "teams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_member_stats: {
+        Row: {
+          comments_count: number | null
+          created_at: string
+          id: string
+          last_activity: string | null
+          likes_given: number | null
+          likes_received: number | null
+          posts_count: number | null
+          team_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comments_count?: number | null
+          created_at?: string
+          id?: string
+          last_activity?: string | null
+          likes_given?: number | null
+          likes_received?: number | null
+          posts_count?: number | null
+          team_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comments_count?: number | null
+          created_at?: string
+          id?: string
+          last_activity?: string | null
+          likes_given?: number | null
+          likes_received?: number | null
+          posts_count?: number | null
+          team_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_member_stats_team_id_fkey"
             columns: ["team_id"]
             isOneToOne: false
             referencedRelation: "teams"

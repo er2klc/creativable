@@ -190,9 +190,9 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
           onClose={() => onOpenChange(false)}
         />
         <NotificationList
-          notifications={notifications}
-          onDelete={handleDeleteNotification}
-          onNotificationClick={handleNotificationClick}
+          notifications={notifications as any[]}
+          onDelete={handleDeleteNotification as any}
+          onNotificationClick={handleNotificationClick as any}
         />
       </SheetContent>
     </Sheet>

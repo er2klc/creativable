@@ -58,26 +58,26 @@ export const LeaderBoardCard = ({ teamId, onMemberClick }: LeaderBoardCardProps)
           <div className="space-y-4">
             {leaderboard.map((member, index) => (
               <div
-                key={member.profiles.id}
+                key={(member.profiles as any)?.id}
                 className={cn(
                   "flex items-center justify-between p-2 rounded-lg transition-colors",
                   "hover:bg-accent/50 cursor-pointer"
                 )}
-                onClick={() => onMemberClick(member.profiles.id)}
+                onClick={() => onMemberClick((member.profiles as any)?.id)}
               >
                 <div className="flex items-center gap-3">
                   <div className="font-medium text-muted-foreground w-6">
                     #{index + 1}
                   </div>
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={member.profiles.avatar_url || ''} />
+                    <AvatarImage src={(member.profiles as any)?.avatar_url || ''} />
                     <AvatarFallback>
-                      {member.profiles.display_name?.substring(0, 2).toUpperCase() || '??'}
+                      {(member.profiles as any)?.display_name?.substring(0, 2).toUpperCase() || '??'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col">
                     <span className="font-medium">
-                      {member.profiles.display_name}
+                      {(member.profiles as any)?.display_name}
                     </span>
                     <span className="text-sm text-muted-foreground">
                       Level {member.level}

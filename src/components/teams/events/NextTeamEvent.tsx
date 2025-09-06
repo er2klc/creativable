@@ -64,7 +64,7 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
         
         if (!event.recurring_pattern || event.recurring_pattern === 'none') {
           if (isAfter(originalStartTime, now)) {
-            processedEvents.push(event);
+            processedEvents.push(event as any);
           }
           return;
         }
@@ -113,7 +113,7 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
               ? format(addDays(nextDate, duration), "yyyy-MM-dd'T'HH:mm:ssxxx")
               : format(addHours(nextDate, 1), "yyyy-MM-dd'T'HH:mm:ssxxx")
           };
-          processedEvents.push(recurringEvent);
+          processedEvents.push(recurringEvent as any);
         }
       });
 
