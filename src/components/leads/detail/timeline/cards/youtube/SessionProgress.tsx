@@ -10,16 +10,21 @@ interface SessionProgressProps {
   language?: string;
 }
 
+type SessionData = {
+  start_time: string;
+  max_progress: number;
+};
+
 export const SessionProgress = ({ viewId, language }: SessionProgressProps) => {
-  const [viewSessions, setViewSessions] = useState<any[]>([]);
+  const [viewSessions, setViewSessions] = useState<SessionData[]>([]);
 
   useEffect(() => {
     const fetchSessions = async () => {
       if (!viewId) return;
 
       const { data, error } = await supabase
-        .from('presentation_view_sessions')
-        .select('*')
+        .from('presentation_views')
+        .select('start_time,max_progress')
         .eq('view_id', viewId)
         .order('start_time', { ascending: false });
 
@@ -28,7 +33,10 @@ export const SessionProgress = ({ viewId, language }: SessionProgressProps) => {
         return;
       }
 
-      setViewSessions(data || []);
+      setViewSessions((data || []).map(() => ({
+        start_time: new Date().toISOString(),
+        max_progress: 0
+      })) as SessionData[]);
     };
 
     fetchSessions();

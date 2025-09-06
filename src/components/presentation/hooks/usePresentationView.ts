@@ -66,7 +66,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           url: pageData.video_url,
           ip: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
-          presentationUrl: pageData.presentationUrl,
+          presentationUrl: (pageData as any).presentation_url || (pageData as any).presentationUrl || "",
           video_progress: 0,
           completed: false,
           id: newViewId
@@ -125,7 +125,8 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
       }
 
       // Append the new history entry to the existing array
-      const updatedHistory = [...(currentView?.view_history || []), historyEntry];
+      const viewHistory = currentView?.view_history;
+      const updatedHistory = Array.isArray(viewHistory) ? [...viewHistory, historyEntry] : [historyEntry];
 
       const updates = {
         video_progress: progress,
@@ -140,7 +141,7 @@ export const usePresentationView = (pageId: string | undefined, leadId: string |
           url: pageData.video_url,
           ip: ipLocationData?.ipAddress || 'unknown',
           location: ipLocationData?.location || 'Unknown Location',
-          presentationUrl: pageData.presentationUrl,
+          presentationUrl: (pageData as any).presentation_url || (pageData as any).presentationUrl || "",
           video_progress: progress,
           completed: isCompleted,
           id: viewId

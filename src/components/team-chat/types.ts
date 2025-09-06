@@ -5,7 +5,7 @@ export interface TeamMember {
   avatar_url?: string | null;
   last_seen?: string | null;
   email?: string | null;
-  level: number;
+  level: "owner" | "admin" | "member";
 }
 
 export interface TeamMessage {

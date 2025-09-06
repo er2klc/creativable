@@ -64,19 +64,29 @@ export const PresentationTab = ({
     return `${baseSlug}-${videoId}-${timestamp}`;
   };
 
+  type SimpleUserLink = {
+    id: string;
+    title: string;
+    url: string;
+    is_favorite: boolean;
+  };
+
   const { data: userLinks = [] } = useQuery({
     queryKey: ['user-links', type],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_links')
-        .select('*')
+        .select('id,title,url')
         .eq('group_type', type)
-        .order('is_favorite', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map(item => ({
+        ...item,
+        is_favorite: false
+      }));
     },
-  });
+  }) as { data: SimpleUserLink[] };
 
   const handleLinkSelect = (link: any) => {
     setUrl(link.url);

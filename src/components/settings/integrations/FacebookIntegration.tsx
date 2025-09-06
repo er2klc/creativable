@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { useSettings } from "@/hooks/use-settings";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";

@@ -8,6 +8,7 @@ interface VideoPlayerProps {
   savedProgress?: number;
   onDuration?: (duration: number) => void;
   autoplay?: boolean;
+  initialProgress?: number;
 }
 
 export const VideoPlayer = ({ 

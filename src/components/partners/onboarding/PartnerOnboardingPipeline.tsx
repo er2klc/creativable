@@ -63,13 +63,31 @@ export function PartnerOnboardingPipeline() {
     const newPhaseId = over.id as string;
 
     try {
-      await supabase
+      const { data: existing } = await supabase
         .from("partner_onboarding_progress")
-        .upsert({
-          lead_id: partnerId,
-          phase_id: newPhaseId,
-          status: "in_progress",
-        });
+        .select("id")
+        .eq("lead_id", partnerId)
+        .eq("phase_id", newPhaseId)
+        .maybeSingle();
+
+      if (existing) {
+        await supabase
+          .from("partner_onboarding_progress")
+          .update({ completed: false })
+          .eq("id", existing.id);
+      } else {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("No authenticated user");
+
+        await supabase
+          .from("partner_onboarding_progress")
+          .insert({
+            lead_id: partnerId,
+            phase_id: newPhaseId,
+            user_id: user.id,
+            completed: false,
+          });
+      }
     } catch (error) {
       console.error("Error updating partner phase:", error);
     }

@@ -1,7 +1,11 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { PresentationPageData } from '../types';
+import type { Tables } from "@/integrations/supabase/types";
+
+type PageRow = Pick<Tables<"presentation_pages">, "id"|"title"|"video_url"|"expires_at"|"is_url_active"|"user_id"|"lead_id">;
+type ProfileRow = Pick<Tables<"profiles">, "display_name"|"avatar_url">;
+type LeadRow = Pick<Tables<"leads">, "id"|"name"|"social_media_profile_image_url">;
 
 export const usePresentationData = (pageId: string | undefined) => {
   const [pageData, setPageData] = useState<PresentationPageData | null>(null);
@@ -16,27 +20,12 @@ export const usePresentationData = (pageId: string | undefined) => {
     }
 
     try {
-      const { data: pageData, error: pageError } = await supabase
+      // Fetch page data
+      const { data: page, error: pageError } = await supabase
         .from('presentation_pages')
-        .select(`
-          id,
-          title,
-          video_url,
-          expires_at,
-          is_url_active,
-          user_id,
-          lead:lead_id (
-            id,
-            name,
-            social_media_profile_image_url
-          ),
-          creator:user_id (
-            display_name,
-            avatar_url
-          )
-        `)
+        .select("id,title,video_url,expires_at,is_url_active,user_id,lead_id")
         .eq('slug', pageId)
-        .maybeSingle();
+        .single<PageRow>();
 
       if (pageError) {
         console.error('Error loading presentation page:', pageError);
@@ -45,37 +34,59 @@ export const usePresentationData = (pageId: string | undefined) => {
         return;
       }
 
-      if (!pageData) {
+      if (!page) {
         setError("Presentation not found");
         setIsLoading(false);
         return;
       }
 
-      if (pageData.expires_at && new Date(pageData.expires_at) < new Date()) {
+      if (page.expires_at && new Date(page.expires_at) < new Date()) {
         setError("This presentation has expired");
         setIsLoading(false);
         return;
       }
 
-      if (!pageData.is_url_active) {
+      if (!page.is_url_active) {
         setError("This presentation is no longer available");
         setIsLoading(false);
         return;
       }
 
+      // Fetch creator profile
+      let creator: ProfileRow | null = null;
+      if (page.user_id) {
+        const { data: prof, error: profErr } = await supabase
+          .from("profiles")
+          .select("display_name,avatar_url")
+          .eq("id", page.user_id)
+          .single<ProfileRow>();
+        if (!profErr) creator = prof;
+      }
+
+      // Fetch lead data  
+      let lead: LeadRow | null = null;
+      if (page.lead_id) {
+        const { data: leadData, error: leadErr } = await supabase
+          .from("leads")
+          .select("id,name,social_media_profile_image_url")
+          .eq("id", page.lead_id)
+          .single<LeadRow>();
+        if (!leadErr) lead = leadData;
+      }
+
       const formattedPageData: PresentationPageData = {
-        id: pageData.id,
-        title: pageData.title,
-        video_url: pageData.video_url,
-        lead_id: pageData.lead.id,
+        id: page.id,
+        title: page.title,
+        video_url: page.video_url,
+        lead_id: page.lead_id,
         lead: {
-          name: pageData.lead?.name || '',
-          social_media_profile_image_url: pageData.lead?.social_media_profile_image_url || ''
+          name: lead?.name || '',
+          social_media_profile_image_url: lead?.social_media_profile_image_url || ''
         },
         user: {
           profiles: {
-            display_name: pageData.creator?.display_name || '',
-            avatar_url: pageData.creator?.avatar_url || ''
+            display_name: creator?.display_name || '',
+            avatar_url: creator?.avatar_url || ''
           }
         }
       };

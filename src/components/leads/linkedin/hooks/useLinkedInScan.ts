@@ -45,7 +45,7 @@ export function useLinkedInScan() {
       try {
         const { data: scanHistory, error } = await supabase
           .from('social_media_scan_history')
-          .select('*')
+          .select('processing_progress,current_file,success')
           .eq('lead_id', leadId)
           .eq('platform', 'linkedin')
           .order('scanned_at', { ascending: false })
@@ -57,7 +57,7 @@ export function useLinkedInScan() {
         }
 
         if (scanHistory) {
-          const progress = scanHistory.processing_progress || 0;
+          const progress = (scanHistory.processing_progress as number) || 0;
           
           if (progress < lastProgressRef.current) {
             return;
