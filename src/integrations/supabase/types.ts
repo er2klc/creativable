@@ -1438,6 +1438,7 @@ export type Database = {
       }
       settings: {
         Row: {
+          about_me: string | null
           apify_api_key: string | null
           business_description: string | null
           company_name: string | null
@@ -1445,23 +1446,31 @@ export type Database = {
           default_message_template: string | null
           email_notifications: boolean | null
           facebook_app_id: string | null
+          facebook_connected: boolean | null
           id: string
+          instagram_connected: boolean | null
           language: string | null
           last_selected_pipeline_id: string | null
+          linkedin_connected: boolean | null
           network_marketing_id: string | null
           openai_api_key: string | null
+          presentation_views: number | null
           products_services: string | null
           registration_completed: boolean | null
           registration_step: number | null
+          social_media_connected: boolean | null
           superchat_api_key: string | null
           target_audience: string | null
           theme: string | null
+          tiktok_connected: boolean | null
           updated_at: string | null
           user_id: string
           usp: string | null
           whatsapp_number: string | null
+          whatsapp_verified: boolean | null
         }
         Insert: {
+          about_me?: string | null
           apify_api_key?: string | null
           business_description?: string | null
           company_name?: string | null
@@ -1469,23 +1478,31 @@ export type Database = {
           default_message_template?: string | null
           email_notifications?: boolean | null
           facebook_app_id?: string | null
+          facebook_connected?: boolean | null
           id?: string
+          instagram_connected?: boolean | null
           language?: string | null
           last_selected_pipeline_id?: string | null
+          linkedin_connected?: boolean | null
           network_marketing_id?: string | null
           openai_api_key?: string | null
+          presentation_views?: number | null
           products_services?: string | null
           registration_completed?: boolean | null
           registration_step?: number | null
+          social_media_connected?: boolean | null
           superchat_api_key?: string | null
           target_audience?: string | null
           theme?: string | null
+          tiktok_connected?: boolean | null
           updated_at?: string | null
           user_id: string
           usp?: string | null
           whatsapp_number?: string | null
+          whatsapp_verified?: boolean | null
         }
         Update: {
+          about_me?: string | null
           apify_api_key?: string | null
           business_description?: string | null
           company_name?: string | null
@@ -1493,21 +1510,28 @@ export type Database = {
           default_message_template?: string | null
           email_notifications?: boolean | null
           facebook_app_id?: string | null
+          facebook_connected?: boolean | null
           id?: string
+          instagram_connected?: boolean | null
           language?: string | null
           last_selected_pipeline_id?: string | null
+          linkedin_connected?: boolean | null
           network_marketing_id?: string | null
           openai_api_key?: string | null
+          presentation_views?: number | null
           products_services?: string | null
           registration_completed?: boolean | null
           registration_step?: number | null
+          social_media_connected?: boolean | null
           superchat_api_key?: string | null
           target_audience?: string | null
           theme?: string | null
+          tiktok_connected?: boolean | null
           updated_at?: string | null
           user_id?: string
           usp?: string | null
           whatsapp_number?: string | null
+          whatsapp_verified?: boolean | null
         }
         Relationships: []
       }
