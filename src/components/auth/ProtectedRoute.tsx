@@ -60,7 +60,11 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }, [isAuthenticated, location.pathname]);
 
   if (isLoading || !isSessionChecked) {
-    return null;
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0A0A0A]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+      </div>
+    );
   }
 
   if (!isAuthenticated && !hasSession) {
