@@ -25,6 +25,7 @@ export interface YoutubeCardMetadata {
   id?: string;
   view_id?: string;
   completed?: boolean;
+  expires_at?: string;
   view_history?: Array<{
     timestamp: string;
     progress: number;

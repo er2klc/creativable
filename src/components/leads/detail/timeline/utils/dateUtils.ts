@@ -2,8 +2,16 @@ import { format } from "date-fns";
 import { de } from "date-fns/locale";
 import { MEETING_TYPES } from "../../../../../constants/meetingTypes";
 
-export const getMeetingTypeLabel = (meetingTypeValue: string) => {
-  return MEETING_TYPES.find(type => type.value === meetingTypeValue)?.label || meetingTypeValue;
+export const formatDate = (dateString: string): string => {
+  if (!dateString) return '';
+  
+  try {
+    const date = new Date(dateString);
+    return format(date, "dd.MM.yyyy", { locale: de });
+  } catch (error) {
+    console.error('Error formatting date:', error);
+    return dateString;
+  }
 };
 
 export const formatDateTime = (dateString: string | undefined, language: string = 'de') => {

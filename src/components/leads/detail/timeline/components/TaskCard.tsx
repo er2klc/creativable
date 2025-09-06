@@ -29,7 +29,7 @@ const getMeetingTypeLabel = (meetingType?: string) => {
   
   return (
     <div className="flex items-center gap-2">
-      <MeetingTypeIcon iconName={meetingTypeObj.iconName} />
+      <MeetingTypeIcon type={meetingTypeObj.value} />
       <span>{meetingTypeObj.label}</span>
     </div>
   );

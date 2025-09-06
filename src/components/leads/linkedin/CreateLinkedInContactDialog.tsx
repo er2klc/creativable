@@ -94,7 +94,7 @@ export function CreateLinkedInContactDialog({
         return null;
       }
 
-      return contact as LeadWithRelations | null;
+      return contact as unknown as LeadWithRelations | null;
     } catch (error) {
       console.error("Error in checkExistingContact:", error);
       return null;

@@ -73,7 +73,7 @@ export function CallScriptGenerator({
         settings
       };
 
-      const { data, error } = await supabase.functions.invoke('generate-call-script', {
+      const response = await supabase.functions.invoke('generate-call-script', {
         body: requestData
       }).catch(err => {
         console.error("Error calling function:", err);
@@ -82,7 +82,8 @@ export function CallScriptGenerator({
         return generateScriptFallback(requestData);
       });
 
-      if (data && 'error' in data && data.error) throw data.error;
+      if ('error' in response && response.error) throw response.error;
+      const data = response?.data;
 
       const scriptContent = data?.script || "Could not generate script";
       setGeneratedScript(scriptContent);

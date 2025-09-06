@@ -13,9 +13,10 @@ interface NoteCardProps {
   metadata?: {
     last_edited_at?: string;
   };
+  onDelete?: () => void;
 }
 
-export const NoteCard = ({ id, content, metadata }: NoteCardProps) => {
+export const NoteCard = ({ id, content, metadata, onDelete }: NoteCardProps) => {
   const { settings } = useSettings();
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);

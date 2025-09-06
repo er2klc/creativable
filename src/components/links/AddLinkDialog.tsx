@@ -61,7 +61,7 @@ export const AddLinkDialog = ({
       .insert({
         title,
         url: formattedUrl,
-        group_type: groupType,
+        group_type: groupType as "zoom" | "youtube" | "documents" | "custom" | "other",
         user_id: session.user.id,
       });
 

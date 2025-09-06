@@ -48,6 +48,11 @@ export interface TimelineItem {
     commonalities?: string[];
     potential_needs?: string[];
     strengths?: string[];
+    timestamp?: string;
+    duration?: number;
+    content?: string;
+    oldPhase?: string;
+    newPhase?: string;
   };
   created_at?: string;
 }

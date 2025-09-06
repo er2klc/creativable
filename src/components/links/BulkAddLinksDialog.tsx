@@ -97,7 +97,7 @@ export const BulkAddLinksDialog = ({
       return {
         title,
         url: formattedUrl,
-        group_type,
+        group_type: "other" as const,
         user_id: session.user.id,
       };
     });

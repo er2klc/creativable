@@ -36,10 +36,8 @@ export const AppointmentCard = ({
   const { settings } = useSettings();
   
   useAppointmentNotification({
-    id,
-    leadId,
     dueDate: metadata?.dueDate,
-    content
+    content: content
   });
 
   // Get the appropriate icon component based on meeting type

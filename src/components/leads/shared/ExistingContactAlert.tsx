@@ -36,8 +36,8 @@ export function ExistingContactAlert({ contact, onClose }: ExistingContactAlertP
             <div className="mt-1 text-sm text-gray-600 space-y-1">
               <p>Name: {contact.name}</p>
               <p>Angelegt am: {format(new Date(contact.created_at), 'dd.MM.yyyy')}</p>
-              <p>Pipeline: {contact.pipeline?.name}</p>
-              <p>Phase: {contact.phase?.name}</p>
+              <p>Pipeline: {(contact as any).pipeline?.name}</p>
+              <p>Phase: {(contact as any).phase?.name}</p>
             </div>
           </div>
         </div>
