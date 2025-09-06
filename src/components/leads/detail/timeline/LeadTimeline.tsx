@@ -66,6 +66,8 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           (settings?.language === "en" ? "Activities" : "Aktivitäten") :
           (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
         }
+        activitiesTitle={settings?.language === "en" ? "Activities" : "Aktivitäten"}
+        socialTitle={settings?.language === "en" ? "Social Media" : "Social Media"}
         showSocialTimeline={showSocialTimeline}
         activeTimeline={activeTimeline}
         onTimelineChange={setActiveTimeline}

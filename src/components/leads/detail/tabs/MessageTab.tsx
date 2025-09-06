@@ -69,13 +69,8 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   const { data: smtpSettings, isLoading: smtpLoading } = useQuery({
     queryKey: ['smtp-settings'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('smtp_settings')
-        .select('*')
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+        // Email functionality removed - no SMTP settings to check
+        return { enabled: false, message: "Email functionality has been removed" };
     },
   });
 
@@ -237,7 +232,7 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
       <div className="flex flex-col space-y-2 text-sm text-muted-foreground mb-4">
         <div className="flex items-center space-x-2">
           <span>Von:</span>
-          <span>{smtpSettings?.from_email || "Nicht konfiguriert"}</span>
+          <span>Email-Funktion deaktiviert</span>
         </div>
         <div className="flex items-center space-x-2">
           <span>An:</span>

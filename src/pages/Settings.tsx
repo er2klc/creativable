@@ -5,7 +5,7 @@ import { MLMSettings } from "@/components/settings/MLMSettings";
 import { IntegrationSettings } from "@/components/settings/IntegrationSettings";
 import { AboutSettings } from "@/components/settings/AboutSettings";
 import { BillingSettings } from "@/components/settings/BillingSettings";
-import { NewEmailSettings } from "@/components/settings/NewEmailSettings";
+
 import { useSettings } from "@/hooks/use-settings";
 import { SearchBar } from "@/components/dashboard/SearchBar";
 import { HeaderActions } from "@/components/layout/HeaderActions";
@@ -62,7 +62,6 @@ export default function Settings() {
         <Tabs defaultValue={defaultTab} className="space-y-4">
           <TabsList>
             <TabsTrigger value="general">Allgemein</TabsTrigger>
-            <TabsTrigger value="email">E-Mail</TabsTrigger>
             <TabsTrigger value="mlm">Über mein Business</TabsTrigger>
             <TabsTrigger value="about">Über mich</TabsTrigger>
             <TabsTrigger value="billing">Plan & Rechnung</TabsTrigger>
@@ -73,9 +72,6 @@ export default function Settings() {
             <GeneralSettings />
           </TabsContent>
 
-          <TabsContent value="email" className="space-y-4">
-            <NewEmailSettings />
-          </TabsContent>
 
           <TabsContent value="mlm" className="space-y-4">
             <MLMSettings />
