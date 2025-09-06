@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,13 @@ interface PresentationTabProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+type SimpleUserLink = {
+  id: string;
+  title: string;
+  url: string;
+  is_favorite: boolean;
+};
 
 export const PresentationTab = ({
   leadId,
@@ -64,14 +70,7 @@ export const PresentationTab = ({
     return `${baseSlug}-${videoId}-${timestamp}`;
   };
 
-  type SimpleUserLink = {
-    id: string;
-    title: string;
-    url: string;
-    is_favorite: boolean;
-  };
-
-  const { data: userLinks = [] } = useQuery({
+  const { data: userLinks = [] } = useQuery<SimpleUserLink[], Error>({
     queryKey: ['user-links', type],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -81,12 +80,12 @@ export const PresentationTab = ({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return (data || []).map(item => ({
+      return ((data || []) as any[]).map((item: any) => ({
         ...item,
         is_favorite: false
-      }));
+      })) as SimpleUserLink[];
     },
-  }) as { data: SimpleUserLink[] };
+  });
 
   const handleLinkSelect = (link: any) => {
     setUrl(link.url);
@@ -136,7 +135,7 @@ export const PresentationTab = ({
             title: title || url,
             video_url: url,
             slug: slug,
-            expires_at: expiryDate.toISOString(),
+            expires_at: expiryDate?.toISOString(),
             is_url_active: true
           })
           .select()

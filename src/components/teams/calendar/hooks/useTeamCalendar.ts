@@ -20,47 +20,47 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
     queryFn: async () => {
       const [eventsResult, disabledResult] = await Promise.all([
         supabase
-          .from("team_calendar_events")
+          .from("team_calendar_events" as any)
           .select("*")
           .eq("team_id", teamId),
         supabase
-          .from("team_calendar_disabled_events")
+          .from("team_calendar_disabled_events" as any)
           .select("event_id, disabled_date")
       ]);
 
       if (eventsResult.error) throw eventsResult.error;
       
       const disabledDates = new Set(
-        disabledResult.data?.map(d => 
+        ((disabledResult.data as any[]) ?? []).map((d: any) => 
           `${d.event_id}-${format(new Date(d.disabled_date), 'yyyy-MM-dd')}`
-        ) || []
+        )
       );
 
       const allEvents = [];
-      for (const event of eventsResult.data) {
-        if (event.recurring_pattern === 'none') {
+      for (const event of (eventsResult.data as any[])) {
+        if ((event as any).recurring_pattern === 'none') {
           allEvents.push(event);
           continue;
         }
 
-        const startDate = new Date(event.start_time);
+        const startDate = new Date((event as any).start_time);
         const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
         let currentInstance = startDate;
         while (currentInstance <= monthEnd) {
           if (currentInstance >= monthStart) {
-            const instanceKey = `${event.id}-${format(currentInstance, 'yyyy-MM-dd')}`;
+            const instanceKey = `${(event as any).id}-${format(currentInstance, 'yyyy-MM-dd')}`;
             if (!disabledDates.has(instanceKey)) {
               allEvents.push({
-                ...event,
+                ...(event as any),
                 start_time: currentInstance.toISOString(),
                 isRecurring: true,
               });
             }
           }
 
-          switch (event.recurring_pattern) {
+          switch ((event as any).recurring_pattern) {
             case 'daily':
               currentInstance = addDays(currentInstance, 1);
               break;
@@ -133,7 +133,7 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
 
     try {
       const { error } = await supabase
-        .from("team_calendar_events")
+        .from("team_calendar_events" as any)
         .update({
           start_time: updatedDate.toISOString()
         })
@@ -155,7 +155,7 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
       if (!user) throw new Error("No user found");
 
       const { error } = await supabase
-        .from("team_calendar_disabled_events")
+        .from("team_calendar_disabled_events" as any)
         .insert({
           event_id: eventId,
           disabled_date: format(date, 'yyyy-MM-dd'),

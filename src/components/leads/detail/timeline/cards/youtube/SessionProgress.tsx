@@ -1,48 +1,30 @@
 
-import { formatDateTime } from "../../utils/dateUtils";
-import { Session } from "./types";
-import { Progress } from "@/components/ui/progress";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { Progress } from "@/components/ui/progress";
 
-interface SessionProgressProps {
-  viewId?: string;
-  language?: string;
+type ProgressRow = { session_id: string; progress: number };
+
+function useYtSessionProgress(sessionId: string | null) {
+  return useQuery<ProgressRow | null, Error>({
+    queryKey: ["yt-progress", sessionId],
+    enabled: !!sessionId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("presentation_view_sessions" as any)
+        .select("id,progress")
+        .eq("id", sessionId!)
+        .maybeSingle();
+      if (error) throw error;
+      return ((data as any) ?? null);
+    },
+  });
 }
 
-type SessionData = {
-  start_time: string;
-  max_progress: number;
-};
+export const SessionProgress = ({ viewId, language }: { viewId?: string; language?: string }) => {
+  const { data: sessionProgress } = useYtSessionProgress(viewId);
 
-export const SessionProgress = ({ viewId, language }: SessionProgressProps) => {
-  const [viewSessions, setViewSessions] = useState<SessionData[]>([]);
-
-  useEffect(() => {
-    const fetchSessions = async () => {
-      if (!viewId) return;
-
-      const { data, error } = await supabase
-        .from('presentation_views')
-        .select('start_time,max_progress')
-        .eq('view_id', viewId)
-        .order('start_time', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching sessions:', error);
-        return;
-      }
-
-      setViewSessions((data || []).map(() => ({
-        start_time: new Date().toISOString(),
-        max_progress: 0
-      })) as SessionData[]);
-    };
-
-    fetchSessions();
-  }, [viewId]);
-
-  if (!viewSessions || viewSessions.length === 0) {
+  if (!sessionProgress) {
     return null;
   }
 
@@ -64,22 +46,20 @@ export const SessionProgress = ({ viewId, language }: SessionProgressProps) => {
 
   return (
     <div className="space-y-4 mt-4">
-      {viewSessions.map((session, index) => (
-        <div key={index} className="space-y-2 bg-gray-50 p-3 rounded-lg">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600 font-medium">
-              {formatDate(session.start_time)}
-            </span>
-            <span className="text-xs font-medium text-green-600">
-              {Math.round(session.max_progress)}%
-            </span>
-          </div>
-          <Progress 
-            value={session.max_progress} 
-            className="h-2.5 bg-gray-200" 
-          />
+      <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-gray-600 font-medium">
+            Progress
+          </span>
+          <span className="text-xs font-medium text-green-600">
+            {Math.round(sessionProgress.progress)}%
+          </span>
         </div>
-      ))}
+        <Progress 
+          value={sessionProgress.progress} 
+          className="h-2.5 bg-gray-200" 
+        />
+      </div>
     </div>
   );
 };

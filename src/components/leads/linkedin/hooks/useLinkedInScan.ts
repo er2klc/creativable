@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -17,6 +18,9 @@ const initialState: ScanState = {
   isSuccess: false
 };
 
+type Vars = { leadId: string };
+type Res = { queued: boolean; taskId?: string };
+
 export function useLinkedInScan() {
   const [state, setState] = useState<ScanState>(initialState);
   const lastProgressRef = useRef<number>(0);
@@ -25,6 +29,18 @@ export function useLinkedInScan() {
   const updateState = (updates: Partial<ScanState>) => {
     setState(prev => ({ ...prev, ...updates }));
   };
+
+  const scanMutation = useMutation<Res, Error, Vars>({
+    mutationFn: async ({ leadId }) => {
+      const { data, error } = await supabase
+        .from("linkedin_scan_jobs" as any)
+        .insert({ lead_id: leadId })
+        .select("id")
+        .single();
+      if (error) throw error;
+      return { queued: true, taskId: (data as any)?.id as string | undefined };
+    },
+  });
 
   const pollProgress = async (leadId: string) => {
     console.log('Starting progress polling for lead:', leadId);
@@ -107,6 +123,7 @@ export function useLinkedInScan() {
     setIsSuccess: (isSuccess: boolean) => updateState({ isSuccess }),
     lastProgressRef,
     settings,
-    pollProgress
+    pollProgress,
+    startScan: (leadId: string) => scanMutation.mutate({ leadId })
   };
 }

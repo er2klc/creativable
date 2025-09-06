@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -134,7 +135,7 @@ export const TeamEventForm = ({
 
       if (eventToEdit) {
         const { error } = await supabase
-          .from("team_calendar_events")
+          .from("team_calendar_events" as any)
           .update(eventData)
           .eq("id", eventToEdit.id);
         
@@ -144,7 +145,7 @@ export const TeamEventForm = ({
         }
       } else {
         const { error } = await supabase
-          .from("team_calendar_events")
+          .from("team_calendar_events" as any)
           .insert({
             ...eventData,
             created_by: user.id,

@@ -33,7 +33,7 @@ export const NewTeamEventDialog = ({
       if (!eventToEdit?.id) return;
       
       const { error } = await supabase
-        .from("team_calendar_events")
+        .from("team_calendar_events" as any)
         .delete()
         .eq('id', eventToEdit.id);
 

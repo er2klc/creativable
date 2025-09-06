@@ -1,9 +1,25 @@
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
-import { TeamMessage } from '../types';
-import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import type { Tables } from "@/integrations/supabase/types";
+import { toast } from "sonner";
 import { useEffect } from 'react';
+
+type MsgRow = Pick<Tables<"team_direct_messages">,
+  "id"|"team_id"|"sender_id"|"receiver_id"|"content"|"created_at"|"read"
+> & {
+  read_at?: string | null;
+  delivered_at?: string | null;
+};
+
+type Prof = Pick<Tables<"profiles">, "id"|"display_name"|"avatar_url"|"email">;
+
+export type TeamMessage = MsgRow & {
+  sender?: Pick<Prof, "id"|"display_name"|"avatar_url"|"email">;
+  receiver?: Pick<Prof, "id"|"display_name"|"avatar_url"|"email">;
+  read_at: string | null;
+  delivered_at: string | null;
+};
 
 interface UseTeamMessagesProps {
   teamId?: string;
@@ -14,7 +30,7 @@ interface UseTeamMessagesProps {
 export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: UseTeamMessagesProps) => {
   const queryClient = useQueryClient();
 
-  const { data: messages = [], isLoading } = useQuery({
+  const { data: messages = [], isLoading } = useQuery<TeamMessage[], Error>({
     queryKey: ['team-messages', selectedUserId, teamId],
     queryFn: async () => {
       if (!selectedUserId || !teamId) return [];
@@ -47,27 +63,36 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
       // Invalidiere Notifications Query
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      const { data: messages, error } = await supabase
+      // Messages lesen
+      const { data, error } = await supabase
         .from('team_direct_messages')
-        .select(`
-          *,
-          sender:sender_id (
-            id,
-            display_name,
-            avatar_url
-          ),
-          receiver:receiver_id (
-            id,
-            display_name,
-            avatar_url
-          )
-        `)
+        .select("id,team_id,sender_id,receiver_id,content,created_at,read")
         .eq('team_id', teamId)
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${selectedUserId}),and(sender_id.eq.${selectedUserId},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return messages as TeamMessage[];
+
+      const rows = (data ?? []) as MsgRow[];
+      if (rows.length === 0) return [];
+
+      // Profile nachladen (beide Seiten)
+      const ids = Array.from(new Set(rows.flatMap(r => [r.sender_id, r.receiver_id])));
+      const { data: profs, error: pErr } = await supabase
+        .from("profiles")
+        .select("id,display_name,avatar_url,email")
+        .in("id", ids);
+      if (pErr) throw pErr;
+
+      const pmap = new Map<string, Prof>((profs ?? []).map(p => [p.id, p as Prof]));
+
+      return rows.map(r => ({
+        ...r,
+        read_at: (r as any).read_at || null,
+        delivered_at: (r as any).delivered_at || null,
+        sender: pmap.get(r.sender_id),
+        receiver: pmap.get(r.receiver_id),
+      })) as TeamMessage[];
     },
     enabled: !!selectedUserId && !!teamId
   });
