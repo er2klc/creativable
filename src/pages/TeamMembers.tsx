@@ -92,7 +92,7 @@ const TeamMembers = () => {
     gcTime: 1000 * 60 * 30,
     retry: 3,
     refetchOnMount: true,
-    keepPreviousData: true
+    placeholderData: [],
   });
 
   const sortedMembers = useMemo(() => {

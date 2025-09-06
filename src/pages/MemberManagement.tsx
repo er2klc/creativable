@@ -274,7 +274,7 @@ const MemberManagement = () => {
                         onClick={() => setSelectedMember({
                           id: member.user_id,
                           name: member.profile?.display_name || "Unbekannt",
-                          teamId: member.team_id || team.id
+                          teamId: team?.id || ''
                         })}
                       >
                         <Award className="h-4 w-4 mr-2" />

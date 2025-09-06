@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Header } from "@/components/landing/Header";
 import { VisitorSupportForm } from "@/components/support/VisitorSupportForm";
@@ -10,10 +9,12 @@ import { useNavigate } from "react-router-dom";
 
 const Support = () => {
   const auth = useAuth();
-
-  if (auth.user) {
   const navigate = useNavigate();
   const [isScrolled, setIsScrolled] = useState(false);
+
+  if (auth.user) {
+    return <AuthenticatedSupportView />;
+  }
 
   return (
     <div className="min-h-screen w-full bg-[#0A0A0A] text-white">

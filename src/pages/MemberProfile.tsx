@@ -104,13 +104,13 @@ const MemberProfile = () => {
       })) || [];
 
       return {
-        profile: {
-          ...profile,
-          points: memberPoints?.points || 0,
-          level: memberPoints?.level || 0
-        },
+        ...profile,
+        points: memberPoints?.points || 0,
+        level: memberPoints?.level || 0,
+        id: profile.id,
+        activities: activityLog,
         memberPoints,
-        activityLog: activityLog || [],
+        activityLog,
         posts: processedPosts
       };
     },
@@ -147,8 +147,8 @@ const MemberProfile = () => {
     );
   }
 
-  const currentPoints = memberData.points;
-  const currentLevel = memberData.level;
+  const currentPoints = memberData?.points || 0;
+  const currentLevel = memberData?.level || 0;
   const pointsToNextLevel = ((currentLevel + 1) * 100) - currentPoints;
 
   return (
@@ -172,11 +172,11 @@ const MemberProfile = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2 space-y-6">
-            <ActivityCalendar activities={memberData.activities} />
-            <MembershipCard userId={memberData.id} />
+            <ActivityCalendar activities={memberData?.activities || []} />
+            <MembershipCard userId={memberData?.id || ''} />
             {memberData && (
               <ActivityFeed 
-                activities={memberData.activities || []} 
+                activities={memberData?.activities || []} 
                 teamSlug={teamSlug!}
               />
             )}
@@ -184,12 +184,23 @@ const MemberProfile = () => {
 
           <div className="space-y-6">
             <ProfileCard
-              memberData={memberData}
+              memberData={{
+                ...memberData,
+                id: memberData?.id || '',
+                last_seen: new Date().toISOString(),
+                joined_at: new Date().toISOString(),
+                stats: { 
+                  posts_count: 0, 
+                  followers_count: 0, 
+                  following_count: 0 
+                },
+                aboutMe: ''
+              }}
               memberSlug={memberSlug!}
               currentLevel={currentLevel}
               currentPoints={currentPoints}
               pointsToNextLevel={pointsToNextLevel}
-              aboutMe={memberData.aboutMe}
+              aboutMe={memberData?.aboutMe || ''}
             />
           </div>
         </div>
