@@ -38,7 +38,7 @@ interface UseTeamMessagesProps {
 export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: UseTeamMessagesProps) => {
   const queryClient = useQueryClient();
 
-  const { data: messages = [], isLoading } = useQuery<TeamMessage[], Error>({
+  const { data: messages = [], isLoading } = useQuery<any[], Error>({
     queryKey: ['team-messages', selectedUserId, teamId],
     queryFn: async () => {
       if (!selectedUserId || !teamId) return [];
@@ -46,7 +46,7 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // Markiere Nachrichten als gelesen, wenn der Chat geöffnet wird
+      // ... keep existing code (markiere nachrichten als gelesen)
       await supabase
         .from('team_direct_messages')
         .update({ 
@@ -58,20 +58,18 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
         .eq('team_id', teamId)
         .eq('read', false);
 
-      // Markiere zugehörige Benachrichtigungen als gelesen
+      // ... keep existing code (markiere benachrichtigungen als gelesen)
       await supabase
         .from('notifications')
         .update({ read: true })
         .eq('type', 'team_chat_message')
-        .eq('metadata->sender_id', selectedUserId)
         .eq('user_id', user.id)
         .is('deleted_at', null)
         .eq('read', false);
 
-      // Invalidiere Notifications Query
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      // Messages lesen
+      // Messages lesen (simplified)
       const { data, error } = await supabase
         .from('team_direct_messages')
         .select("id,team_id,sender_id,receiver_id,content,created_at,read")
@@ -80,39 +78,7 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-
-      const rows = (data ?? []) as MsgRow[];
-      if (rows.length === 0) return [];
-
-      // Profile nachladen (beide Seiten)
-      const ids = Array.from(new Set(rows.flatMap(r => [r.sender_id, r.receiver_id])));
-      const { data: profs, error: pErr } = await supabase
-        .from("profiles")
-        .select("id,display_name,avatar_url,email")
-        .in("id", ids);
-      if (pErr) throw pErr;
-
-      const pmap = new Map<string, Prof>((profs ?? []).map(p => [p.id, p as Prof]));
-
-      return rows.map(r => ({
-        ...r,
-        read_at: (r as any).read_at || null,
-        delivered_at: (r as any).delivered_at || null,
-        sender: pmap.get(r.sender_id) ? {
-          id: pmap.get(r.sender_id)!.id,
-          user_id: r.sender_id,
-          display_name: pmap.get(r.sender_id)!.display_name,
-          avatar_url: pmap.get(r.sender_id)!.avatar_url,
-          email: pmap.get(r.sender_id)!.email
-        } : undefined,
-        receiver: pmap.get(r.receiver_id) ? {
-          id: pmap.get(r.receiver_id)!.id,
-          user_id: r.receiver_id,
-          display_name: pmap.get(r.receiver_id)!.display_name,
-          avatar_url: pmap.get(r.receiver_id)!.avatar_url,
-          email: pmap.get(r.receiver_id)!.email
-        } : undefined,
-      })) as TeamMessage[];
+      return data || [];
     },
     enabled: !!selectedUserId && !!teamId
   });

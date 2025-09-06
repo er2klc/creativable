@@ -1876,6 +1876,7 @@ export type Database = {
           is_public: boolean | null
           name: string
           order_index: number | null
+          slug: string
           team_id: string
           updated_at: string | null
         }
@@ -1888,6 +1889,7 @@ export type Database = {
           is_public?: boolean | null
           name: string
           order_index?: number | null
+          slug: string
           team_id: string
           updated_at?: string | null
         }
@@ -1900,6 +1902,7 @@ export type Database = {
           is_public?: boolean | null
           name?: string
           order_index?: number | null
+          slug?: string
           team_id?: string
           updated_at?: string | null
         }
@@ -2330,6 +2333,70 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fk_team_post_comments_post"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_post_reports: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          reason: string | null
+          reported_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          reason?: string | null
+          reported_by: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          reason?: string | null
+          reported_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_post_reports_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_post_subscriptions: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          subscribed: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          subscribed?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          subscribed?: boolean
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_post_subscriptions_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "team_posts"
