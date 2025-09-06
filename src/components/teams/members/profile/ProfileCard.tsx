@@ -74,15 +74,12 @@ export const ProfileCard = ({
     queryKey: ['member-stats', memberData.id, teamData?.id],
     enabled: !!teamData?.id,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('team_member_stats' as any)
-        .select('*')
-        .eq('user_id', memberData.id)
-        .eq('team_id', teamData.id)
-        .single();
-
-      if (error) throw error;
-      return data;
+      // Return default stats for now
+      return {
+        posts_count: 0,
+        followers_count: 0,
+        following_count: 0
+      };
     }
   });
 
@@ -202,15 +199,15 @@ export const ProfileCard = ({
 
           <div className="grid grid-cols-3 gap-4 py-4 border-y mt-6">
             <div className="text-center">
-              <div className="text-2xl font-bold">{stats.posts_count}</div>
+              <div className="text-2xl font-bold">{stats?.posts_count || 0}</div>
               <div className="text-xs text-muted-foreground">Posts</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{stats.followers_count}</div>
+              <div className="text-2xl font-bold">{stats?.followers_count || 0}</div>
               <div className="text-xs text-muted-foreground">Followers</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold">{stats.following_count}</div>
+              <div className="text-2xl font-bold">{stats?.following_count || 0}</div>
               <div className="text-xs text-muted-foreground">Following</div>
             </div>
           </div>

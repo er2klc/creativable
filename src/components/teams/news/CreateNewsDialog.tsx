@@ -40,7 +40,7 @@ export function CreateNewsDialog({ teamId }: CreateNewsDialogProps) {
 
   const onSubmit = async (values: FormValues) => {
     try {
-      const { error } = await supabase.from("team_news").insert({
+      const { error } = await (supabase as any).from("team_news").insert({
         team_id: teamId,
         title: values.title,
         content: values.content,

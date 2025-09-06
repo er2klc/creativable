@@ -15,10 +15,18 @@ type MsgRow = Pick<Tables<"team_direct_messages">,
 type Prof = Pick<Tables<"profiles">, "id"|"display_name"|"avatar_url"|"email">;
 
 export type TeamMessage = MsgRow & {
-  sender?: Pick<Prof, "id"|"display_name"|"avatar_url"|"email">;
-  receiver?: Pick<Prof, "id"|"display_name"|"avatar_url"|"email">;
+  sender?: TeamMemberType;
+  receiver?: TeamMemberType;
   read_at: string | null;
   delivered_at: string | null;
+};
+
+type TeamMemberType = {
+  id: string;
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  email: string | null;
 };
 
 interface UseTeamMessagesProps {
@@ -90,8 +98,20 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
         ...r,
         read_at: (r as any).read_at || null,
         delivered_at: (r as any).delivered_at || null,
-        sender: pmap.get(r.sender_id),
-        receiver: pmap.get(r.receiver_id),
+        sender: pmap.get(r.sender_id) ? {
+          id: pmap.get(r.sender_id)!.id,
+          user_id: r.sender_id,
+          display_name: pmap.get(r.sender_id)!.display_name,
+          avatar_url: pmap.get(r.sender_id)!.avatar_url,
+          email: pmap.get(r.sender_id)!.email
+        } : undefined,
+        receiver: pmap.get(r.receiver_id) ? {
+          id: pmap.get(r.receiver_id)!.id,
+          user_id: r.receiver_id,
+          display_name: pmap.get(r.receiver_id)!.display_name,
+          avatar_url: pmap.get(r.receiver_id)!.avatar_url,
+          email: pmap.get(r.receiver_id)!.email
+        } : undefined,
       })) as TeamMessage[];
     },
     enabled: !!selectedUserId && !!teamId

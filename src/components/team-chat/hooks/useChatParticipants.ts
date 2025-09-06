@@ -34,11 +34,12 @@ export const useChatParticipants = (teamId?: string) => {
 
       return (data || []).map(member => ({
         id: member.user_id,
+        user_id: member.user_id,
         display_name: (member as any).profiles?.display_name || null,
         avatar_url: (member as any).profiles?.avatar_url || null,
         last_seen: null,
         email: (member as any).profiles?.email || null,
-        level: "member" as const
+        level: 0
       }));
     },
     enabled: !!teamId

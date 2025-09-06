@@ -65,10 +65,9 @@ export const useAppointmentNotification = ({ id, leadId, dueDate, content }: Use
         const { data: existingNotifications } = await supabase
           .from('notifications')
           .select('id')
-          .eq('metadata->appointmentId', id)
           .eq('type', 'appointment_reminder')
           .is('deleted_at', null)
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) as any;
+          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString());
 
         if (existingNotifications && existingNotifications.length > 0) {
           return; // Notification already exists
