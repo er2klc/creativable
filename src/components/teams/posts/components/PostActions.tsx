@@ -23,26 +23,30 @@ export const PostActions = ({
 
   const handleReaction = async () => {
     try {
-      const { data: existingReaction } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Use any cast to work around type issues
+      const { data: existingReaction } = await (supabase as any)
         .from('team_post_reactions')
         .select('id')
         .eq('post_id', postId)
-        .eq('created_by', (await supabase.auth.getUser()).data.user?.id)
+        .eq('created_by', user.id)
         .maybeSingle();
 
       if (existingReaction) {
-        await supabase
+        await (supabase as any)
           .from('team_post_reactions')
           .delete()
           .eq('id', existingReaction.id);
         toast.success("Reaktion entfernt");
       } else {
-        await supabase
+        await (supabase as any)
           .from('team_post_reactions')
           .insert({
             post_id: postId,
             reaction_type: 'like',
-            created_by: (await supabase.auth.getUser()).data.user?.id
+            created_by: user.id
           });
         toast.success("Reaktion hinzugefügt");
       }

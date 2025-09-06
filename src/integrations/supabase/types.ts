@@ -1870,6 +1870,7 @@ export type Database = {
         Row: {
           color: string | null
           created_at: string | null
+          created_by: string | null
           description: string | null
           icon: string | null
           id: string
@@ -1883,6 +1884,7 @@ export type Database = {
         Insert: {
           color?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           icon?: string | null
           id?: string
@@ -1896,6 +1898,7 @@ export type Database = {
         Update: {
           color?: string | null
           created_at?: string | null
+          created_by?: string | null
           description?: string | null
           icon?: string | null
           id?: string
@@ -2333,6 +2336,38 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "fk_team_post_comments_post"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "team_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_post_reactions: {
+        Row: {
+          created_at: string
+          created_by: string
+          id: string
+          post_id: string
+          reaction_type: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          id?: string
+          post_id: string
+          reaction_type?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          id?: string
+          post_id?: string
+          reaction_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_post_reactions_post_id_fkey"
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "team_posts"

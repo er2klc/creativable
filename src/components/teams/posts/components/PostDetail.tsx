@@ -200,21 +200,10 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
               <div className="space-y-1">
                 <div className="font-medium">{post.author.display_name}</div>
                 <div className="text-sm text-muted-foreground">
-                  {formatDistanceToNow(new Date(post.created_at), {
+                   {formatDistanceToNow(new Date(post.created_at), {
                     addSuffix: true,
                     locale: de,
                   })}
-                  {post.edited && (
-                    <>
-                      <span className="mx-1">•</span>
-                      <span>
-                        Bearbeitet {formatDistanceToNow(new Date(post.last_edited_at!), {
-                          addSuffix: true,
-                          locale: de,
-                        })}
-                      </span>
-                    </>
-                  )}
                 </div>
               </div>
             </div>
@@ -303,11 +292,10 @@ export const PostDetail = ({ post, teamSlug }: PostDetailProps) => {
         ) : (
           <div className="space-y-4">
             {comments.map((comment) => (
-              <CommentItem
-                key={comment.id}
-                comment={comment}
-                onDelete={handleDeleteComment}
-              />
+                  <CommentItem 
+                    key={comment.id} 
+                    comment={comment as any}
+                  />
             ))}
           </div>
         )}

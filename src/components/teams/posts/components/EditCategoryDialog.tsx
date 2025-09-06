@@ -85,11 +85,12 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
 
       if (selectedCategory === "new") {
         // First create the category
-        const { data: newCategory, error: categoryError } = await supabase
+        const { data: newCategory, error: categoryError } = await (supabase as any)
           .from('team_categories')
           .insert({
             team_id: teamId,
             name: categoryName.trim(),
+            slug: categoryName.trim().toLowerCase().replace(/\s+/g, '-'),
             is_public: isPublic,
             icon: selectedIcon,
             color: selectedColor,
@@ -216,7 +217,7 @@ export const EditCategoryDialog = ({ teamSlug }: EditCategoryDialogProps) => {
             onIconChange={setSelectedIcon}
             onColorChange={setSelectedColor}
             onSizeChange={setSelectedSize}
-            categories={categories}
+            categories={categories as any}
           />
         )}
 

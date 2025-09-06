@@ -75,14 +75,14 @@ export const PostFooter = ({
                     <Avatar 
                       className="w-6 h-6 border-2 border-background transition-transform hover:scale-110"
                     >
-                      <AvatarImage src={commenter.author?.avatar_url || ""} />
+                      <AvatarImage src={(commenter as any).author?.avatar_url || ""} />
                       <AvatarFallback className="text-xs">
-                        {commenter.author?.display_name?.substring(0, 2).toUpperCase() || "??"}
+                        {(commenter as any).author?.display_name?.substring(0, 2).toUpperCase() || "??"}
                       </AvatarFallback>
                     </Avatar>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p className="text-sm">{commenter.author?.display_name}</p>
+                    <p className="text-sm">{(commenter as any).author?.display_name}</p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>

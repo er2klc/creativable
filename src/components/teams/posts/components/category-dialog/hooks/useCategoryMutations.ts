@@ -71,11 +71,12 @@ export const useCategoryMutations = () => {
       } else {
         console.log("Creating new category for team:", teamId);
         
-        const { data: newCategory, error: categoryError } = await supabase
+        const { data: newCategory, error: categoryError } = await (supabase as any)
           .from("team_categories")
           .insert({
             team_id: teamId,
             name: categoryName,
+            slug: categoryName.toLowerCase().replace(/\s+/g, '-'),
             is_public: isPublic,
             icon: selectedIcon,
             color: selectedColor,
