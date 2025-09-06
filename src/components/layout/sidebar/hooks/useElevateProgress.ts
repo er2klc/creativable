@@ -49,7 +49,5 @@ export const useElevateProgress = () => {
       return totalUnits > 0 ? Math.round((completedUnits / totalUnits) * 100) : 0;
     },
     enabled: !!user?.id,
-    staleTime: 15 * 60 * 1000, // 15 minutes
-    refetchOnWindowFocus: false
   });
 };

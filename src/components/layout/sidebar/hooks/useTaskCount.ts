@@ -20,8 +20,7 @@ export const useTaskCount = () => {
 
       return count || 0;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    refetchOnWindowFocus: false
+    refetchInterval: 30000,
   });
 
   // Subscribe to real-time updates for tasks
