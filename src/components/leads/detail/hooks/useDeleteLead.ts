@@ -1,71 +1,71 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { useSettings } from "@/hooks/use-settings";
+import { toast } from "sonner";
 
-export const useDeleteLead = (leadId: string | null, onClose: () => void) => {
+type DeleteLeadResult = { success: boolean };
+type DeleteLeadError = Error;
+type DeleteLeadVariables = string;
+
+export function useDeleteLead() {
   const navigate = useNavigate();
-  const { settings } = useSettings();
+  const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async () => {
-      if (!leadId) return;
+  return useMutation<DeleteLeadResult, DeleteLeadError, DeleteLeadVariables>({
+    mutationFn: async (leadId: string): Promise<DeleteLeadResult> => {
+      console.log("Deleting lead:", leadId);
 
-      console.log('Starting deletion process for lead:', leadId);
-
+      // Define related tables
       const relatedTables = [
-        'contact_group_states',
-        'social_media_scan_history',
-        'lead_files',
-        'lead_subscriptions',
+        'lead_tags',
+        'notes', 
+        'tasks',
         'messages',
-        'notes',
-        'tasks'
+        'lead_subscriptions',
+        'lead_business_match',
+        'phase_based_analyses',
+        'social_media_posts',
+        'lead_files'
       ] as const;
 
       // Delete related records first
       for (const table of relatedTables) {
         console.log(`Deleting related records from ${table}`);
         const { error } = await supabase
-          .from(table)
+          .from(table as any)
           .delete()
           .eq('lead_id', leadId);
         
         if (error) {
-          console.error(`Error deleting from ${table}:`, error);
-          throw error;
+          console.warn(`Failed to delete from ${table}:`, error);
         }
       }
 
-      // Finally delete the lead
-      console.log('Deleting lead record');
-      const { error } = await supabase
-        .from('leads')
+      // Delete the lead itself
+      const { error: leadError } = await supabase
+        .from("leads")
         .delete()
-        .eq('id', leadId);
+        .eq("id", leadId);
 
-      if (error) {
-        console.error("Error deleting lead:", error);
-        throw error;
+      if (leadError) {
+        console.error("Error deleting lead:", leadError);
+        throw new Error(`Failed to delete lead: ${leadError.message}`);
       }
+
+      console.log("Lead deleted successfully");
+      return { success: true };
     },
     onSuccess: () => {
-      toast.success(
-        settings?.language === "en"
-          ? "Contact deleted successfully"
-          : "Kontakt erfolgreich gelöscht"
-      );
-      onClose();
-      navigate('/contacts');
+      // Invalidate queries to refresh the UI
+      queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["lead-phases"] });
+      
+      toast.success("Lead erfolgreich gelöscht");
+      navigate("/");
     },
-    onError: (error) => {
-      console.error("Error deleting lead:", error);
-      toast.error(
-        settings?.language === "en"
-          ? "Error deleting contact"
-          : "Fehler beim Löschen des Kontakts"
-      );
+    onError: (error: DeleteLeadError) => {
+      console.error("Delete lead mutation error:", error);
+      toast.error("Fehler beim Löschen des Leads");
     }
   });
-};
+}

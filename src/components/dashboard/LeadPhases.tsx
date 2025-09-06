@@ -1,47 +1,41 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+// Simplified types to avoid deep inference
+type SimplePhase = {
+  id: string;
+  name: string;
+  order_index: number;
+  color: string;
+  leads: SimpleLead[];
+};
+
+type SimpleLead = {
+  id: string;
+  name: string;
+  platform: string;
+  avatar_url: string | null;
+};
+
 export const LeadPhases = () => {
-  const { data: phases = [], isLoading, error } = useQuery({
+  const { data: phases = [], isLoading, error } = useQuery<SimplePhase[], Error>({
     queryKey: ['lead-phases'],
-    queryFn: async () => {
+    queryFn: async (): Promise<SimplePhase[]> => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return [];
 
-        // First get the default or last used pipeline
-        const lastUsedPipelineId = localStorage.getItem('lastUsedPipelineId');
-        
-        let pipelineQuery = supabase
+        // Get first available pipeline
+        const { data: pipelineData, error: pipelineError } = await supabase
           .from('pipelines')
           .select('id')
-          .eq('user_id', user.id);
-          
-        if (lastUsedPipelineId) {
-          pipelineQuery = pipelineQuery.eq('id', lastUsedPipelineId);
-        } else {
-          pipelineQuery = pipelineQuery.eq('is_default', true);
-        }
-          
-        // Use let instead of const for pipelineData since we need to reassign it later
-        let { data: pipelineData, error: pipelineError } = await pipelineQuery.single();
-
-        if (pipelineError || !pipelineData) {
-          // Fallback to any pipeline this user has
-          const { data: fallbackPipeline, error: fallbackError } = await supabase
-            .from('pipelines')
-            .select('id')
-            .eq('user_id', user.id)
-            .limit(1)
-            .single();
+          .eq('user_id', user.id)
+          .limit(1)
+          .single();
             
-          if (fallbackError || !fallbackPipeline) {
-            console.error('Error fetching any pipeline:', fallbackError);
-            return [];
-          }
-          
-          pipelineData = fallbackPipeline;
+        if (pipelineError || !pipelineData) {
+          console.error('No pipeline found:', pipelineError);
+          return [];
         }
 
         // Then get the phases for this pipeline
@@ -55,7 +49,7 @@ export const LeadPhases = () => {
               id,
               name,
               platform,
-              avatar_url:social_media_profile_image_url
+              social_media_profile_image_url
             )
           `)
           .eq('pipeline_id', pipelineData.id)
@@ -66,32 +60,24 @@ export const LeadPhases = () => {
           return [];
         }
 
-        // Generate colors for phases based on index
-        return phasesData.map((phase, index) => {
-          // Generate a color from a predefined palette
-          const colors = [
-            '#3b82f6', // blue-500
-            '#6366f1', // indigo-500
-            '#8b5cf6', // violet-500
-            '#d946ef', // fuchsia-500
-            '#ec4899', // pink-500
-            '#f43f5e', // rose-500
-            '#ef4444', // red-500
-            '#f97316', // orange-500
-            '#f59e0b', // amber-500
-            '#84cc16', // lime-500
-            '#10b981', // emerald-500
-            '#14b8a6', // teal-500
-          ];
-          
-          return {
-            id: phase.id,
-            name: phase.name,
-            order_index: phase.order_index,
-            color: colors[index % colors.length],
-            leads: phase.leads || []
-          };
-        });
+        // Generate colors for phases
+        const colors = [
+          '#3b82f6', '#6366f1', '#8b5cf6', '#d946ef', 
+          '#ec4899', '#f43f5e', '#ef4444', '#f97316'
+        ];
+        
+        return (phasesData || []).map((phase, index) => ({
+          id: phase.id,
+          name: phase.name,
+          order_index: phase.order_index,
+          color: colors[index % colors.length],
+          leads: (phase.leads || []).map(lead => ({
+            id: lead.id,
+            name: lead.name,
+            platform: lead.platform,
+            avatar_url: lead.social_media_profile_image_url
+          }))
+        }));
       } catch (error) {
         console.error('Error in lead phases query:', error);
         return [];

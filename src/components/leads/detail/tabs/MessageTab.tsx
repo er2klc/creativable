@@ -69,8 +69,8 @@ export const MessageTab = ({ leadId, platform }: MessageTabProps) => {
   const { data: smtpSettings, isLoading: smtpLoading } = useQuery({
     queryKey: ['smtp-settings'],
     queryFn: async () => {
-        // Email functionality removed - no SMTP settings to check
-        return { enabled: false, message: "Email functionality has been removed" };
+      // Email functionality removed - return null
+      return null;
     },
   });
 
