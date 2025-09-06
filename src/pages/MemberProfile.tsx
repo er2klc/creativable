@@ -100,7 +100,7 @@ const MemberProfile = () => {
           .select('about_me')
           .eq('user_id', profileData.id)
           .maybeSingle(),
-        supabase
+        (supabase as any)
           .from('team_member_activity_log')
           .select('activity_date, activity_type, points_earned')
           .eq('team_id', teamData.id)

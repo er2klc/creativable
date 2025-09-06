@@ -2,8 +2,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { MEMBERS_QUERY, transformMemberData } from "./use-team-members";
-import type { TransformedTeamMember } from "./use-team-members";
+import { fetchTeamMembers, type TransformedTeamMember } from "./use-team-members";
 import { toast } from "sonner";
 
 interface TeamStats {
@@ -52,22 +51,7 @@ export function useTeamStats(teamId: string): UseTeamStatsResult {
     queryKey: ['team-members', teamId],
     queryFn: async () => {
       try {
-        const { data: teamMembers, error } = await supabase
-          .from('team_members')
-          .select(MEMBERS_QUERY)
-          .eq('team_id', teamId);
-
-        if (error) {
-          console.error('Error fetching team members:', error);
-          toast.error("Fehler beim Laden der Team-Mitglieder");
-          throw error;
-        }
-
-        if (!teamMembers) {
-          return [];
-        }
-
-        return teamMembers.map(transformMemberData);
+        return await fetchTeamMembers(teamId);
       } catch (err) {
         console.error('Error in team members query:', err);
         setError(err instanceof Error ? err : new Error('Unknown error'));
@@ -76,7 +60,7 @@ export function useTeamStats(teamId: string): UseTeamStatsResult {
     },
     enabled: Boolean(teamId),
     staleTime: 1000 * 60 * 5, // Consider data fresh for 5 minutes
-    cacheTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
+    gcTime: 1000 * 60 * 30, // Keep data in cache for 30 minutes
   });
 
   // Track online presence with error handling

@@ -47,11 +47,11 @@ export default function Messages() {
     queryKey: ['api-email-settings'],
     queryFn: async () => {
       if (!user) return null;
-      const { data, error } = await supabase
-        .from('api_email_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+        const { data, error } = await (supabase as any)
+          .from('api_email_settings')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
       
       if (error) throw error;
       return data;
@@ -75,7 +75,7 @@ export default function Messages() {
         setIsCheckingConfig(true);
         
         // Check for API email settings
-        const { data, error } = await supabase
+        const { data, error } = await (supabase as any)
           .from('api_email_settings')
           .select('*')
           .eq('user_id', user.id)

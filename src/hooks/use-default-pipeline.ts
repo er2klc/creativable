@@ -15,7 +15,7 @@ export const useDefaultPipeline = () => {
     queryFn: async () => {
       if (!user?.id) return null;
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from("pipelines")
         .select("*")
         .eq("user_id", user.id)

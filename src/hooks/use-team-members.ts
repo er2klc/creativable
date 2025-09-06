@@ -42,7 +42,7 @@ interface TeamMember {
   }>;
 }
 
-interface TransformedTeamMember extends Omit<TeamMember, 'team_member_points'> {
+export interface TransformedTeamMember extends Omit<TeamMember, 'team_member_points'> {
   points: {
     level: number;
     points: number;
@@ -63,23 +63,49 @@ export const transformMemberData = (member: TeamMember): TransformedTeamMember =
 });
 
 export const fetchTeamMembers = async (teamId: string, limit?: number): Promise<TransformedTeamMember[]> => {
-  let query = supabase
+  const { data: teamMembers, error } = await (supabase as any)
     .from('team_members')
-    .select(MEMBERS_QUERY)
-    .eq('team_id', teamId);
-
-  if (limit) {
-    query = query.limit(limit);
-  }
-
-  const { data: teamMembers, error } = await query;
+    .select(`
+      id,
+      user_id,
+      role,
+      joined_at,
+      profiles!inner(
+        id,
+        display_name,
+        avatar_url,
+        bio,
+        status,
+        last_seen,
+        slug
+      )
+    `)
+    .eq('team_id', teamId)
+    .limit(limit || 100);
 
   if (error) {
     console.error('Error fetching team members:', error);
     return [];
   }
 
-  const transformedData = teamMembers.map(transformMemberData);
+  if (!teamMembers) return [];
+
+  const transformedData = teamMembers.map((member: any) => ({
+    id: member.id,
+    user_id: member.user_id,
+    role: (member.role as 'owner' | 'admin' | 'member') || 'member',
+    joined_at: member.joined_at,
+    profile: member.profiles || {
+      id: member.user_id,
+      display_name: 'Kein Name angegeben',
+      avatar_url: null
+    },
+    points: {
+      level: 0,
+      points: 0
+    }
+  }));
+
   return transformedData.sort((a, b) => 
     (b.points?.points || 0) - (a.points?.points || 0)
   );

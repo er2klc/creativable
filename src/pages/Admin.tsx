@@ -56,7 +56,10 @@ const Admin = () => {
           .limit(5);
 
         if (recentUsersData) {
-          setRecentUsers(recentUsersData as UserProfile[]);
+          setRecentUsers(recentUsersData.map((user: any) => ({
+            ...user,
+            last_sign_in_at: user.last_seen || new Date().toISOString()
+          })));
         }
 
         // For demo purposes, set a random number of online users
