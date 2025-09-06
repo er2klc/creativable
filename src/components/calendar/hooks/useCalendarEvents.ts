@@ -22,7 +22,7 @@ const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] 
   const maxInstances = 100;
   let instanceCount = 0;
   
-  while (currentInstance <= monthEnd && instanceCount < maxInstances) {
+  while (instanceCount < maxInstances) {
     // Only add the instance if it falls within the current month view
     if (currentInstance >= monthStart && currentInstance <= monthEnd) {
       instances.push({
@@ -30,9 +30,14 @@ const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] 
         id: `${event.id}-${format(currentInstance, 'yyyy-MM-dd')}`,
         start_time: format(currentInstance, "yyyy-MM-dd'T'HH:mm:ssxxx"),
         end_time: event.end_time ? format(
-          new Date(event.end_time),
+          new Date(new Date(event.end_time).setFullYear(
+            currentInstance.getFullYear(),
+            currentInstance.getMonth(),
+            currentInstance.getDate()
+          )),
           "yyyy-MM-dd'T'HH:mm:ssxxx"
         ) : format(currentInstance, "yyyy-MM-dd'T'HH:mm:ssxxx"),
+        current_day: format(currentInstance, "yyyy-MM-dd"),
       });
     }
 
@@ -54,6 +59,24 @@ const expandRecurringEvent = (event: TeamEvent, currentDate: Date): TeamEvent[] 
     }
     
     instanceCount++;
+    
+    // Break the loop if we've gone past the end of the current month
+    // and we've already found at least one instance in this month
+    if (currentInstance > monthEnd && instances.length > 0) {
+      break;
+    }
+    
+    // Break if the start date is after the end of the viewed month
+    if (startDate > monthEnd) {
+      break;
+    }
+    
+    // Break if we've gone too far into the future (12 months from now)
+    const futureLimit = new Date();
+    futureLimit.setFullYear(futureLimit.getFullYear() + 1);
+    if (currentInstance > futureLimit) {
+      break;
+    }
   }
 
   return instances;
@@ -121,7 +144,7 @@ export const useCalendarEvents = (
       );
 
       // Fetch team events including admin-only events if user is admin
-      // Modified to get all recurring events, not just those that start in current month
+      // Modified to get all recurring events from all relevant times
       const { data: events = [], error: eventsError } = await supabase
         .from("team_calendar_events")
         .select(`
@@ -180,6 +203,12 @@ export const useCalendarEvents = (
       const endDate = event.end_date ? new Date(event.end_date) : 
                      event.end_time ? new Date(event.end_time) : 
                      startDate;
+      
+      // For events with a current_day property (recurring events)
+      if (event.current_day) {
+        const currentDayDate = new Date(event.current_day);
+        return isSameDay(currentDayDate, date);
+      }
 
       // For multi-day events
       if (event.is_multi_day) {

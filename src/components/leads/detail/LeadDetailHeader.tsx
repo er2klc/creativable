@@ -53,7 +53,7 @@ export function LeadDetailHeader({ lead, onUpdateLead, onDeleteLead }: LeadDetai
 
   return (
     <>
-      <DialogHeader className="fixed top-0 left-0 right-0 z-[40] bg-white border-b md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
+      <DialogHeader className="fixed top-0 left-0 right-0 z-[55] bg-white border-b md:left-[72px] md:group-hover:left-[240px] transition-[left] duration-300">
         <div className="flex flex-col space-y-4">
           <header className="h-16 flex items-center justify-between px-6 border-b border-sidebar-border">
             <div className="flex items-center gap-4">
