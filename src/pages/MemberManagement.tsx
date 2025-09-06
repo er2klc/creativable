@@ -113,31 +113,36 @@ const MemberManagement = () => {
       if (debouncedSearch) {
         filteredMembers = teamMembers.filter(member => {
           const profile = member.profiles;
-          if (!profile || typeof profile === 'string') return false;
+          if (!profile || typeof profile !== 'object') return false;
           
-          const displayName = profile.display_name?.toLowerCase() || '';
-          const email = profile.email?.toLowerCase() || '';
+          const displayName = (profile as any).display_name?.toLowerCase() || '';
+          const email = (profile as any).email?.toLowerCase() || '';
           const search = debouncedSearch.toLowerCase();
           
           return displayName.includes(search) || email.includes(search);
         });
       }
 
-      return filteredMembers.map(member => ({
-        ...member,
-        profile: (typeof member.profiles === 'object' && member.profiles !== null) ? {
-          id: member.profiles.id,
-          display_name: member.profiles.display_name,
-          avatar_url: member.profiles.avatar_url,
-          email: member.profiles.email
+      return filteredMembers.map(member => {
+        const profileData = member.profiles;
+        const profile = (typeof profileData === 'object' && profileData !== null) ? {
+          id: (profileData as any).id,
+          display_name: (profileData as any).display_name,
+          avatar_url: (profileData as any).avatar_url,
+          email: (profileData as any).email
         } : {
           id: member.user_id,
           display_name: 'Unknown User',
           avatar_url: null,
           email: null
-        },
-        points: pointsData?.find(p => p.user_id === member.user_id) || { points: 0, level: 0 }
-      }));
+        };
+
+        return {
+          ...member,
+          profile,
+          points: pointsData?.find(p => p.user_id === member.user_id) || { points: 0, level: 0 }
+        };
+      });
     },
     enabled: !!team?.id
   });

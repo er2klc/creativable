@@ -2973,6 +2973,10 @@ export type Database = {
           id: string
         }[]
       }
+      delete_team_cascade: {
+        Args: { team_id_param: string }
+        Returns: undefined
+      }
       generate_invite_code: {
         Args: Record<PropertyKey, never>
         Returns: string
