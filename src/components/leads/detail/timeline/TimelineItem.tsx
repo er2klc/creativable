@@ -86,7 +86,7 @@ export const TimelineItem = ({
 
     // Alle anderen Kartentypen
     return (
-      <TimelineItemCard
+      <TimelineItemCard 
         type={item.type}
         content={item.content}
         metadata={item.metadata}
@@ -96,6 +96,7 @@ export const TimelineItem = ({
         created_at={item.created_at}
         isCompleted={item.type === 'task' ? item.completed : undefined}
         onToggleComplete={onToggleTaskComplete && item.type === 'task' ? onToggleTaskComplete : undefined}
+        leadName={leadName}
       />
     );
   };

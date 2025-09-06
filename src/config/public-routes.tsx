@@ -1,6 +1,6 @@
+
 import { lazy } from "react";
 
-// Lazy loaded public components
 const PresentationPage = lazy(() => import("@/pages/presentation/[pageId]"));
 const Auth = lazy(() => import("@/pages/Auth"));
 const Register = lazy(() => import("@/pages/Register"));

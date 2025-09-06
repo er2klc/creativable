@@ -14,7 +14,7 @@ export const ChatContactList = ({ contacts, onSelect, selectedId }: ChatContactL
 
   return (
     <div className="w-full h-[90px] border-t overflow-hidden">
-      <ScrollArea className="w-full h-full">
+      <ScrollArea className="w-full h-full" orientation="horizontal">
         <div className="flex gap-2 px-4 py-2 snap-x snap-mandatory h-full">
           {contacts.map((contact) => (
             <ChatContactCard

@@ -36,9 +36,13 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
       if (!lead.id || !user?.id) return;
       
       try {
-        // 1. Check for existing business match (table doesn't exist yet, skip for now)
-        const existingMatch = null;
-        const matchError = null;
+        // 1. Check for existing business match
+        const { data: existingMatch, error: matchError } = await supabase
+          .from("lead_business_match")
+          .select("*")
+          .eq("lead_id", lead.id)
+          .eq("user_id", user.id)
+          .maybeSingle();
 
         if (matchError) throw matchError;
         
@@ -58,15 +62,15 @@ export function LeadSummary({ lead }: LeadSummaryProps) {
           if (error) throw error;
           
           if (existingAnalysis) {
-            setAnalysisContent((existingAnalysis.analysis as any)?.content || "");
+            setAnalysisContent(existingAnalysis.content);
             setAnalysisMetadata({
               type: 'phase_analysis',
               phase: {
                 id: lead.phase_id,
-                name: "Current Phase"
+                name: lead.phase_name || "Current Phase"
               },
               timestamp: existingAnalysis.created_at,
-              metadata: {}
+              metadata: existingAnalysis.metadata
             });
           }
 

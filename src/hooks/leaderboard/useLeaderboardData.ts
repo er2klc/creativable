@@ -23,7 +23,7 @@ export const useLeaderboardData = (teamId: string, period: LeaderboardPeriod) =>
       
       switch (period) {
         case "7days":
-          const { data: weekData } = await (supabase as any)
+          const { data: weekData } = await supabase
             .from("team_points_7_days")
             .select("*")
             .eq("team_id", teamId)
@@ -31,7 +31,7 @@ export const useLeaderboardData = (teamId: string, period: LeaderboardPeriod) =>
           return weekData || [];
         
         case "30days":
-          const { data: monthData } = await (supabase as any)
+          const { data: monthData } = await supabase
             .from("team_points_30_days")
             .select("*")
             .eq("team_id", teamId)

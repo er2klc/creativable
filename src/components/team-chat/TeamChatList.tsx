@@ -78,10 +78,7 @@ export const TeamChatList = ({
                 )}
               </div>
               <button
-                onClick={() => onSelectUser({
-                  ...member,
-                  level: member.level || "member"
-                } as TeamMember)}
+                onClick={() => onSelectUser(member)}
                 className="flex flex-col items-start flex-1 text-left"
               >
                 <span className="text-sm font-medium">

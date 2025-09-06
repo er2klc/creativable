@@ -12,15 +12,15 @@ import {
   Globe2, 
   Database,
   Wrench,
-  GitBranch,
+  Waves,
   Link2,
   Infinity
 } from "lucide-react";
 
 export const personalItems = [
   { name: "Dashboard", path: "/dashboard", icon: LayoutGrid },
-  { name: "Pipeline", path: "/contacts", icon: GitBranch },
-  { name: "Kontakte", path: "/pool", icon: Users },
+  { name: "Kontakte", path: "/contacts", icon: Users },
+  { name: "Pool", path: "/pool", icon: Waves },
   { name: "E-Mail", path: "/messages", icon: Mail },
   { name: "Kalender", path: "/calendar", icon: Calendar },
   { name: "Todo Liste", path: "/todo", icon: CheckSquare },

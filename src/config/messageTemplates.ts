@@ -76,38 +76,6 @@ export const messageTemplates: Record<MessageTemplateType, Record<Platform, Mess
         tone: 'casual',
         required_elements: ['personalization', 'reason']
       }
-    },
-    TikTok: {
-      type: 'first_contact',
-      platform: 'TikTok',
-      structure: {
-        greeting: 'Hey {{name}} ✨',
-        introduction: 'Dein Content ist echt cool! {{reason}}',
-        main_content: '{{personalization}}',
-        call_to_action: 'Lass uns connecten! 🤝',
-        closing: 'Peace ✌️\n{{user_name}}'
-      },
-      rules: {
-        max_length: 200,
-        tone: 'casual',
-        required_elements: ['personalization', 'content_appreciation']
-      }
-    },
-    Offline: {
-      type: 'first_contact',
-      platform: 'Offline',
-      structure: {
-        greeting: 'Hallo {{name}}',
-        introduction: 'Es freut mich, Sie kennenzulernen. {{reason}}',
-        main_content: '{{personalization}}',
-        call_to_action: 'Lassen Sie uns gerne in Kontakt bleiben.',
-        closing: 'Mit freundlichen Grüßen\n{{user_name}}'
-      },
-      rules: {
-        max_length: 300,
-        tone: 'professional',
-        required_elements: ['personalization', 'meeting_context']
-      }
     }
   },
   follow_up: {
@@ -157,38 +125,6 @@ export const messageTemplates: Record<MessageTemplateType, Record<Platform, Mess
         max_length: 500,
         tone: 'casual',
         required_elements: ['last_interaction', 'next_steps']
-      }
-    },
-    TikTok: {
-      type: 'follow_up',
-      platform: 'TikTok',
-      structure: {
-        greeting: 'Hey {{name}} 🔥',
-        introduction: 'Dein letzter Post war mega! {{last_interaction}}',
-        main_content: '{{follow_up_content}}',
-        call_to_action: 'Let\'s talk! 💬',
-        closing: 'Stay awesome ✨\n{{user_name}}'
-      },
-      rules: {
-        max_length: 200,
-        tone: 'casual',
-        required_elements: ['content_reference', 'collaboration_idea']
-      }
-    },
-    Offline: {
-      type: 'follow_up',
-      platform: 'Offline',
-      structure: {
-        greeting: 'Hallo {{name}}',
-        introduction: 'Bezugnehmend auf {{last_interaction}}',
-        main_content: '{{follow_up_content}}',
-        call_to_action: 'Können wir einen Termin vereinbaren?',
-        closing: 'Mit freundlichen Grüßen\n{{user_name}}'
-      },
-      rules: {
-        max_length: 350,
-        tone: 'professional',
-        required_elements: ['meeting_reference', 'next_steps']
       }
     }
   },
@@ -241,38 +177,6 @@ export const messageTemplates: Record<MessageTemplateType, Record<Platform, Mess
         tone: 'casual',
         required_elements: ['event_details', 'date', 'location']
       }
-    },
-    TikTok: {
-      type: 'event_invitation',
-      platform: 'TikTok',
-      structure: {
-        greeting: 'Yo {{name}} 🎪',
-        introduction: 'Check das aus: {{event_introduction}}',
-        main_content: '{{event_details}}',
-        call_to_action: 'Be there! 🔥',
-        closing: 'See ya! 🚀\n{{user_name}}'
-      },
-      rules: {
-        max_length: 200,
-        tone: 'casual',
-        required_elements: ['event_details', 'hype_factor']
-      }
-    },
-    Offline: {
-      type: 'event_invitation',
-      platform: 'Offline',
-      structure: {
-        greeting: 'Hallo {{name}}',
-        introduction: '{{event_introduction}}',
-        main_content: '{{event_details}}',
-        call_to_action: 'Bitte bestätigen Sie Ihre Teilnahme.',
-        closing: 'Mit freundlichen Grüßen\n{{user_name}}'
-      },
-      rules: {
-        max_length: 400,
-        tone: 'formal',
-        required_elements: ['event_details', 'date', 'location', 'rsvp_info']
-      }
     }
   },
   collaboration: {
@@ -323,38 +227,6 @@ export const messageTemplates: Record<MessageTemplateType, Record<Platform, Mess
         tone: 'casual',
         required_elements: ['collaboration_reason', 'collaboration_details']
       }
-    },
-    TikTok: {
-      type: 'collaboration',
-      platform: 'TikTok',
-      structure: {
-        greeting: 'Hey {{name}} 🔥',
-        introduction: 'Mega Idee: {{collaboration_reason}}',
-        main_content: '{{collaboration_details}}',
-        call_to_action: 'Let\'s collab! 🚀',
-        closing: 'Stay creative ✨\n{{user_name}}'
-      },
-      rules: {
-        max_length: 200,
-        tone: 'casual',
-        required_elements: ['collaboration_idea', 'mutual_benefit']
-      }
-    },
-    Offline: {
-      type: 'collaboration',
-      platform: 'Offline',
-      structure: {
-        greeting: 'Hallo {{name}}',
-        introduction: 'Ich möchte Ihnen eine Kooperationsmöglichkeit vorschlagen: {{collaboration_reason}}',
-        main_content: '{{collaboration_details}}',
-        call_to_action: 'Können wir einen Termin vereinbaren?',
-        closing: 'Mit freundlichen Grüßen\n{{user_name}}'
-      },
-      rules: {
-        max_length: 400,
-        tone: 'professional',
-        required_elements: ['collaboration_proposal', 'business_case', 'next_steps']
-      }
     }
   },
   feedback: {
@@ -403,38 +275,6 @@ export const messageTemplates: Record<MessageTemplateType, Record<Platform, Mess
       rules: {
         max_length: 500,
         tone: 'casual',
-        required_elements: ['feedback_context', 'feedback_request']
-      }
-    },
-    TikTok: {
-      type: 'feedback',
-      platform: 'TikTok',
-      structure: {
-        greeting: 'Hey {{name}} ✨',
-        introduction: '{{feedback_context}}',
-        main_content: '{{feedback_request}}',
-        call_to_action: 'Drop your thoughts! 💭',
-        closing: 'Thanks! 🙏\n{{user_name}}'
-      },
-      rules: {
-        max_length: 200,
-        tone: 'casual',
-        required_elements: ['feedback_context', 'feedback_request']
-      }
-    },
-    Offline: {
-      type: 'feedback',
-      platform: 'Offline',
-      structure: {
-        greeting: 'Hallo {{name}}',
-        introduction: '{{feedback_context}}',
-        main_content: '{{feedback_request}}',
-        call_to_action: 'Ich würde mich über Ihr Feedback freuen.',
-        closing: 'Mit freundlichen Grüßen\n{{user_name}}'
-      },
-      rules: {
-        max_length: 400,
-        tone: 'professional',
         required_elements: ['feedback_context', 'feedback_request']
       }
     }

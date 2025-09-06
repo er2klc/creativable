@@ -34,7 +34,7 @@ export const handlePartnerOnboarding = async (leadId: string) => {
           .upsert({
             lead_id: leadId,
             phase_id: firstPhase.id,
-            user_id: (await supabase.auth.getUser()).data.user?.id
+            status: 'in_progress'
           });
 
         if (progressError && progressError.code !== '23505') {

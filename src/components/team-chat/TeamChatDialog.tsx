@@ -47,9 +47,10 @@ export function TeamChatDialog({ open, onOpenChange }: TeamChatDialogProps) {
         
         <div className="flex-1 flex min-h-0">
           <TeamChatList 
-            teamId={selectedUser?.id}
+            members={teamMembers}
             selectedUserId={selectedUser?.id}
             onSelectUser={selectUser}
+            currentUserLevel={currentUserLevel}
             unreadMessagesByUser={{}}
           />
           

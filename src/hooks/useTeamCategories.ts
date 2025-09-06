@@ -97,7 +97,7 @@ export const useTeamCategories = (teamSlug?: string) => {
           settings: {
             size: settings?.size || 'small'
           },
-          post_count: 0 // Default to 0 since post_count table doesn't exist
+          post_count: postCount?.post_count || 0
         };
       });
 

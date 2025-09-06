@@ -1,52 +1,102 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
-import type { User } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
+import { AuthContext } from "./auth/AuthContext";
+import { useSessionRefresh } from "@/hooks/auth/use-session-refresh";
+import { useAuthState } from "@/hooks/auth/use-auth-state";
+import { isTokenExpired, handleSessionExpiration } from "@/utils/auth-utils";
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  signOut: () => Promise<void>;
-}
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  signOut: async () => {}
-});
+  const publicPaths = [
+    "/", 
+    "/auth", 
+    "/register", 
+    "/privacy-policy", 
+    "/auth/data-deletion/instagram",
+    "/impressum",
+    "/changelog",
+    "/unity",
+    "/elevate",
+    "/unity/team"
+  ];
+  
+  const protectedPaths = [
+    "/dashboard",
+    "/settings",
+    "/leads",
+    "/messages",
+    "/calendar"
+  ];
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within AuthProvider");
-  }
-  return context;
-};
-
-interface AuthProviderProps {
-  children: React.ReactNode;
-}
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const user = useUser();
-  const supabase = useSupabaseClient();
-  const [loading, setLoading] = useState(true);
-
+  useSessionRefresh(protectedPaths, setUser, setIsAuthenticated);
+  useAuthState(setUser, setIsAuthenticated);
+  
   useEffect(() => {
-    setLoading(false);
-  }, [user]);
+    const setupAuth = async () => {
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          if (isTokenExpired(sessionError)) {
+            handleSessionExpiration(
+              location.pathname,
+              protectedPaths,
+              navigate,
+              setUser,
+              setIsAuthenticated
+            );
+          }
+          return;
+        }
+        
+        if (session?.user) {
+          setUser(session.user);
+          setIsAuthenticated(true);
+          
+          if (location.pathname === "/auth") {
+            navigate("/dashboard");
+          }
+        } else {
+          if (protectedPaths.includes(location.pathname)) {
+            navigate("/auth");
+          }
+        }
+      } catch (error: any) {
+        console.error("[Auth] Setup error:", error);
+        if (isTokenExpired(error)) {
+          handleSessionExpiration(
+            location.pathname,
+            protectedPaths,
+            navigate,
+            setUser,
+            setIsAuthenticated
+          );
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+    setupAuth();
+  }, [location.pathname, navigate]);
 
-  const value = {
-    user,
-    loading,
-    signOut
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      </div>
+    );
+  }
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ isAuthenticated, isLoading, user }}>
       {children}
     </AuthContext.Provider>
   );

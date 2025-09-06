@@ -27,7 +27,7 @@ const BioGenerator = () => {
         return;
       }
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("user_bios")
         .select("*")
         .eq("user_id", session.user.id)
@@ -41,17 +41,17 @@ const BioGenerator = () => {
       if (data) {
         console.info("Found saved bio data:", data);
         setSavedFormData({
-          role: (data as any)?.role || "",
-          target_audience: (data as any)?.target_audience || "",
-          unique_strengths: (data as any)?.unique_strengths || "",
-          mission: (data as any)?.mission || "",
-          social_proof: (data as any)?.social_proof || "",
-          cta_goal: (data as any)?.cta_goal || "",
-          url: (data as any)?.url || "",
-          preferred_emojis: (data as any)?.preferred_emojis || "",
-          language: (data as any)?.language || "Deutsch",
+          role: data.role || "",
+          target_audience: data.target_audience || "",
+          unique_strengths: data.unique_strengths || "",
+          mission: data.mission || "",
+          social_proof: data.social_proof || "",
+          cta_goal: data.cta_goal || "",
+          url: data.url || "",
+          preferred_emojis: data.preferred_emojis || "",
+          language: data.language || "Deutsch",
         });
-        setGeneratedBio((data as any)?.generated_bio || "");
+        setGeneratedBio(data.generated_bio || "");
       } else {
         console.info("No saved bio data found");
       }
@@ -110,7 +110,7 @@ const BioGenerator = () => {
       }
 
       // Save to database
-      const { error: saveError } = await (supabase as any)
+      const { error: saveError } = await supabase
         .from("user_bios")
         .upsert({
           user_id: session.user.id,

@@ -127,7 +127,7 @@ export function MessageGenerator({
         .eq('id', leadId)
         .single();
 
-      const result = await supabase.functions.invoke('generate-message', {
+      const { data, error } = await supabase.functions.invoke('generate-message', {
         body: {
           leadId,
           userName,
@@ -145,13 +145,9 @@ export function MessageGenerator({
         return generateMessageFallback(platform, leadName, userName);
       });
 
-      if ('error' in result && result.error) {
-        console.error('Error generating message:', result.error);
-        toast.error('Fehler beim Generieren der Nachricht');
-        return;  
-      }
+      if (error) throw error;
 
-      const messageContent = result.data?.message || "Could not generate message";
+      const messageContent = data?.message || "Could not generate message";
       setGeneratedMessage(messageContent);
 
       // Save the message to the database

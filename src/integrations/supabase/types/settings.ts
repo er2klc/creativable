@@ -1,24 +1,15 @@
-// Settings types for the application
-export interface SettingsType {
-  id: string;
-  user_id: string;
-  language: string;
-  openai_api_key?: string;
-  email_notifications: boolean;
-  created_at: string;
-  updated_at: string;
-  // Add other settings fields as needed
-  [key: string]: any;
+import { BaseSettings } from './settings/base';
+import { ApiKeySettings } from './settings/api-keys';
+import { BusinessSettings } from './settings/business';
+import { SocialMediaSettings } from './settings/social-media';
+import { EmailSettings } from './settings/email';
+
+export interface Settings extends BaseSettings, ApiKeySettings, BusinessSettings, SocialMediaSettings, EmailSettings {
+  
 }
 
-export interface EmailSettingsType {
-  id: string;
+export interface SettingsInsert extends Partial<Settings> {
   user_id: string;
-  email_provider: string;
-  email_settings: Record<string, any>;
-  created_at: string;
-  updated_at: string;
 }
 
-// Alias for compatibility
-export type Settings = SettingsType;
+export interface SettingsUpdate extends Partial<Settings> {}

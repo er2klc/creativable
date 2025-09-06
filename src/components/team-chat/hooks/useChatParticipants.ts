@@ -1,55 +1,66 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { useTeamChatStore } from '@/store/useTeamChatStore';
-import type { TeamMember } from '../types';
 
 export const useChatParticipants = (teamId?: string) => {
   const queryClient = useQueryClient();
   const { openTeamChat } = useTeamChatStore();
+  const user = supabase.auth.user?.();
 
-  const { data: participants = [], isLoading } = useQuery<TeamMember[], Error>({
+  const { data: participants = [], isLoading } = useQuery({
     queryKey: ['chat-participants', teamId],
-    queryFn: async (): Promise<TeamMember[]> => {
+    queryFn: async () => {
       if (!teamId) return [];
 
-      // Use team_members table since team_chat_participants doesn't exist
       const { data, error } = await supabase
-        .from('team_members')
+        .from('team_chat_participants')
         .select(`
-          user_id,
-          profiles:user_id (
+          participant_id,
+          profiles:participant_id (
             id,
             display_name,
             avatar_url,
+            last_seen,
             email
           )
         `)
-        .eq('team_id', teamId);
+        .eq('team_id', teamId)
+        .eq('user_id', user?.id);
 
       if (error) {
         toast.error('Fehler beim Laden der Chat-Partner');
         throw error;
       }
 
-      return (data || []).map(member => ({
-        id: member.user_id,
-        user_id: member.user_id,
-        display_name: (member as any).profiles?.display_name || null,
-        avatar_url: (member as any).profiles?.avatar_url || null,
-        last_seen: null,
-        email: (member as any).profiles?.email || null,
-        level: 0
+      return data.map(p => ({
+        id: p.participant_id,
+        display_name: p.profiles.display_name,
+        avatar_url: p.profiles.avatar_url,
+        last_seen: p.profiles.last_seen,
+        email: p.profiles.email
       }));
     },
-    enabled: !!teamId
+    enabled: !!teamId && !!user?.id
   });
 
-  const addParticipant = useMutation<void, Error, { teamId: string, participantId: string }>({
-    mutationFn: async ({ teamId, participantId }) => {
-      // Since we're using team_members, just open the chat
-      // The participant should already be a team member
-      return;
+  const addParticipant = useMutation({
+    mutationFn: async ({ teamId, participantId }: { teamId: string, participantId: string }) => {
+      const { error } = await supabase
+        .from('team_chat_participants')
+        .insert([{
+          team_id: teamId,
+          user_id: user?.id,
+          participant_id: participantId
+        }]);
+
+      if (error) {
+        if (error.code === '23505') { // Unique violation
+          return; // Participant already exists, just open chat
+        }
+        throw error;
+      }
     },
     onSuccess: (_, { teamId, participantId }) => {
       queryClient.invalidateQueries({ queryKey: ['chat-participants', teamId] });
@@ -61,10 +72,16 @@ export const useChatParticipants = (teamId?: string) => {
     }
   });
 
-  const removeParticipant = useMutation<void, Error, { teamId: string, participantId: string }>({
-    mutationFn: async ({ teamId, participantId }) => {
-      // For now, just close the chat - don't remove from team
-      return;
+  const removeParticipant = useMutation({
+    mutationFn: async ({ teamId, participantId }: { teamId: string, participantId: string }) => {
+      const { error } = await supabase
+        .from('team_chat_participants')
+        .delete()
+        .eq('team_id', teamId)
+        .eq('participant_id', participantId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
     },
     onSuccess: (_, { teamId }) => {
       queryClient.invalidateQueries({ queryKey: ['chat-participants', teamId] });

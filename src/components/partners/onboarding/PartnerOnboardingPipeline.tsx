@@ -63,31 +63,13 @@ export function PartnerOnboardingPipeline() {
     const newPhaseId = over.id as string;
 
     try {
-      const { data: existing } = await supabase
+      await supabase
         .from("partner_onboarding_progress")
-        .select("id")
-        .eq("lead_id", partnerId)
-        .eq("phase_id", newPhaseId)
-        .maybeSingle();
-
-      if (existing) {
-        await supabase
-          .from("partner_onboarding_progress")
-          .update({ completed: false })
-          .eq("id", existing.id);
-      } else {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) throw new Error("No authenticated user");
-
-        await supabase
-          .from("partner_onboarding_progress")
-          .insert({
-            lead_id: partnerId,
-            phase_id: newPhaseId,
-            user_id: user.id,
-            completed: false,
-          });
-      }
+        .upsert({
+          lead_id: partnerId,
+          phase_id: newPhaseId,
+          status: "in_progress",
+        });
     } catch (error) {
       console.error("Error updating partner phase:", error);
     }
@@ -96,7 +78,7 @@ export function PartnerOnboardingPipeline() {
   // Find maximum number of partners in any phase for consistent height
   const maxPartners = Math.max(...phases.map(phase => 
     partners.filter(partner => 
-      (partner as any).partner_onboarding_progress?.some((progress: any) => 
+      partner.partner_onboarding_progress?.some(progress => 
         progress.phase_id === phase.id
       )
     ).length
@@ -106,14 +88,14 @@ export function PartnerOnboardingPipeline() {
   const getPartnersForPhase = (phase: any) => {
     if (phase.order_index === 0) {
       return partners.filter(partner => 
-        !(partner as any).partner_onboarding_progress?.length || 
-        (partner as any).partner_onboarding_progress.some((progress: any) => 
+        !partner.partner_onboarding_progress?.length || 
+        partner.partner_onboarding_progress.some(progress => 
           progress.phase_id === phase.id
         )
       );
     }
     return partners.filter(partner => 
-      (partner as any).partner_onboarding_progress?.some((progress: any) => 
+      partner.partner_onboarding_progress?.some(progress => 
         progress.phase_id === phase.id
       )
     );

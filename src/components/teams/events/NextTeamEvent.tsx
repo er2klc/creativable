@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { format, isWithinInterval, formatDistanceToNow, addWeeks, parseISO, isBefore, isAfter, addMonths, addDays, addHours, differenceInDays, startOfDay, endOfDay, isSameDay } from "date-fns";
 import { de } from "date-fns/locale";
 import { Calendar } from "lucide-react";
@@ -64,7 +63,7 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
         
         if (!event.recurring_pattern || event.recurring_pattern === 'none') {
           if (isAfter(originalStartTime, now)) {
-            processedEvents.push(event as any);
+            processedEvents.push(event);
           }
           return;
         }
@@ -113,7 +112,7 @@ export function NextTeamEvent({ teamId, teamSlug }: NextTeamEventProps) {
               ? format(addDays(nextDate, duration), "yyyy-MM-dd'T'HH:mm:ssxxx")
               : format(addHours(nextDate, 1), "yyyy-MM-dd'T'HH:mm:ssxxx")
           };
-          processedEvents.push(recurringEvent as any);
+          processedEvents.push(recurringEvent);
         }
       });
 

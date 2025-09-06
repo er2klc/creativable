@@ -117,7 +117,7 @@ export const CategoryOverview = ({
               key={post.id}
               post={post}
               teamSlug={teamSlug}
-              size={categorySlug ? 'large' as const : (defaultSize as "small" | "medium" | "large")}
+              size={categorySlug ? 'large' : defaultSize}
               isAdmin={isAdmin}
             />
           ))}

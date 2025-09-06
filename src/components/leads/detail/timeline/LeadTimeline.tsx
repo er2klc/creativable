@@ -26,14 +26,14 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
   
   console.log("DEBUG - LeadTimeline render:", {
     leadId: lead.id,
-    hasLinkedInPosts: Array.isArray(lead.social_media_posts) && lead.social_media_posts.some(post => post.platform === 'LinkedIn'),
-    linkedInPostsData: lead.social_media_posts?.filter(post => post.platform === 'LinkedIn'),
+    hasLinkedInPosts: Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0,
+    linkedInPostsData: lead.linkedin_posts,
     socialMediaPosts: socialMediaPosts?.length || 0,
     activeTimeline,
     timestamp: new Date().toISOString()
   });
 
-  const hasLinkedInPosts = Array.isArray(lead.social_media_posts) && lead.social_media_posts.some(post => post.platform === 'LinkedIn');
+  const hasLinkedInPosts = Array.isArray(lead.linkedin_posts) && lead.linkedin_posts.length > 0;
   const hasSocialPosts = Array.isArray(socialMediaPosts) && socialMediaPosts.length > 0;
   const hasInstagramData = lead.apify_instagram_data && 
     (typeof lead.apify_instagram_data === 'object' || 
@@ -66,8 +66,6 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
           (settings?.language === "en" ? "Activities" : "Aktivitäten") :
           (settings?.language === "en" ? "Social Media Activities" : "Social Media Aktivitäten")
         }
-        activitiesTitle={settings?.language === "en" ? "Activities" : "Aktivitäten"}
-        socialTitle={settings?.language === "en" ? "Social Media" : "Social Media"}
         showSocialTimeline={showSocialTimeline}
         activeTimeline={activeTimeline}
         onTimelineChange={setActiveTimeline}
@@ -84,7 +82,7 @@ export const LeadTimeline = ({ lead, onDeletePhaseChange }: LeadTimelineProps) =
         <SocialTimeline 
           platform={lead.platform}
           hasLinkedInPosts={hasLinkedInPosts}
-          linkedInPosts={lead.social_media_posts?.filter(post => post.platform === 'LinkedIn') || []}
+          linkedInPosts={lead.linkedin_posts || []}
           socialMediaPosts={socialMediaPosts || []}
           leadId={lead.id}
         />

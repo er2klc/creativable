@@ -64,7 +64,7 @@ export const PostList = ({ teamId, categoryId }: PostListProps) => {
             key={post.id}
             post={post}
             teamSlug={teamId}
-            size={(post.team_categories?.settings?.size || 'medium') as "small" | "medium" | "large"}
+            size={post.team_categories?.settings?.size || 'medium'}
           />
         ))}
       </div>

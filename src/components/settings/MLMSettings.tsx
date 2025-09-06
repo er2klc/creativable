@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CompanyNameField } from "./mlm/CompanyNameField";
 import { ProductsServicesField } from "./mlm/ProductsServicesField";

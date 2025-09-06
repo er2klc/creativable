@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,9 @@ import { EmailLayout } from '@/features/email/components/layout/EmailLayout';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 
 export default function Messages() {
-  // Alle State-Hooks immer zu Beginn der Komponente
+  // ---- React hooks must be called at the top level and in same order every time ----
+  
+  // Auth and state hooks
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -23,8 +26,7 @@ export default function Messages() {
   const [isCheckingConfig, setIsCheckingConfig] = useState(true);
   const configCheckCompletedRef = useRef(false);
 
-  // Alle Query-Hooks immer unabhängig von Bedingungen deklarieren
-  // Nutze enabled für bedingte Ausführung
+  // Fetch user profile for header - called unconditionally
   const { data: profile } = useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
@@ -39,24 +41,32 @@ export default function Messages() {
       if (error) throw error;
       return data;
     },
-    enabled: !!user
+    enabled: !!user // This ensures the query only runs when user exists
   });
 
-  // Zweiter Query - immer deklarieren, nur mit enabled kontrollieren
+  // Query for API email settings - called unconditionally
   const { data: apiSettings } = useQuery({
     queryKey: ['api-email-settings'],
     queryFn: async () => {
       if (!user) return null;
-        const { data, error } = await (supabase as any)
-          .from('api_email_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
       
-      if (error) throw error;
+      const { data, error } = await supabase
+        .from('api_email_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log("No email settings found");
+          return null;
+        }
+        throw error;
+      }
+      
       return data;
     },
-    enabled: !!user && isConfigured && !isCheckingConfig,
+    enabled: !!user, // This ensures the query only runs when user exists
   });
 
   // Check email configuration only once - simplified for external API
@@ -75,7 +85,7 @@ export default function Messages() {
         setIsCheckingConfig(true);
         
         // Check for API email settings
-        const { data, error } = await (supabase as any)
+        const { data, error } = await supabase
           .from('api_email_settings')
           .select('*')
           .eq('user_id', user.id)
@@ -116,7 +126,9 @@ export default function Messages() {
     }
   }, [user]);
 
-  // Rendering-Logik nach allen Hooks
+  // ---- All hooks have been called by this point, now we can have conditional renders ----
+
+  // Render states based on authentication and configuration
   if (!user) {
     return (
       <div className="container mx-auto p-4 overflow-x-hidden">
@@ -192,6 +204,7 @@ export default function Messages() {
     );
   }
 
+  // Main component render when everything is set up
   return (
     <div className="container-fluid p-0 h-[calc(100vh-4rem)] overflow-hidden">
       <Card className="w-full h-full rounded-none border-0 shadow-none">

@@ -1,12 +1,11 @@
 
 export interface TeamMember {
   id: string;
-  user_id: string;
   display_name?: string | null;
   avatar_url?: string | null;
   last_seen?: string | null;
   email?: string | null;
-  level?: number;
+  level: number;
 }
 
 export interface TeamMessage {

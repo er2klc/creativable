@@ -28,45 +28,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Get Apify API key from user settings
-    const authHeader = req.headers.get('authorization');
-    if (!authHeader) {
-      throw new Error('Authorization header required');
-    }
-
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
-    
-    if (authError || !user) {
-      throw new Error('Authentication failed');
-    }
-
-    const { data: userSettings, error: settingsError } = await supabaseClient
-      .from('settings')
-      .select('apify_api_key')
-      .eq('user_id', user.id)
-      .single();
-
-    if (settingsError || !userSettings?.apify_api_key) {
-      throw new Error('Apify API key not found in user settings');
-    }
-
-    // Create initial progress record - use a proper UUID
-    const progressId = crypto.randomUUID();
-    const { error: insertError } = await supabaseClient
+    // Create initial progress record
+    await supabaseClient
       .from('social_media_posts')
-      .insert({
-        id: progressId,
+      .upsert({
+        id: `temp-${leadId}`,
         lead_id: leadId,
-        user_id: user.id,
         platform: platform,
-        post_type: 'profile_scan',
+        post_type: 'post',
         processing_progress: 0,
         current_file: 'Starting profile scan...'
       });
 
-    if (insertError) {
-      console.error('Failed to create progress record:', insertError);
+    // Get Apify API key
+    const { data: secrets, error: secretError } = await supabaseClient
+      .from('secrets')
+      .select('value')
+      .eq('name', 'APIFY_API_TOKEN')
+      .single();
+
+    if (secretError || !secrets?.value) {
+      throw new Error('Could not retrieve Apify API key');
     }
 
     // Update progress to 20%
@@ -76,7 +58,7 @@ serve(async (req) => {
     const runResponse = await fetch(`https://api.apify.com/v2/acts/apify~instagram-profile-scraper/runs`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${userSettings.apify_api_key}`,
+        'Authorization': `Bearer ${secrets.value}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
@@ -105,7 +87,7 @@ serve(async (req) => {
 
       const datasetResponse = await fetch(`https://api.apify.com/v2/actor-runs/${runId}/dataset/items`, {
         headers: {
-          'Authorization': `Bearer ${userSettings.apify_api_key}`
+          'Authorization': `Bearer ${secrets.value}`
         }
       });
 
@@ -164,13 +146,12 @@ async function updateProgress(
 ): Promise<void> {
   console.log(`Updating progress: ${progress}% - ${message}`);
   
-  // Update all progress records for this lead
   await supabaseClient
     .from('social_media_posts')
     .update({ 
       processing_progress: progress,
-      current_file: message
+      current_file: message,
+      media_processing_status: progress === 100 ? 'completed' : 'processing'
     })
-    .eq('lead_id', leadId)
-    .eq('post_type', 'profile_scan');
+    .eq('id', `temp-${leadId}`);
 }

@@ -78,71 +78,41 @@ const MemberManagement = () => {
     queryFn: async () => {
       if (!team?.id) return [];
 
-      const { data: teamMembers, error } = await supabase
+      let query = supabase
         .from('team_members')
         .select(`
           id,
-          user_id,
           role,
+          team_id,
           joined_at,
-          profiles!inner(
+          user_id,
+          profile:profiles!user_id(
             id,
-            display_name,
             avatar_url,
-            email
+            display_name,
+            email,
+            bio,
+            slug
+          ),
+          team_member_points!inner(
+            level,
+            points
           )
         `)
-        .eq('team_id', team.id)
-        .order('joined_at', { ascending: false });
+        .eq('team_id', team.id);
+
+      if (debouncedSearch) {
+        query = query.or(`profiles.display_name.ilike.%${debouncedSearch}%,profiles.email.ilike.%${debouncedSearch}%`);
+      }
+
+      const { data, error } = await query.order('joined_at', { ascending: false });
 
       if (error) {
         console.error('Error fetching members:', error);
         throw error;
       }
 
-      if (!teamMembers) return [];
-
-      // Get team member points separately
-      const { data: pointsData } = await supabase
-        .from('team_member_points')
-        .select('user_id, points, level')
-        .eq('team_id', team.id);
-
-      // Filter by search if provided
-      let filteredMembers = teamMembers;
-      if (debouncedSearch) {
-        filteredMembers = teamMembers.filter(member => {
-          const profile = member.profiles;
-          if (!profile || typeof profile !== 'object') return false;
-          
-          const displayName = (profile as any).display_name?.toLowerCase() || '';
-          const email = (profile as any).email?.toLowerCase() || '';
-          const search = debouncedSearch.toLowerCase();
-          
-          return displayName.includes(search) || email.includes(search);
-        });
-      }
-
-      return filteredMembers.map(member => {
-        const profileData = member.profiles;
-        const profile = (typeof profileData === 'object' && profileData !== null) ? {
-          id: (profileData as any).id,
-          display_name: (profileData as any).display_name,
-          avatar_url: (profileData as any).avatar_url,
-          email: (profileData as any).email
-        } : {
-          id: member.user_id,
-          display_name: 'Unknown User',
-          avatar_url: null,
-          email: null
-        };
-
-        return {
-          ...member,
-          profile,
-          points: pointsData?.find(p => p.user_id === member.user_id) || { points: 0, level: 0 }
-        };
-      });
+      return data || [];
     },
     enabled: !!team?.id
   });
@@ -263,13 +233,13 @@ const MemberManagement = () => {
                   <TableRow key={member.id}>
                     <TableCell className="flex items-center gap-3">
                       <Avatar className="h-8 w-8">
-                        <AvatarImage src={member.profile?.avatar_url || undefined} />
+                        <AvatarImage src={member.profile?.avatar_url} />
                         <AvatarFallback>
-                          {member.profile?.display_name?.charAt(0) || 'U'}
+                          {member.profile?.display_name?.substring(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <div className="font-medium">{member.profile?.display_name || 'Unknown User'}</div>
+                        <div className="font-medium">{member.profile?.display_name}</div>
                         <div className="text-sm text-muted-foreground">{member.profile?.email}</div>
                       </div>
                     </TableCell>
@@ -282,10 +252,10 @@ const MemberManagement = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      {member.points?.level || 0}
+                      {member.team_member_points?.level || 0}
                     </TableCell>
                     <TableCell className="text-right">
-                      {member.points?.points || 0}
+                      {member.team_member_points?.points || 0}
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
@@ -294,7 +264,7 @@ const MemberManagement = () => {
                         onClick={() => setSelectedMember({
                           id: member.user_id,
                           name: member.profile?.display_name || "Unbekannt",
-                          teamId: team?.id || ''
+                          teamId: member.team_id
                         })}
                       >
                         <Award className="h-4 w-4 mr-2" />

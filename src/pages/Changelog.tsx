@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ export default function Changelog() {
       const { data, error } = await supabase
         .from("changelog_entries")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("date", { ascending: false });
 
       if (error) {
         console.error("Error fetching changelog entries:", error);
@@ -35,7 +35,7 @@ export default function Changelog() {
         } else {
           acc.push({
             version: entry.version,
-            date: new Date(entry.created_at).toISOString().split('T')[0],
+            date: new Date(entry.date).toISOString().split('T')[0],
             changes: [{
               title: entry.title,
               status: entry.status as "completed" | "in-progress" | "planned",

@@ -12,7 +12,7 @@ export function NewsList({ teamId }: NewsListProps) {
   const { data: news = [], isLoading } = useQuery({
     queryKey: ["team-news", teamId],
     queryFn: async () => {
-      const { data: newsData, error } = await (supabase as any)
+      const { data: newsData, error } = await supabase
         .from("team_news")
         .select("*")
         .eq("team_id", teamId);
@@ -21,7 +21,7 @@ export function NewsList({ teamId }: NewsListProps) {
 
       // Fetch creator information separately
       const newsWithCreators = await Promise.all(
-        (newsData || []).map(async (newsItem: any) => {
+        newsData.map(async (newsItem) => {
           const { data: profileData } = await supabase
             .from("profiles")
             .select("display_name")
@@ -57,7 +57,7 @@ export function NewsList({ teamId }: NewsListProps) {
 
   return (
     <div className="space-y-4">
-      {news.map((item: any) => (
+      {news.map((item) => (
         <Card key={item.id}>
           <CardHeader>
             <h3 className="text-lg font-semibold">{item.title}</h3>

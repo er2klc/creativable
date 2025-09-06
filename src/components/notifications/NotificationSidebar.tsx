@@ -11,7 +11,7 @@ import { NotificationList } from './NotificationList';
 interface Notification {
   id: string;
   title: string;
-  message: string;
+  content: string;
   created_at: string;
   read: boolean;
   type: string;
@@ -45,7 +45,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
         .select(`
           id,
           title,
-          message,
+          content,
           created_at,
           read,
           type,
@@ -68,7 +68,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
       const sanitizedPayload = {
         id: payload.new?.id,
         title: payload.new?.title,
-        message: payload.new?.message,
+        content: payload.new?.content,
         created_at: payload.new?.created_at,
         read: payload.new?.read,
         type: payload.new?.type,
@@ -81,7 +81,7 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
       
       if (payload.eventType === 'INSERT' && !payload.new?.read) {
         toast(sanitizedPayload.title, {
-          description: sanitizedPayload.message,
+          description: sanitizedPayload.content,
         });
       }
     };
@@ -190,9 +190,9 @@ export const NotificationSidebar = ({ open, onOpenChange }: NotificationSidebarP
           onClose={() => onOpenChange(false)}
         />
         <NotificationList
-          notifications={notifications as any[]}
-          onDelete={handleDeleteNotification as any}
-          onNotificationClick={handleNotificationClick as any}
+          notifications={notifications}
+          onDelete={handleDeleteNotification}
+          onNotificationClick={handleNotificationClick}
         />
       </SheetContent>
     </Sheet>

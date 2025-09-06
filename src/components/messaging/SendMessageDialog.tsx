@@ -39,11 +39,11 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
           leadName: lead.name,
           leadPlatform: lead.platform,
           leadIndustry: lead.industry,
-          companyName: (settings as any)?.company_name,
-          productsServices: (settings as any)?.products_services,
-          targetAudience: (settings as any)?.target_audience,
-          usp: (settings as any)?.usp,
-          businessDescription: (settings as any)?.business_description,
+          companyName: settings?.company_name,
+          productsServices: settings?.products_services,
+          targetAudience: settings?.target_audience,
+          usp: settings?.usp,
+          businessDescription: settings?.business_description,
           language: settings?.language || "de",
         },
       });
@@ -96,7 +96,7 @@ export function SendMessageDialog({ lead, trigger }: SendMessageDialogProps) {
         {lead && (
           <PromptEditor
             lead={lead}
-            settings={settings as any}
+            settings={settings}
             onGenerate={handleGenerateMessage}
             isGenerating={isGenerating}
             generatedMessage={message}

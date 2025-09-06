@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Star, XCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tables } from "@/integrations/supabase/types";
-import * as confetti from 'canvas-confetti';
+import confetti from 'canvas-confetti';
 
 interface StatusButtonsProps {
   status: string;

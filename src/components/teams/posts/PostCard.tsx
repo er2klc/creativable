@@ -5,7 +5,7 @@ import { Bell, Link2, Flag, MoreHorizontal } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { de } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
-import { Post } from "./types/post";
+import { Post } from "../types/post";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getAvatarUrl, getCategoryStyle } from "@/lib/supabase-utils";
 import { PostReactions } from "./components/reactions/PostReactions";
@@ -25,11 +25,9 @@ import {
 interface PostCardProps {
   post: Post;
   teamSlug: string;
-  size?: "small" | "medium" | "large";
-  isAdmin?: boolean;
 }
 
-export const PostCard = ({ post, teamSlug, size = "medium", isAdmin = false }: PostCardProps) => {
+export const PostCard = ({ post, teamSlug }: PostCardProps) => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -39,7 +37,7 @@ export const PostCard = ({ post, teamSlug, size = "medium", isAdmin = false }: P
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return null;
 
-      const { data } = await (supabase as any)
+      const { data } = await supabase
         .from('team_post_subscriptions')
         .select('subscribed')
         .eq('post_id', post.id)
@@ -54,14 +52,14 @@ export const PostCard = ({ post, teamSlug, size = "medium", isAdmin = false }: P
     return null;
   }
 
-  const categoryStyle = getCategoryStyle(post.team_categories?.color || '#3B82F6');
-  const displayName = post.author?.display_name || 'Unbekannt';
-  const avatarUrl = getAvatarUrl(post.author?.avatar_url, post.author?.email);
+  const categoryStyle = getCategoryStyle(post.team_categories.color);
+  const displayName = post.author.display_name || 'Unbekannt';
+  const avatarUrl = getAvatarUrl(post.author.avatar_url, post.author.email);
   const isSubscribed = subscription?.subscribed || false;
 
   const handleCopyUrl = (e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = `${window.location.origin}/unity/team/${teamSlug}/posts/${post.id}`;
+    const url = `${window.location.origin}/unity/team/${teamSlug}/posts/${post.slug}`;
     navigator.clipboard.writeText(url);
     toast.success("Link kopiert!");
   };
@@ -72,7 +70,7 @@ export const PostCard = ({ post, teamSlug, size = "medium", isAdmin = false }: P
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      await (supabase as any)
+      await supabase
         .from('team_post_subscriptions')
         .upsert({
           post_id: post.id,
@@ -98,7 +96,7 @@ export const PostCard = ({ post, teamSlug, size = "medium", isAdmin = false }: P
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('team_post_reports')
         .insert({
           post_id: post.id,
@@ -186,10 +184,10 @@ export const PostCard = ({ post, teamSlug, size = "medium", isAdmin = false }: P
                   className="hover:opacity-90"
                   onClick={(e) => {
                     e.stopPropagation();
-                    navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories?.slug || post.category_id}`);
+                    navigate(`/unity/team/${teamSlug}/posts/category/${post.team_categories.slug}`);
                   }}
                 >
-                  {post.team_categories?.name || 'Kategorie'}
+                  {post.team_categories.name}
                 </Badge>
               </div>
             </div>

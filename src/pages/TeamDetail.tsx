@@ -73,9 +73,13 @@ const TeamDetail = () => {
           id,
           user_id,
           role,
-          profiles!team_members_user_id_fkey (
+          profile:profiles!team_members_user_id_fkey (
             display_name,
             avatar_url
+          ),
+          points:team_member_points!inner (
+            level,
+            points
           )
         `)
         .eq('team_id', team.id);
@@ -86,33 +90,21 @@ const TeamDetail = () => {
         return null;
       }
 
-      // Get member points separately  
-      const { data: memberPoints } = await supabase
-        .from('team_member_points')
-        .select('user_id, level, points')
-        .eq('team_id', team.id);
-
-      // Add points data to members
-      const membersWithPoints = members.map(member => ({
-        ...member,
-        points: memberPoints?.find(p => p.user_id === member.user_id) || { level: 0, points: 0 }
-      }));
-
       // Calculate stats directly
       const stats = {
-        totalMembers: membersWithPoints.length,
-        admins: membersWithPoints.filter(m => m.role === 'admin' || m.role === 'owner').length,
+        totalMembers: members.length,
+        admins: members.filter(m => m.role === 'admin' || m.role === 'owner').length,
         onlineCount: 0, // This will be updated by the presence channel
-        memberProgress: Math.min((membersWithPoints.length / 100) * 100, 100),
+        memberProgress: Math.min((members.length / 100) * 100, 100),
         levelStats: {
-          averageLevel: membersWithPoints.reduce((acc, m) => acc + (m.points?.level || 0), 0) / membersWithPoints.length || 0,
-          highestLevel: Math.max(...membersWithPoints.map(m => m.points?.level || 0)),
-          totalPoints: membersWithPoints.reduce((acc, m) => acc + (m.points?.points || 0), 0)
+          averageLevel: members.reduce((acc, m) => acc + (m.points?.[0]?.level || 0), 0) / members.length || 0,
+          highestLevel: Math.max(...members.map(m => m.points?.[0]?.level || 0)),
+          totalPoints: members.reduce((acc, m) => acc + (m.points?.[0]?.points || 0), 0)
         },
         roles: {
-          owners: membersWithPoints.filter(m => m.role === 'owner').length,
-          admins: membersWithPoints.filter(m => m.role === 'admin').length,
-          members: membersWithPoints.filter(m => m.role === 'member').length
+          owners: members.filter(m => m.role === 'owner').length,
+          admins: members.filter(m => m.role === 'admin').length,
+          members: members.filter(m => m.role === 'member').length
         }
       };
 

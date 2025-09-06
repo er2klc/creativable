@@ -24,19 +24,6 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     sourcemap: true,
-    // Optimize chunk size and memory usage
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
-          'tiptap-vendor': ['@tiptap/react', '@tiptap/starter-kit', '@tiptap/extension-mention', '@tiptap/suggestion'],
-          'radix-vendor': ['@radix-ui/react-slot', '@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu'],
-          'supabase-vendor': ['@supabase/supabase-js', '@supabase/auth-helpers-react'],
-        },
-      },
-    },
-    // Increase memory limit for build
-    chunkSizeWarningLimit: 1000,
   },
   server: {
     port: 8080,
@@ -58,17 +45,5 @@ export default defineConfig(({ mode }) => ({
       interval: 100,
     },
   },
-  // Optimize dependency handling
-  optimizeDeps: {
-    include: [
-      'react',
-      'react-dom',
-      'react/jsx-runtime',
-      '@tiptap/react',
-      '@tiptap/starter-kit',
-      '@tiptap/extension-mention',
-      '@tiptap/suggestion',
-    ],
-    force: true,
-  },
 }))
+

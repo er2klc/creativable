@@ -6,8 +6,7 @@ import { useEffect, useTransition } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const Auth = () => {
-  const { user, isLoading, error } = useAuth();
-  const isAuthenticated = !!user;
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isPending, startTransition] = useTransition();

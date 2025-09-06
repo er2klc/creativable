@@ -1,6 +1,5 @@
 
 import { Check } from "lucide-react";
-import * as React from "react";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -39,13 +38,12 @@ export function TeamSwitcher() {
       if (error) throw error;
       return data || [];
     },
-  });
-
-  React.useEffect(() => {
-    if (teams.length > 0 && !selectedTeamId) {
-      setSelectedTeamId(teams[0].id);
+    onSuccess: (data) => {
+      if (data.length > 0 && !selectedTeamId) {
+        setSelectedTeamId(data[0].id);
+      }
     }
-  }, [teams, selectedTeamId, setSelectedTeamId]);
+  });
 
   const selectedTeam = teams.find((team) => team.id === selectedTeamId);
 

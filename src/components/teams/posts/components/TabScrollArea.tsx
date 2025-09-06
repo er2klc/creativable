@@ -29,7 +29,7 @@ export const TabScrollArea = ({
     scrollTabs
   } = useTabScroll();
 
-  const { categories, isLoading } = useTeamCategories(teamSlug) as any;
+  const { categories, isLoading } = useTeamCategories(teamSlug);
 
   // Check if we're in a post detail view (not just category view)
   const isPostDetailView = window.location.pathname.includes('/posts/') && 

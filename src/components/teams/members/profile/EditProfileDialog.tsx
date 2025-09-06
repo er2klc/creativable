@@ -114,7 +114,7 @@ export function EditProfileDialog({ isOpen, onClose, profileData }: EditProfileD
           linkedin: formatLinkedInUrl(formData.social_links.linkedin)
         },
         email: formData.email,
-        updated_at: new Date().toISOString()
+        updated_at: new Date()
       };
 
       const { error } = await supabase

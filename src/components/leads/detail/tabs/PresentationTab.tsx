@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,13 +17,6 @@ interface PresentationTabProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-type SimpleUserLink = {
-  id: string;
-  title: string;
-  url: string;
-  is_favorite: boolean;
-};
 
 export const PresentationTab = ({
   leadId,
@@ -70,20 +64,17 @@ export const PresentationTab = ({
     return `${baseSlug}-${videoId}-${timestamp}`;
   };
 
-  const { data: userLinks = [] } = useQuery<SimpleUserLink[], Error>({
+  const { data: userLinks = [] } = useQuery({
     queryKey: ['user-links', type],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_links')
-        .select('id,title,url')
+        .select('*')
         .eq('group_type', type)
-        .order('created_at', { ascending: false });
+        .order('is_favorite', { ascending: false });
 
       if (error) throw error;
-      return ((data || []) as any[]).map((item: any) => ({
-        ...item,
-        is_favorite: false
-      })) as SimpleUserLink[];
+      return data || [];
     },
   });
 
@@ -129,15 +120,17 @@ export const PresentationTab = ({
         
         const { data: pageData, error: pageError } = await supabase
           .from('presentation_pages')
-          .insert({
-            lead_id: leadId,
-            user_id: user?.id,
-            title: title || url,
-            video_url: url,
-            slug: slug,
-            expires_at: expiryDate?.toISOString(),
-            is_url_active: true
-          })
+          .insert([
+            {
+              lead_id: leadId,
+              user_id: user?.id,
+              title: title || url,
+              video_url: url,
+              slug: slug,
+              expires_at: expiryDate,
+              is_url_active: true
+            }
+          ])
           .select()
           .single();
 

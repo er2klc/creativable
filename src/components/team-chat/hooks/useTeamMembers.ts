@@ -1,86 +1,58 @@
 
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { TeamMember } from '../types';
+import { toast } from 'sonner';
 
-type MemberRow = Pick<Tables<"team_members">, "id"|"team_id"|"user_id"|"role">;
-type ProfileRow = Pick<Tables<"profiles">, "id"|"display_name"|"avatar_url"|"email">;
-
-type TeamMemberVM = {
-  id: string;
-  team_id: string;
-  user_id: string;
-  role: string | null;
-  display_name: string | null;
-  avatar_url: string | null;
-  last_seen: string | null;
-  email: string | null;
-  points?: number;
-};
-
-export function useTeamMembers(teamId: string | null, currentUserId?: string) {
-  const result = useQuery<TeamMemberVM[], Error>({
-    queryKey: ["team-members", teamId],
-    enabled: !!teamId,
+export const useTeamMembers = (teamId?: string, currentUserId?: string) => {
+  const { data: teamMembers = [], isLoading } = useQuery({
+    queryKey: ['team-members', teamId],
     queryFn: async () => {
-      // 1) Roh-Mitglieder
-      const { data: members, error: memErr } = await supabase
-        .from("team_members")
-        .select("id,team_id,user_id,role")
-        .eq("team_id", teamId!);
-      if (memErr) throw memErr;
-      const ms = (members ?? []) as MemberRow[];
+      if (!teamId) return [];
 
-      if (ms.length === 0) return [];
+      const { data: members, error } = await supabase
+        .from('team_members')
+        .select(`
+          user_id,
+          points:team_member_points (
+            level
+          ),
+          profiles:user_id (
+            id,
+            display_name,
+            avatar_url,
+            last_seen,
+            email
+          )
+        `)
+        .eq('team_id', teamId)
+        .order('points(level)', { ascending: false });
 
-      // 2) zugehörige Profile
-      const userIds = Array.from(new Set(ms.map(m => m.user_id)));
-      const { data: profiles, error: profErr } = await supabase
-        .from("profiles")
-        .select("id,display_name,avatar_url,email")
-        .in("id", userIds);
-
-      if (profErr) throw profErr;
-      const profMap = new Map<string, ProfileRow>(
-        (profiles ?? []).map(p => [p.id, p as ProfileRow])
-      );
-
-      // 3) optional: Punkte (wenn Tabelle existiert; sonst try/catch ignorieren)
-      let ptsMap = new Map<string, number>();
-      try {
-        const { data: pts } = await supabase
-          .from("team_member_points")
-          .select("user_id,team_id,points")
-          .eq("team_id", teamId!);
-        ptsMap = new Map<string, number>(
-          ((pts as any[]) ?? []).map((p: any) => [p.user_id, p.points])
-        );
-      } catch {
-        // Tabelle (noch) nicht typisiert → ignorieren
+      if (error) {
+        toast.error('Fehler beim Laden der Teammitglieder');
+        throw error;
       }
 
-      // 4) ViewModel bauen
-      const result: TeamMemberVM[] = ms
-        .filter(m => m.user_id !== currentUserId)
-        .map(m => {
-          const p = profMap.get(m.user_id);
-          return {
-            id: m.id,
-            team_id: m.team_id,
-            user_id: m.user_id,
-            role: m.role,
-            display_name: p?.display_name ?? null,
-            avatar_url: p?.avatar_url ?? null,
-            last_seen: null, // simplified since last_seen doesn't exist in profiles
-            email: p?.email ?? null,
-            points: ptsMap.get(m.user_id),
-          };
-        });
+      // Filter nur den aktuellen User aus und mapped die Daten
+      const mappedMembers = members
+        .filter(m => {
+          if (!m.profiles) return false;
+          return m.user_id !== currentUserId;
+        })
+        .map(m => ({
+          id: m.user_id,
+          display_name: m.profiles.display_name,
+          avatar_url: m.profiles.avatar_url,
+          last_seen: m.profiles.last_seen,
+          email: m.profiles.email,
+          level: m.points?.level || 0
+        }));
 
-      return result;
+      return mappedMembers as TeamMember[];
     },
+    enabled: !!teamId
   });
 
-  return { teamMembers: result.data ?? [], isLoading: result.isLoading };
-}
+  return { teamMembers, isLoading };
+};
 

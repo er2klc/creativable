@@ -52,14 +52,6 @@ export interface TimelineItem {
   created_at?: string;
 }
 
-export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('de-DE', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
-  });
-};
-
 export const createStatusChangeItem = (
   status: string, 
   timestamp: string
@@ -90,7 +82,8 @@ export const createStatusChangeItem = (
     timestamp,
     metadata: {
       oldStatus: 'lead',
-      newStatus: status
+      newStatus: status,
+      timestamp
     }
   };
 };

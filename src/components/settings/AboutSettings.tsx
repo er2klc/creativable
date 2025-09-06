@@ -1,4 +1,4 @@
-import * as React from "react";
+import React from "react";
 import { useSession } from "@supabase/auth-helpers-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,7 +33,7 @@ export function AboutSettings() {
         .maybeSingle();
 
       if (error) throw error;
-      return data as Partial<Settings> | null;
+      return data as Settings | null;
     },
     enabled: !!session?.user?.id,
   });

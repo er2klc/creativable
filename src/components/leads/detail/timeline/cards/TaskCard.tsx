@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import * as confetti from "canvas-confetti";
+import confetti from "canvas-confetti";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface TaskCardProps {

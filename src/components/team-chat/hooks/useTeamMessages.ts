@@ -1,33 +1,9 @@
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
-import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { TeamMessage } from '../types';
+import { toast } from 'sonner';
 import { useEffect } from 'react';
-
-type MsgRow = Pick<Tables<"team_direct_messages">,
-  "id"|"team_id"|"sender_id"|"receiver_id"|"content"|"created_at"|"read"
-> & {
-  read_at?: string | null;
-  delivered_at?: string | null;
-};
-
-type Prof = Pick<Tables<"profiles">, "id"|"display_name"|"avatar_url"|"email">;
-
-export type TeamMessage = MsgRow & {
-  sender?: TeamMemberType;
-  receiver?: TeamMemberType;
-  read_at: string | null;
-  delivered_at: string | null;
-};
-
-type TeamMemberType = {
-  id: string;
-  user_id: string;
-  display_name: string | null;
-  avatar_url: string | null;
-  email: string | null;
-};
 
 interface UseTeamMessagesProps {
   teamId?: string;
@@ -38,7 +14,7 @@ interface UseTeamMessagesProps {
 export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: UseTeamMessagesProps) => {
   const queryClient = useQueryClient();
 
-  const { data: messages = [], isLoading } = useQuery<any[], Error>({
+  const { data: messages = [], isLoading } = useQuery({
     queryKey: ['team-messages', selectedUserId, teamId],
     queryFn: async () => {
       if (!selectedUserId || !teamId) return [];
@@ -46,7 +22,7 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // ... keep existing code (markiere nachrichten als gelesen)
+      // Markiere Nachrichten als gelesen, wenn der Chat geöffnet wird
       await supabase
         .from('team_direct_messages')
         .update({ 
@@ -58,27 +34,40 @@ export const useTeamMessages = ({ teamId, selectedUserId, currentUserLevel }: Us
         .eq('team_id', teamId)
         .eq('read', false);
 
-      // ... keep existing code (markiere benachrichtigungen als gelesen)
+      // Markiere zugehörige Benachrichtigungen als gelesen
       await supabase
         .from('notifications')
         .update({ read: true })
         .eq('type', 'team_chat_message')
+        .eq('metadata->sender_id', selectedUserId)
         .eq('user_id', user.id)
         .is('deleted_at', null)
         .eq('read', false);
 
+      // Invalidiere Notifications Query
       queryClient.invalidateQueries({ queryKey: ['notifications'] });
 
-      // Messages lesen (simplified)
-      const { data, error } = await supabase
+      const { data: messages, error } = await supabase
         .from('team_direct_messages')
-        .select("id,team_id,sender_id,receiver_id,content,created_at,read")
+        .select(`
+          *,
+          sender:sender_id (
+            id,
+            display_name,
+            avatar_url
+          ),
+          receiver:receiver_id (
+            id,
+            display_name,
+            avatar_url
+          )
+        `)
         .eq('team_id', teamId)
         .or(`and(sender_id.eq.${user.id},receiver_id.eq.${selectedUserId}),and(sender_id.eq.${selectedUserId},receiver_id.eq.${user.id})`)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      return data || [];
+      return messages as TeamMessage[];
     },
     enabled: !!selectedUserId && !!teamId
   });

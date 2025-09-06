@@ -27,10 +27,10 @@ export const useLeadData = (leadId: string | null) => {
         .select(`
           *,
           messages (*),
-          tasks (id, title, description, lead_id, user_id, priority, completed, completed_at, created_at, updated_at, due_date, order_index, cancelled, color, meeting_type),
+          tasks (id, title, lead_id, user_id, priority, completed, created_at, updated_at, due_date, order_index, cancelled, color, meeting_type),
           notes (*),
           lead_files (*),
-          social_media_posts (*)
+          linkedin_posts (*)
         `)
         .eq("id", leadId)
         .maybeSingle();
@@ -56,6 +56,6 @@ export const useLeadData = (leadId: string | null) => {
     },
     enabled: !!leadId && isValidUUID(leadId),
     staleTime: 0, // Immer neu laden
-    gcTime: 5 * 60 * 1000, // 5 Minuten im Cache behalten
+    cacheTime: 5 * 60 * 1000, // 5 Minuten im Cache behalten
   });
 };

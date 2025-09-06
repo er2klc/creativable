@@ -31,36 +31,36 @@ export const useTeamCalendar = (teamId: string, isAdmin: boolean) => {
       if (eventsResult.error) throw eventsResult.error;
       
       const disabledDates = new Set(
-        ((disabledResult.data as any[]) ?? []).map((d: any) => 
+        disabledResult.data?.map(d => 
           `${d.event_id}-${format(new Date(d.disabled_date), 'yyyy-MM-dd')}`
-        )
+        ) || []
       );
 
       const allEvents = [];
-      for (const event of (eventsResult.data as any[])) {
-        if ((event as any).recurring_pattern === 'none') {
+      for (const event of eventsResult.data) {
+        if (event.recurring_pattern === 'none') {
           allEvents.push(event);
           continue;
         }
 
-        const startDate = new Date((event as any).start_time);
+        const startDate = new Date(event.start_time);
         const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
         const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
         let currentInstance = startDate;
         while (currentInstance <= monthEnd) {
           if (currentInstance >= monthStart) {
-            const instanceKey = `${(event as any).id}-${format(currentInstance, 'yyyy-MM-dd')}`;
+            const instanceKey = `${event.id}-${format(currentInstance, 'yyyy-MM-dd')}`;
             if (!disabledDates.has(instanceKey)) {
               allEvents.push({
-                ...(event as any),
+                ...event,
                 start_time: currentInstance.toISOString(),
                 isRecurring: true,
               });
             }
           }
 
-          switch ((event as any).recurring_pattern) {
+          switch (event.recurring_pattern) {
             case 'daily':
               currentInstance = addDays(currentInstance, 1);
               break;

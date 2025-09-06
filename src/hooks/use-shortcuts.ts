@@ -25,7 +25,7 @@ export const useShortcuts = () => {
         throw new Error("No user found");
       }
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("dashboard_shortcuts")
         .select("*")
         .eq("user_id", user.id)
@@ -48,7 +48,7 @@ export const useShortcuts = () => {
         throw new Error("No user found");
       }
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("dashboard_shortcuts")
         .insert([{ ...shortcut, user_id: user.id }])
         .select()
@@ -69,7 +69,7 @@ export const useShortcuts = () => {
 
   const updateShortcut = useMutation({
     mutationFn: async (shortcut: Shortcut) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("dashboard_shortcuts")
         .update(shortcut)
         .eq("id", shortcut.id);
@@ -88,7 +88,7 @@ export const useShortcuts = () => {
 
   const deleteShortcut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("dashboard_shortcuts")
         .delete()
         .eq("id", id);
@@ -113,7 +113,7 @@ export const useShortcuts = () => {
         throw new Error("No user found");
       }
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("dashboard_shortcuts")
         .upsert(
           shortcuts.map((shortcut) => ({

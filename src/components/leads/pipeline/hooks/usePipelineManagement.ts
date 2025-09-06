@@ -60,13 +60,13 @@ export function usePipelineManagement(initialPipelineId: string | null) {
         return;
       }
 
-        // Find pipeline with is_default flag or use type casting
-        const defaultPipeline = pipelines.find((p: any) => p.is_default === true);
-        if (defaultPipeline) {
-          console.log("Using default pipeline:", defaultPipeline.id);
-          setSelectedPipelineId(defaultPipeline.id);
-          return;
-        }
+      // Find default pipeline
+      const defaultPipeline = pipelines.find(p => p.is_default);
+      if (defaultPipeline) {
+        console.log("Using default pipeline:", defaultPipeline.id);
+        setSelectedPipelineId(defaultPipeline.id);
+        return;
+      }
 
       // Fallback: First available pipeline
       console.log("Using first available pipeline:", pipelines[0].id);

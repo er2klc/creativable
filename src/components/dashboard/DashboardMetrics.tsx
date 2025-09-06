@@ -142,7 +142,7 @@ export const DashboardMetrics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {Array.isArray(contactsByPlatform) ? [] : contactsByPlatform?.platforms?.map(({ platform, count }) => {
+              {contactsByPlatform.platforms?.map(({ platform, count }) => {
                 const Icon = platformIcons[platform] || Users;
                 return (
                   <div key={platform} className="flex justify-between items-center p-2 hover:bg-black/5 rounded-lg transition-colors">
@@ -150,7 +150,7 @@ export const DashboardMetrics = () => {
                       <Icon className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">{platform}</span>
                     </div>
-                    <span className="font-bold">{String(count)}</span>
+                    <span className="font-bold">{count}</span>
                   </div>
                 );
               })}
@@ -251,11 +251,11 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Partner</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{Array.isArray(contactsByPlatform) ? 0 : (contactsByPlatform?.statuses as any)?.partner || 0}</span>
+                  <span>{contactsByPlatform.statuses?.partner || 0}</span>
                 </div>
                 <Progress 
-                  value={!Array.isArray(contactsByPlatform) && (contactsByPlatform?.statuses as any)?.partner 
-                    ? (Number((contactsByPlatform.statuses as any).partner) / (Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0) as number)) * 100
+                  value={contactsByPlatform.statuses?.partner 
+                    ? (contactsByPlatform.statuses.partner / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
                     : 0
                   } 
                   className="h-2" 
@@ -265,11 +265,11 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Kunde</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{Array.isArray(contactsByPlatform) ? 0 : (contactsByPlatform?.statuses as any)?.customer || 0}</span>
+                  <span>{contactsByPlatform.statuses?.customer || 0}</span>
                 </div>
                 <Progress 
-                  value={!Array.isArray(contactsByPlatform) && (contactsByPlatform?.statuses as any)?.customer 
-                    ? (Number((contactsByPlatform.statuses as any).customer) / (Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0) as number)) * 100
+                  value={contactsByPlatform.statuses?.customer 
+                    ? (contactsByPlatform.statuses.customer / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
                     : 0
                   } 
                   className="h-2" 
@@ -279,11 +279,11 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Not for now</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{Array.isArray(contactsByPlatform) ? 0 : (contactsByPlatform?.statuses as any)?.not_for_now || 0}</span>
+                  <span>{contactsByPlatform.statuses?.not_for_now || 0}</span>
                 </div>
                 <Progress 
-                  value={!Array.isArray(contactsByPlatform) && (contactsByPlatform?.statuses as any)?.not_for_now 
-                    ? (Number((contactsByPlatform.statuses as any).not_for_now) / (Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0) as number)) * 100
+                  value={contactsByPlatform.statuses?.not_for_now 
+                    ? (contactsByPlatform.statuses.not_for_now / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
                     : 0
                   } 
                   className="h-2" 
@@ -293,11 +293,11 @@ export const DashboardMetrics = () => {
                 <h3 className="text-sm font-medium">Kein Interesse</h3>
                 <div className="flex justify-between text-sm">
                   <span>Gesamt</span>
-                  <span>{Array.isArray(contactsByPlatform) ? 0 : (contactsByPlatform?.statuses as any)?.no_interest || 0}</span>
+                  <span>{contactsByPlatform.statuses?.no_interest || 0}</span>
                 </div>
                 <Progress 
-                  value={!Array.isArray(contactsByPlatform) && (contactsByPlatform?.statuses as any)?.no_interest 
-                    ? (Number((contactsByPlatform.statuses as any).no_interest) / (Object.values(contactsByPlatform.statuses as any).reduce((a: number, b: any) => a + Number(b || 0), 0) as number)) * 100
+                  value={contactsByPlatform.statuses?.no_interest 
+                    ? (contactsByPlatform.statuses.no_interest / Object.values(contactsByPlatform.statuses).reduce((a, b) => a + b, 0)) * 100 
                     : 0
                   } 
                   className="h-2" 

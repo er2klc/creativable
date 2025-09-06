@@ -1,5 +1,5 @@
 
-import * as React from "react";
+import React from "react";
 import { Phone, MapPin, Video, Users, BarChart, RefreshCw, Calendar } from "lucide-react";
 
 export const getMeetingTypeLabel = (type: string): string => {

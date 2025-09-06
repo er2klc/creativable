@@ -26,7 +26,7 @@ export const useSnapManagement = (teamId: string) => {
         .insert({
           team_id: teamId,
           snap_id: snapId,
-          user_id: session?.user?.id,
+          hidden_by: session?.user?.id,
         });
 
       if (error) throw error;

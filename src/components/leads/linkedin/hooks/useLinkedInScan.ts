@@ -1,5 +1,4 @@
 import { useState, useRef } from "react";
-import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useSettings } from "@/hooks/use-settings";
@@ -18,9 +17,6 @@ const initialState: ScanState = {
   isSuccess: false
 };
 
-type Vars = { leadId: string };
-type Res = { queued: boolean; taskId?: string };
-
 export function useLinkedInScan() {
   const [state, setState] = useState<ScanState>(initialState);
   const lastProgressRef = useRef<number>(0);
@@ -29,18 +25,6 @@ export function useLinkedInScan() {
   const updateState = (updates: Partial<ScanState>) => {
     setState(prev => ({ ...prev, ...updates }));
   };
-
-  const scanMutation = useMutation<Res, Error, Vars>({
-    mutationFn: async ({ leadId }) => {
-      const { data, error } = await supabase
-        .from("linkedin_scan_jobs")
-        .insert({ lead_id: leadId })
-        .select("id")
-        .single();
-      if (error) throw error;
-      return { queued: true, taskId: (data as any)?.id as string | undefined };
-    },
-  });
 
   const pollProgress = async (leadId: string) => {
     console.log('Starting progress polling for lead:', leadId);
@@ -60,11 +44,11 @@ export function useLinkedInScan() {
 
       try {
         const { data: scanHistory, error } = await supabase
-          .from('linkedin_scan_jobs')
-          .select('status,created_at')
+          .from('social_media_scan_history')
+          .select('*')
           .eq('lead_id', leadId)
-          .order('created_at', { ascending: false })
-          .limit(1)
+          .eq('platform', 'linkedin')
+          .order('scanned_at', { ascending: false })
           .maybeSingle();
 
         if (error) {
@@ -73,10 +57,7 @@ export function useLinkedInScan() {
         }
 
         if (scanHistory) {
-          // Simulate progress based on time elapsed
-          const now = Date.now();
-          const elapsed = now - new Date(scanHistory.created_at).getTime();
-          const progress = Math.min(100, Math.floor(elapsed / 300)); // 30 seconds = 100%
+          const progress = scanHistory.processing_progress || 0;
           
           if (progress < lastProgressRef.current) {
             return;
@@ -85,13 +66,21 @@ export function useLinkedInScan() {
 
           updateState({ 
             scanProgress: progress,
-            currentFile: 'Scanning LinkedIn profile...'
+            currentFile: scanHistory.current_file || 'Scanning LinkedIn profile...'
           });
 
-          if (progress >= 100 || scanHistory.status === 'completed') {
+          if (progress >= 100 || scanHistory.success) {
             updateState({ isSuccess: true });
             pollingState.isActive = false;
             clearInterval(interval);
+          }
+
+          // If there's an error message, show it and stop polling
+          if (scanHistory.error_message) {
+            toast.error(scanHistory.error_message);
+            pollingState.isActive = false;
+            clearInterval(interval);
+            updateState({ isLoading: false });
           }
         }
 
@@ -118,7 +107,6 @@ export function useLinkedInScan() {
     setIsSuccess: (isSuccess: boolean) => updateState({ isSuccess }),
     lastProgressRef,
     settings,
-    pollProgress,
-    startScan: (leadId: string) => scanMutation.mutate({ leadId })
+    pollProgress
   };
 }

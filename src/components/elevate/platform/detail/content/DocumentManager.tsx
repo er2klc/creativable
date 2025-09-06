@@ -29,7 +29,7 @@ export const DocumentManager = ({
         .eq('lerninhalte_id', lerninhalteId);
 
       if (error) throw error;
-      return (data || []).map(doc => ({ ...doc, preview_file_path: null }));
+      return data || [];
     },
     enabled: !!lerninhalteId // Query nur ausführen wenn lerninhalteId existiert
   });

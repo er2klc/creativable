@@ -4,8 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { user, isLoading } = useAuth();
-  const isAuthenticated = !!user;
+  const { isAuthenticated, isLoading } = useAuth();
   const [isSessionChecked, setIsSessionChecked] = useState(false);
   const [hasSession, setHasSession] = useState(false);
   const location = useLocation();
@@ -60,11 +59,7 @@ export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   }, [isAuthenticated, location.pathname]);
 
   if (isLoading || !isSessionChecked) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0A0A0A]">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
-      </div>
-    );
+    return null;
   }
 
   if (!isAuthenticated && !hasSession) {

@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSupabaseClient, useSessionContext, User } from '@supabase/auth-helpers-react';
 
 export const useAuth = () => {
@@ -10,28 +11,28 @@ export const useAuth = () => {
   const fetchAttemptedRef = useRef(false);
   const sessionIdRef = useRef<string | null>(null);
 
-  // Optimierte Fetch-Funktion
+  // Memoize the fetchUser function to prevent recreation on each render
   const fetchUser = useCallback(async () => {
-    // Sofortiges Return wenn Session noch lädt
-    if (sessionLoading) {
-      return;
-    }
+    // Skip if still loading session or if we've already fetched for this session
+    if (sessionLoading) return;
     
-    // Session-ID-Optimierung
+    // If session ID hasn't changed and we've already attempted to fetch, skip
     const currentSessionId = session?.user?.id || null;
     if (currentSessionId === sessionIdRef.current && fetchAttemptedRef.current) {
-      setIsLoading(false); // Stellen Sie sicher, dass isLoading false ist
       return;
     }
     
+    // Update session ID reference
     sessionIdRef.current = currentSessionId;
     
     try {
       fetchAttemptedRef.current = true;
+      setIsLoading(true);
       
       if (session?.user) {
         setUser(session.user);
       } else {
+        // If no session is present, set user to null
         setUser(null);
       }
     } catch (err: any) {
@@ -42,17 +43,20 @@ export const useAuth = () => {
     }
   }, [session, sessionLoading]);
 
-  // Optimiere die Abhängigkeiten des useEffect
+  // Reset fetch attempt flag when session changes
   useEffect(() => {
-    if (!sessionLoading) {
-      fetchUser();
+    if (session?.user?.id !== sessionIdRef.current) {
+      fetchAttemptedRef.current = false;
     }
-  }, [fetchUser, sessionLoading]);
+  }, [session?.user?.id]);
 
-  // Verwende useMemo für das Rückgabeobjekt
-  return useMemo(() => ({ 
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]); // Only depends on the memoized fetchUser function
+
+  return { 
     user, 
     isLoading: isLoading || sessionLoading, 
     error 
-  }), [user, isLoading, sessionLoading, error]);
+  };
 };

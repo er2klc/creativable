@@ -53,7 +53,9 @@ export const updateLeadPhase = async (
   const { error: updateError } = await supabase
     .from("leads")
     .update({
-      phase_id: phaseId
+      phase_id: phaseId,
+      last_action: "Phase changed",
+      last_action_date: timestamp,
     })
     .eq("id", leadId);
 
@@ -65,9 +67,9 @@ export const updateLeadPhase = async (
     .from("notes")
     .select("id")
     .eq("lead_id", leadId)
-    .eq("metadata->>type", "phase_change")
-    .eq("metadata->>oldPhase", oldPhaseName)
-    .eq("metadata->>newPhase", newPhaseName)
+    .eq("metadata->type", "phase_change")
+    .eq("metadata->oldPhase", oldPhaseName)
+    .eq("metadata->newPhase", newPhaseName)
     .gte("created_at", fiveSecondsAgo);
 
   // Nur eine neue Notiz erstellen, wenn keine kürzlich erstellte existiert

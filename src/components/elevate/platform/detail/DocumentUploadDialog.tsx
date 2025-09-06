@@ -5,7 +5,6 @@ import { FileUpload } from "./FileUpload";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useUser } from "@supabase/auth-helpers-react";
 
 interface DocumentUploadDialogProps {
   open: boolean;
@@ -27,7 +26,6 @@ export const DocumentUploadDialog = ({
   const [files, setFiles] = useState<File[]>([]);
   const [customFileNames, setCustomFileNames] = useState<CustomFileName>({});
   const [isUploading, setIsUploading] = useState(false);
-  const user = useUser();
 
   const handleUpload = async () => {
     if (files.length === 0) {
@@ -57,8 +55,7 @@ export const DocumentUploadDialog = ({
             lerninhalte_id: lerninhalteId,
             file_name: sanitizedFileName,
             file_path: filePath,
-            file_type: file.type,
-            created_by: user?.id || ""
+            file_type: file.type
           });
 
         if (dbError) throw dbError;

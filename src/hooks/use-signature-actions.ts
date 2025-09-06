@@ -10,7 +10,7 @@ export const useSignatureActions = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from('user_signatures')
         .upsert({
           user_id: user.id,

@@ -17,7 +17,7 @@ export const CommentsList = ({ post, isExpanded }: CommentsListProps) => {
     <div className="mt-4 border-t pt-4">
       <CreateCommentForm postId={post.id} />
       <div className="mt-4 space-y-4">
-        {(post as any)?.team_post_comments?.map((comment: any) => (
+        {post.team_post_comments?.map((comment) => (
           <div key={comment.id} className="flex items-start gap-3">
             <Avatar className="h-8 w-8">
               <AvatarImage src={comment.author?.avatar_url || ""} />

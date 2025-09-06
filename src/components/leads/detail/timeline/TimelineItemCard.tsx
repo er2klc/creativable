@@ -77,10 +77,7 @@ export const TimelineItemCard = ({
     return (
       <NexusTimelineCard
         content={content}
-        metadata={{
-          type: metadata?.type || 'phase_analysis',
-          ...metadata
-        }}
+        metadata={metadata}
         onDelete={onDelete}
       />
     );
@@ -181,13 +178,14 @@ export const TimelineItemCard = ({
     }
 
     if (type === "note" && id) {
-        return (
-          <NoteCard 
-            id={id}
-            content={content}
-            metadata={metadata}
-          />
-        );
+      return (
+        <NoteCard
+          id={id}
+          content={content}
+          metadata={metadata}
+          onDelete={onDelete}
+        />
+      );
     }
 
     if (type === "status_change") {
@@ -196,7 +194,7 @@ export const TimelineItemCard = ({
           content={content}
           timestamp={metadata?.timestamp || new Date().toISOString()}
           metadata={metadata}
-          onDelete={onDelete ? () => onDelete() : undefined}
+          onDelete={onDelete ? () => onDelete(id!) : undefined}
         />
       );
     }

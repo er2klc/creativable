@@ -1,15 +1,13 @@
-import { lazy } from "react";
 
-// Lazy loaded components
-const Dashboard = lazy(() => import("@/pages/Dashboard"));
-const Leads = lazy(() => import("@/pages/Leads"));
-const LeadDetail = lazy(() => import("@/pages/LeadDetail"));
-const Messages = lazy(() => import("@/pages/Messages"));
-const Calendar = lazy(() => import("@/pages/Calendar"));
-const Settings = lazy(() => import("@/pages/Settings"));
-const Pool = lazy(() => import("@/pages/Pool"));
-const Admin = lazy(() => import("@/pages/Admin"));
-const Links = lazy(() => import("@/pages/Links"));
+import Dashboard from "@/pages/Dashboard";
+import Leads from "@/pages/Leads";
+import LeadDetail from "@/pages/LeadDetail";
+import Messages from "@/pages/Messages";
+import Calendar from "@/pages/Calendar";
+import Settings from "@/pages/Settings";
+import Pool from "@/pages/Pool";
+import Admin from "@/pages/Admin";
+import Links from "@/pages/Links";
 
 export const mainRoutes = [
   {
@@ -63,9 +61,3 @@ export const mainRoutes = [
     label: "Links",
   },
 ];
-
-// Vorsichtigeres Preloading ohne potenzielle zirkuläre Referenzen
-setTimeout(() => {
-  // Dashboard vorausladen - häufig besuchte Seite
-  import("@/pages/Dashboard").catch(console.error);
-}, 1000);

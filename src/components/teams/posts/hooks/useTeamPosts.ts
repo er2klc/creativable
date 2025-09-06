@@ -10,7 +10,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string, page: number =
       console.log("Starting to fetch posts for teamId:", teamId, "categoryId:", categoryId);
       
       try {
-        let query = (supabase as any)
+        let query = supabase
           .from('team_posts')
           .select(`
             *,
@@ -23,7 +23,7 @@ export const useTeamPosts = (teamId: string, categoryId?: string, page: number =
                 size
               )
             ),
-            profiles!team_posts_created_by_fkey (
+            author:profiles!team_posts_created_by_fkey (
               id,
               display_name,
               avatar_url,
@@ -35,7 +35,8 @@ export const useTeamPosts = (teamId: string, categoryId?: string, page: number =
           `, { count: 'exact' })
           .eq('team_id', teamId)
           .order('pinned', { ascending: false })
-          .order('created_at', { ascending: false });
+          .order('activity_score', { ascending: false }) // Neue Sortierung nach Activity Score
+          .order('last_activity_at', { ascending: false }); // Fallback auf letzter Aktivität
 
         if (categoryId) {
           query = query.eq('category_id', categoryId);
@@ -56,19 +57,19 @@ export const useTeamPosts = (teamId: string, categoryId?: string, page: number =
           return { posts: [], totalCount: 0 };
         }
 
-        const transformedData = data.map((post: any) => ({
+        const transformedData = data.map(post => ({
           ...post,
-          team_categories: post.team_categories ? {
+          team_categories: {
             ...post.team_categories,
             settings: {
               size: post.team_categories?.team_category_settings?.[0]?.size || 'medium'
             }
-          } : null,
+          },
           team_post_comments: post.team_post_comments?.length || 0,
-          author: post.profiles ? {
-            ...post.profiles,
-            avatar_url: post.profiles.avatar_url || null
-          } : null
+          author: {
+            ...post.author,
+            avatar_url: post.author?.avatar_url || null
+          }
         }));
         
         return { posts: transformedData, totalCount: count || 0 };

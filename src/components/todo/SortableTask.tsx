@@ -5,7 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tables } from "@/integrations/supabase/types";
-import * as confetti from "canvas-confetti";
+import confetti from "canvas-confetti";
 import { toast } from "sonner";
 
 interface Task extends Tables<"tasks"> {
