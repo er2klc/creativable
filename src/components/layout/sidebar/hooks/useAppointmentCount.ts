@@ -28,7 +28,8 @@ export const useAppointmentCount = () => {
 
       return count || 0;
     },
-    refetchInterval: 30000,
+    staleTime: 10 * 60 * 1000, // 10 minutes
+    refetchOnWindowFocus: false
   });
 
   // Subscribe to real-time updates for appointments
